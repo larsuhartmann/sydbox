@@ -56,7 +56,7 @@ static struct syscall_def {
     {__NR_access,       "access",       CHECK_PATH | RESOLV_PATH | ACCESS_MODE},
     {__NR_rename,       "rename",       CHECK_PATH | RESOLV_PATH},
     {__NR_rmdir,        "rmdir",        CHECK_PATH | RESOLV_PATH},
-    {__NR_symlink,      "symlink",      0},
+    {__NR_symlink,      "symlink",      CHECK_PATH | RESOLV_PATH},
     {__NR_truncate,     "truncate",     CHECK_PATH | RESOLV_PATH},
     {__NR_unlink,       "unlink",       CHECK_PATH},
     {__NR_openat,       "openat",       0},
