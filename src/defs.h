@@ -20,6 +20,7 @@
 #ifndef SYDBOX_GUARD_DEFS_H
 #define SYDBOX_GUARD_DEFS_H 1
 
+#include <limits.h>
 #include <sysexits.h>
 #include <sys/types.h>
 
@@ -150,7 +151,7 @@ enum result {
     R_ALLOW /* Allow the system call to be called */
 };
 
-#define REASON_MAX 128
+#define REASON_MAX (PATH_MAX + 128)
 struct decision {
     enum result res;
     int ret;
