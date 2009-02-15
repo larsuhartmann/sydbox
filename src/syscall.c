@@ -38,6 +38,7 @@
 #define ACCESS_MODE     (1 << 2) /* Check the mode argument of access() */
 #define CHECK_PATH      (1 << 3) /* First argument should be a valid path */
 #define RESOLV_PATH     (1 << 4) /* Resolve first pathname and modify syscall */
+#define NET_CALL        (1 << 5) /* Allowing the system call depends on the net flag */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -69,6 +70,11 @@ static struct syscall_def {
     {__NR_symlinkat,    "symlinkat",    0},
     {__NR_fchmodat,     "fchmodat",     0},
     {__NR_faccessat,    "faccessat",    0},
+#if defined(I386)
+    {__NR_socketcall,   "socketcall",   NET_CALL},
+#elif defined(X86_64)
+    {__NR_socket,       "socket",       NET_CALL},
+#endif
     {0,                 NULL,           0}
 };
 
@@ -219,6 +225,16 @@ found:
         }
         free(rpath);
     }
+    if (sflags & NET_CALL && !(ctx->net_allowed)) {
+        decs.res = R_DENY_VIOLATION;
+#if defined(I386)
+        snprintf(decs.reason, REASON_MAX, "socketcall()");
+#elif defined(X86_64)
+        snprintf(decs.reason, REASON_MAX, "socket()");
+#endif
+        decs.ret = -1;
+        return decs;
+    }
     decs.res = R_ALLOW;
     return decs;
 }
@@ -229,9 +245,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     syscall = ptrace_get_syscall(child->pid);
     if (!child->in_syscall) { /* Entering syscall */
+#if 0
         lg(LOG_DEBUG, "syscall.syscall_handle.syscall_enter",
                 "Child %i is entering system call number %d",
                 child->pid, syscall);
+#endif
         decs = syscall_check(ctx, child, syscall);
         switch(decs.res) {
             case R_DENY_VIOLATION:
@@ -249,9 +267,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         child->in_syscall = 1;
     }
     else { /* Exiting syscall */
+#if 0
         lg(LOG_DEBUG, "syscall.syscall_handle.syscall_exit",
                 "Child %i is exiting system call number %d",
                 child->pid, syscall);
+#endif
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);

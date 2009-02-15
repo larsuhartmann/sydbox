@@ -48,6 +48,7 @@ void usage(void) {
     fprintf(stderr, "\nEnvironment variables:\n");
     fprintf(stderr, "\t"ENV_WRITE": Colon separated path prefixes of write allowed paths\n");
     fprintf(stderr, "\t"ENV_PREDICT": Colon separated path prefixes of write predicted paths\n");
+    fprintf(stderr, "\t"ENV_NET": If set network calls will NOT be allowed\n");
     fprintf(stderr, "\t"ENV_NO_COLOUR": If set messages won't be coloured\n");
 }
 
@@ -226,11 +227,13 @@ int main(int argc, char **argv) {
         ctx = context_new();
         write_env = getenv(ENV_WRITE);
         predict_env = getenv(ENV_PREDICT);
+        ctx->net_allowed = getenv(ENV_NET) ? 0 : 1;
         pathlist_init(&(ctx->write_prefixes), write_env);
         pathlist_init(&(ctx->predict_prefixes), predict_env);
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         tchild_setup(ctx->eldest);
+
 
         lg(LOG_VERBOSE, "main.context_init.done", "Initialization done, waiting for child");
         /* Wait for the SIGTRAP */

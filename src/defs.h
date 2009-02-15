@@ -35,6 +35,7 @@
 /* environment */
 #define ENV_WRITE       "SYDBOX_WRITE"
 #define ENV_PREDICT     "SYDBOX_PREDICT"
+#define ENV_NET         "SYDBOX_DISALLOW_NET"
 #define ENV_NO_COLOUR   "SYDBOX_NO_COLOUR"
 
 /* path.c */
@@ -86,6 +87,7 @@ extern unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
+    int net_allowed;
     struct pathnode *write_prefixes;
     struct pathnode *predict_prefixes;
     struct tchild *children;
