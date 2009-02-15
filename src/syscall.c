@@ -208,11 +208,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);
-#if defined(I386)
-            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ADDR_MUL * EAX, child->error_code)) {
-#elif defined(X86_64)
-            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ADDR_MUL * RAX, child->error_code)) {
-#endif
+            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->error_code)) {
                 lg(LOG_ERROR, "syscall.syscall_handle.fail_pokeuser",
                         "Failed to set error code to %d: %s", child->error_code,
                         strerror(errno));
