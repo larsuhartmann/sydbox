@@ -172,14 +172,8 @@ int main(int argc, char **argv) {
         {"debug",   no_argument, NULL, 'd'},
         {0, 0, 0, 0}
     };
-    int status, ret;
     pid_t pid;
-    char *write_env, *predict_env;
-    context_t *ctx;
 
-    write_env = NULL;
-    ctx = NULL;
-    ret = EXIT_SUCCESS;
     log_level = LOG_NORMAL;
     while (-1 != (optc = getopt_long(argc, argv, "hVvd", long_options, NULL))) {
         switch (optc) {
@@ -224,6 +218,10 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     else { /* Parent process */
+        int status, ret;
+        char *write_env, *predict_env;
+        context_t *ctx;
+
         lg(LOG_VERBOSE, "main.context_init", "Initializing context");
         ctx = context_new();
         write_env = getenv(ENV_WRITE);
@@ -250,9 +248,9 @@ int main(int argc, char **argv) {
             goto exit;
         }
         ret = trace_loop(ctx);
-    }
 exit:
-    if (NULL != ctx)
-        context_free(ctx);
-    return ret;
+        if (NULL != ctx)
+            context_free(ctx);
+        return ret;
+    }
 }
