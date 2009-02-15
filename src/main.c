@@ -43,6 +43,12 @@ void usage(void) {
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "\t-h, --help\tYou're looking at it :)\n");
     fprintf(stderr, "\t-V, --version\tShow version information\n");
+    fprintf(stderr, "\t-v, --verbose\tBe verbose\n");
+    fprintf(stderr, "\t-d, --debug\tEnable debug messages\n");
+    fprintf(stderr, "\nEnvironment variables:\n");
+    fprintf(stderr, "\t"ENV_WRITE": Colon separated path prefixes of write allowed paths\n");
+    fprintf(stderr, "\t"ENV_PREDICT": Colon separated path prefixes of write predicted paths\n");
+    fprintf(stderr, "\t"ENV_NO_COLOUR": If set messages won't be coloured\n");
 }
 
 int trace_loop(context_t *ctx) {
