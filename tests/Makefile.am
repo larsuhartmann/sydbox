@@ -1,3 +1,5 @@
+CLEANFILES= arnold_layne its_not_the_same
+
 TESTS= check_sydbox
 check_PROGRAMS= check_sydbox
 
