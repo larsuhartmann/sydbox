@@ -80,13 +80,15 @@ void ptrace_get_string(pid_t pid, int param, char *dest, size_t len) {
     /* Shut the compiler up */
     addr = 0;
 
-    assert(param > 0 && param < 4);
+    assert(param > 0 && param < 5);
     if (1 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM1, NULL);
     else if (2 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM2, NULL);
     else if (3 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM3, NULL);
+    else if (4 == param)
+        addr = ptrace(PTRACE_PEEKUSER, pid, PARAM4, NULL);
 
     if (0 > addr) {
         lg(LOG_ERROR, "trace.ptrace_get_string.fail",
@@ -121,13 +123,15 @@ void ptrace_set_string(pid_t pid, int param, char *src, size_t len) {
     /* Shut the compiler up */
     addr = 0;
 
-    assert(param > 0 && param < 4);
+    assert(param > 0 && param < 5);
     if (1 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM1, NULL);
     else if (2 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM2, NULL);
     else if (3 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM3, NULL);
+    else if (4 == param)
+        addr = ptrace(PTRACE_PEEKUSER, pid, PARAM4, NULL);
 
     if (0 > addr) {
         lg(LOG_ERROR, "trace.ptrace_set_string.fail_peekuser",

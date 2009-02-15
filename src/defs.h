@@ -127,12 +127,14 @@ extern char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymli
 #define PARAM1          (4 * EBX)
 #define PARAM2          (4 * ECX)
 #define PARAM3          (4 * EDX)
+#define PARAM4          (4 * ESI)
 #elif defined(X86_64)
 #define ORIG_ACCUM      (8 * ORIG_RAX)
 #define ACCUM           (8 * RAX)
 #define PARAM1          (8 * RDI)
 #define PARAM2          (8 * RSI)
 #define PARAM3          (8 * RDX)
+#define PARAM4          (8 * RCX)
 #endif
 
 extern int ptrace_get_syscall(pid_t pid);
