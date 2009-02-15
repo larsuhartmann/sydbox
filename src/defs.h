@@ -143,6 +143,21 @@ extern void ptrace_get_string(pid_t pid, int param, char *dest, size_t len);
 extern void ptrace_set_string(pid_t pid, int param, char *src, size_t len);
 
 /* syscall.c */
+/* Possible results for a syscall */
+enum result {
+    R_DENY_VIOLATION, /* Deny the system call and raise an access violation. */
+    R_DENY_RETURN, /* Deny the system call and make it return the specified return code. */
+    R_ALLOW /* Allow the system call to be called */
+};
+
+#define REASON_MAX 128
+struct decision {
+    enum result res;
+    int ret;
+    char reason[REASON_MAX];
+};
+
+extern struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall);
 extern int syscall_handle(context_t *ctx, struct tchild *child);
 
 #endif /* SYDBOX_GUARD_DEFS_H */

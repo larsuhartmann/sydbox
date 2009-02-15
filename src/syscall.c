@@ -19,34 +19,21 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _ATFILE_SOURCE
-#define _ATFILE_SOURCE 1 /* Get AT_* constants */
-#endif
-
 #include <errno.h>
 #include <limits.h>
-#include <fcntl.h>
+#include <libgen.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h>
-#include <sys/ptrace.h>
 #include <asm/unistd.h>
+#include <sys/ptrace.h>
 
 #include "defs.h"
 
 /* System call dispatch flags */
 #define CHECK_PATH      (1 << 0) /* First argument should be a valid path */
-#define CHECK_PATH2     (1 << 1) /* Second argument should be a valid path */
-#define CHECK_PATH_AT   (1 << 2) /* First argument is dirfd and second is path */
-#define CHECK_PATH_AT2  (1 << 3) /* Third argument is dirfd and fourth is path */
-#define RESOLV_PATH     (1 << 4) /* Resolve first pathname and modify syscall */
-#define RESOLV_PATH2    (1 << 5) /* Resolve second pathname and modify syscall */
-#define RESOLV_PATH_AT  (1 << 6) /* RESOLV_PATH for *_at functions */
-#define RESOLV_PATH_AT2 (1 << 7) /* RESOLV_PATH2 for *_at functions */
-#define OPEN_MODE       (1 << 8) /* Check the write mode of open flags */
-#define FAKE_ID         (1 << 9) /* Fake builder identity as root */
-#define NET_CALL        (1 << 10) /* System call depends on network allowed flag */
-#define DENY_ALL        (1 << 11) /* Insecure system call that needs to be denied */
+#define RESOLV_PATH     (1 << 1) /* Resolve first pathname and modify syscall */
+#define RETURNS_FD      (1 << 2) /* The function returns a file descriptor */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -56,8 +43,8 @@ static struct syscall_def {
 } system_calls[] = {
     {__NR_chmod,        "chmod",        CHECK_PATH | RESOLV_PATH},
     {__NR_chown,        "chown",        CHECK_PATH | RESOLV_PATH},
-    {__NR_open,         "open",         CHECK_PATH | OPEN_MODE | RESOLV_PATH},
-    {__NR_creat,        "creat",        CHECK_PATH | RESOLV_PATH},
+    {__NR_open,         "open",         CHECK_PATH | RESOLV_PATH | RETURNS_FD},
+    {__NR_creat,        "creat",        0},
     {__NR_lchown,       "lchown",       CHECK_PATH},
     {__NR_link,         "link",         0},
     {__NR_mkdir,        "mkdir",        CHECK_PATH | RESOLV_PATH},
@@ -78,30 +65,31 @@ static struct syscall_def {
     {__NR_symlinkat,    "symlinkat",    0},
     {__NR_fchmodat,     "fchmodat",     0},
     {__NR_faccessat,    "faccessat",    0},
-    {__NR_ptrace,       "ptrace",       0},
     {0,                 NULL,           0}
 };
 
-int syscall_check(context_t *ctx, struct tchild *child, int syscall) {
-    int i, issymlink;
-    char *rpath;
-    unsigned int sflags;
+struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
+    unsigned int sflags, i;
     const char *sname;
-    char pathname[PATH_MAX];
-    int flags;
-
+    struct decision decs;
     for (i = 0; system_calls[i].name; i++) {
         if (system_calls[i].no == syscall)
             goto found;
     }
-    return 0;
+    decs.res = R_ALLOW;
+    return decs;
 found:
     sflags = system_calls[i].flags;
     sname = system_calls[i].name;
+
     lg(LOG_VERBOSE, "syscall.syscall_check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
 
     if (sflags & CHECK_PATH) {
+        int issymlink;
+        char pathname[PATH_MAX];
+        char *rpath;
+
         ptrace_get_string(child->pid, 1, pathname, PATH_MAX);
 
         if (sflags & RESOLV_PATH)
@@ -127,7 +115,9 @@ found:
                      * we deny access without calling it but don't throw an
                      * access violation.
                      */
-                    return -1;
+                    decs.res = R_DENY_RETURN;
+                    decs.ret = -1;
+                    return decs;
                 }
                 else {
                     /* Add the basename back */
@@ -142,42 +132,36 @@ found:
             else {
                 lg(LOG_WARNING, "syscall.syscall_check.fail_safe_realpath",
                         "safe_realpath() failed for \"%s\": %s", pathname, strerror(errno));
-                return -1;
+                decs.res = R_DENY_RETURN;
+                decs.ret = -1;
+                return decs;
             }
         }
 
-        if (sflags & OPEN_MODE) {
-#if defined(I386)
-            flags = ptrace(PTRACE_PEEKUSER, child->pid, 4 * ECX, NULL);
-#elif defined(X86_64)
-            flags = ptrace(PTRACE_PEEKUSER, child->pid, 8 * RSI, NULL);
-#endif
-            if (!(flags & O_WRONLY || flags & O_RDWR)) {
-                if (issymlink) {
-                    /* Change the pathname argument with the resolved path to
-                     * prevent symlink races.
-                     */
-                    ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
-                }
-                return 0;
-            }
-        }
+        int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
+        int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
-        if (pathlist_check(&(ctx->predict_prefixes), rpath)) {
-            /* Predict mode change path parameter to /dev/null */
-            lg(LOG_VERBOSE, "syscall.syscall_check.predict",
-                    "\"%s\" is under a predict path, changing path argument to /dev/null", rpath);
-            ptrace_set_string(child->pid, 1, "/dev/null", 10);
+        if (!allow_write && !allow_predict) {
+            decs.res = R_DENY_VIOLATION;
+            snprintf(decs.reason, REASON_MAX, "%s(\"%s\", ...)", sname,
+                    pathname);
             free(rpath);
-            return 0;
+            return decs;
         }
-        if (!pathlist_check(&(ctx->write_prefixes), rpath)) {
-            if (sflags & OPEN_MODE)
-                access_error(child->pid, "%s(\"%s\", O_WRONLY/O_RDWR, ...)", sname, pathname);
-            else
-                access_error(child->pid, "%s(\"%s\", ...)", sname, pathname);
+        else if (!allow_write && allow_predict) {
+            if (sflags & RETURNS_FD) {
+                /* Change path argument to /dev/null.
+                 * TODO: remove O_CREAT from flags if OPEN_MODE is set.
+                 */
+                ptrace_set_string(child->pid, 1, "/dev/null", 10);
+                decs.res = R_ALLOW;
+            }
+            else {
+                decs.res = R_DENY_RETURN;
+                decs.ret = 0;
+            }
             free(rpath);
-            return -1;
+            return decs;
         }
 
         if (issymlink) {
@@ -188,28 +172,38 @@ found:
         }
         free(rpath);
     }
-    return 0;
+    decs.res = R_ALLOW;
+    return decs;
 }
 
 int syscall_handle(context_t *ctx, struct tchild *child) {
-    int syscall, ret;
+    int syscall;
+    struct decision decs;
 
     syscall = ptrace_get_syscall(child->pid);
-
     if (!child->in_syscall) { /* Entering syscall */
-        lg(LOG_DEBUG, "syscall.syscall_handle.syscall_enter", "Child %i is entering system call number %d",
+        lg(LOG_DEBUG, "syscall.syscall_handle.syscall_enter",
+                "Child %i is entering system call number %d",
                 child->pid, syscall);
-        ret = syscall_check(ctx, child, syscall);
-        if (0 != ret) {
-            /* Access violation, prevent the system call */
-            child->error_code = ret;
-            child->orig_syscall = syscall;
-            ptrace_set_syscall(child->pid, 0xbadca11);
+        decs = syscall_check(ctx, child, syscall);
+        switch(decs.res) {
+            case R_DENY_VIOLATION:
+                access_error(child->pid, decs.reason);
+                decs.ret = -1;
+            case R_DENY_RETURN:
+                child->error_code = decs.ret;
+                child->orig_syscall = syscall;
+                ptrace_set_syscall(child->pid, 0xbadca11);
+                break;
+            case R_ALLOW:
+            default:
+                break;
         }
         child->in_syscall = 1;
     }
     else { /* Exiting syscall */
-        lg(LOG_DEBUG, "syscall.syscall_handle.syscall_exit", "Child %i is exiting system call number %d",
+        lg(LOG_DEBUG, "syscall.syscall_handle.syscall_exit",
+                "Child %i is exiting system call number %d",
                 child->pid, syscall);
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
@@ -220,7 +214,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             if (0 != ptrace(PTRACE_POKEUSER, child->pid, ADDR_MUL * RAX, child->error_code)) {
 #endif
                 lg(LOG_ERROR, "syscall.syscall_handle.fail_pokeuser",
-                        "Failed to set error code to %d: %s", child->error_code, strerror(errno));
+                        "Failed to set error code to %d: %s", child->error_code,
+                        strerror(errno));
                 return -1;
             }
         }
