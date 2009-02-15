@@ -110,7 +110,7 @@ void tchild_setup(struct tchild *child) {
                     | PTRACE_O_TRACEEXEC
                     | PTRACE_O_TRACEFORK
                     | PTRACE_O_TRACEVFORK))
-        die(EX_SOFTWARE, "PTRACE_SETOPTIONS failed for child %d: %s\n",
+        die(EX_SOFTWARE, "PTRACE_SETOPTIONS failed for child %i: %s\n",
                 child->pid, strerror(errno));
     child->need_setup = 0;
 }

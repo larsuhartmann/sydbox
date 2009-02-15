@@ -4,6 +4,14 @@
  * Distributed under the terms of the GNU General Public License v2
  */
 
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <signal.h>
+#include <string.h>
+#include <unistd.h>
+
 #include <check.h>
 
 #include "../src/defs.h"
@@ -67,6 +75,46 @@ START_TEST(check_tchild_delete) {
 }
 END_TEST
 
+START_TEST(check_tchild_find) {
+    struct tchild *tc = NULL;
+
+    for(int i = 666; i < 670; i++)
+        tchild_new(&tc, i);
+    for(int i = 666; i < 670; i++)
+        fail_unless(NULL != tchild_find(&tc, i),
+                "Failed to find pid %d", i);
+    for(int i = 670; i < 680; i++)
+        fail_unless(NULL == tchild_find(&tc, i),
+                "Found pid %d", i);
+    tchild_free(&tc);
+}
+END_TEST
+
+/* FIXME why doesn't this work? */
+#if 0
+START_TEST(check_tchild_setup) {
+    pid_t pid;
+    struct tchild *tc = NULL;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        for(;;)
+            sleep(1);
+    }
+    else { /* parent */
+        tchild_new(&tc, pid);
+        tchild_setup(tc);
+        fail_unless(0 == tc->need_setup);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+#endif
+
 Suite *children_suite_create(void) {
     Suite *s = suite_create("children");
 
@@ -76,6 +124,7 @@ Suite *children_suite_create(void) {
     tcase_add_test(tc_tchild, check_tchild_free);
     tcase_add_test(tc_tchild, check_tchild_delete_first);
     tcase_add_test(tc_tchild, check_tchild_delete);
+    tcase_add_test(tc_tchild, check_tchild_find);
     suite_add_tcase(s, tc_tchild);
 
     return s;
