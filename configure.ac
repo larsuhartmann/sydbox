@@ -19,7 +19,7 @@ dnl }}}
 dnl {{{ toolchain checks
 AC_PROG_CC_C99
 if test x"$ac_cv_prog_cc_c99" = x"no"; then
-	AC_MSG_ERROR(["sydbox requires a C compiler that supports ISO C99!"])
+	AC_MSG_ERROR([sydbox requires a C compiler that supports ISO C99!])
 fi
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
@@ -47,6 +47,45 @@ dnl }}}
 
 dnl {{{ Check headers
 AC_CHECK_HEADERS([sys/reg.h], [], [])
+dnl }}}
+
+dnl {{{ Check /proc
+AC_MSG_CHECKING(whether /proc is usable)
+AC_CACHE_VAL(ac_cv_proc_usable)
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <limits.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+int main(void) {
+    pid_t pid;
+    char proc[32];
+    char buf[PATH_MAX];
+
+    pid = fork();
+    if (0 == pid) {
+        pause();
+        exit(0);
+    }
+    else {
+        sprintf(proc, "/proc/%d/cwd", pid);
+        if (0 > readlink(proc, buf, PATH_MAX))
+            goto fail;
+        kill(pid, SIGKILL);
+        exit(0);
+fail:
+        kill(pid, SIGKILL);
+        exit(1);
+    }
+}
+]])],
+[AC_MSG_RESULT([yes]) ; ac_cv_proc_usable=yes],
+[AC_MSG_RESULT([NO!]) ; ac_cv_proc_usable=no])
+if test x"$ac_cv_proc_usable" = x"no"; then
+	AC_MSG_ERROR([Your /proc doesn't fit the requirements needed by sydbox])
+fi
 dnl }}}
 
 dnl {{{ Extra CFLAGS for gcc
