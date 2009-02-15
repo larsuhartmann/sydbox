@@ -215,6 +215,123 @@ START_TEST(check_tchild_event_e_syscall) {
 }
 END_TEST
 
+/* TODO
+ * START_TEST(check_tchild_event_e_fork)
+ * START_TEST(check_tchild_event_e_fork_vfork)
+ * START_TEST(check_tchild_event_e_fork_clone)
+ * START_TEST(check_tchild_event_e_execv)
+ */
+
+START_TEST(check_tchild_event_e_genuine) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        kill(getpid(), SIGINT);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        tchild_setup(tc);
+
+        /* Resume the child, it will receive a SIGINT */
+        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
+                "PTRACE_CONT failed: %s", strerror(errno));
+        wait(&status);
+
+        /* Check the event */
+        ret = tchild_event(tc, status);
+        fail_unless(E_GENUINE == ret,
+                "Expected E_GENUINE got %d", ret);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_tchild_event_e_exit) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        exit(EXIT_SUCCESS);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        tchild_setup(tc);
+
+        /* Resume the child, it will exit. */
+        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
+                "PTRACE_CONT failed: %s", strerror(errno));
+        wait(&status);
+
+        /* Check the event */
+        ret = tchild_event(tc, status);
+        fail_unless(E_EXIT == ret,
+                "Expected E_EXIT got %d", ret);
+    }
+}
+END_TEST
+
+START_TEST(check_tchild_event_e_exit_signal) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        for(;;)
+            sleep(1);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        tchild_setup(tc);
+
+        /* Resume the child. */
+        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
+                "PTRACE_CONT failed: %s", strerror(errno));
+        /* Kill it with a signal. */
+        kill(pid, SIGKILL);
+        wait(&status);
+
+        /* Check the event */
+        ret = tchild_event(tc, status);
+        fail_unless(E_EXIT_SIGNAL == ret,
+                "Expected E_EXIT_SIGNAL got %d", ret);
+    }
+}
+END_TEST
+
 Suite *children_suite_create(void) {
     Suite *s = suite_create("children");
 
@@ -228,6 +345,9 @@ Suite *children_suite_create(void) {
     tcase_add_test(tc_tchild, check_tchild_event_e_setup);
     tcase_add_test(tc_tchild, check_tchild_event_e_setup_premature);
     tcase_add_test(tc_tchild, check_tchild_event_e_syscall);
+    tcase_add_test(tc_tchild, check_tchild_event_e_genuine);
+    tcase_add_test(tc_tchild, check_tchild_event_e_exit);
+    tcase_add_test(tc_tchild, check_tchild_event_e_exit_signal);
     suite_add_tcase(s, tc_tchild);
 
     return s;
