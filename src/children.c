@@ -131,8 +131,7 @@ unsigned int tchild_event(struct tchild *child, int status) {
             }
             if (NULL == child) {
                 lg(LOG_DEBUG, "children.tchild_event.e_setup_premature",
-                        "Child %i is born before fork event and she's ready for tracing",
-                        child->pid);
+                        "Child is born before fork event and she's ready for tracing");
                 return E_SETUP_PREMATURE;
             }
         }

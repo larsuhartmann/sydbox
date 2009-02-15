@@ -9,8 +9,10 @@
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include <check.h>
 
@@ -90,30 +92,129 @@ START_TEST(check_tchild_find) {
 }
 END_TEST
 
-/* FIXME why doesn't this work? */
-#if 0
 START_TEST(check_tchild_setup) {
     pid_t pid;
-    struct tchild *tc = NULL;
 
     pid = fork();
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        for(;;)
-            sleep(1);
+        kill(getpid(), SIGSTOP);
     }
     else { /* parent */
+        int status;
+        struct tchild *tc = NULL;
+
         tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
         tchild_setup(tc);
         fail_unless(0 == tc->need_setup);
+
+        tchild_free(&tc);
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_tchild_event_e_setup) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        ret = tchild_event(tc, status);
+        fail_unless(E_SETUP == ret, "Expected E_SETUP got %d", ret);
+
+        tchild_free(&tc);
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_tchild_event_e_setup_premature) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        /* tchild_new(&tc, pid); */
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        ret = tchild_event(tc, status);
+        fail_unless(E_SETUP_PREMATURE == ret,
+                "Expected E_SETUP_PREMATURE got %d", ret);
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
-#endif
+
+START_TEST(check_tchild_event_e_syscall) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        sleep(1);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        tchild_setup(tc);
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
+                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGTRAP",
+                pid);
+
+        /* Check the event */
+        ret = tchild_event(tc, status);
+        fail_unless(E_SYSCALL == ret,
+                "Expected E_SYSCALL got %d", ret);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
 
 Suite *children_suite_create(void) {
     Suite *s = suite_create("children");
@@ -125,6 +226,9 @@ Suite *children_suite_create(void) {
     tcase_add_test(tc_tchild, check_tchild_delete_first);
     tcase_add_test(tc_tchild, check_tchild_delete);
     tcase_add_test(tc_tchild, check_tchild_find);
+    tcase_add_test(tc_tchild, check_tchild_event_e_setup);
+    tcase_add_test(tc_tchild, check_tchild_event_e_setup_premature);
+    tcase_add_test(tc_tchild, check_tchild_event_e_syscall);
     suite_add_tcase(s, tc_tchild);
 
     return s;

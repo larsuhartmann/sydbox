@@ -13,7 +13,7 @@
 
 int main(void) {
     int number_failed;
-    log_level = LOG_NORMAL;
+    log_level = LOG_DEBUG;
 
     /* Add suites */
     SRunner *sr = srunner_create(path_suite_create());
