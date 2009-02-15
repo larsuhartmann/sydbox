@@ -77,8 +77,8 @@ struct tchild {
 };
 
 extern void tchild_new(struct tchild **head, pid_t pid);
-extern void tchild_delete(struct tchild **head, pid_t pid);
 extern void tchild_free(struct tchild **head);
+extern void tchild_delete(struct tchild **head, pid_t pid);
 extern struct tchild *tchild_find(struct tchild **head, pid_t pid);
 extern void tchild_setup(struct tchild *child);
 extern unsigned int tchild_event(struct tchild *child, int status);

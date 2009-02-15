@@ -44,6 +44,19 @@ void tchild_new(struct tchild **head, pid_t pid) {
     lg(LOG_DEBUG, "children.tchild_new", "New child %i", pid);
 }
 
+void tchild_free(struct tchild **head) {
+    struct tchild *current, *temp;
+
+    lg(LOG_DEBUG, "children.tchild_free", "Freeing children %p", (void *) head);
+    current = *head;
+    while (current != NULL) {
+        temp = current;
+        current = current->next;
+        free(temp);
+    }
+    *head = NULL;
+}
+
 void tchild_delete(struct tchild **head, pid_t pid) {
     struct tchild *temp;
     struct tchild *previous, *current;
@@ -68,18 +81,6 @@ void tchild_delete(struct tchild **head, pid_t pid) {
             previous->next = current->next;
             free(temp);
         }
-    }
-}
-
-void tchild_free(struct tchild **head) {
-    struct tchild *current, *temp;
-
-    lg(LOG_DEBUG, "children.tchild_free", "Freeing children %p", (void *) head);
-    current = *head;
-    while (current != NULL) {
-        temp = current;
-        current = current->next;
-        free(temp);
     }
 }
 
