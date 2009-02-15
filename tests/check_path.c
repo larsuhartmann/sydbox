@@ -14,6 +14,7 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "check_sydbox.h"
 
 START_TEST(check_pathnode_new) {
     struct pathnode *head = NULL;
@@ -152,15 +153,4 @@ Suite *path_suite_create(void) {
     suite_add_tcase(s, tc_pathlist);
 
     return s;
-}
-
-int main(void) {
-    int number_failed;
-    log_level = LOG_DEBUG;
-    Suite *s = path_suite_create();
-    SRunner *sr = srunner_create(s);
-    srunner_run_all(sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return (0 == number_failed) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
