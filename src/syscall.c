@@ -153,8 +153,6 @@ found:
             flags = ptrace(PTRACE_PEEKUSER, child->pid, 4 * ECX, NULL);
 #elif defined(X86_64)
             flags = ptrace(PTRACE_PEEKUSER, child->pid, 8 * RSI, NULL);
-#elif defined(ALPHA)
-            flags = ptrace(PTRACE_PEEKUSER, child->pid, REG_A1, NULL);
 #endif
             if (!(flags & O_WRONLY || flags & O_RDWR)) {
                 if (issymlink) {
@@ -219,11 +217,9 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);
 #if defined(I386)
-            if (0 != ptrace(PTRACE_POKEUSER, child->pid, 4 * EAX, child->error_code)) {
+            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ADDR_MUL * EAX, child->error_code)) {
 #elif defined(X86_64)
-            if (0 != ptrace(PTRACE_POKEUSER, child->pid, 8 * RAX, child->error_code)) {
-#elif defined(ALPHA)
-            if (0 != ptrace(PTRACE_POKEUSER, child->pid, REG_R0, child->error_code)) {
+            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ADDR_MUL * RAX, child->error_code)) {
 #endif
                 lg(LOG_ERROR, "syscall.syscall_handle.fail_pokeuser",
                         "Failed to set error code to %d: %s", child->error_code, strerror(errno));
