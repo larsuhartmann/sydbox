@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <asm/unistd.h>
 #include <sys/ptrace.h>
 
@@ -34,8 +35,9 @@
 /* System call dispatch flags */
 #define RETURNS_FD      (1 << 0) /* The function returns a file descriptor */
 #define OPEN_MODE       (1 << 1) /* Check the mode argument of open() */
-#define CHECK_PATH      (1 << 2) /* First argument should be a valid path */
-#define RESOLV_PATH     (1 << 3) /* Resolve first pathname and modify syscall */
+#define ACCESS_MODE     (1 << 2) /* Check the mode argument of access() */
+#define CHECK_PATH      (1 << 3) /* First argument should be a valid path */
+#define RESOLV_PATH     (1 << 4) /* Resolve first pathname and modify syscall */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -46,12 +48,12 @@ static struct syscall_def {
     {__NR_chmod,        "chmod",        CHECK_PATH | RESOLV_PATH},
     {__NR_chown,        "chown",        CHECK_PATH | RESOLV_PATH},
     {__NR_open,         "open",         CHECK_PATH | RESOLV_PATH | RETURNS_FD | OPEN_MODE},
-    {__NR_creat,        "creat",        0},
+    {__NR_creat,        "creat",        CHECK_PATH | RESOLV_PATH},
     {__NR_lchown,       "lchown",       CHECK_PATH},
-    {__NR_link,         "link",         0},
+    {__NR_link,         "link",         CHECK_PATH | RESOLV_PATH},
     {__NR_mkdir,        "mkdir",        CHECK_PATH | RESOLV_PATH},
     {__NR_mknod,        "mknod",        CHECK_PATH | RESOLV_PATH},
-    {__NR_access,       "access",       0},
+    {__NR_access,       "access",       CHECK_PATH | RESOLV_PATH | ACCESS_MODE},
     {__NR_rename,       "rename",       CHECK_PATH | RESOLV_PATH},
     {__NR_rmdir,        "rmdir",        CHECK_PATH | RESOLV_PATH},
     {__NR_symlink,      "symlink",      0},
@@ -140,13 +142,31 @@ found:
             }
         }
 
-        if (sflags & OPEN_MODE) {
-            int flags = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
-            if (0 > flags) {
+        if (sflags & ACCESS_MODE) {
+            int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
+            if (0 > mode) {
                 free(rpath);
                 die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
             }
-            if (!(flags & O_WRONLY || flags & O_RDWR)) {
+            if (!(mode & W_OK)) {
+                if (issymlink) {
+                    /* Change the pathname argument with the resolved path to
+                     * prevent symlink races.
+                     */
+                    ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
+                }
+                free(rpath);
+                decs.res = R_ALLOW;
+                return decs;
+            }
+        }
+        else if (sflags & OPEN_MODE) {
+            int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
+            if (0 > mode) {
+                free(rpath);
+                die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+            }
+            if (!(mode & O_WRONLY || mode & O_RDWR)) {
                 if (issymlink) {
                     /* Change the pathname argument with the resolved path to
                      * prevent symlink races.
@@ -166,7 +186,9 @@ found:
             decs.res = R_DENY_VIOLATION;
             snprintf(decs.reason, REASON_MAX, "%s(\"%s\", ", sname,
                     pathname);
-            if (sflags & OPEN_MODE)
+            if (sflags & ACCESS_MODE)
+                strcat(decs.reason, "O_WR)");
+            else if (sflags & OPEN_MODE)
                 strcat(decs.reason, "O_WRONLY/O_RDWR, ...)");
             else
                 strcat(decs.reason, "...)");
