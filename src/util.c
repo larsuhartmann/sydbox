@@ -17,6 +17,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -123,4 +124,19 @@ char *xstrndup (const char *s, size_t n) {
     t[n] = '\0';
 
     return t;
+}
+
+void bash_expand(const char *pathname, char *dest) {
+    char command[32 + PATH_MAX] = "/bin/bash -c 'echo -n \"";
+    strncat(command, pathname, PATH_MAX);
+    strncat(command, "\"'", 2);
+    FILE *bash = popen(command, "r");
+    if (NULL == bash)
+        die(EX_SOFTWARE, "bug in popen call: %s", strerror(errno));
+
+    int i = 0;
+    while (!feof(bash))
+        dest[i++] = fgetc(bash);
+    dest[i-1] = '\0';
+    fclose(bash);
 }

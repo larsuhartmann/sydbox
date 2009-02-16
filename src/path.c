@@ -28,7 +28,8 @@ void pathnode_new(struct pathnode **head, const char *pathname) {
     struct pathnode *newnode;
 
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
-    newnode->pathname = xstrndup(pathname, PATH_MAX);
+    newnode->pathname = xmalloc(PATH_MAX * sizeof(char));
+    bash_expand(pathname, newnode->pathname);
     newnode->next = *head; /* link next */
     *head = newnode; /* link head */
     lg(LOG_DEBUG, "path.pathnode_new", "New path item \"%s\"", pathname);

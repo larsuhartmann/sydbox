@@ -121,6 +121,7 @@ extern void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
 extern void *xmalloc(size_t size);
 extern char *xstrndup(const char *s, size_t n);
+extern void bash_expand(const char *pathname, char *dest);
 
 /* realpath.c */
 extern char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
