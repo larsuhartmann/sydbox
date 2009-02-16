@@ -94,7 +94,7 @@ void ptrace_get_string(pid_t pid, int param, char *dest, size_t len) {
         lg(LOG_ERROR, "trace.ptrace_get_string.fail",
                 "Failed to grab the string from argument %d of the last syscall made by child %i: %s",
                 param, pid, strerror(errno));
-        die(EX_SOFTWARE, "Failed to grab string");
+        die(EX_SOFTWARE, "Failed to grab string: %s", strerror(errno));
     }
 
     if (addr & (sizeof(long) -1)) {
@@ -137,7 +137,7 @@ void ptrace_set_string(pid_t pid, int param, char *src, size_t len) {
         lg(LOG_ERROR, "trace.ptrace_set_string.fail_peekuser",
                 "Failed to get the address of argument %d of the last syscall made by child %i: %s",
                 param, pid, strerror(errno));
-        die(EX_SOFTWARE, "Failed to get address");
+        die(EX_SOFTWARE, "Failed to get address: %s", strerror(errno));
     }
 
     n = 0;
