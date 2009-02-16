@@ -51,11 +51,16 @@ void usage(void) {
     fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
     fprintf(stderr, "\t-p PHASE, --phase=PHASE\tSpecify phase (required)\n");
     fprintf(stderr, "\t-c PATH, --config=PATH\tSpecify PATH to the configuration file\n");
+    fprintf(stderr, "\t-D, --dump\t\tDump configuration and exit\n");
     fprintf(stderr, "\nEnvironment variables:\n");
+    fprintf(stderr, "\t"ENV_PHASE": Specify phase, can be used instead of -p\n");
+    fprintf(stderr, "\t"ENV_WRITE": Colon seperated paths to allow write\n");
+    fprintf(stderr, "\t"ENV_PREDICT": Colon seperated paths to predict write\n");
+    fprintf(stderr, "\t"ENV_NET": Enable sandboxing of network connections\n");
     fprintf(stderr, "\t"ENV_CONFIG": Specify PATH to the configuration file\n");
     fprintf(stderr, "\t"ENV_NO_COLOUR": If set messages won't be coloured\n");
     fprintf(stderr, "\nPhases:\n");
-    fprintf(stderr, "\tPhase can be one of unpack, prepare, configure, compile, test, install\n");
+    fprintf(stderr, "\tdefault, loadenv, unpack, prepare, configure, compile, test, install\n");
 }
 
 int trace_loop(context_t *ctx) {
@@ -171,7 +176,7 @@ int trace_loop(context_t *ctx) {
 }
 
 int main(int argc, char **argv) {
-    int optc;
+    int optc, dump;
     char *config_file = NULL;
     char *phase = NULL;
     context_t *ctx = context_new();
@@ -185,13 +190,15 @@ int main(int argc, char **argv) {
         {"nocolour", no_argument, NULL, 'C'},
         {"config",   required_argument, NULL, 'c'},
         {"phase",    required_argument, NULL, 'p'},
+        {"dump",     no_argument, NULL, 'D'},
         {0, 0, NULL, 0}
     };
     pid_t pid;
 
     colour = -1;
     log_level = -1;
-    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:c:", long_options, NULL))) {
+    dump = 0;
+    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:c:D", long_options, NULL))) {
         switch (optc) {
             case 'h':
                 usage();
@@ -214,27 +221,38 @@ int main(int argc, char **argv) {
             case 'c':
                 config_file = optarg;
                 break;
+            case 'D':
+                dump = 1;
+                break;
             case '?':
             default:
                 die(EX_USAGE, "try %s --help for more information", PACKAGE);
         }
     }
 
-    if (NULL == phase)
-        die(EX_USAGE, "no phase given");
-    else if (0 != strncmp(phase, "unpack", 7) &&
-             0 != strncmp(phase, "prepare", 8) &&
-             0 != strncmp(phase, "configure", 10) &&
-             0 != strncmp(phase, "compile", 8) &&
-             0 != strncmp(phase, "test", 5) &&
-             0 != strncmp(phase, "install", 8))
-        die(EX_USAGE, "invalid phase");
-    else if (argc < optind + 1)
-        die(EX_USAGE, "no command given");
-    else if (0 != strncmp("--", argv[optind - 1], 3))
-        die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
-    else
-        argv += optind;
+    if (!dump) {
+        if (argc < optind + 1)
+            die(EX_USAGE, "no command given");
+        else if (0 != strncmp("--", argv[optind - 1], 3))
+            die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
+        else
+            argv += optind;
+    }
+
+    if (NULL == phase) {
+        phase = getenv(ENV_PHASE);
+        if (NULL == phase)
+            phase = "default";
+    }
+    if (0 != strncmp(phase, "default", 8) &&
+        0 != strncmp(phase, "loadenv", 8) &&
+        0 != strncmp(phase, "unpack", 7) &&
+        0 != strncmp(phase, "prepare", 8) &&
+        0 != strncmp(phase, "configure", 10) &&
+        0 != strncmp(phase, "compile", 8) &&
+        0 != strncmp(phase, "test", 5) &&
+        0 != strncmp(phase, "install", 8))
+        die(EX_USAGE, "invalid phase '%s'", phase);
 
     /* Parse configuration file */
     if (NULL == config_file)
@@ -246,6 +264,12 @@ int main(int argc, char **argv) {
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_INT("net", 1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t loadenv_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t unpack_opts[] = {
@@ -288,6 +312,7 @@ int main(int argc, char **argv) {
         CFG_BOOL("colour", 1, CFGF_NONE),
         CFG_INT("log_level", -1, CFGF_NONE),
         CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("loadenv", loadenv_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("prepare", prepare_opts, CFGF_TITLE | CFGF_MULTI),
@@ -327,16 +352,68 @@ int main(int argc, char **argv) {
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
         ctx->net_allowed = cfg_getint(cfg_phase, "net");
     }
-    for (int i = 0; i < cfg_size(cfg, "default"); i++) {
-        cfg_default = cfg_getnsec(cfg, "default", i);
-        for (int i = 0; i < cfg_size(cfg_default, "write"); i++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
-        for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
-        if (-1 == ctx->net_allowed)
-            cfg_getint(cfg_default, "net");
+    if (0 != strncmp(phase, "default", 8)) {
+        for (int i = 0; i < cfg_size(cfg, "default"); i++) {
+            cfg_default = cfg_getnsec(cfg, "default", i);
+            for (int i = 0; i < cfg_size(cfg_default, "write"); i++)
+                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
+            for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
+                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
+            if (-1 == ctx->net_allowed)
+                cfg_getint(cfg_default, "net");
+        }
     }
     cfg_free(cfg);
+
+    /* Parse environment variables */
+    char *write_env, *predict_env, *net_env;
+    write_env = getenv(ENV_WRITE);
+    predict_env = getenv(ENV_PREDICT);
+    net_env = getenv(ENV_NET);
+
+    pathlist_init(&(ctx->write_prefixes), write_env);
+    pathlist_init(&(ctx->predict_prefixes), predict_env);
+    if (NULL != net_env)
+        ctx->net_allowed = 0;
+
+    if (dump) {
+        fprintf(stderr, "config_file = %s\n", config_file);
+        fprintf(stderr, "phase = %s\n", phase);
+        fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
+        fprintf(stderr, "log_level = ");
+        switch (log_level) {
+            case LOG_ERROR:
+                fprintf(stderr, "LOG_ERROR\n");
+                break;
+            case LOG_WARNING:
+                fprintf(stderr, "LOG_WARNING\n");
+                break;
+            case LOG_NORMAL:
+                fprintf(stderr, "LOG_NORMAL\n");
+                break;
+            case LOG_VERBOSE:
+                fprintf(stderr, "LOG_VERBOSE\n");
+                break;
+            case LOG_DEBUG:
+                fprintf(stderr, "LOG_DEBUG\n");
+                break;
+        }
+        fprintf(stderr, "network sandboxing = %s\n", ctx->net_allowed ? "off" : "on");
+        struct pathnode *curnode;
+        fprintf(stderr, "write allowed paths:\n");
+        curnode = ctx->write_prefixes;
+        while (NULL != curnode) {
+            fprintf(stderr, "> %s\n", curnode->pathname);
+            curnode = curnode->next;
+        }
+        fprintf(stderr, "write predicted paths:\n");
+        curnode = ctx->predict_prefixes;
+        while (NULL != curnode) {
+            fprintf(stderr, "> %s\n", curnode->pathname);
+            curnode = curnode->next;
+        }
+        return EXIT_SUCCESS;
+    }
 
     lg(LOG_VERBOSE, "main.fork", "Forking");
     pid = fork();

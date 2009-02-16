@@ -33,8 +33,12 @@
 #endif /* HAVE_SYS_REG_H */
 
 /* environment */
-#define ENV_CONFIG      "SYDBOX_CONFIG"
-#define ENV_NO_COLOUR   "SYDBOX_NO_COLOUR"
+#define ENV_PHASE       "SANDBOX_PHASE"
+#define ENV_WRITE       "SANDBOX_WRITE"
+#define ENV_PREDICT     "SANDBOX_PREDICT"
+#define ENV_NET         "SANDBOX_NET"
+#define ENV_CONFIG      "SANDBOX_CONFIG"
+#define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
 
 /* path.c */
 struct pathnode {

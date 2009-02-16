@@ -63,7 +63,7 @@ void lg(int level, const char *id, const char *fmt, ...) {
                 fprintf(stderr, "DEBUG ");
                 break;
         }
-        fprintf(stderr, "%s ] ", id);
+        fprintf(stderr, "%s] ", id);
 
         va_start(args, fmt);
         vfprintf(stderr, fmt, args);

@@ -24,6 +24,7 @@
 context_t *context_new(void) {
     context_t *ctx;
     ctx = (context_t *) xmalloc(sizeof(context_t));
+    ctx->net_allowed = 1;
     ctx->write_prefixes = NULL;
     ctx->predict_prefixes = NULL;
     ctx->children = NULL;
