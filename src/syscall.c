@@ -38,11 +38,13 @@
 /* System call dispatch flags */
 #define RETURNS_FD      (1 << 0) /* The function returns a file descriptor */
 #define OPEN_MODE       (1 << 1) /* Check the mode argument of open() */
-#define ACCESS_MODE     (1 << 2) /* Check the mode argument of access() */
-#define CHECK_PATH      (1 << 3) /* First argument should be a valid path */
-#define CHECK_PATH2     (1 << 4) /* Second argument should be a valid path */
-#define DONT_RESOLV     (1 << 5) /* Don't resolve symlinks */
-#define NET_CALL        (1 << 6) /* Allowing the system call depends on the net flag */
+#define OPEN_MODE_AT    (1 << 2) /* Check the mode argument of openat() */
+#define ACCESS_MODE     (1 << 3) /* Check the mode argument of access() */
+#define CHECK_PATH      (1 << 4) /* First argument should be a valid path */
+#define CHECK_PATH2     (1 << 5) /* Second argument should be a valid path */
+#define CHECK_PATH_AT   (1 << 6) /* CHECK_PATH for at suffixed functions. */
+#define DONT_RESOLV     (1 << 7) /* Don't resolve symlinks */
+#define NET_CALL        (1 << 8) /* Allowing the system call depends on the net flag */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -79,15 +81,15 @@ static struct syscall_def {
     {__NR_umount2,      "umount2",      CHECK_PATH},
     {__NR_utime,        "utime",        CHECK_PATH},
     {__NR_unlink,       "unlink",       CHECK_PATH},
-    {__NR_openat,       "openat",       0},
-    {__NR_mkdirat,      "mkdirat",      0},
-    {__NR_mknodat,      "mknodat",      0},
-    {__NR_fchownat,     "fchownat",     0},
-    {__NR_unlinkat,     "unlinkat",     0},
+    {__NR_openat,       "openat",       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
+    {__NR_mkdirat,      "mkdirat",      CHECK_PATH_AT},
+    {__NR_mknodat,      "mknodat",      CHECK_PATH_AT},
+    {__NR_fchownat,     "fchownat",     CHECK_PATH_AT},
+    {__NR_unlinkat,     "unlinkat",     CHECK_PATH_AT},
     {__NR_renameat,     "renameat",     0},
-    {__NR_linkat,       "linkat",       0},
+    {__NR_linkat,       "linkat",       CHECK_PATH_AT},
     {__NR_symlinkat,    "symlinkat",    0},
-    {__NR_fchmodat,     "fchmodat",     0},
+    {__NR_fchmodat,     "fchmodat",     CHECK_PATH_AT},
     {__NR_faccessat,    "faccessat",    0},
 #if defined(I386)
     {__NR_socketcall,   "socketcall",   NET_CALL},
@@ -104,7 +106,30 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     char *rpath;
 
     assert(1 == arg || 2 == arg);
-    ptrace_get_string(child->pid, arg, pathname, PATH_MAX);
+
+    if (sflags & CHECK_PATH_AT) {
+        int dirfd;
+        dirfd = ptrace(PTRACE_PEEKUSER, child->pid, PARAM1, NULL);
+        ptrace_get_string(child->pid, 2, pathname, PATH_MAX);
+
+        if (AT_FDCWD != dirfd && '/' != pathname[0]) {
+            int n;
+            char dname[PATH_MAX], res_dname[PATH_MAX];
+
+            snprintf(dname, PATH_MAX, "/proc/%i/fd/%i", child->pid, dirfd);
+            n = readlink(dname, res_dname, PATH_MAX - 1);
+            if (0 > n)
+                die(EX_SOFTWARE, "readlink failed for %s: %s", dname, strerror(errno));
+            res_dname[n] = '\0';
+
+            char *pathc = xstrndup(pathname, PATH_MAX);
+            snprintf(pathname, PATH_MAX, "%s/%s", res_dname, pathc);
+            free(pathc);
+            ptrace(PTRACE_POKEUSER, child->pid, PARAM2, AT_FDCWD);
+        }
+    }
+    else
+        ptrace_get_string(child->pid, arg, pathname, PATH_MAX);
 
     if (!(sflags & DONT_RESOLV))
         rpath = safe_realpath(pathname, child->pid, 1, &issymlink);
@@ -188,6 +213,24 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             return 0;
         }
     }
+    else if (sflags & OPEN_MODE_AT) {
+        int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM3, NULL);
+        if (0 > mode) {
+            free(rpath);
+            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+        }
+        if (!(mode & O_WRONLY || mode & O_RDWR)) {
+            if (issymlink) {
+                /* Change the pathname argument with the resolved path to
+                 * prevent symlink races.
+                 */
+                ptrace_set_string(child->pid, 2, rpath, PATH_MAX);
+            }
+            free(rpath);
+            decs->res = R_ALLOW;
+            return 0;
+        }
+    }
 
     int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
@@ -202,7 +245,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                     pathname);
         if (sflags & ACCESS_MODE)
             strcat(decs->reason, "O_WR)");
-        else if (sflags & OPEN_MODE)
+        else if (sflags & OPEN_MODE || sflags & OPEN_MODE_AT)
             strcat(decs->reason, "O_WRONLY/O_RDWR, ...)");
         else
             strcat(decs->reason, "...)");
@@ -257,6 +300,11 @@ found:
             return decs;
     }
     if (sflags & CHECK_PATH2) {
+        syscall_check_path(ctx, child, &decs, 2, sflags, sname);
+        if (R_ALLOW != decs.res)
+            return decs;
+    }
+    if (sflags & CHECK_PATH_AT) {
         syscall_check_path(ctx, child, &decs, 2, sflags, sname);
         if (R_ALLOW != decs.res)
             return decs;

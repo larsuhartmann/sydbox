@@ -169,6 +169,8 @@ struct decision {
     char reason[REASON_MAX];
 };
 
+extern int syscall_check_path(context_t *ctx, struct tchild *child,
+        struct decision *decs, int arg, int sflags, const char *sname);
 extern struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall);
 extern int syscall_handle(context_t *ctx, struct tchild *child);
 
