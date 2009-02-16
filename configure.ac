@@ -49,9 +49,9 @@ dnl {{{ Check headers
 AC_CHECK_HEADERS([sys/reg.h], [], [])
 dnl }}}
 
-dnl {{{ Check /proc
-AC_MSG_CHECKING(whether /proc is usable)
-AC_CACHE_VAL(ac_cv_proc_usable)
+dnl {{{ Check for usable /proc
+AC_MSG_CHECKING(whether /proc/PID/cwd is usable)
+AC_CACHE_VAL(ac_cv_proc_cwd_usable)
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <limits.h>
 #include <signal.h>
@@ -61,18 +61,30 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 
 int main(void) {
     pid_t pid;
-    char proc[32];
-    char buf[PATH_MAX];
+
 
     pid = fork();
+
+    if (0 > pid)
+        exit(1);
     if (0 == pid) {
         pause();
         exit(0);
     }
     else {
-        sprintf(proc, "/proc/%d/cwd", pid);
-        if (0 > readlink(proc, buf, PATH_MAX))
+        char proc[32], path[PATH_MAX];
+        char *cwd;
+
+        cwd = getcwd(cwd, PATH_MAX);
+        if (NULL == cwd)
             goto fail;
+
+        snprintf(proc, 32, "/proc/%i/cwd", pid);
+        if (0 > readlink(proc, path, PATH_MAX))
+            goto fail;
+        if (0 != strncmp(cwd, path, PATH_MAX))
+            goto fail;
+
         kill(pid, SIGKILL);
         exit(0);
 fail:
@@ -81,10 +93,77 @@ fail:
     }
 }
 ]])],
-[AC_MSG_RESULT([yes]) ; ac_cv_proc_usable=yes],
-[AC_MSG_RESULT([NO!]) ; ac_cv_proc_usable=no])
-if test x"$ac_cv_proc_usable" = x"no"; then
-	AC_MSG_ERROR([Your /proc doesn't fit the requirements needed by sydbox])
+[AC_MSG_RESULT([yes]) ; ac_cv_proc_cwd_usable=yes],
+[AC_MSG_RESULT([NO!]) ; ac_cv_proc_cwd_usable=no])
+if test x"$ac_cv_proc_cwd_usable" = x"no"; then
+	AC_MSG_ERROR([/proc fails to give current working directory information about pids])
+fi
+
+AC_MSG_CHECKING(whether /proc/PID/fd/DIRFD is usable)
+AC_CACHE_VAL(ac_cv_proc_fd_usable)
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <limits.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+int main(void) {
+    pid_t pid;
+    char buf[32];
+    int pfd[2];
+
+    if (-1 == pipe(pfd))
+        exit(1);
+
+    pid = fork();
+    if (0 == pid) {
+        DIR *d = opendir("/dev/pts");
+        int dfd = dirfd(d);
+
+        close(pfd[0]);
+
+        snprintf(buf, 32, "%i", dfd);
+        write(pfd[1], buf, 32);
+
+        close(pfd[1]);
+
+        pause();
+        exit(0);
+    }
+    else {
+        int dfd;
+        char proc[64], path[PATH_MAX];
+
+        close(pfd[1]);
+
+        if (0 > read(pfd[0], buf, 32))
+            goto fail;
+
+        close(pfd[0]);
+
+        dfd = atoi(buf);
+        snprintf(proc, 64, "/proc/%i/fd/%i", pid, dfd);
+        if (0 > readlink(proc, path, PATH_MAX))
+            goto fail;
+
+        if (0 != strncmp(path, "/dev/pts", 9))
+            goto fail;
+
+        kill(pid, SIGKILL);
+        exit(0);
+fail:
+        kill(pid, SIGKILL);
+        exit(1);
+    }
+}
+]])],
+[AC_MSG_RESULT([yes]) ; ac_cv_proc_fd_usable=yes],
+[AC_MSG_RESULT([NO!]) ; ac_cv_proc_fd_usable=no])
+if test x"$ac_cv_proc_fd_usable" = x"no"; then
+	AC_MSG_ERROR([/proc fails to give directory file descriptor information about pids])
 fi
 dnl }}}
 
