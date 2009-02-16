@@ -163,7 +163,7 @@ int trace_loop(context_t *ctx) {
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
-                lg(LOG_WARNING, "main.trace_loop.unknown", 
+                lg(LOG_DEBUG, "main.trace_loop.unknown", 
                         "Unknown signal %#x received from child %i", status, pid);
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
                     lg(LOG_ERROR, "main.trace_loop.resume_unknown",
