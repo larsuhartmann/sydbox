@@ -42,35 +42,73 @@ void die(int err, const char *fmt, ...) {
 }
 
 void lg(int level, const char *id, const char *fmt, ...) {
+    static int log_file_opened = 0;
+    static int isstderr;
     va_list args;
 
+    isstderr = '\0' == log_file[0] ? 1 : 0;
+
+    if (!log_file_opened && !isstderr) {
+        flog = fopen(log_file, "a");
+        if (NULL == flog)
+            die(EX_SOFTWARE, "Failed to open log file: %s", strerror(errno));
+        log_file_opened = 1;
+    }
+
     if (level <= log_level) {
-        fprintf(stderr, "%s@%ld: [", PACKAGE, time(NULL));
+        if (isstderr)
+            fprintf(stderr, PACKAGE"@%ld: [", time(NULL));
+        else
+            fprintf(flog, "%ld: [", time(NULL));
 
         switch (level) {
             case LOG_ERROR:
-                fprintf(stderr, "ERROR ");
+                if (isstderr)
+                    fprintf(stderr, "ERROR ");
+                else
+                    fprintf(flog, "ERROR ");
                 break;
             case LOG_WARNING:
-                fprintf(stderr, "WARNING ");
+                if (isstderr)
+                    fprintf(stderr, "WARNING ");
+                else
+                    fprintf(flog, "WARNING ");
                 break;
             case LOG_NORMAL:
-                fprintf(stderr, "NORMAL ");
+                if (isstderr)
+                    fprintf(stderr, "NORMAL ");
+                else
+                    fprintf(flog, "NORMAL ");
                 break;
             case LOG_VERBOSE:
-                fprintf(stderr, "VERBOSE ");
+                if (isstderr)
+                    fprintf(stderr, "VERBOSE ");
+                else
+                    fprintf(flog, "VERBOSE ");
                 break;
             case LOG_DEBUG:
-                fprintf(stderr, "DEBUG ");
+                if (isstderr)
+                    fprintf(stderr, "DEBUG ");
+                else
+                    fprintf(flog, "DEBUG ");
                 break;
         }
-        fprintf(stderr, "%s] ", id);
+        if (isstderr)
+            fprintf(stderr, "%s] ", id);
+        else
+            fprintf(flog, "%s] ", id);
 
         va_start(args, fmt);
-        vfprintf(stderr, fmt, args);
+        if (isstderr)
+            vfprintf(stderr, fmt, args);
+        else
+            vfprintf(flog, fmt, args);
         va_end(args);
 
-        fputc('\n', stderr);
+        if (isstderr)
+            fputc('\n', stderr);
+        else
+            fputc('\n', flog);
     }
 }
 

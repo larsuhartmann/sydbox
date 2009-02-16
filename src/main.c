@@ -177,6 +177,11 @@ int trace_loop(context_t *ctx) {
     return ret;
 }
 
+void cleanup(void) {
+    if (NULL != flog)
+        fclose(flog);
+}
+
 int main(int argc, char **argv) {
     int optc, dump;
     char *config_file = NULL;
@@ -202,6 +207,8 @@ int main(int argc, char **argv) {
     log_level = -1;
     dump = 0;
     log_file[0] = '\0';
+    flog = NULL;
+    atexit(cleanup);
     while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:l:c:D", long_options, NULL))) {
         switch (optc) {
             case 'h':

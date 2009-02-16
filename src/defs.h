@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <sysexits.h>
 #include <sys/types.h>
+#include <stdio.h> /* FILE */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -103,6 +104,7 @@ extern void context_free(context_t *ctx);
 
 /* util.c */
 char log_file[PATH_MAX];
+FILE *flog;
 
 #define LOG_ERROR       1
 #define LOG_WARNING     2
