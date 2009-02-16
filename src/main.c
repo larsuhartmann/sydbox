@@ -51,14 +51,16 @@ void usage(void) {
     fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
     fprintf(stderr, "\t-p PHASE, --phase=PHASE\tSpecify phase (required)\n");
     fprintf(stderr, "\t-c PATH, --config=PATH\tSpecify PATH to the configuration file\n");
+    fprintf(stderr, "\t-l PATH, --log-file=PATH\n\t\t\t\tSpecify PATH to the log file\n");
     fprintf(stderr, "\t-D, --dump\t\tDump configuration and exit\n");
     fprintf(stderr, "\nEnvironment variables:\n");
-    fprintf(stderr, "\t"ENV_PHASE": Specify phase, can be used instead of -p\n");
-    fprintf(stderr, "\t"ENV_WRITE": Colon seperated paths to allow write\n");
-    fprintf(stderr, "\t"ENV_PREDICT": Colon seperated paths to predict write\n");
-    fprintf(stderr, "\t"ENV_NET": Enable sandboxing of network connections\n");
-    fprintf(stderr, "\t"ENV_CONFIG": Specify PATH to the configuration file\n");
-    fprintf(stderr, "\t"ENV_NO_COLOUR": If set messages won't be coloured\n");
+    fprintf(stderr, "\t"ENV_PHASE":\t\tSpecify phase, can be used instead of -p\n");
+    fprintf(stderr, "\t"ENV_WRITE":\t\tColon seperated paths to allow write\n");
+    fprintf(stderr, "\t"ENV_PREDICT":\tColon seperated paths to predict write\n");
+    fprintf(stderr, "\t"ENV_NET":\t\tEnable sandboxing of network connections\n");
+    fprintf(stderr, "\t"ENV_CONFIG":\t\tSpecify PATH to the configuration file\n");
+    fprintf(stderr, "\t"ENV_NO_COLOUR":\tIf set messages won't be coloured\n");
+    fprintf(stderr, "\t"ENV_LOG":\t\tSpecify PATH to the log file\n");
     fprintf(stderr, "\nPhases:\n");
     fprintf(stderr, "\tdefault, loadenv, saveenv, unpack, prepare, configure, compile, test, install\n");
 }
@@ -188,8 +190,9 @@ int main(int argc, char **argv) {
         {"verbose",  no_argument, NULL, 'v'},
         {"debug",    no_argument, NULL, 'd'},
         {"nocolour", no_argument, NULL, 'C'},
-        {"config",   required_argument, NULL, 'c'},
         {"phase",    required_argument, NULL, 'p'},
+        {"log-file", required_argument, NULL, 'l'},
+        {"config",   required_argument, NULL, 'c'},
         {"dump",     no_argument, NULL, 'D'},
         {0, 0, NULL, 0}
     };
@@ -198,7 +201,8 @@ int main(int argc, char **argv) {
     colour = -1;
     log_level = -1;
     dump = 0;
-    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:c:D", long_options, NULL))) {
+    log_file[0] = '\0';
+    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:l:c:D", long_options, NULL))) {
         switch (optc) {
             case 'h':
                 usage();
@@ -217,6 +221,9 @@ int main(int argc, char **argv) {
                 break;
             case 'p':
                 phase = optarg;
+                break;
+            case 'l':
+                strncpy(log_file, optarg, PATH_MAX);
                 break;
             case 'c':
                 config_file = optarg;
@@ -317,6 +324,7 @@ int main(int argc, char **argv) {
     };
     cfg_opt_t sydbox_opts[] = {
         CFG_BOOL("colour", 1, CFGF_NONE),
+        CFG_STR("log_file", NULL, CFGF_NONE),
         CFG_INT("log_level", -1, CFGF_NONE),
         CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("loadenv", loadenv_opts, CFGF_TITLE | CFGF_MULTI),
@@ -337,6 +345,9 @@ int main(int argc, char **argv) {
         free(cfg);
         die(EX_USAGE, "Parse error in file %s", config_file);
     }
+
+    if ('\0' == log_file[0] && NULL != cfg_getstr(cfg, "log_file"))
+        strncpy(log_file, cfg_getstr(cfg, "log_file"), PATH_MAX);
 
     if (-1 == log_level) {
         log_level = cfg_getint(cfg, "log_level");
@@ -374,10 +385,14 @@ int main(int argc, char **argv) {
     cfg_free(cfg);
 
     /* Parse environment variables */
-    char *write_env, *predict_env, *net_env;
+    char *log_env, *write_env, *predict_env, *net_env;
+    log_env = getenv(ENV_LOG);
     write_env = getenv(ENV_WRITE);
     predict_env = getenv(ENV_PREDICT);
     net_env = getenv(ENV_NET);
+
+    if ('\0' == log_file[0] && NULL != log_env)
+        strncpy(log_file, log_env, PATH_MAX);
 
     pathlist_init(&(ctx->write_prefixes), write_env);
     pathlist_init(&(ctx->predict_prefixes), predict_env);
@@ -388,6 +403,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "config_file = %s\n", config_file);
         fprintf(stderr, "phase = %s\n", phase);
         fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
+        fprintf(stderr, "log_file = %s\n", '\0' == log_file[0] ? "stderr" : log_file);
         fprintf(stderr, "log_level = ");
         switch (log_level) {
             case LOG_ERROR:

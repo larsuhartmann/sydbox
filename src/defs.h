@@ -34,10 +34,11 @@
 
 /* environment */
 #define ENV_PHASE       "SANDBOX_PHASE"
+#define ENV_LOG         "SANDBOX_LOG"
+#define ENV_CONFIG      "SANDBOX_CONFIG"
 #define ENV_WRITE       "SANDBOX_WRITE"
 #define ENV_PREDICT     "SANDBOX_PREDICT"
 #define ENV_NET         "SANDBOX_NET"
-#define ENV_CONFIG      "SANDBOX_CONFIG"
 #define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
 
 /* path.c */
@@ -101,6 +102,8 @@ extern context_t *context_new(void);
 extern void context_free(context_t *ctx);
 
 /* util.c */
+char log_file[PATH_MAX];
+
 #define LOG_ERROR       1
 #define LOG_WARNING     2
 #define LOG_NORMAL      3
