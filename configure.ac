@@ -3,6 +3,7 @@ dnl vim: set sw=4 sts=4 ts=4 noet ft=config foldmethod=marker foldmarker={{{,}}}
 dnl {{{ program, version
 AC_PREREQ(2.59)
 AC_INIT([src/main.c])
+AC_CANONICAL_HOST
 
 VERSION_MAJOR=0
 VERSION_MINOR=1
@@ -25,8 +26,39 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 dnl }}}
 
+dnl {{{ check for supported OS
+AC_MSG_CHECKING([for supported OS])
+case "$host_os" in
+	linux*)
+		AC_MSG_RESULT([$host_os])
+		AC_MSG_CHECKING([for supported kernel])
+		kernel_version=`uname -r | cut -d'-' -f1`
+		case "$kernel_version" in
+			2.6*)
+				AC_MSG_RESULT([$kernel_version])
+				;;
+			2.5*)
+				kernel_minor_version=`echo $kernel_version | cut -d'.' -f3`
+				if test "$kernel_minor_version" -lt 46; then
+					AC_MSG_RESULT([NO!])
+					AC_MSG_ERROR([linux kernel version $kernel_version is not supported by sydbox])
+				fi
+				AC_MSG_RESULT([$kernel_version])
+				;;
+			*)
+				AC_MSG_RESULT([NO!])
+				AC_MSG_ERROR([linux kernel version $kernel_version is not supported by sydbox])
+				;;
+		esac
+		;;
+	*)
+		AC_MSG_RESULT([NO!])
+		AC_MSG_ERROR([operating system $host_os is not supported by sydbox])
+		;;
+esac
+dnl }}}
+
 dnl {{{ check for supported architecture
-AC_CANONICAL_HOST
 AC_MSG_CHECKING([for supported architecture])
 case "$host_cpu" in
 i[[3456]]86|pentium)
