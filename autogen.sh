@@ -6,8 +6,13 @@ die() {
     exit 1
 }
 
+echo ">>> rm -f config.cache"
 rm -f config.cache
+echo ">>> aclocal"
 aclocal || die "aclocal failed"
+echo ">>> autoheader"
 autoheader || die "autoheader failed"
+echo ">>> autoconf"
 autoconf || die "autoconf failed"
+echo ">>> automake"
 automake -a --copy || die "automake failed"
