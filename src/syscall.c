@@ -148,12 +148,18 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                 rpath = safe_realpath(dname, child->pid, 0, NULL);
             free(dirc);
 
+            lg(LOG_DEBUG, "syscall.syscall_check_path",
+                    "File %s doesn't exist, using directory %s",
+                    pathname, rpath);
             if (NULL == rpath) {
                 /* Directory doesn't exist as well.
                  * The system call will fail, to prevent any kind of races
                  * we deny access without calling it but don't throw an
                  * access violation.
                  */
+                lg(LOG_DEBUG, "syscall.syscall_check_path",
+                        "Neither file %s nor directory %s exists, deny access without violation",
+                        pathname, rpath);
                 decs->res = R_DENY_RETURN;
                 decs->ret = -1;
                 return 0;
@@ -256,6 +262,10 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         if (sflags & RETURNS_FD) {
             /* Change path argument to /dev/null.
              */
+            lg(LOG_DEBUG, "syscall.syscall_check_path.devnull_subs",
+                    "System call returns fd and its argument is under a predict path");
+            lg(LOG_DEBUG, "syscall.syscall_check_path.devnull_subs",
+                    "Changing the path argument to /dev/null");
             ptrace_set_string(child->pid, arg, "/dev/null", 10);
             decs->res = R_ALLOW;
         }
@@ -271,9 +281,13 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         /* Change the pathname argument with the resolved path to
         * prevent symlink races.
         */
+        lg(LOG_DEBUG, "syscall.syscall_check_path.resolved_subs",
+                "Substituting symlink %s with resolved path %s to prevent races",
+                pathname, rpath);
         ptrace_set_string(child->pid, arg, rpath, PATH_MAX);
     }
     free(rpath);
+    decs->res = R_ALLOW;
     return 0;
 }
 
@@ -291,7 +305,7 @@ found:
     sflags = system_calls[i].flags;
     sname = system_calls[i].name;
 
-    lg(LOG_VERBOSE, "syscall.syscall_check.essential",
+    lg(LOG_DEBUG, "syscall.syscall_check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
 
     if (sflags & CHECK_PATH) {
