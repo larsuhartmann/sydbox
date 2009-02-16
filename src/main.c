@@ -60,7 +60,7 @@ void usage(void) {
     fprintf(stderr, "\t"ENV_CONFIG": Specify PATH to the configuration file\n");
     fprintf(stderr, "\t"ENV_NO_COLOUR": If set messages won't be coloured\n");
     fprintf(stderr, "\nPhases:\n");
-    fprintf(stderr, "\tdefault, loadenv, unpack, prepare, configure, compile, test, install\n");
+    fprintf(stderr, "\tdefault, loadenv, saveenv, unpack, prepare, configure, compile, test, install\n");
 }
 
 int trace_loop(context_t *ctx) {
@@ -246,6 +246,7 @@ int main(int argc, char **argv) {
     }
     if (0 != strncmp(phase, "default", 8) &&
         0 != strncmp(phase, "loadenv", 8) &&
+        0 != strncmp(phase, "saveenv", 8) &&
         0 != strncmp(phase, "unpack", 7) &&
         0 != strncmp(phase, "prepare", 8) &&
         0 != strncmp(phase, "configure", 10) &&
@@ -267,6 +268,12 @@ int main(int argc, char **argv) {
         CFG_END()
     };
     cfg_opt_t loadenv_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t saveenv_opts[] = {
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
@@ -313,6 +320,7 @@ int main(int argc, char **argv) {
         CFG_INT("log_level", -1, CFGF_NONE),
         CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("loadenv", loadenv_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("saveenv", saveenv_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("prepare", prepare_opts, CFGF_TITLE | CFGF_MULTI),
