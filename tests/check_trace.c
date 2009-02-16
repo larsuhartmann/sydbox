@@ -236,8 +236,6 @@ START_TEST(check_ptrace_get_string_third) {
 }
 END_TEST
 
-/* FIXME why does this fail? */
-#if 0
 START_TEST(check_ptrace_get_string_fourth) {
     pid_t pid;
 
@@ -278,7 +276,6 @@ START_TEST(check_ptrace_get_string_fourth) {
     }
 }
 END_TEST
-#endif
 
 START_TEST(check_ptrace_set_string_first) {
     pid_t pid;
@@ -406,6 +403,47 @@ START_TEST(check_ptrace_set_string_third) {
 }
 END_TEST
 
+START_TEST(check_ptrace_set_string_fourth) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        linkat(AT_FDCWD, "emily", AT_FDCWD, "arnold_layne", 0600);
+    }
+    else { /* parent */
+        int status;
+        char pathname[PATH_MAX];
+        struct tchild *tc = NULL;
+
+        tchild_new(&tc, pid);
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        tchild_setup(tc);
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
+                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGTRAP",
+                pid);
+
+        ptrace_set_string(pid, 4, "its_not_the_same", 17);
+        ptrace_get_string(pid, 4, pathname, PATH_MAX);
+        fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
+                "Expected 'its_not_the_same' got '%s'", pathname);
+
+        tchild_free(&tc);
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
 
 Suite *trace_suite_create(void) {
     Suite *s = suite_create("trace");
@@ -417,12 +455,11 @@ Suite *trace_suite_create(void) {
     tcase_add_test(tc_ptrace, check_ptrace_get_string_first);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_second);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_third);
-#if 0
     tcase_add_test(tc_ptrace, check_ptrace_get_string_fourth);
-#endif
     tcase_add_test(tc_ptrace, check_ptrace_set_string_first);
     tcase_add_test(tc_ptrace, check_ptrace_set_string_second);
     tcase_add_test(tc_ptrace, check_ptrace_set_string_third);
+    tcase_add_test(tc_ptrace, check_ptrace_set_string_fourth);
     suite_add_tcase(s, tc_ptrace);
 
     return s;
