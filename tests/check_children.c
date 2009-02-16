@@ -342,6 +342,7 @@ Suite *children_suite_create(void) {
     tcase_add_test(tc_tchild, check_tchild_delete_first);
     tcase_add_test(tc_tchild, check_tchild_delete);
     tcase_add_test(tc_tchild, check_tchild_find);
+    tcase_add_test(tc_tchild, check_tchild_setup);
     tcase_add_test(tc_tchild, check_tchild_event_e_setup);
     tcase_add_test(tc_tchild, check_tchild_event_e_setup_premature);
     tcase_add_test(tc_tchild, check_tchild_event_e_syscall);
