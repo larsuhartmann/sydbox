@@ -74,14 +74,11 @@ void lg(int level, const char *id, const char *fmt, ...) {
 }
 
 void access_error(pid_t pid, const char *fmt, ...) {
-    static char *nocolour_env;
     va_list args;
     time_t now;
 
     now = time(NULL);
-    nocolour_env = getenv(ENV_NO_COLOUR);
-
-    if (NULL == nocolour_env) {
+    if (colour) {
         fprintf(stderr, "%s@%ld: " MAGENTA "Access violation!" NORMAL "\n", PACKAGE, now);
         fprintf(stderr, "%s@%ld: " MAGENTA "Child pid: " PINK "%i" NORMAL "\n", PACKAGE, now, pid);
         fprintf(stderr, "%s@%ld: " MAGENTA "Reason: " PINK, PACKAGE, now);
@@ -96,7 +93,7 @@ void access_error(pid_t pid, const char *fmt, ...) {
     vfprintf(stderr, fmt, args);
     va_end(args);
 
-    if (NULL == nocolour_env)
+    if (colour)
         fprintf(stderr, NORMAL "\n");
     else
         fputc('\n', stderr);

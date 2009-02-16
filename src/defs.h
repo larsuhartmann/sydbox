@@ -33,9 +33,7 @@
 #endif /* HAVE_SYS_REG_H */
 
 /* environment */
-#define ENV_WRITE       "SYDBOX_WRITE"
-#define ENV_PREDICT     "SYDBOX_PREDICT"
-#define ENV_NET         "SYDBOX_DISALLOW_NET"
+#define ENV_CONFIG      "SYDBOX_CONFIG"
 #define ENV_NO_COLOUR   "SYDBOX_NO_COLOUR"
 
 /* path.c */
@@ -109,6 +107,7 @@ int log_level;
 #define NORMAL  "[00;00m"
 #define MAGENTA "[00;35m"
 #define PINK    "[01;35m"
+int colour;
 
 extern void die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));

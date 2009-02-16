@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <confuse.h>
 
 #include "defs.h"
 
@@ -41,15 +44,18 @@ void usage(void) {
     fprintf(stderr, "%s-%s ptrace based sandbox\n", PACKAGE, VERSION);
     fprintf(stderr, "Usage: %s [options] -- command [args]\n\n", PACKAGE);
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "\t-h, --help\tYou're looking at it :)\n");
-    fprintf(stderr, "\t-V, --version\tShow version information\n");
-    fprintf(stderr, "\t-v, --verbose\tBe verbose\n");
-    fprintf(stderr, "\t-d, --debug\tEnable debug messages\n");
+    fprintf(stderr, "\t-h, --help\t\tYou're looking at it :)\n");
+    fprintf(stderr, "\t-V, --version\t\tShow version information\n");
+    fprintf(stderr, "\t-v, --verbose\t\tBe verbose\n");
+    fprintf(stderr, "\t-d, --debug\t\tEnable debug messages\n");
+    fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
+    fprintf(stderr, "\t-p PHASE, --phase=PHASE\tSpecify phase (required)\n");
+    fprintf(stderr, "\t-c PATH, --config=PATH\tSpecify PATH to the configuration file\n");
     fprintf(stderr, "\nEnvironment variables:\n");
-    fprintf(stderr, "\t"ENV_WRITE": Colon separated path prefixes of write allowed paths\n");
-    fprintf(stderr, "\t"ENV_PREDICT": Colon separated path prefixes of write predicted paths\n");
-    fprintf(stderr, "\t"ENV_NET": If set network calls will NOT be allowed\n");
+    fprintf(stderr, "\t"ENV_CONFIG": Specify PATH to the configuration file\n");
     fprintf(stderr, "\t"ENV_NO_COLOUR": If set messages won't be coloured\n");
+    fprintf(stderr, "\nPhases:\n");
+    fprintf(stderr, "\tPhase can be one of unpack, prepare, configure, compile, test, install\n");
 }
 
 int trace_loop(context_t *ctx) {
@@ -166,17 +172,26 @@ int trace_loop(context_t *ctx) {
 
 int main(int argc, char **argv) {
     int optc;
+    char *config_file = NULL;
+    char *phase = NULL;
+    context_t *ctx = context_new();
+
+    /* Parse command line */
     static struct option long_options[] = {
-        {"version", no_argument, NULL, 'V'},
-        {"help",    no_argument, NULL, 'h'},
-        {"verbose", no_argument, NULL, 'v'},
-        {"debug",   no_argument, NULL, 'd'},
-        {0, 0, 0, 0}
+        {"version",  no_argument, NULL, 'V'},
+        {"help",     no_argument, NULL, 'h'},
+        {"verbose",  no_argument, NULL, 'v'},
+        {"debug",    no_argument, NULL, 'd'},
+        {"nocolour", no_argument, NULL, 'C'},
+        {"config",   required_argument, NULL, 'c'},
+        {"phase",    required_argument, NULL, 'p'},
+        {0, 0, NULL, 0}
     };
     pid_t pid;
 
-    log_level = LOG_NORMAL;
-    while (-1 != (optc = getopt_long(argc, argv, "hVvd", long_options, NULL))) {
+    colour = -1;
+    log_level = -1;
+    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:c:", long_options, NULL))) {
         switch (optc) {
             case 'h':
                 usage();
@@ -190,18 +205,138 @@ int main(int argc, char **argv) {
             case 'd':
                 log_level = LOG_DEBUG;
                 break;
+            case 'C':
+                colour = 0;
+                break;
+            case 'p':
+                phase = optarg;
+                break;
+            case 'c':
+                config_file = optarg;
+                break;
             case '?':
             default:
                 die(EX_USAGE, "try %s --help for more information", PACKAGE);
         }
     }
 
-    if (argc < optind + 1)
+    if (NULL == phase)
+        die(EX_USAGE, "no phase given");
+    else if (0 != strncmp(phase, "unpack", 7) &&
+             0 != strncmp(phase, "prepare", 8) &&
+             0 != strncmp(phase, "configure", 10) &&
+             0 != strncmp(phase, "compile", 8) &&
+             0 != strncmp(phase, "test", 5) &&
+             0 != strncmp(phase, "install", 8))
+        die(EX_USAGE, "invalid phase");
+    else if (argc < optind + 1)
         die(EX_USAGE, "no command given");
     else if (0 != strncmp("--", argv[optind - 1], 3))
         die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
     else
         argv += optind;
+
+    /* Parse configuration file */
+    if (NULL == config_file)
+        config_file = getenv(ENV_CONFIG);
+    if (NULL == config_file)
+        config_file = SYSCONFDIR"/sydbox.conf";
+
+    cfg_opt_t default_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", 1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t unpack_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t prepare_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t configure_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t compile_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t test_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t install_opts[] = {
+        CFG_STR_LIST("write", "{}", CFGF_NONE),
+        CFG_STR_LIST("predict", "{}", CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
+        CFG_END()
+    };
+    cfg_opt_t sydbox_opts[] = {
+        CFG_BOOL("colour", 1, CFGF_NONE),
+        CFG_INT("log_level", -1, CFGF_NONE),
+        CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("prepare", prepare_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("configure", configure_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("compile", compile_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("test", test_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("install", install_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_END()
+    };
+
+    cfg_t *cfg = cfg_init(sydbox_opts, CFGF_NONE);
+
+    if (CFG_PARSE_ERROR == cfg_parse(cfg, config_file)) {
+        free(cfg);
+        die(EX_USAGE, "Parse error in file %s", config_file);
+    }
+
+    if (-1 == log_level) {
+        log_level = cfg_getint(cfg, "log_level");
+        if (-1 == log_level)
+            log_level = LOG_NORMAL;
+    }
+
+    if (-1 == colour) {
+        if (NULL != getenv(ENV_NO_COLOUR))
+            colour = 0;
+        else
+            colour = cfg_getbool(cfg, "colour");
+    }
+
+    cfg_t *cfg_default, *cfg_phase;
+    for (int i = 0; i < cfg_size(cfg, phase); i++) {
+        cfg_phase = cfg_getnsec(cfg, phase, i);
+        for (int i = 0; i < cfg_size(cfg_phase, "write"); i++)
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
+        for (int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
+        ctx->net_allowed = cfg_getint(cfg_phase, "net");
+    }
+    for (int i = 0; i < cfg_size(cfg, "default"); i++) {
+        cfg_default = cfg_getnsec(cfg, "default", i);
+        for (int i = 0; i < cfg_size(cfg_default, "write"); i++)
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
+        for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
+        if (-1 == ctx->net_allowed)
+            cfg_getint(cfg_default, "net");
+    }
+    cfg_free(cfg);
 
     lg(LOG_VERBOSE, "main.fork", "Forking");
     pid = fork();
@@ -211,8 +346,8 @@ int main(int argc, char **argv) {
         if (0 != ptrace(PTRACE_TRACEME, 0, NULL, NULL))
             die(EX_SOFTWARE, "couldn't set tracing: %s", strerror(errno));
         /* Stop and wait the parent to resume us with PTRACE_SYSCALL */
-        if (0 > kill(getpid(), SIGTRAP))
-            die(EX_SOFTWARE, "failed to send SIGTRAP: %s", strerror(errno));
+        if (0 > kill(getpid(), SIGSTOP))
+            die(EX_SOFTWARE, "failed to send SIGSTOP: %s", strerror(errno));
         /* Start the fun! */
         execvp(argv[0], argv);
         die(EX_DATAERR, strerror(errno));
@@ -220,29 +355,19 @@ int main(int argc, char **argv) {
     }
     else { /* Parent process */
         int status, ret;
-        char *write_env, *predict_env;
-        context_t *ctx;
 
-        lg(LOG_VERBOSE, "main.context_init", "Initializing context");
-        ctx = context_new();
-        write_env = getenv(ENV_WRITE);
-        predict_env = getenv(ENV_PREDICT);
-        ctx->net_allowed = getenv(ENV_NET) ? 0 : 1;
-        pathlist_init(&(ctx->write_prefixes), write_env);
-        pathlist_init(&(ctx->predict_prefixes), predict_env);
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        tchild_setup(ctx->eldest);
 
-
-        lg(LOG_VERBOSE, "main.context_init.done", "Initialization done, waiting for child");
-        /* Wait for the SIGTRAP */
+        /* Wait for the SIGSTOP */
         wait(&status);
         if (WIFEXITED(status)) {
-            /* wtf? child died before sending SIGTRAP */
+            /* wtf? child died before sending SIGSTOP */
             ret = WEXITSTATUS(status);
             goto exit;
         }
+        tchild_setup(ctx->eldest);
+
         lg(LOG_VERBOSE, "main.resume", "Child %i is ready to go, resuming", pid);
         if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);

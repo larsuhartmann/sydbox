@@ -96,8 +96,10 @@ fi
 AC_SUBST([SYDBOX_CFLAGS])
 dnl }}}
 
-dnl {{{ Tests
+dnl {{{ Check for libraries
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+PKG_CHECK_MODULES([confuse], [libconfuse >= 2.6],,
+				  [AC_MSG_ERROR([sydbox requires libconfuse >=2.6])])
 dnl }}}
 
 dnl {{{ output
