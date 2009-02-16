@@ -51,7 +51,8 @@ void lg(int level, const char *id, const char *fmt, ...) {
     if (!log_file_opened && !isstderr) {
         flog = fopen(log_file, "a");
         if (NULL == flog)
-            die(EX_SOFTWARE, "Failed to open log file: %s", strerror(errno));
+            die(EX_SOFTWARE, "Failed to open log file %s: %s",
+                    log_file, strerror(errno));
         log_file_opened = 1;
     }
 
