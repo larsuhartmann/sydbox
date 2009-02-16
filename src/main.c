@@ -249,8 +249,10 @@ int main(int argc, char **argv) {
             die(EX_USAGE, "no command given");
         else if (0 != strncmp("--", argv[optind - 1], 3))
             die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
-        else
+        else {
+            argc -= optind;
             argv += optind;
+        }
     }
 
     if (NULL == phase) {
@@ -446,7 +448,16 @@ int main(int argc, char **argv) {
         return EXIT_SUCCESS;
     }
 
-    lg(LOG_VERBOSE, "main.fork", "Forking");
+    int cmdsize = 4096;
+    char cmd[4096] = { 0 };
+    for (int i = 0; i < argc; i++) {
+        strncat(cmd, argv[i], cmdsize);
+        if (argc - 1 != i)
+            strncat(cmd, " ", 1);
+        cmdsize -= (strlen(argv[i]) + 1);
+    }
+
+    lg(LOG_VERBOSE, "main.fork", "Forking to execute '%s'", cmd);
     pid = fork();
     if (0 > pid)
         die(EX_SOFTWARE, strerror(errno));
