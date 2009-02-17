@@ -38,6 +38,8 @@
 
 #include "defs.h"
 
+context_t *ctx = NULL;
+
 void about(void) {
     fprintf(stderr, "%s-%s\n", PACKAGE, VERSION);
 }
@@ -180,6 +182,8 @@ int trace_loop(context_t *ctx) {
 }
 
 void cleanup(void) {
+    if (NULL != ctx)
+        context_free(ctx);
     if (NULL != flog)
         fclose(flog);
 }
@@ -188,7 +192,7 @@ int main(int argc, char **argv) {
     int optc, dump;
     char *config_file = NULL;
     char *phase = NULL;
-    context_t *ctx = context_new();
+    ctx = context_new();
 
     /* Parse command line */
     static struct option long_options[] = {
@@ -497,20 +501,13 @@ int main(int argc, char **argv) {
 
         /* Wait for the SIGSTOP */
         wait(&status);
-        if (WIFEXITED(status)) {
-            lg(LOG_ERROR, "main.wait_fail", "wtf? child died before sending SIGSTOP");
-            ret = WEXITSTATUS(status);
-            goto exit;
-        }
+        if (WIFEXITED(status))
+            die(WEXITSTATUS(status), "wtf? child died before sending SIGSTOP");
 
         /* Attach to the process */
-        if (0 > ptrace(PTRACE_ATTACH, pid, NULL, NULL)) {
-            lg(LOG_ERROR, "main.attach_fail",
-                    "Failed to attach to child %i as %s:%s: %s",
+        if (0 > ptrace(PTRACE_ATTACH, pid, NULL, NULL))
+            die(EX_SOFTWARE, "Failed to attach to child %i as %s:%s: %s",
                     pid, pwd->pw_name, grp->gr_name, strerror(errno));
-            ret = EX_SOFTWARE;
-            goto exit;
-        }
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         tchild_setup(ctx->eldest);
@@ -518,14 +515,9 @@ int main(int argc, char **argv) {
         lg(LOG_VERBOSE, "main.resume", "Child %i is ready to go, resuming", pid);
         if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
-            lg(LOG_ERROR, "main.resume.fail", "Failed to resume child %i: %s", pid, strerror(errno));
-            ret = EX_SOFTWARE;
-            goto exit;
+            die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
         ret = trace_loop(ctx);
-exit:
-        if (NULL != ctx)
-            context_free(ctx);
         return ret;
     }
 }
