@@ -494,8 +494,14 @@ int main(int argc, char **argv) {
     }
     else { /* Parent process */
         int status, ret;
-        tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+
+        /* Wait for the SIGSTOP */
+        wait(&status);
+        if (WIFEXITED(status)) {
+            lg(LOG_ERROR, "main.wait_fail", "wtf? child died before sending SIGSTOP");
+            ret = WEXITSTATUS(status);
+            goto exit;
+        }
 
         /* Attach to the process */
         if (0 > ptrace(PTRACE_ATTACH, pid, NULL, NULL)) {
@@ -505,14 +511,8 @@ int main(int argc, char **argv) {
             ret = EX_SOFTWARE;
             goto exit;
         }
-
-        /* Wait for the SIGSTOP */
-        wait(&status);
-        if (WIFEXITED(status)) {
-            lg(LOG_ERROR, "main.wait_fail", "wtf? child died before sending SIGSTOP");
-            ret = WEXITSTATUS(status);
-            goto exit;
-        }
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
         tchild_setup(ctx->eldest);
 
         lg(LOG_VERBOSE, "main.resume", "Child %i is ready to go, resuming", pid);
