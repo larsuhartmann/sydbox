@@ -509,7 +509,7 @@ int main(int argc, char **argv) {
         /* Wait for the SIGSTOP */
         wait(&status);
         if (WIFEXITED(status)) {
-            /* wtf? child died before sending SIGSTOP */
+            lg(LOG_ERROR, "main.wait_fail", "wtf? child died before sending SIGSTOP");
             ret = WEXITSTATUS(status);
             goto exit;
         }
