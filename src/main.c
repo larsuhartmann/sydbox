@@ -504,10 +504,7 @@ int main(int argc, char **argv) {
         if (WIFEXITED(status))
             die(WEXITSTATUS(status), "wtf? child died before sending SIGSTOP");
 
-        /* Attach to the process */
-        if (0 > ptrace(PTRACE_ATTACH, pid, NULL, NULL))
-            die(EX_SOFTWARE, "Failed to attach to child %i as %s:%s: %s",
-                    pid, pwd->pw_name, grp->gr_name, strerror(errno));
+        ptrace(PTRACE_ATTACH, pid, NULL, NULL);
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         tchild_setup(ctx->eldest);
