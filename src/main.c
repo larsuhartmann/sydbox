@@ -23,10 +23,12 @@
 #include <errno.h>
 #include <limits.h>
 #include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <grp.h>
+#include <pwd.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -457,7 +459,25 @@ int main(int argc, char **argv) {
         cmdsize -= (strlen(argv[i]) + 1);
     }
 
-    lg(LOG_VERBOSE, "main.fork", "Forking to execute '%s'", cmd);
+    /* Get user name and group name */
+    uid_t uid;
+    gid_t gid;
+    struct passwd *pwd;
+    struct group *grp;
+
+    uid = geteuid();
+    errno = 0;
+    pwd = getpwuid(uid);
+    if (NULL == pwd)
+        die(EX_SOFTWARE, "Failed to get password file entry: %s", strerror(errno));
+    errno = 0;
+    gid = getegid();
+    grp = getgrgid(gid);
+    if (NULL == getgrgid)
+        die(EX_SOFTWARE, "Failed to get group file entry: %s", strerror(errno));
+
+    lg(LOG_VERBOSE, "main.fork", "Forking to execute '%s' as %s:%s",
+            cmd, pwd->pw_name, grp->gr_name);
     pid = fork();
     if (0 > pid)
         die(EX_SOFTWARE, strerror(errno));
@@ -474,14 +494,14 @@ int main(int argc, char **argv) {
     }
     else { /* Parent process */
         int status, ret;
-
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
         /* Attach to the process */
         if (0 > ptrace(PTRACE_ATTACH, pid, NULL, NULL)) {
             lg(LOG_ERROR, "main.attach_fail",
-                    "Failed to attach to child %i: %s", pid, strerror(errno));
+                    "Failed to attach to child %i as %s:%s: %s",
+                    pid, pwd->pw_name, grp->gr_name, strerror(errno));
             ret = EX_SOFTWARE;
             goto exit;
         }
