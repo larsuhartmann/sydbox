@@ -106,7 +106,7 @@ int main(void) {
     }
     else {
         char proc[32], path[PATH_MAX];
-        char *cwd;
+        char *cwd = NULL;
 
         cwd = getcwd(cwd, PATH_MAX);
         if (NULL == cwd)
