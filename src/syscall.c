@@ -148,7 +148,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                 rpath = safe_realpath(dname, child->pid, 0, NULL);
             free(dirc);
 
-            lg(LOG_DEBUG, "syscall.syscall_check_path",
+            lg(LOG_DEBUG, "syscall.syscall_check_path.no_file",
                     "File %s doesn't exist, using directory %s",
                     pathname, rpath);
             if (NULL == rpath) {
@@ -157,7 +157,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                  * we deny access without calling it but don't throw an
                  * access violation.
                  */
-                lg(LOG_DEBUG, "syscall.syscall_check_path",
+                lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_and_dir",
                         "Neither file %s nor directory %s exists, deny access without violation",
                         pathname, rpath);
                 decs->res = R_DENY_RETURN;
@@ -165,7 +165,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                 return 0;
             }
             else {
-                /* Add the basename back */
+                lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_but_dir",
+                        "File %s doesn't exist but directory %s exists, adding basename",
+                        pathname, rpath);
                 char *basec, *bname;
                 basec = xstrndup(pathname, PATH_MAX);
                 bname = basename(basec);
@@ -175,7 +177,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             }
         }
         else {
-            lg(LOG_WARNING, "syscall.syscall_check.fail_safe_realpath",
+            lg(LOG_WARNING, "syscall.syscall_check.safe_realpath_fail",
                     "safe_realpath() failed for \"%s\": %s", pathname, strerror(errno));
             decs->res = R_DENY_RETURN;
             decs->ret = -1;
