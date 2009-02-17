@@ -478,6 +478,14 @@ int main(int argc, char **argv) {
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
+        /* Attach to the process */
+        if (0 > ptrace(PTRACE_ATTACH, pid, NULL, NULL)) {
+            lg(LOG_ERROR, "main.attach_fail",
+                    "Failed to attach to child %i: %s", pid, strerror(errno));
+            ret = EX_SOFTWARE;
+            goto exit;
+        }
+
         /* Wait for the SIGSTOP */
         wait(&status);
         if (WIFEXITED(status)) {
