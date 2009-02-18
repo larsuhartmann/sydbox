@@ -148,7 +148,7 @@ extern char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymli
 #define PARAM1          (8 * RDI)
 #define PARAM2          (8 * RSI)
 #define PARAM3          (8 * RDX)
-#define PARAM4          (8 * RCX)
+#define PARAM4          (8 * R10)
 #endif
 
 extern int ptrace_get_syscall(pid_t pid);
