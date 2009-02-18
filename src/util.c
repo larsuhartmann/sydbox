@@ -41,6 +41,20 @@ void die(int err, const char *fmt, ...) {
     exit(err);
 }
 
+void _die(int err, const char *fmt, ...) {
+    va_list args;
+
+    fprintf(stderr, "%s: ", PACKAGE);
+
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+
+    fputc('\n', stderr);
+
+    _exit(err);
+}
+
 void lg(int level, const char *id, const char *fmt, ...) {
     static int log_file_opened = 0;
     static int isstderr;

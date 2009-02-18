@@ -486,15 +486,14 @@ int main(int argc, char **argv) {
     if (0 > pid)
         die(EX_SOFTWARE, strerror(errno));
     else if (0 == pid) { /* Child process */
-        if (0 != ptrace(PTRACE_TRACEME, 0, NULL, NULL))
-            die(EX_SOFTWARE, "couldn't set tracing: %s", strerror(errno));
+        if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL))
+            _die(EX_SOFTWARE, "couldn't set tracing: %s", strerror(errno));
         /* Stop and wait the parent to resume us with PTRACE_SYSCALL */
         if (0 > kill(getpid(), SIGSTOP))
-            die(EX_SOFTWARE, "failed to send SIGSTOP: %s", strerror(errno));
+            _die(EX_SOFTWARE, "failed to send SIGSTOP: %s", strerror(errno));
         /* Start the fun! */
         execvp(argv[0], argv);
-        die(EX_DATAERR, strerror(errno));
-        return EXIT_FAILURE;
+        _die(EX_DATAERR, strerror(errno));
     }
     else { /* Parent process */
         int status, ret;
@@ -503,8 +502,8 @@ int main(int argc, char **argv) {
         wait(&status);
         if (WIFEXITED(status))
             die(WEXITSTATUS(status), "wtf? child died before sending SIGSTOP");
+        assert(WIFSTOPPED(status) && SIGSTOP == WSTOPSIG(status));
 
-        ptrace(PTRACE_ATTACH, pid, NULL, NULL);
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         tchild_setup(ctx->eldest);
