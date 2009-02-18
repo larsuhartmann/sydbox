@@ -69,7 +69,7 @@ void usage(void) {
     fprintf(stderr, "\tdefault, loadenv, saveenv, unpack, prepare, configure, compile, test, install\n");
 }
 
-int trace_loop(context_t *ctx) {
+int trace_loop(void) {
     int status, ret;
     unsigned int event;
     pid_t pid, childpid;
@@ -513,7 +513,7 @@ int main(int argc, char **argv) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
-        ret = trace_loop(ctx);
+        ret = trace_loop();
         return ret;
     }
 }
