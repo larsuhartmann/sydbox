@@ -1,7 +1,7 @@
 CLEANFILES= arnold_layne its_not_the_same
 
-TESTS= check_sydbox
-check_PROGRAMS= check_sydbox
+TESTS= check_sydbox t01-chmod.bash t02-chown.bash t03-open.bash
+check_PROGRAMS= check_sydbox t01_chmod t02_chown t03_open
 
 check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.c \
 		      check_sydbox.h check_sydbox.c \
@@ -11,3 +11,7 @@ check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.
 		      $(top_builddir)/src/syscall.c $(top_builddir)/src/trace.c
 check_sydbox_CFLAGS= @SYDBOX_CFLAGS@ @CHECK_CFLAGS@
 check_sydbox_LDADD= @CHECK_LIBS@
+
+t01_chmod_SOURCES= t01-chmod.c
+t02_chown_SOURCES= t02-chown.c
+t03_open_SOURCES= t03-open.c
