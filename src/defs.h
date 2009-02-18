@@ -120,6 +120,8 @@ int colour;
 
 extern void die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
+extern void _die(int err, const char *fmt, ...)
+    __attribute__ ((__format__ (__printf__, 2, 3)));
 extern void lg(int level, const char *id, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)));
 extern void access_error(pid_t pid, const char *fmt, ...)
