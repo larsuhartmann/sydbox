@@ -1,6 +1,12 @@
 #!/bin/bash
 # vim: set sw=4 et sts=4 tw=80 :
 
+# Check for bash
+if test -z "${BASH_VERSION}"; then
+    echo "This is not bash!"
+    exit 127
+fi
+
 # Reset environment
 export LANG=C
 export LC_ALL=C
