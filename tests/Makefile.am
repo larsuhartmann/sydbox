@@ -16,18 +16,5 @@ check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.
 check_sydbox_CFLAGS= @SYDBOX_CFLAGS@ @CHECK_CFLAGS@
 check_sydbox_LDADD= @CHECK_LIBS@
 
-t01_chmod_SOURCES= t01-chmod.c
-t02_chown_SOURCES= t02-chown.c
-t03_open_SOURCES= t03-open.c
-t04_creat_SOURCES= t04-creat.c
-t05_lchown_SOURCES= t05-lchown.c
-t06_link_SOURCES= t06-link.c
-t07_mkdir_SOURCES= t07-mkdir.c
-t08_mknod_SOURCES= t08-mknod.c
-t09_access_SOURCES= t09-access.c
-t10_rename_first_SOURCES= t10-rename-first.c
-t11_rename_second_SOURCES= t11-rename-second.c
-t12_rmdir_SOURCES= t12-rmdir.c
-
 test-lib.bash: test-lib.bash.in
 	sed -e "s/@TOP_BUILDDIR@/$(top_builddir)/" test-lib.bash.in > test-lib.bash
