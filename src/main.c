@@ -41,12 +41,18 @@
 context_t *ctx = NULL;
 
 void about(void) {
-    fprintf(stderr, "%s-%s\n", PACKAGE, VERSION);
+    fprintf(stderr, PACKAGE"-"VERSION);
+    if (0 != strlen(GITHEAD))
+        fprintf(stderr, "-"GITHEAD);
+    fputc('\n', stderr);
 }
 
 void usage(void) {
-    fprintf(stderr, "%s-%s ptrace based sandbox\n", PACKAGE, VERSION);
-    fprintf(stderr, "Usage: %s [options] -- command [args]\n\n", PACKAGE);
+    fprintf(stderr, PACKAGE"-"VERSION);
+    if (0 != strlen(GITHEAD))
+        fprintf(stderr, "-"GITHEAD);
+    fprintf(stderr, " ptrace based sandbox\n");
+    fprintf(stderr, "Usage: "PACKAGE" [options] -- command [args]\n\n");
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "\t-h, --help\t\tYou're looking at it :)\n");
     fprintf(stderr, "\t-V, --version\t\tShow version information\n");

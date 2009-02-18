@@ -15,6 +15,21 @@ AC_SUBST([VERSION_MINOR])
 AC_SUBST([VERSION_FULL])
 
 AM_INIT_AUTOMAKE(sydbox, [$VERSION_FULL])
+
+dnl {{{ git revision
+AC_MSG_CHECKING([for git head])
+if test -d "${GIT_DIR:-${ac_top_srcdir:-./}/.git}" ; then
+	GITHEAD=`git describe 2>/dev/null`
+	if test -z ${GITHEAD} ; then
+		GITHEAD=`git rev-parse --short HEAD`
+	fi
+	if test -n "`git diff-index -m --name-only HEAD`" ; then
+		GITHEAD=${GITHEAD}-dirty
+	fi
+fi
+AC_MSG_RESULT([$GITHEAD])
+AC_SUBST([GITHEAD])
+dnl }}}
 dnl }}}
 
 dnl {{{ toolchain checks
