@@ -110,6 +110,8 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     if (sflags & CHECK_PATH_AT) {
         int dirfd;
         dirfd = ptrace(PTRACE_PEEKUSER, child->pid, PARAM1, NULL);
+        if (0 > dirfd)
+            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         ptrace_get_string(child->pid, 2, pathname, PATH_MAX);
 
         if (AT_FDCWD != dirfd && '/' != pathname[0]) {
@@ -125,7 +127,8 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             char *pathc = xstrndup(pathname, PATH_MAX);
             snprintf(pathname, PATH_MAX, "%s/%s", res_dname, pathc);
             free(pathc);
-            ptrace(PTRACE_POKEUSER, child->pid, PARAM2, AT_FDCWD);
+            if (0 > ptrace(PTRACE_POKEUSER, child->pid, PARAM1, AT_FDCWD))
+                die(EX_SOFTWARE, "PTRACE_POKEUSER failed: %s", strerror(errno));
         }
     }
     else
