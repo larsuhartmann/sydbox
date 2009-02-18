@@ -107,13 +107,13 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     assert(1 == arg || 2 == arg);
     if (1 == arg) {
         dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM1, NULL);
-        if (0 > dirfd)
+        if (0 != errno)
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         ptrace_get_string(pid, 2, dest, PATH_MAX);
     }
     else {
         dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM3, NULL);
-        if (0 > dirfd)
+        if (0 != errno)
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         ptrace_get_string(pid, 4, dest, PATH_MAX);
     }
@@ -210,7 +210,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         else
             mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM3, NULL);
 
-        if (0 > mode) {
+        if (0 != errno) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }
@@ -231,7 +231,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     }
     else if (sflags & OPEN_MODE) {
         int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
-        if (0 > mode) {
+        if (0 != errno) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }
@@ -249,7 +249,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     }
     else if (sflags & OPEN_MODE_AT) {
         int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM3, NULL);
-        if (0 > mode) {
+        if (0 != errno) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }

@@ -48,7 +48,7 @@ int ptrace_get_syscall(pid_t pid) {
     int syscall;
 
     syscall = ptrace(PTRACE_PEEKUSER, pid, ORIG_ACCUM, NULL);
-    if (0 > syscall) {
+    if (0 != errno) {
         lg(LOG_ERROR, "trace.ptrace_get_syscall.fail",
                 "Failed to get syscall number for child %i: %s", pid, strerror(errno));
         die(EX_SOFTWARE, "Failed to get syscall number: %s", strerror(errno));
@@ -87,7 +87,7 @@ void ptrace_get_string(pid_t pid, int param, char *dest, size_t len) {
     else if (4 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM4, NULL);
 
-    if (0 > addr) {
+    if (0 != errno) {
         lg(LOG_ERROR, "trace.ptrace_get_string.fail",
                 "Failed to grab the string from argument %d of the last syscall made by child %i: %s",
                 param, pid, strerror(errno));
@@ -130,7 +130,7 @@ void ptrace_set_string(pid_t pid, int param, char *src, size_t len) {
     else if (4 == param)
         addr = ptrace(PTRACE_PEEKUSER, pid, PARAM4, NULL);
 
-    if (0 > addr) {
+    if (0 != errno) {
         lg(LOG_ERROR, "trace.ptrace_set_string.fail_peekuser",
                 "Failed to get the address of argument %d of the last syscall made by child %i: %s",
                 param, pid, strerror(errno));
