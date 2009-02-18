@@ -51,20 +51,17 @@ int ptrace_get_syscall(pid_t pid) {
     if (0 > syscall) {
         lg(LOG_ERROR, "trace.ptrace_get_syscall.fail",
                 "Failed to get syscall number for child %i: %s", pid, strerror(errno));
-        die(EX_SOFTWARE, "Failed to get syscall number");
+        die(EX_SOFTWARE, "Failed to get syscall number: %s", strerror(errno));
     }
     return syscall;
 }
 
 void ptrace_set_syscall(pid_t pid, int syscall) {
-    int ret;
-
-    ret = ptrace(PTRACE_POKEUSER, pid, ORIG_ACCUM, syscall);
-    if (0 != ret) {
+    if (0 > ptrace(PTRACE_POKEUSER, pid, ORIG_ACCUM, syscall)) {
         lg(LOG_ERROR, "trace.ptrace_set_syscall.fail",
                 "Failed to set syscall number to %d for child %i: %s",
                 syscall, pid, strerror(errno));
-        die(EX_SOFTWARE, "Failed to set syscall number");
+        die(EX_SOFTWARE, "Failed to set syscall number: %s", strerror(errno));
     }
 }
 
