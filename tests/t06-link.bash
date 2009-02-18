@@ -10,22 +10,25 @@ if [[ 0 != $? ]]; then
     die "rm -fr arnold.layne"
 fi
 
-say "t06-link-deny"
+start_test "t06-link-deny"
 sydbox -- ./t06_link
 if [[ 0 == $? ]]; then
     die "failed to deny link"
 fi
+end_test
 
-say "t06-link-predict"
+start_test "t06-link-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t06_link
 if [[ 0 != $? ]]; then
     die "failed to predict link"
 fi
+end_test
 
-say "t06-link-write"
+start_test "t06-link-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t06_link
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -f arnold.layne ]]; then
     die "file doesn't exist, write didn't allow access"
 fi
+end_test

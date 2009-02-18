@@ -10,26 +10,29 @@ if [[ 0 != $? ]]; then
     die "rm -fr arnold.layne"
 fi
 
-say "t07-mkdir-deny"
+start_test "t07-mkdir-deny"
 sydbox -- ./t07_mkdir
 if [[ 0 == $? ]]; then
     die "failed to deny mkdir"
 elif [[ -d arnold.layne ]]; then
     die "dir exists, failed to deny mkdir"
 fi
+end_test
 
-say "t07-mkdir-predict"
+start_test "t07-mkdir-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t07_mkdir
 if [[ 0 != $? ]]; then
     die "failed to predict mkdir"
 elif [[ -d arnold.layne ]]; then
     die "predict allowed access"
 fi
+end_test
 
-say "t07-mkdir-write"
+start_test "t07-mkdir-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t07_mkdir
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -d arnold.layne ]]; then
     die "dir doesn't exist, write didn't allow access"
 fi
+end_test

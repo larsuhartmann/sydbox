@@ -14,20 +14,23 @@ if [[ 0 != $? ]]; then
     die "ln -s its.not.the.same arnold.layne"
 fi
 
-say "t05-lchown-deny"
+start_test "t05-lchown-deny"
 sydbox -- ./t05_lchown
 if [[ 0 == $? ]]; then
     die "failed to deny lchown"
 fi
+end_test
 
-say "t05-lchown-predict"
+start_test "t05-lchown-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t05_lchown
 if [[ 0 != $? ]]; then
     die "failed to predict lchown"
 fi
+end_test
 
-say "t05-lchown-write"
+start_test "t05-lchown-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t05_lchown
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 fi
+end_test

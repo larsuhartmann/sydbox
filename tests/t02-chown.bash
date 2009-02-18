@@ -5,20 +5,23 @@
 
 . test-lib.bash
 
-say "t02-chown-deny"
+start_test "t02-chown-deny"
 sydbox -- ./t02_chown
 if [[ 0 == $? ]]; then
     die "failed to deny chown"
 fi
+end_test
 
-say "t02-chown-predict"
+start_test "t02-chown-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t02_chown
 if [[ 0 != $? ]]; then
     die "failed to predict chown"
 fi
+end_test
 
-say "t02-chown-write"
+start_test "t02-chown-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t02_chown
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 fi
+end_test

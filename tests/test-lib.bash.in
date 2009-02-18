@@ -46,6 +46,16 @@ say() {
 die() {
     echo "FAIL: $@" >&2
     echo "LOG: ${SANDBOX_LOG}"
+    echo ">>> Testcase failed" >> "${SANDBOX_LOG}"
     remove_log=false
     exit 1
+}
+
+start_test() {
+    say "* $@"
+    echo ">>> Starting testcase $@" >> "${SANDBOX_LOG}"
+}
+
+end_test() {
+    echo ">>> Finished testcase" >> "${SANDBOX_LOG}"
 }

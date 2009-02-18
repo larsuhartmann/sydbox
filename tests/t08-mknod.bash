@@ -10,26 +10,29 @@ if [[ 0 != $? ]]; then
     die "rm -fr arnold.layne"
 fi
 
-say "t08-mknod-deny"
+start_test "t08-mknod-deny"
 sydbox -- ./t08_mknod
 if [[ 0 == $? ]]; then
     die "failed to deny mknod"
 elif [[ -p arnold.layne ]]; then
     die "fifo exists, failed to deny mknod"
 fi
+end_test
 
-say "t08-mknod-predict"
+start_test "t08-mknod-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t08_mknod
 if [[ 0 != $? ]]; then
     die "failed to predict mknod"
 elif [[ -p arnold.layne ]]; then
     die "predict allowed access"
 fi
+end_test
 
-say "t08-mknod-write"
+start_test "t08-mknod-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t08_mknod
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -p arnold.layne ]]; then
     die "fifo doesn't exist, write didn't allow access"
 fi
+end_test

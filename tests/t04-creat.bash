@@ -10,26 +10,29 @@ if [[ 0 != $? ]]; then
     die "rm -fr arnold.layne"
 fi
 
-say "t04-creat-deny"
+start_test "t04-creat-deny"
 sydbox -- ./t04_creat
 if [[ 0 == $? ]]; then
     die "failed to deny creat"
 elif [[ -f arnold.layne ]]; then
     die "file exists, failed to deny creat"
 fi
+end_test
 
-say "t04-creat-predict"
+start_test "t04-creat-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t04_creat
 if [[ 0 != $? ]]; then
     die "failed to predict creat"
 elif [[ -f arnold.layne ]]; then
     die "predict allowed access"
 fi
+end_test
 
-say "t04-creat-write"
+start_test "t04-creat-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t04_creat
 if [[ 0 != $? ]]; then
     die "failed to allow creat"
 elif [[ ! -f arnold.layne ]]; then
     die "file doesn't exist, failed to allow creat"
 fi
+end_test

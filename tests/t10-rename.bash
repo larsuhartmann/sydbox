@@ -5,50 +5,56 @@
 
 . test-lib.bash
 
-say "t10-rename-first-deny"
+start_test "t10-rename-first-deny"
 sydbox -- ./t10_rename 0
 if [[ 0 == $? ]]; then
     die "failed to deny rename"
 elif [[ -f its.not.the.same ]]; then
     die "file exists, failed to deny rename"
 fi
+end_test
 
-say "t10-rename-first-predict"
+start_test "t10-rename-first-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t10_rename 0
 if [[ 0 != $? ]]; then
     die "failed to predict rename"
 elif [[ -f its.not.the.same ]]; then
     die "predict allowed access"
 fi
+end_test
 
-say "t10-rename-first-write"
+start_test "t10-rename-first-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t10_rename 0
 if [[ 0 != $? ]]; then
     die "failed to allow rename"
 elif [[ ! -f its.not.the.same ]]; then
     die "file doesn't exist, failed to allow rename"
 fi
+end_test
 
-say "t10-rename-second-deny"
+start_test "t10-rename-second-deny"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t10_rename 1
 if [[ 0 == $? ]]; then
     die "failed to deny rename"
 elif [[ -f /tmp/sydbox.txt ]]; then
     die "file exists, failed to deny rename"
 fi
+end_test
 
-say "t10-rename-second-predict"
+start_test "t10-rename-second-predict"
 SANDBOX_WRITE="${cwd}" SANDBOX_PREDICT="/tmp" sydbox -- ./t10_rename 1
 if [[ 0 != $? ]]; then
     die "failed to predict rename"
 elif [[ -f /tmp/sydbox.txt ]]; then
     die "predict allowed access"
 fi
+end_test
 
-say "t10-rename-second-write"
+start_test "t10-rename-second-write"
 SANDBOX_WRITE="${cwd}:/tmp" sydbox -- ./t10_rename 1
 if [[ 0 != $? ]]; then
     die "failed to allow rename"
 elif [[ ! -f /tmp/sydbox.txt ]]; then
     die "file doesn't exist, failed to allow rename"
 fi
+end_test

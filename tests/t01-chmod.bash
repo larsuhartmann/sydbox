@@ -5,13 +5,14 @@
 
 . test-lib.bash
 
-say "t01-chmod-deny"
+start_test "t01-chmod-deny"
 sydbox -- ./t01_chmod
 if [[ 0 == $? ]]; then
     die "failed to deny chmod"
 fi
+end_test
 
-say "t01-chmod-predict"
+start_test "t01-chmod-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t01_chmod
 if [[ 0 != $? ]]; then
     die "failed to predict chmod"
@@ -20,8 +21,9 @@ perms=$(ls -l arnold.layne | cut -d' ' -f1)
 if [[ "${perms}" != '-rw-r--r--' ]]; then
     die "predict allowed access"
 fi
+end_test
 
-say "t01-chmod-write"
+start_test "t01-chmod-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t01_chmod
 if [[ 0 != $? ]]; then
     die "failed to allow chmod"
@@ -30,3 +32,4 @@ perms=$(ls -l arnold.layne | cut -d' ' -f1)
 if [[ "${perms}" != '----------' ]]; then
     die "write didn't allow access"
 fi
+end_test
