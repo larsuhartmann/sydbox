@@ -18,6 +18,7 @@ AM_INIT_AUTOMAKE(sydbox, [$VERSION_FULL])
 dnl }}}
 
 dnl {{{ toolchain checks
+AM_PROG_CC_C_O
 AC_PROG_CC_C99
 if test x"$ac_cv_prog_cc_c99" = x"no"; then
 	AC_MSG_ERROR([sydbox requires a C compiler that supports ISO C99!])
