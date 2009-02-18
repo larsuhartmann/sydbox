@@ -24,7 +24,7 @@ cwd="$(readlink -f .)"
 
 old_umask=$(umask)
 umask 0022 && touch arnold.layne && umask $old_umask
-trap 'rm -f arnold.layne' EXIT
+trap 'rm -fr arnold.layne' EXIT
 
 sydbox() {
     @TOP_BUILDDIR@/src/sydbox "$@"

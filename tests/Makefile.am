@@ -1,9 +1,9 @@
 CLEANFILES= arnold_layne its_not_the_same
 
 TESTS= check_sydbox t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash \
-       t05-lchown.bash t06-link.bash
+       t05-lchown.bash t06-link.bash t07-mkdir.bash
 check_PROGRAMS= check_sydbox test-lib.bash t01_chmod t02_chown t03_open \
-		t04_creat t05_lchown t06_link
+		t04_creat t05_lchown t06_link t07_mkdir
 
 check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.c \
 		      check_sydbox.h check_sydbox.c \
@@ -20,6 +20,7 @@ t03_open_SOURCES= t03-open.c
 t04_creat_SOURCES= t04-creat.c
 t05_lchown_SOURCES= t05-lchown.c
 t06_link_SOURCES= t06-link.c
+t07_mkdir_SOURCES= t07-mkdir.c
 
 test-lib.bash: test-lib.bash.in
 	sed -e "s/@TOP_BUILDDIR@/$(top_builddir)/" test-lib.bash.in > test-lib.bash
