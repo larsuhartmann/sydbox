@@ -20,9 +20,8 @@ old_umask=$(umask)
 umask 0022 && touch arnold.layne && umask $old_umask
 trap 'rm -f arnold.layne' EXIT
 
-# FIXME
 sydbox() {
-    ../src/sydbox "$@"
+    @TOP_BUILDDIR@/src/sydbox "$@"
 }
 
 say() {
