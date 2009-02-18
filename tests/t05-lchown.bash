@@ -6,9 +6,12 @@
 . test-lib.bash
 
 rm -f arnold.layne
+if [[ 0 != $? ]]; then
+    die "rm -f arnold.layne"
+fi
 ln -s its.not.the.same arnold.layne
 if [[ 0 != $? ]]; then
-    die "ln -s its.not.the.same see.emily.play"
+    die "ln -s its.not.the.same arnold.layne"
 fi
 
 say "t05-lchown-deny"

@@ -6,6 +6,9 @@
 . test-lib.bash
 
 rm -f arnold.layne
+if [[ 0 != $? ]]; then
+    die "rm -f arnold.layne"
+fi
 
 say "t04-creat-deny"
 sydbox -- ./t04_creat
