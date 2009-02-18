@@ -40,12 +40,13 @@
 #define OPEN_MODE       (1 << 1) /* Check the mode argument of open() */
 #define OPEN_MODE_AT    (1 << 2) /* Check the mode argument of openat() */
 #define ACCESS_MODE     (1 << 3) /* Check the mode argument of access() */
-#define CHECK_PATH      (1 << 4) /* First argument should be a valid path */
-#define CHECK_PATH2     (1 << 5) /* Second argument should be a valid path */
-#define CHECK_PATH_AT   (1 << 6) /* CHECK_PATH for at suffixed functions */
-#define CHECK_PATH_AT2  (1 << 7) /* CHECK_PATH2 for at suffixed functions */
-#define DONT_RESOLV     (1 << 8) /* Don't resolve symlinks */
-#define NET_CALL        (1 << 9) /* Allowing the system call depends on the net flag */
+#define ACCESS_MODE_AT  (1 << 4) /* Check the mode argument of faccessat() */
+#define CHECK_PATH      (1 << 5) /* First argument should be a valid path */
+#define CHECK_PATH2     (1 << 6) /* Second argument should be a valid path */
+#define CHECK_PATH_AT   (1 << 7) /* CHECK_PATH for at suffixed functions */
+#define CHECK_PATH_AT2  (1 << 8) /* CHECK_PATH2 for at suffixed functions */
+#define DONT_RESOLV     (1 << 9) /* Don't resolve symlinks */
+#define NET_CALL        (1 << 10) /* Allowing the system call depends on the net flag */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -91,7 +92,7 @@ static struct syscall_def {
     {__NR_linkat,       "linkat",       CHECK_PATH_AT},
     {__NR_symlinkat,    "symlinkat",    CHECK_PATH_AT2 | DONT_RESOLV},
     {__NR_fchmodat,     "fchmodat",     CHECK_PATH_AT},
-    {__NR_faccessat,    "faccessat",    0},
+    {__NR_faccessat,    "faccessat",    CHECK_PATH_AT | ACCESS_MODE_AT},
 #if defined(I386)
     {__NR_socketcall,   "socketcall",   NET_CALL},
 #elif defined(X86_64)
@@ -211,8 +212,13 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
-    if (sflags & ACCESS_MODE) {
-        int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
+    if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
+        int mode;
+        if (sflags & ACCESS_MODE)
+            mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
+        else
+            mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM3, NULL);
+
         if (0 > mode) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
@@ -222,7 +228,10 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                 /* Change the pathname argument with the resolved path to
                  * prevent symlink races.
                  */
-                ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
+                if (sflags & ACCESS_MODE)
+                    ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
+                else
+                    ptrace_set_string(child->pid, 2, rpath, PATH_MAX);
             }
             free(rpath);
             decs->res = R_ALLOW;
