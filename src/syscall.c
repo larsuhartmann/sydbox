@@ -167,7 +167,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             free(dirc);
 
             lg(LOG_DEBUG, "syscall.syscall_check_path.no_file",
-                    "File %s doesn't exist, using directory %s",
+                    "File \"%s\" doesn't exist, using directory \"%s\"",
                     pathname, rpath);
             if (NULL == rpath) {
                 /* Directory doesn't exist as well.
@@ -176,7 +176,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                  * access violation.
                  */
                 lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_and_dir",
-                        "Neither file %s nor directory %s exists, deny access without violation",
+                        "Neither file \"%s\" nor directory \"%s\" exists, deny access without violation",
                         pathname, rpath);
                 decs->res = R_DENY_RETURN;
                 decs->ret = -1;
@@ -184,7 +184,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             }
             else {
                 lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_but_dir",
-                        "File %s doesn't exist but directory %s exists, adding basename",
+                        "File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
                         pathname, rpath);
                 char *basec, *bname;
                 basec = xstrndup(pathname, PATH_MAX);
@@ -266,7 +266,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
+    lg(LOG_DEBUG, "syscall.syscall_check_path", "Checking \"%s\" for write access", rpath);
     int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
+    lg(LOG_DEBUG, "syscall.syscall_check_path", "Checking \"%s\" for predict access", rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
     if (!allow_write && !allow_predict) {
