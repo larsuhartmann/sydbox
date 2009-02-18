@@ -5,7 +5,7 @@
 
 . test-lib.bash
 
-rm arnold.layne
+rm -f arnold.layne
 
 say "t04-creat-deny"
 sydbox -- ./t04_creat
