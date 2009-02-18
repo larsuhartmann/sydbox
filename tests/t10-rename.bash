@@ -3,32 +3,54 @@
 # Copyright 2009 Ali Polatel <polatel@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-# FIXME this testcase doesn't check if the second path is checked correctly.
-
 . test-lib.bash
 
-trap 'rm -f its.not.the.same' EXIT
+trap 'rm -f its.not.the.same ; rm -f /tmp/sydbox.txt' EXIT
 
-say "t10-rename-deny"
-sydbox -- ./t10_rename
+say "t10-rename-first-deny"
+sydbox -- ./t10_rename 0
 if [[ 0 == $? ]]; then
     die "failed to deny rename"
 elif [[ -f its.not.the.same ]]; then
     die "file exists, failed to deny rename"
 fi
 
-say "t10-rename-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t10_rename
+say "t10-rename-first-predict"
+SANDBOX_PREDICT="${cwd}" sydbox -- ./t10_rename 0
 if [[ 0 != $? ]]; then
     die "failed to predict rename"
 elif [[ -f its.not.the.same ]]; then
     die "predict allowed access"
 fi
 
-say "t10-rename-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t10_rename
+say "t10-rename-first-write"
+SANDBOX_WRITE="${cwd}" sydbox -- ./t10_rename 0
 if [[ 0 != $? ]]; then
     die "failed to allow rename"
 elif [[ ! -f its.not.the.same ]]; then
+    die "file doesn't exist, failed to allow rename"
+fi
+
+say "t10-rename-second-deny"
+SANDBOX_WRITE="${cwd}" sydbox -- ./t10_rename 1
+if [[ 0 == $? ]]; then
+    die "failed to deny rename"
+elif [[ -f /tmp/sydbox.txt ]]; then
+    die "file exists, failed to deny rename"
+fi
+
+say "t10-rename-second-predict"
+SANDBOX_WRITE="${cwd}" SANDBOX_PREDICT="/tmp" sydbox -- ./t10_rename 1
+if [[ 0 != $? ]]; then
+    die "failed to predict rename"
+elif [[ -f /tmp/sydbox.txt ]]; then
+    die "predict allowed access"
+fi
+
+say "t10-rename-second-write"
+SANDBOX_WRITE="${cwd}:/tmp" sydbox -- ./t10_rename 1
+if [[ 0 != $? ]]; then
+    die "failed to allow rename"
+elif [[ ! -f /tmp/sydbox.txt ]]; then
     die "file doesn't exist, failed to allow rename"
 fi

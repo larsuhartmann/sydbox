@@ -104,7 +104,7 @@ static struct syscall_def {
 void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     int dirfd;
 
-    assert (1 == arg || 2 == arg);
+    assert(1 == arg || 2 == arg);
     if (1 == arg) {
         dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM1, NULL);
         if (0 > dirfd)
@@ -131,15 +131,6 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
         char *destc = xstrndup(dest, PATH_MAX);
         snprintf(dest, PATH_MAX, "%s/%s", res_dname, destc);
         free(destc);
-    }
-
-    if (1 == arg) {
-        if (0 > ptrace(PTRACE_POKEUSER, pid, PARAM1, AT_FDCWD))
-            die(EX_SOFTWARE, "PTRACE_POKEUSER failed: %s", strerror(errno));
-    }
-    else {
-        if (0 > ptrace(PTRACE_POKEUSER, pid, PARAM3, AT_FDCWD))
-            die(EX_SOFTWARE, "PTRACE_POKEUSER failed: %s", strerror(errno));
     }
 }
 
