@@ -31,6 +31,7 @@ cleanup() {
     rm -fr arnold.layne
     rm -f its.not.the.same
     rm -f /tmp/sydbox.txt
+    rm -fr see.emily.play
     $remove_log && rm -f "${SANDBOX_LOG}"
 }
 trap 'cleanup' EXIT
@@ -46,13 +47,13 @@ say() {
 die() {
     echo "FAIL: $@" >&2
     echo "LOG: ${SANDBOX_LOG}"
-    echo ">>> Testcase failed" >> "${SANDBOX_LOG}"
+    echo ">>> Testcase failed: $@" >> "${SANDBOX_LOG}"
     remove_log=false
     exit 1
 }
 
 start_test() {
-    say "* $@"
+    say "$@"
     echo ">>> Starting testcase $@" >> "${SANDBOX_LOG}"
 }
 
