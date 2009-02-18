@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 int main(void) {
-    if (0 > mkdir("arnold.layne", 0644))
+    if (0 > mkdir("see.emily.play", 0644))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;
