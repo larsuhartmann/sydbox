@@ -42,9 +42,10 @@
 #define ACCESS_MODE     (1 << 3) /* Check the mode argument of access() */
 #define CHECK_PATH      (1 << 4) /* First argument should be a valid path */
 #define CHECK_PATH2     (1 << 5) /* Second argument should be a valid path */
-#define CHECK_PATH_AT   (1 << 6) /* CHECK_PATH for at suffixed functions. */
-#define DONT_RESOLV     (1 << 7) /* Don't resolve symlinks */
-#define NET_CALL        (1 << 8) /* Allowing the system call depends on the net flag */
+#define CHECK_PATH_AT   (1 << 6) /* CHECK_PATH for at suffixed functions */
+#define CHECK_PATH_AT2  (1 << 7) /* CHECK_PATH2 for at suffixed functions */
+#define DONT_RESOLV     (1 << 8) /* Don't resolve symlinks */
+#define NET_CALL        (1 << 9) /* Allowing the system call depends on the net flag */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -86,9 +87,9 @@ static struct syscall_def {
     {__NR_mknodat,      "mknodat",      CHECK_PATH_AT},
     {__NR_fchownat,     "fchownat",     CHECK_PATH_AT},
     {__NR_unlinkat,     "unlinkat",     CHECK_PATH_AT},
-    {__NR_renameat,     "renameat",     0},
+    {__NR_renameat,     "renameat",     CHECK_PATH_AT | CHECK_PATH_AT2},
     {__NR_linkat,       "linkat",       CHECK_PATH_AT},
-    {__NR_symlinkat,    "symlinkat",    0},
+    {__NR_symlinkat,    "symlinkat",    CHECK_PATH_AT2 | DONT_RESOLV},
     {__NR_fchmodat,     "fchmodat",     CHECK_PATH_AT},
     {__NR_faccessat,    "faccessat",    0},
 #if defined(I386)
@@ -99,6 +100,48 @@ static struct syscall_def {
     {0,                 NULL,           0}
 };
 
+void syscall_process_pathat(pid_t pid, int arg, char *dest) {
+    int dirfd;
+
+    assert (1 == arg || 2 == arg);
+    if (1 == arg) {
+        dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM1, NULL);
+        if (0 > dirfd)
+            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+        ptrace_get_string(pid, 2, dest, PATH_MAX);
+    }
+    else {
+        dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM3, NULL);
+        if (0 > dirfd)
+            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+        ptrace_get_string(pid, 4, dest, PATH_MAX);
+    }
+
+    if (AT_FDCWD != dirfd && '/' != dest[0]) {
+        int n;
+        char dname[PATH_MAX], res_dname[PATH_MAX];
+
+        snprintf(dname, PATH_MAX, "/proc/%i/fd/%i", pid, dirfd);
+        n = readlink(dname, res_dname, PATH_MAX - 1);
+        if (0 > n)
+            die(EX_SOFTWARE, "readlink failed for %s: %s", dname, strerror(errno));
+        res_dname[n] = '\0';
+
+        char *destc = xstrndup(dest, PATH_MAX);
+        snprintf(dest, PATH_MAX, "%s/%s", res_dname, destc);
+        free(destc);
+    }
+
+    if (1 == arg) {
+        if (0 > ptrace(PTRACE_POKEUSER, pid, PARAM1, AT_FDCWD))
+            die(EX_SOFTWARE, "PTRACE_POKEUSER failed: %s", strerror(errno));
+    }
+    else {
+        if (0 > ptrace(PTRACE_POKEUSER, pid, PARAM3, AT_FDCWD))
+            die(EX_SOFTWARE, "PTRACE_POKEUSER failed: %s", strerror(errno));
+    }
+}
+
 int syscall_check_path(context_t *ctx, struct tchild *child,
         struct decision *decs, int arg, int sflags, const char *sname) {
     int issymlink;
@@ -107,32 +150,12 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
     assert(1 == arg || 2 == arg);
 
-    if (sflags & CHECK_PATH_AT) {
-        int dirfd;
-        dirfd = ptrace(PTRACE_PEEKUSER, child->pid, PARAM1, NULL);
-        if (0 > dirfd)
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        ptrace_get_string(child->pid, 2, pathname, PATH_MAX);
-
-        if (AT_FDCWD != dirfd && '/' != pathname[0]) {
-            int n;
-            char dname[PATH_MAX], res_dname[PATH_MAX];
-
-            snprintf(dname, PATH_MAX, "/proc/%i/fd/%i", child->pid, dirfd);
-            n = readlink(dname, res_dname, PATH_MAX - 1);
-            if (0 > n)
-                die(EX_SOFTWARE, "readlink failed for %s: %s", dname, strerror(errno));
-            res_dname[n] = '\0';
-
-            char *pathc = xstrndup(pathname, PATH_MAX);
-            snprintf(pathname, PATH_MAX, "%s/%s", res_dname, pathc);
-            free(pathc);
-            if (0 > ptrace(PTRACE_POKEUSER, child->pid, PARAM1, AT_FDCWD))
-                die(EX_SOFTWARE, "PTRACE_POKEUSER failed: %s", strerror(errno));
-        }
-    }
-    else
+    if (sflags & CHECK_PATH || sflags & CHECK_PATH2)
         ptrace_get_string(child->pid, arg, pathname, PATH_MAX);
+    if (sflags & CHECK_PATH_AT)
+        syscall_process_pathat(child->pid, 1, pathname);
+    if (sflags & CHECK_PATH_AT2)
+        syscall_process_pathat(child->pid, 2, pathname);
 
     if (!(sflags & DONT_RESOLV))
         rpath = safe_realpath(pathname, child->pid, 1, &issymlink);
