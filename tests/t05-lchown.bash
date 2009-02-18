@@ -5,9 +5,9 @@
 
 . test-lib.bash
 
-rm -f arnold.layne
+rm -fr arnold.layne
 if [[ 0 != $? ]]; then
-    die "rm -f arnold.layne"
+    die "rm -fr arnold.layne"
 fi
 ln -s its.not.the.same arnold.layne
 if [[ 0 != $? ]]; then

@@ -5,8 +5,6 @@
 
 . test-lib.bash
 
-trap 'rm -f its.not.the.same ; rm -f /tmp/sydbox.txt' EXIT
-
 say "t10-rename-first-deny"
 sydbox -- ./t10_rename 0
 if [[ 0 == $? ]]; then
