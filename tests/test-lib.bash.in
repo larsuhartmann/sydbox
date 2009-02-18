@@ -32,6 +32,7 @@ cleanup() {
     rm -f its.not.the.same
     rm -f /tmp/sydbox.txt
     rm -fr see.emily.play
+    unlink jugband.blues
     $remove_log && rm -f "${SANDBOX_LOG}"
 }
 trap 'cleanup' EXIT
