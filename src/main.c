@@ -409,7 +409,9 @@ int main(int argc, char **argv) {
     if ('\0' == log_file[0] && NULL != log_env)
         strncpy(log_file, log_env, PATH_MAX);
 
+    lg(LOG_DEBUG, "main.env_write", "Initializing path list using "ENV_WRITE);
     pathlist_init(&(ctx->write_prefixes), write_env);
+    lg(LOG_DEBUG, "main.env_predict", "Initializing path list using "ENV_PREDICT);
     pathlist_init(&(ctx->predict_prefixes), predict_env);
     if (NULL != net_env)
         ctx->net_allowed = 0;
