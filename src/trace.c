@@ -104,6 +104,8 @@ void ptrace_get_string(pid_t pid, int param, char *dest, size_t len) {
     }
     while (len) {
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
+        if (EIO == errno)
+            break;
         memcpy(dest, u.x, m = MIN(sizeof(long), len));
         addr += sizeof(long), dest += m, len -= m;
     }
