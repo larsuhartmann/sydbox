@@ -342,40 +342,61 @@ found:
         lg(LOG_DEBUG, "syscall.syscall_check.check_path",
                 "System call %s() has CHECK_PATH set, checking", sname);
         syscall_check_path(ctx, child, &decs, 1, sflags, sname);
-        if (R_ALLOW != decs.res) {
-            lg(LOG_DEBUG, "syscall.syscall_check.check_path.deny",
-                    "Access denied for system call %s()", sname);
-            return decs;
+        switch(decs.res) {
+            case R_DENY_VIOLATION:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path.deny",
+                        "Access denied for system call %s()", sname);
+                return decs;
+            case R_DENY_RETURN:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path.predict",
+                        "Access predicted for system call %s()", sname);
+                break;
+            case R_ALLOW:
+            default:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path.allow",
+                        "Access allowed for system call %s()", sname);
+                break;
         }
-        else
-            lg(LOG_DEBUG, "syscall.syscall_check.check_path.allow",
-                    "Access allowed for system call %s()", sname);
     }
     if (sflags & CHECK_PATH2) {
-        lg(LOG_DEBUG, "syscall.syscall_check.check_path2",
+        lg(LOG_DEBUG, "syscall.syscall_check.checkpath2",
                 "System call %s() has CHECK_PATH2 set, checking", sname);
         syscall_check_path(ctx, child, &decs, 2, sflags, sname);
-        if (R_ALLOW != decs.res) {
-            lg(LOG_DEBUG, "syscall.syscall_checkpath2.deny",
-                    "Access denied for system call %s()", sname);
-            return decs;
+        switch(decs.res) {
+            case R_DENY_VIOLATION:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path2.deny",
+                        "Access denied for system call %s()", sname);
+                return decs;
+            case R_DENY_RETURN:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path2.predict",
+                        "Access predicted for system call %s()", sname);
+                break;
+            case R_ALLOW:
+            default:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path2.allow",
+                        "Access allowed for system call %s()", sname);
+                break;
         }
-        else
-            lg(LOG_DEBUG, "syscall.syscall_checkpath2.allow",
-                    "Access allowed for system call %s()", sname);
     }
     if (sflags & CHECK_PATH_AT) {
         lg(LOG_DEBUG, "syscall.syscall_check.check_path_at",
                 "System call %s() has CHECK_PATH_AT set, checking", sname);
         syscall_check_path(ctx, child, &decs, 2, sflags, sname);
-        if (R_ALLOW != decs.res) {
-            lg(LOG_DEBUG, "syscall.syscall_check_path_at.deny",
+        switch(decs.res) {
+            case R_DENY_VIOLATION:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.deny",
                         "Access denied for system call %s()", sname);
-            return decs;
+                return decs;
+            case R_DENY_RETURN:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.predict",
+                        "Access predicted for system call %s()", sname);
+                break;
+            case R_ALLOW:
+            default:
+                lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.allow",
+                        "Access allowed for system call %s()", sname);
+                break;
         }
-        else
-            lg(LOG_DEBUG, "syscall.syscall_check_path_at.allow",
-                    "Access allowed for system call %s()", sname);
     }
     if (sflags & NET_CALL && !(ctx->net_allowed)) {
         decs.res = R_DENY_VIOLATION;
@@ -387,7 +408,6 @@ found:
         decs.ret = -1;
         return decs;
     }
-    decs.res = R_ALLOW;
     return decs;
 }
 
