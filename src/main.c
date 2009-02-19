@@ -85,8 +85,10 @@ int trace_loop(void) {
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
         if (0 > pid) {
-            lg(LOG_ERROR, "main.trace_loop.waitpid", "waitpid failed for child %i", pid);
-            return EX_SOFTWARE;
+            lg(LOG_ERROR, "main.trace_loop.waitpid", "waitpid failed for child %i: %s",
+                    pid, strerror(errno));
+            die(EX_SOFTWARE, "waitpid failed for child %i: %s",
+                    pid, strerror(errno));
         }
         child = tchild_find(&(ctx->children), pid);
         event = tchild_event(child, status);
@@ -100,7 +102,8 @@ int trace_loop(void) {
                     lg(LOG_ERROR, "main.trace_loop.resume_after_setup",
                             "Failed to resume child %i after setup: %s",
                             child->pid, strerror(errno));
-                    return EX_SOFTWARE;
+                    die(EX_SOFTWARE, "Failed to resume child %i after setup: %s",
+                            child->pid, strerror(errno));
                 }
                 break;
             case E_SETUP_PREMATURE:
@@ -113,16 +116,20 @@ int trace_loop(void) {
 
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
                     lg(LOG_ERROR, "main.trace_loop.resume_after_syscall",
-                            "Failed to resume child %i after syscall: %s", child->pid, strerror(errno));
-                    return EX_SOFTWARE;
+                            "Failed to resume child %i after syscall: %s",
+                            child->pid, strerror(errno));
+                    die(EX_SOFTWARE, "Failed to resume child %i after syscall: %s",
+                            child->pid, strerror(errno));
                 }
                 break;
             case E_FORK:
                 /* Get new child's pid */
                 if (0 != ptrace(PTRACE_GETEVENTMSG, pid, NULL, &childpid)) {
                     lg(LOG_ERROR, "main.trace_loop.geteventmsg",
-                            "Failed to get the pid of the newborn child: %s", strerror(errno));
-                    return EX_SOFTWARE;
+                            "Failed to get the pid of the newborn child: %s",
+                            strerror(errno));
+                    die(EX_SOFTWARE, "Failed to get the pid of the newborn child: %s",
+                            strerror(errno));
                 }
                 if (tchild_find(&(ctx->children), childpid)) {
                     /* Child is prematurely born, let it continue its life */
@@ -130,7 +137,8 @@ int trace_loop(void) {
                         lg(LOG_ERROR, "main.trace_loop.resume_premature",
                                 "Failed to resume prematurely born child %i: %s",
                                 pid, strerror(errno));
-                        return EX_SOFTWARE;
+                        die(EX_SOFTWARE, "Failed to resume prematurely born child %i: %s",
+                                pid, strerror(errno));
                     }
                 }
                 else {
@@ -141,7 +149,8 @@ int trace_loop(void) {
                     lg(LOG_ERROR, "main.trace_loop.resume_fork",
                             "Failed to resume child %i after fork, vfork or clone: %s",
                             pid, strerror(errno));
-                    return EX_SOFTWARE;
+                    die(EX_SOFTWARE, "Failed to resume child %i after fork: %s",
+                            pid, strerror(errno));
                 }
                 break;
             case E_EXECV:
@@ -149,7 +158,8 @@ int trace_loop(void) {
                     lg(LOG_ERROR, "main.trace_loop.resume_execve",
                             "Failed to resume child %i after execve: %s",
                             pid, strerror(errno));
-                    return EX_SOFTWARE;
+                    die(EX_SOFTWARE, "Failed to resume child %i after execve: %s",
+                            pid, strerror(errno));
                 }
                 break;
             case E_GENUINE:
@@ -157,7 +167,8 @@ int trace_loop(void) {
                     lg(LOG_ERROR, "main.trace_loop.resume_genuine",
                             "Failed to resume child %i after genuine signal: %s",
                             pid, strerror(errno));
-                    return EX_SOFTWARE;
+                    die(EX_SOFTWARE, "Failed to resume child %i after genuine signal: %s",
+                            pid, strerror(errno));
                 }
                 break;
             case E_EXIT:
@@ -166,27 +177,28 @@ int trace_loop(void) {
                     ret = WEXITSTATUS(status);
                     lg(LOG_VERBOSE, "main.trace_loop.eldest_dead",
                             "Eldest child %i exited with return code %d", pid, ret);
+                    tchild_delete(&(ctx->children), pid);
+                    return ret;
                 }
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_EXIT_SIGNAL:
-                if (0 != ptrace(PTRACE_SYSCALL, pid, 0, WTERMSIG(status))) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_exit_signal",
-                            "Failed to resume child %i after signal: %s",
-                            pid, strerror(errno));
-                    return EX_SOFTWARE;
+                if (ctx->eldest == child) {
+                    tchild_delete(&(ctx->children), pid);
+                    return EXIT_FAILURE;
                 }
-                ret = 1;
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
-                lg(LOG_DEBUG, "main.trace_loop.unknown", 
+                lg(LOG_DEBUG, "main.trace_loop.unknown",
                         "Unknown signal %#x received from child %i", status, pid);
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
                     lg(LOG_ERROR, "main.trace_loop.resume_unknown",
                             "Failed to resume child %i after unknown signal %#x: %s",
                             pid, status, strerror(errno));
-                    return EX_SOFTWARE;
+                    die(EX_SOFTWARE,
+                            "Failed to resume child %i after unknown signal %#x: %s",
+                            pid, status, strerror(errno));
                 }
                 break;
         }
@@ -528,7 +540,6 @@ int main(int argc, char **argv) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
-        ret = trace_loop();
-        return ret;
+        return trace_loop();
     }
 }
