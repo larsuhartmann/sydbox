@@ -198,4 +198,8 @@ void bash_expand(const char *pathname, char *dest) {
         dest[i++] = fgetc(bash);
     dest[i-1] = '\0';
     fclose(bash);
+    if (0 != strncmp(pathname, dest, PATH_MAX))
+        lg(LOG_DEBUG, "util.bash_expand",
+                "Expanded path \"%s\" to \"%s\" using bash",
+                pathname, dest);
 }

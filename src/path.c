@@ -32,7 +32,7 @@ void pathnode_new(struct pathnode **head, const char *pathname) {
     bash_expand(pathname, newnode->pathname);
     newnode->next = *head; /* link next */
     *head = newnode; /* link head */
-    lg(LOG_DEBUG, "path.pathnode_new", "New path item \"%s\"", pathname);
+    lg(LOG_DEBUG, "path.pathnode_new", "New path item \"%s\"", newnode->pathname);
 }
 
 void pathnode_free(struct pathnode **head) {
