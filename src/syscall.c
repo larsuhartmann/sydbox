@@ -76,7 +76,7 @@ static struct syscall_def {
 #if defined(I386)
     {__NR_truncate64,   "truncate64",   CHECK_PATH},
 #endif
-    {__NR_mount,        "mount",        CHECK_PATH},
+    {__NR_mount,        "mount",        CHECK_PATH | CHECK_PATH2},
 #if defined(I386)
     {__NR_umount,       "umount",       CHECK_PATH},
 #endif
