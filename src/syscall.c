@@ -141,9 +141,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     if (sflags & CHECK_PATH_AT2)
         syscall_process_pathat(child->pid, 2, pathname);
 
-    if ('/' == pathname[0])
-        rpath = xstrndup(pathname, PATH_MAX);
-    else if (!(sflags & DONT_RESOLV))
+    if (!(sflags & DONT_RESOLV))
         rpath = safe_realpath(pathname, child->pid, 1, &issymlink);
     else
         rpath = safe_realpath(pathname, child->pid, 0, NULL);
@@ -154,9 +152,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             char *dirc, *dname;
             dirc = xstrndup(pathname, PATH_MAX);
             dname = dirname(dirc);
-            if ('/' == dname[0])
-                rpath = xstrndup(dname, PATH_MAX);
-            else if (!(sflags & DONT_RESOLV))
+            if (!(sflags & DONT_RESOLV))
                 rpath = safe_realpath(dname, child->pid, 1, &issymlink);
             else
                 rpath = safe_realpath(dname, child->pid, 0, NULL);
