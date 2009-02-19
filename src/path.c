@@ -123,10 +123,10 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
         node = node->next;
     }
     if (ret)
-        lg(LOG_DEBUG, "pathlist.pathlist_check.allow",
-                "Access allowed for \"%s\"", pathname);
+        lg(LOG_DEBUG, "pathlist.pathlist_check.success",
+                "Path list check succeeded for \"%s\"", pathname);
     else
-        lg(LOG_DEBUG, "pathlist.pathlist_check.deny",
-                "Access denied for \"%s\"", pathname);
+        lg(LOG_DEBUG, "pathlist.pathlist_check.fail",
+                "Path list check failed for \"%s\"", pathname);
     return ret;
 }
