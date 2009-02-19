@@ -186,7 +186,7 @@ char *xstrndup (const char *s, size_t n) {
 }
 
 void bash_expand(const char *pathname, char *dest) {
-    char command[32 + PATH_MAX] = "/bin/bash -c 'echo -n \"";
+    char command[32 + PATH_MAX] = "/usr/bin/env bash -c 'echo -n \"";
     strncat(command, pathname, PATH_MAX);
     strncat(command, "\"'", 2);
     FILE *bash = popen(command, "r");
