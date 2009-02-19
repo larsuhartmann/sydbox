@@ -48,10 +48,10 @@ struct pathnode {
     struct pathnode *next;
 };
 
-extern void pathnode_new(struct pathnode **head, const char *pathname);
-extern void pathnode_free(struct pathnode **head);
-extern int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
-extern int pathlist_check(struct pathnode **pathlist, const char *pathname);
+void pathnode_new(struct pathnode **head, const char *pathname);
+void pathnode_free(struct pathnode **head);
+int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
+int pathlist_check(struct pathnode **pathlist, const char *pathname);
 
 /* children.c */
 /* Events */
@@ -82,12 +82,12 @@ struct tchild {
     struct tchild *next;
 };
 
-extern void tchild_new(struct tchild **head, pid_t pid);
-extern void tchild_free(struct tchild **head);
-extern void tchild_delete(struct tchild **head, pid_t pid);
-extern struct tchild *tchild_find(struct tchild **head, pid_t pid);
-extern void tchild_setup(struct tchild *child);
-extern unsigned int tchild_event(struct tchild *child, int status);
+void tchild_new(struct tchild **head, pid_t pid);
+void tchild_free(struct tchild **head);
+void tchild_delete(struct tchild **head, pid_t pid);
+struct tchild *tchild_find(struct tchild **head, pid_t pid);
+void tchild_setup(struct tchild *child);
+unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
@@ -99,8 +99,8 @@ typedef struct {
     struct tchild *eldest;
 } context_t;
 
-extern context_t *context_new(void);
-extern void context_free(context_t *ctx);
+context_t *context_new(void);
+void context_free(context_t *ctx);
 
 /* util.c */
 char log_file[PATH_MAX];
@@ -120,20 +120,20 @@ int log_level;
 #define PINK    "[01;35m"
 int colour;
 
-extern void die(int err, const char *fmt, ...)
+void die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
-extern void _die(int err, const char *fmt, ...)
+void _die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
-extern void lg(int level, const char *id, const char *fmt, ...)
+void lg(int level, const char *id, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)));
-extern void access_error(pid_t pid, const char *fmt, ...)
+void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
-extern void *xmalloc(size_t size);
-extern char *xstrndup(const char *s, size_t n);
-extern void bash_expand(const char *pathname, char *dest);
+void *xmalloc(size_t size);
+char *xstrndup(const char *s, size_t n);
+void bash_expand(const char *pathname, char *dest);
 
 /* realpath.c */
-extern char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
+char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
 
 /* trace.c */
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
@@ -153,10 +153,10 @@ extern char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymli
 #define PARAM4          (8 * R10)
 #endif
 
-extern int ptrace_get_syscall(pid_t pid);
-extern void ptrace_set_syscall(pid_t pid, int syscall);
-extern void ptrace_get_string(pid_t pid, int param, char *dest, size_t len);
-extern void ptrace_set_string(pid_t pid, int param, char *src, size_t len);
+int ptrace_get_syscall(pid_t pid);
+void ptrace_set_syscall(pid_t pid, int syscall);
+void ptrace_get_string(pid_t pid, int param, char *dest, size_t len);
+void ptrace_set_string(pid_t pid, int param, char *src, size_t len);
 
 /* syscall.c */
 /* Possible results for a syscall */
@@ -173,9 +173,9 @@ struct decision {
     char reason[REASON_MAX];
 };
 
-extern int syscall_check_path(context_t *ctx, struct tchild *child,
+int syscall_check_path(context_t *ctx, struct tchild *child,
         struct decision *decs, int arg, int sflags, const char *sname);
-extern struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall);
-extern int syscall_handle(context_t *ctx, struct tchild *child);
+struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall);
+int syscall_handle(context_t *ctx, struct tchild *child);
 
 #endif /* SYDBOX_GUARD_DEFS_H */
