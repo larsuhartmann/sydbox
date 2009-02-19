@@ -39,6 +39,10 @@
 #include "defs.h"
 
 context_t *ctx = NULL;
+const char *phases[] = {
+    "default", "loadenv", "saveenv", "unpack", "prepare",
+    "configure", "compile", "test", "install"
+};
 
 void about(void) {
     fprintf(stderr, PACKAGE"-"VERSION);
@@ -214,26 +218,11 @@ void cleanup(void) {
 }
 
 int legal_phase(const char *phase) {
-    if (0 == strncmp(phase, "default", 8))
-        return 1;
-    else if (0 == strncmp(phase, "loadenv", 8))
-        return 1;
-    else if (0 == strncmp(phase, "saveenv", 8))
-        return 1;
-    else if (0 == strncmp(phase, "unpack", 7))
-        return 1;
-    else if (0 == strncmp(phase, "prepare", 8))
-        return 1;
-    else if (0 == strncmp(phase, "configure", 10))
-        return 1;
-    else if (0 == strncmp(phase, "compile", 8))
-        return 1;
-    else if (0 == strncmp(phase, "test", 5))
-        return 1;
-    else if (0 == strncmp(phase, "install", 8))
-        return 1;
-    else
-        return 0;
+    for (int i = 0; i < 9; i++) {
+        if (0 == strncmp(phase, phases[i], strlen(phases[i]) + 1))
+            return 1;
+    }
+    return 0;
 }
 
 int main(int argc, char **argv) {
