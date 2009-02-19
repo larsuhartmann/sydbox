@@ -39,7 +39,8 @@
 #include "defs.h"
 
 context_t *ctx = NULL;
-const char *phases[] = {
+#define MAX_PHASES 9
+const char *phases[MAX_PHASES] = {
     "default", "loadenv", "saveenv", "unpack", "prepare",
     "configure", "compile", "test", "install"
 };
@@ -52,6 +53,8 @@ void about(void) {
 }
 
 void usage(void) {
+    int i;
+
     fprintf(stderr, PACKAGE"-"VERSION);
     if (0 != strlen(GITHEAD))
         fprintf(stderr, "-"GITHEAD);
@@ -75,8 +78,10 @@ void usage(void) {
     fprintf(stderr, "\t"ENV_CONFIG":\t\tSpecify PATH to the configuration file\n");
     fprintf(stderr, "\t"ENV_NO_COLOUR":\tIf set messages won't be coloured\n");
     fprintf(stderr, "\t"ENV_LOG":\t\tSpecify PATH to the log file\n");
-    fprintf(stderr, "\nPhases:\n");
-    fprintf(stderr, "\tdefault, loadenv, saveenv, unpack, prepare, configure, compile, test, install\n");
+    fprintf(stderr, "\nPhases:\n\t");
+    for (i = 0; i < MAX_PHASES - 2; i++)
+        fprintf(stderr, "%s, ", phases[i]);
+    fprintf(stderr, "%s\n", phases[++i]);
 }
 
 int trace_loop(void) {
@@ -218,7 +223,7 @@ void cleanup(void) {
 }
 
 int legal_phase(const char *phase) {
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < MAX_PHASES; i++) {
         if (0 == strncmp(phase, phases[i], strlen(phases[i]) + 1))
             return 1;
     }
