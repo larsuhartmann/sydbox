@@ -137,26 +137,21 @@ char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
 
 /* trace.c */
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
+#define MAX_ARGS        4
 #if defined(I386)
 #define ORIG_ACCUM      (4 * ORIG_EAX)
 #define ACCUM           (4 * EAX)
-#define PARAM1          (4 * EBX)
-#define PARAM2          (4 * ECX)
-#define PARAM3          (4 * EDX)
-#define PARAM4          (4 * ESI)
+static const int syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
 #elif defined(X86_64)
 #define ORIG_ACCUM      (8 * ORIG_RAX)
 #define ACCUM           (8 * RAX)
-#define PARAM1          (8 * RDI)
-#define PARAM2          (8 * RSI)
-#define PARAM3          (8 * RDX)
-#define PARAM4          (8 * R10)
+static const int syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
 
 int ptrace_get_syscall(pid_t pid);
 void ptrace_set_syscall(pid_t pid, int syscall);
-void ptrace_get_string(pid_t pid, int param, char *dest, size_t len);
-void ptrace_set_string(pid_t pid, int param, char *src, size_t len);
+void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len);
+void ptrace_set_string(pid_t pid, int arg, char *src, size_t len);
 
 /* syscall.c */
 /* Possible results for a syscall */

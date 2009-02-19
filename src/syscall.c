@@ -104,19 +104,11 @@ static struct syscall_def {
 void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     int dirfd;
 
-    assert(1 == arg || 2 == arg);
-    if (1 == arg) {
-        dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM1, NULL);
-        if (0 != errno)
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        ptrace_get_string(pid, 2, dest, PATH_MAX);
-    }
-    else {
-        dirfd = ptrace(PTRACE_PEEKUSER, pid, PARAM3, NULL);
-        if (0 != errno)
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        ptrace_get_string(pid, 4, dest, PATH_MAX);
-    }
+    assert(0 == arg || 2 == arg);
+    dirfd = ptrace(PTRACE_PEEKUSER, pid, syscall_args[arg], NULL);
+    if (0 != errno)
+        die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+    ptrace_get_string(pid, arg + 1, dest, PATH_MAX);
 
     if (AT_FDCWD != dirfd && '/' != dest[0]) {
         int n;
@@ -140,12 +132,12 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     char pathname[PATH_MAX];
     char *rpath;
 
-    assert(1 == arg || 2 == arg);
+    assert(0 == arg || 1 == arg);
 
     if (sflags & CHECK_PATH || sflags & CHECK_PATH2)
         ptrace_get_string(child->pid, arg, pathname, PATH_MAX);
     if (sflags & CHECK_PATH_AT)
-        syscall_process_pathat(child->pid, 1, pathname);
+        syscall_process_pathat(child->pid, 0, pathname);
     if (sflags & CHECK_PATH_AT2)
         syscall_process_pathat(child->pid, 2, pathname);
 
@@ -206,9 +198,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
         int mode;
         if (sflags & ACCESS_MODE)
-            mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
+            mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
         else
-            mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM3, NULL);
+            mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[2], NULL);
 
         if (0 != errno) {
             free(rpath);
@@ -220,9 +212,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                  * prevent symlink races.
                  */
                 if (sflags & ACCESS_MODE)
-                    ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
+                    ptrace_set_string(child->pid, 0, rpath, PATH_MAX);
                 else
-                    ptrace_set_string(child->pid, 2, rpath, PATH_MAX);
+                    ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
             }
             free(rpath);
             decs->res = R_ALLOW;
@@ -230,7 +222,25 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
     else if (sflags & OPEN_MODE) {
-        int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM2, NULL);
+        int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
+        if (0 != errno) {
+            free(rpath);
+            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+        }
+        if (!(mode & O_WRONLY || mode & O_RDWR)) {
+            if (issymlink) {
+                /* Change the pathname argument with the resolved path to
+                 * prevent symlink races.
+                 */
+                ptrace_set_string(child->pid, 0, rpath, PATH_MAX);
+            }
+            free(rpath);
+            decs->res = R_ALLOW;
+            return 0;
+        }
+    }
+    else if (sflags & OPEN_MODE_AT) {
+        int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[2], NULL);
         if (0 != errno) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
@@ -241,24 +251,6 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                  * prevent symlink races.
                  */
                 ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
-            }
-            free(rpath);
-            decs->res = R_ALLOW;
-            return 0;
-        }
-    }
-    else if (sflags & OPEN_MODE_AT) {
-        int mode = ptrace(PTRACE_PEEKUSER, child->pid, PARAM3, NULL);
-        if (0 != errno) {
-            free(rpath);
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        }
-        if (!(mode & O_WRONLY || mode & O_RDWR)) {
-            if (issymlink) {
-                /* Change the pathname argument with the resolved path to
-                 * prevent symlink races.
-                 */
-                ptrace_set_string(child->pid, 2, rpath, PATH_MAX);
             }
             free(rpath);
             decs->res = R_ALLOW;
@@ -341,7 +333,7 @@ found:
     if (sflags & CHECK_PATH) {
         lg(LOG_DEBUG, "syscall.syscall_check.check_path",
                 "System call %s() has CHECK_PATH set, checking", sname);
-        syscall_check_path(ctx, child, &decs, 1, sflags, sname);
+        syscall_check_path(ctx, child, &decs, 0, sflags, sname);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.syscall_check.check_path.deny",
@@ -361,7 +353,7 @@ found:
     if (sflags & CHECK_PATH2) {
         lg(LOG_DEBUG, "syscall.syscall_check.checkpath2",
                 "System call %s() has CHECK_PATH2 set, checking", sname);
-        syscall_check_path(ctx, child, &decs, 2, sflags, sname);
+        syscall_check_path(ctx, child, &decs, 1, sflags, sname);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.syscall_check.check_path2.deny",
@@ -381,7 +373,7 @@ found:
     if (sflags & CHECK_PATH_AT) {
         lg(LOG_DEBUG, "syscall.syscall_check.check_path_at",
                 "System call %s() has CHECK_PATH_AT set, checking", sname);
-        syscall_check_path(ctx, child, &decs, 2, sflags, sname);
+        syscall_check_path(ctx, child, &decs, 1, sflags, sname);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.deny",

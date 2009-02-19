@@ -144,7 +144,7 @@ START_TEST(check_ptrace_get_string_first) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_get_string(pid, 1, pathname, PATH_MAX);
+        ptrace_get_string(pid, 0, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "/dev/null", 10),
                 "Expected '/dev/null' got '%s'", pathname);
 
@@ -185,7 +185,7 @@ START_TEST(check_ptrace_get_string_second) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_get_string(pid, 2, pathname, PATH_MAX);
+        ptrace_get_string(pid, 1, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "/dev/null", 10),
                 "Expected '/dev/null' got '%s'", pathname);
 
@@ -226,7 +226,7 @@ START_TEST(check_ptrace_get_string_third) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_get_string(pid, 3, pathname, PATH_MAX);
+        ptrace_get_string(pid, 2, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "arnold_layne", 13),
                 "Expected 'arnold_layne' got '%s'", pathname);
 
@@ -267,7 +267,7 @@ START_TEST(check_ptrace_get_string_fourth) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_get_string(pid, 4, pathname, PATH_MAX);
+        ptrace_get_string(pid, 3, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "arnold_layne", 13),
                 "Expected 'arnold_layne' got '%s'", pathname);
 
@@ -308,8 +308,8 @@ START_TEST(check_ptrace_set_string_first) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 1, "/dev/zero", 10);
-        ptrace_get_string(pid, 1, pathname, PATH_MAX);
+        ptrace_set_string(pid, 0, "/dev/zero", 10);
+        ptrace_get_string(pid, 0, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "/dev/zero", 10),
                 "Expected '/dev/zero' got '%s'", pathname);
 
@@ -350,8 +350,8 @@ START_TEST(check_ptrace_set_string_second) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 2, "/dev/zero", 10);
-        ptrace_get_string(pid, 2, pathname, PATH_MAX);
+        ptrace_set_string(pid, 1, "/dev/zero", 10);
+        ptrace_get_string(pid, 1, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "/dev/zero", 10),
                 "Expected '/dev/zero' got '%s'", pathname);
 
@@ -392,8 +392,8 @@ START_TEST(check_ptrace_set_string_third) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 3, "its_not_the_same", 17);
-        ptrace_get_string(pid, 3, pathname, PATH_MAX);
+        ptrace_set_string(pid, 0, "its_not_the_same", 17);
+        ptrace_get_string(pid, 0, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
                 "Expected 'its_not_the_same' got '%s'", pathname);
 
@@ -434,8 +434,8 @@ START_TEST(check_ptrace_set_string_fourth) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 4, "its_not_the_same", 17);
-        ptrace_get_string(pid, 4, pathname, PATH_MAX);
+        ptrace_set_string(pid, 3, "its_not_the_same", 17);
+        ptrace_get_string(pid, 3, pathname, PATH_MAX);
         fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
                 "Expected 'its_not_the_same' got '%s'", pathname);
 
