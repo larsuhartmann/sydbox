@@ -265,10 +265,10 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
     if (!allow_write && !allow_predict) {
         decs->res = R_DENY_VIOLATION;
-        if (1 == arg)
+        if (0 == arg)
             snprintf(decs->reason, REASON_MAX, "%s(\"%s\", ", sname,
                     pathname);
-        else if (2 == arg)
+        else if (1 == arg)
             snprintf(decs->reason, REASON_MAX, "%s(?, \"%s\", ", sname,
                     pathname);
         if (sflags & ACCESS_MODE)
