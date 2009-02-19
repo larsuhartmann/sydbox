@@ -170,7 +170,7 @@ int main(void) {
 
     pid = fork();
     if (0 == pid) {
-        DIR *d = opendir("/dev/pts");
+        DIR *d = opendir("/dev");
         int dfd = dirfd(d);
 
         close(pfd[0]);
@@ -184,7 +184,7 @@ int main(void) {
         exit(0);
     }
     else {
-        int dfd;
+        int dfd, n;
         char proc[64], path[PATH_MAX];
 
         close(pfd[1]);
@@ -196,10 +196,12 @@ int main(void) {
 
         dfd = atoi(buf);
         snprintf(proc, 64, "/proc/%i/fd/%i", pid, dfd);
-        if (0 > readlink(proc, path, PATH_MAX))
+        n = readlink(proc, path, PATH_MAX);
+        if (0 > n)
             goto fail;
+        path[n] = '\0';
 
-        if (0 != strncmp(path, "/dev/pts", 9))
+        if (0 != strncmp(path, "/dev", 5))
             goto fail;
 
         kill(pid, SIGKILL);
