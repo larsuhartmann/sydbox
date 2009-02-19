@@ -3,6 +3,7 @@
 # Copyright 2009 Ali Polatel <polatel@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+no_create_dir=1
 . test-lib.bash
 
 start_test "t07-mkdir-deny"

@@ -5,12 +5,6 @@
 
 . test-lib.bash
 
-old_umask=$(umask)
-umask 0222 && mkdir see.emily.play && umask $old_umask
-if [[ 0 != $? ]]; then
-    die "mkdir see.emily.play"
-fi
-
 start_test "t12-rmdir-deny"
 sydbox -- ./t12_rmdir
 if [[ 0 == $? ]]; then

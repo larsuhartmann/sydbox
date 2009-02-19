@@ -24,8 +24,29 @@ cwd="$(readlink -f .)"
 SANDBOX_LOG="${cwd}/sydbox-$$.log"
 remove_log=true
 
-old_umask=$(umask)
-umask 0022 && touch arnold.layne && umask $old_umask
+if [[ -z "${no_create_file}" ]]; then
+    old_umask=$(umask)
+    umask 0022
+    touch arnold.layne
+    if [[ 0 != $? ]]; then
+        die "touch arnold.layne"
+    elif [[ ! -f arnold.layne ]]; then
+        die "touch arnold.layne (no file)"
+    fi
+    umask $old_umask
+fi
+
+if [[ -z "${no_create_dir}" ]]; then
+    old_umask=$(umask)
+    umask 0222
+    mkdir see.emily.play
+    if [[ 0 != $? ]]; then
+        die "mkdir see.emily.play"
+    elif [[ ! -d see.emily.play ]]; then
+        die "mkdir see.emily.play (no dir)"
+    fi
+    umask $old_umask
+fi
 
 cleanup() {
     rm -fr arnold.layne

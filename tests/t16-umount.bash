@@ -5,16 +5,16 @@
 
 . test-lib.bash
 
-start_test "t15-mount-deny"
-sydbox -- ./t15_mount
+start_test "t16-umount-deny"
+sydbox -- ./t16_umount
 if [[ 0 == $? ]]; then
-    die "failed to deny mount"
+    die "failed to deny umount"
 fi
 end_test
 
-start_test "t15-mount-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t15_mount
+start_test "t16-umount-predict"
+SANDBOX_PREDICT="${cwd}" sydbox -- ./t16_umount
 if [[ 0 != $? ]]; then
-    die "failed to predict mount"
+    die "failed to predict umount"
 fi
 end_test

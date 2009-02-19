@@ -3,11 +3,11 @@ CLEANFILES= *.log arnold_layne its_not_the_same
 TESTS= check_sydbox t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash \
        t05-lchown.bash t06-link.bash t07-mkdir.bash t08-mknod.bash t09-access.bash \
        t10-rename-first.bash t11-rename-second.bash t12-rmdir.bash t13-symlink.bash \
-       t14-truncate.bash t15-mount.bash
+       t14-truncate.bash t15-mount.bash t16-umount.bash
 check_PROGRAMS= check_sydbox test-lib.bash t01_chmod t02_chown t03_open \
 		t04_creat t05_lchown t06_link t07_mkdir t08_mknod t09_access \
 		t10_rename_first t11_rename_second t12_rmdir t13_symlink t14_truncate \
-		t15_mount
+		t15_mount t16_umount
 
 check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.c \
 		      check_sydbox.h check_sydbox.c \
