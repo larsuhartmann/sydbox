@@ -46,7 +46,7 @@ say() {
 }
 
 die() {
-    echo "FAIL: $@" >&2
+    echo "REASON: $@" >&2
     echo "LOG: ${SANDBOX_LOG}"
     echo ">>> Testcase failed: $@" >> "${SANDBOX_LOG}"
     remove_log=false
