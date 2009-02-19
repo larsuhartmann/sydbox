@@ -213,6 +213,29 @@ void cleanup(void) {
         fclose(flog);
 }
 
+int legal_phase(const char *phase) {
+    if (0 != strncmp(phase, "default", 8))
+        return 0;
+    else if (0 != strncmp(phase, "loadenv", 8))
+        return 0;
+    else if (0 != strncmp(phase, "saveenv", 8))
+        return 0;
+    else if (0 != strncmp(phase, "unpack", 7))
+        return 0;
+    else if (0 != strncmp(phase, "prepare", 8))
+        return 0;
+    else if (0 != strncmp(phase, "configure", 10))
+        return 0;
+    else if (0 != strncmp(phase, "compile", 8))
+        return 0;
+    else if (0 != strncmp(phase, "test", 5))
+        return 0;
+    else if (0 != strncmp(phase, "install", 8))
+        return 0;
+    else
+        return 1;
+}
+
 int main(int argc, char **argv) {
     int optc, dump;
     char *config_file = NULL;
@@ -294,15 +317,7 @@ int main(int argc, char **argv) {
         if (NULL == phase)
             phase = "default";
     }
-    if (0 != strncmp(phase, "default", 8) &&
-        0 != strncmp(phase, "loadenv", 8) &&
-        0 != strncmp(phase, "saveenv", 8) &&
-        0 != strncmp(phase, "unpack", 7) &&
-        0 != strncmp(phase, "prepare", 8) &&
-        0 != strncmp(phase, "configure", 10) &&
-        0 != strncmp(phase, "compile", 8) &&
-        0 != strncmp(phase, "test", 5) &&
-        0 != strncmp(phase, "install", 8))
+    if (!legal_phase(phase))
         die(EX_USAGE, "invalid phase '%s'", phase);
 
     /* Parse configuration file */
