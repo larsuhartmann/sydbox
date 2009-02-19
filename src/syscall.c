@@ -162,17 +162,24 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                     "File \"%s\" doesn't exist, using directory \"%s\"",
                     pathname, rpath);
             if (NULL == rpath) {
+                /* FIXME why does this make tar fail? */
+#if 0
                 /* Directory doesn't exist as well.
                  * The system call will fail, to prevent any kind of races
                  * we deny access without calling it but don't throw an
                  * access violation.
+                 *
                  */
                 lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_and_dir",
-                        "Neither file \"%s\" nor directory \"%s\" exists, deny access without violation",
+                        "Neither file \"%s\" nor its directory exists, deny access without violation",
                         pathname, rpath);
                 decs->res = R_DENY_RETURN;
                 decs->ret = -1;
                 return 0;
+#endif
+                decs->res = R_ALLOW;
+                return 0;
+
             }
             else {
                 lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_but_dir",
