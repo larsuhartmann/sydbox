@@ -113,14 +113,11 @@ void ptrace_get_string(pid_t pid, int param, char *dest, size_t len) {
 
 void ptrace_set_string(pid_t pid, int param, char *src, size_t len) {
     int n, m;
-    long addr;
+    long addr = 0;
     union {
         long val;
         char x[sizeof(long)];
     } u;
-
-    /* Shut the compiler up */
-    addr = 0;
 
     assert(param > 0 && param < 5);
     if (1 == param)
