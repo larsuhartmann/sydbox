@@ -523,7 +523,7 @@ int main(int argc, char **argv) {
         _die(EX_DATAERR, strerror(errno));
     }
     else { /* Parent process */
-        int status, ret;
+        int status;
 
         /* Wait for the SIGSTOP */
         wait(&status);
