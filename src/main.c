@@ -137,11 +137,18 @@ int trace_loop(void) {
                     /* Add the child, setup will be done later */
                     tchild_new(&(ctx->children), childpid);
                 }
-                /* No break so this calls PTRACE_SYSCALL */
+                if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
+                    lg(LOG_ERROR, "main.trace_loop.resume_fork",
+                            "Failed to resume child %i after fork, vfork or clone: %s",
+                            pid, strerror(errno));
+                    return EX_SOFTWARE;
+                }
+                break;
             case E_EXECV:
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
                     lg(LOG_ERROR, "main.trace_loop.resume_execve",
-                            "Failed to resume child %i after execve: %s", pid, strerror(errno));
+                            "Failed to resume child %i after execve: %s",
+                            pid, strerror(errno));
                     return EX_SOFTWARE;
                 }
                 break;

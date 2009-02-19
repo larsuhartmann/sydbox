@@ -142,15 +142,22 @@ unsigned int tchild_event(struct tchild *child, int status) {
                 return E_SYSCALL;
             }
             event = (status >> 16) & 0xffff;
-            if (PTRACE_EVENT_FORK == event
-                    || PTRACE_EVENT_VFORK == event
-                    || PTRACE_EVENT_CLONE == event) {
-                lg(LOG_DEBUG, "children.tchild_event.e_fork",
-                        "Child %i called fork(), vfork() or clone()", child->pid);
+            if (PTRACE_EVENT_FORK == event) {
+                lg(LOG_DEBUG, "children.tchild_event.e_fork_fork",
+                            "Child %i called fork()", child->pid);
+                return E_FORK;
+            }
+            else if (PTRACE_EVENT_VFORK == event) {
+                lg(LOG_DEBUG, "children.tchild_event.e_fork_vfork",
+                            "Child %i called vfork()", child->pid);
+                return E_FORK;
+            }
+            else if (PTRACE_EVENT_CLONE == event) {
+                lg(LOG_DEBUG, "children.tchild_event.e_fork_clone",
+                            "Child %i called clone()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_EXEC == event) {
-                /* Child called execve() */
                 lg(LOG_DEBUG, "children.tchild_event.e_execv",
                         "Child %i called execve()", child->pid);
                 return E_EXECV;
