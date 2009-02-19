@@ -111,6 +111,8 @@ FILE *flog;
 #define LOG_NORMAL      3
 #define LOG_VERBOSE     4
 #define LOG_DEBUG       5
+#define LOG_DEBUG_CRAZY 6
+
 int log_level;
 
 #define NORMAL  "[00;00m"

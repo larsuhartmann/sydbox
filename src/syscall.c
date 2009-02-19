@@ -339,19 +339,43 @@ found:
             "Child %i called essential system call %s()", child->pid, sname);
 
     if (sflags & CHECK_PATH) {
+        lg(LOG_DEBUG, "syscall.syscall_check.check_path",
+                "System call %s() has CHECK_PATH set, checking", sname);
         syscall_check_path(ctx, child, &decs, 1, sflags, sname);
-        if (R_ALLOW != decs.res)
+        if (R_ALLOW != decs.res) {
+            lg(LOG_DEBUG, "syscall.syscall_check.check_path.deny",
+                    "Access denied for system call %s()", sname);
             return decs;
+        }
+        else
+            lg(LOG_DEBUG, "syscall.syscall_check.check_path.allow",
+                    "Access allowed for system call %s()", sname);
     }
     if (sflags & CHECK_PATH2) {
+        lg(LOG_DEBUG, "syscall.syscall_check.check_path2",
+                "System call %s() has CHECK_PATH2 set, checking", sname);
         syscall_check_path(ctx, child, &decs, 2, sflags, sname);
-        if (R_ALLOW != decs.res)
+        if (R_ALLOW != decs.res) {
+            lg(LOG_DEBUG, "syscall.syscall_checkpath2.deny",
+                    "Access denied for system call %s()", sname);
             return decs;
+        }
+        else
+            lg(LOG_DEBUG, "syscall.syscall_checkpath2.allow",
+                    "Access allowed for system call %s()", sname);
     }
     if (sflags & CHECK_PATH_AT) {
+        lg(LOG_DEBUG, "syscall.syscall_check.check_path_at",
+                "System call %s() has CHECK_PATH_AT set, checking", sname);
         syscall_check_path(ctx, child, &decs, 2, sflags, sname);
-        if (R_ALLOW != decs.res)
+        if (R_ALLOW != decs.res) {
+            lg(LOG_DEBUG, "syscall.syscall_check_path_at.deny",
+                        "Access denied for system call %s()", sname);
             return decs;
+        }
+        else
+            lg(LOG_DEBUG, "syscall.syscall_check_path_at.allow",
+                    "Access allowed for system call %s()", sname);
     }
     if (sflags & NET_CALL && !(ctx->net_allowed)) {
         decs.res = R_DENY_VIOLATION;
@@ -373,11 +397,9 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     syscall = ptrace_get_syscall(child->pid);
     if (!child->in_syscall) { /* Entering syscall */
-#if 0
-        lg(LOG_DEBUG, "syscall.syscall_handle.syscall_enter",
+        lg(LOG_DEBUG_CRAZY, "syscall.syscall_handle.syscall_enter",
                 "Child %i is entering system call number %d",
                 child->pid, syscall);
-#endif
         decs = syscall_check(ctx, child, syscall);
         switch(decs.res) {
             case R_DENY_VIOLATION:
@@ -395,11 +417,9 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         child->in_syscall = 1;
     }
     else { /* Exiting syscall */
-#if 0
-        lg(LOG_DEBUG, "syscall.syscall_handle.syscall_exit",
+        lg(LOG_DEBUG_CRAZY, "syscall.syscall_handle.syscall_exit",
                 "Child %i is exiting system call number %d",
                 child->pid, syscall);
-#endif
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);

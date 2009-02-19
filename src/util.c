@@ -108,6 +108,11 @@ void lg(int level, const char *id, const char *fmt, ...) {
                 else
                     fprintf(flog, "DEBUG ");
                 break;
+            case LOG_DEBUG_CRAZY:
+                if (isstderr)
+                    fprintf(stderr, "CRAZY ");
+                else
+                    fprintf(flog, "CRAZY ");
         }
         if (isstderr)
             fprintf(stderr, "%s] ", id);

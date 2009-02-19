@@ -252,7 +252,10 @@ int main(int argc, char **argv) {
                 log_level = LOG_VERBOSE;
                 break;
             case 'd':
-                log_level = LOG_DEBUG;
+                if (LOG_DEBUG == log_level)
+                    log_level = LOG_DEBUG_CRAZY;
+                else if (LOG_DEBUG_CRAZY != log_level)
+                    log_level = LOG_DEBUG;
                 break;
             case 'C':
                 colour = 0;
