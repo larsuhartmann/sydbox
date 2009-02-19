@@ -214,26 +214,26 @@ void cleanup(void) {
 }
 
 int legal_phase(const char *phase) {
-    if (0 != strncmp(phase, "default", 8))
-        return 0;
-    else if (0 != strncmp(phase, "loadenv", 8))
-        return 0;
-    else if (0 != strncmp(phase, "saveenv", 8))
-        return 0;
-    else if (0 != strncmp(phase, "unpack", 7))
-        return 0;
-    else if (0 != strncmp(phase, "prepare", 8))
-        return 0;
-    else if (0 != strncmp(phase, "configure", 10))
-        return 0;
-    else if (0 != strncmp(phase, "compile", 8))
-        return 0;
-    else if (0 != strncmp(phase, "test", 5))
-        return 0;
-    else if (0 != strncmp(phase, "install", 8))
-        return 0;
-    else
+    if (0 == strncmp(phase, "default", 8))
         return 1;
+    else if (0 == strncmp(phase, "loadenv", 8))
+        return 1;
+    else if (0 == strncmp(phase, "saveenv", 8))
+        return 1;
+    else if (0 == strncmp(phase, "unpack", 7))
+        return 1;
+    else if (0 == strncmp(phase, "prepare", 8))
+        return 1;
+    else if (0 == strncmp(phase, "configure", 10))
+        return 1;
+    else if (0 == strncmp(phase, "compile", 8))
+        return 1;
+    else if (0 == strncmp(phase, "test", 5))
+        return 1;
+    else if (0 == strncmp(phase, "install", 8))
+        return 1;
+    else
+        return 0;
 }
 
 int main(int argc, char **argv) {
