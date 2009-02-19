@@ -10,13 +10,10 @@
 #include <sys/types.h>
 
 int main(void) {
-    if (0 > chown("arnold.layne", 0, 0)) {
-        if (EPERM == errno) {
-            /* It's the operating system not sydbox who denied access. */
-            return EXIT_SUCCESS;
-        }
+    uid_t uid = geteuid();
+    gid_t gid = getegid();
+    if (0 > chown("arnold.layne", uid, gid))
         return EXIT_FAILURE;
-    }
     else
         return EXIT_SUCCESS;
 }
