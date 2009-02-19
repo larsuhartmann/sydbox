@@ -38,7 +38,7 @@ if [[ 0 != $? ]]; then
 fi
 end_test
 
-8tart_test "t09-access-x_ok-allow"
+start_test "t09-access-x_ok-allow"
 sydbox -- ./t09_access 2
 if [[ 0 != $? ]]; then
     die "denied access for access(\"arnold.layne\", X_OK)"
