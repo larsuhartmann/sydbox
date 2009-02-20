@@ -158,7 +158,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                 rpath = safe_realpath(dname, child->pid, 0, NULL);
             free(dirc);
 
-            lg(LOG_DEBUG, "syscall.syscall_check_path.no_file",
+            lg(LOG_DEBUG, "syscall.check_path.no_file",
                     "File \"%s\" doesn't exist, using directory \"%s\"",
                     pathname, rpath);
             if (NULL == rpath) {
@@ -170,7 +170,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
                  * access violation.
                  *
                  */
-                lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_and_dir",
+                lg(LOG_DEBUG, "syscall.check_path.no_file_and_dir",
                         "Neither file \"%s\" nor its directory exists, deny access without violation",
                         pathname, rpath);
                 decs->res = R_DENY_RETURN;
@@ -182,7 +182,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
             }
             else {
-                lg(LOG_DEBUG, "syscall.syscall_check_path.no_file_but_dir",
+                lg(LOG_DEBUG, "syscall.check_path.no_file_but_dir",
                         "File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
                         pathname, rpath);
                 char *basec, *bname;
@@ -194,7 +194,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             }
         }
         else {
-            lg(LOG_WARNING, "syscall.syscall_check.safe_realpath_fail",
+            lg(LOG_WARNING, "syscall.check.safe_realpath_fail",
                     "safe_realpath() failed for \"%s\": %s", pathname, strerror(errno));
             decs->res = R_DENY_RETURN;
             decs->ret = -1;
@@ -265,9 +265,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
-    lg(LOG_DEBUG, "syscall.syscall_check_path", "Checking \"%s\" for write access", rpath);
+    lg(LOG_DEBUG, "syscall.check_path", "Checking \"%s\" for write access", rpath);
     int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
-    lg(LOG_DEBUG, "syscall.syscall_check_path", "Checking \"%s\" for predict access", rpath);
+    lg(LOG_DEBUG, "syscall.check_path", "Checking \"%s\" for predict access", rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
     if (!allow_write && !allow_predict) {
@@ -291,9 +291,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         if (sflags & RETURNS_FD) {
             /* Change path argument to /dev/null.
              */
-            lg(LOG_DEBUG, "syscall.syscall_check_path.devnull_subs",
+            lg(LOG_DEBUG, "syscall.check_path.devnull_subs",
                     "System call returns fd and its argument is under a predict path");
-            lg(LOG_DEBUG, "syscall.syscall_check_path.devnull_subs",
+            lg(LOG_DEBUG, "syscall.check_path.devnull_subs",
                     "Changing the path argument to /dev/null");
             ptrace_set_string(child->pid, arg, "/dev/null", 10);
             decs->res = R_ALLOW;
@@ -310,7 +310,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         /* Change the pathname argument with the resolved path to
         * prevent symlink races.
         */
-        lg(LOG_DEBUG, "syscall.syscall_check_path.resolved_subs",
+        lg(LOG_DEBUG, "syscall.check_path.resolved_subs",
                 "Substituting symlink %s with resolved path %s to prevent races",
                 pathname, rpath);
         ptrace_set_string(child->pid, arg, rpath, PATH_MAX);
@@ -374,7 +374,7 @@ found:
     sflags = system_calls[i].flags;
     sname = system_calls[i].name;
 
-    lg(LOG_DEBUG, "syscall.syscall_check.essential",
+    lg(LOG_DEBUG, "syscall.check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
 
     /* Handle magic open calls */
@@ -390,61 +390,61 @@ found:
     }
 
     if (sflags & CHECK_PATH) {
-        lg(LOG_DEBUG, "syscall.syscall_check.check_path",
+        lg(LOG_DEBUG, "syscall.check.check_path",
                 "System call %s() has CHECK_PATH set, checking", sname);
         syscall_check_path(ctx, child, &decs, 0, sflags, sname);
         switch(decs.res) {
             case R_DENY_VIOLATION:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path.deny",
+                lg(LOG_DEBUG, "syscall.check.check_path.deny",
                         "Access denied for system call %s()", sname);
                 return decs;
             case R_DENY_RETURN:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path.predict",
+                lg(LOG_DEBUG, "syscall.check.check_path.predict",
                         "Access predicted for system call %s()", sname);
                 break;
             case R_ALLOW:
             default:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path.allow",
+                lg(LOG_DEBUG, "syscall.check.check_path.allow",
                         "Access allowed for system call %s()", sname);
                 break;
         }
     }
     if (sflags & CHECK_PATH2) {
-        lg(LOG_DEBUG, "syscall.syscall_check.checkpath2",
+        lg(LOG_DEBUG, "syscall.check.checkpath2",
                 "System call %s() has CHECK_PATH2 set, checking", sname);
         syscall_check_path(ctx, child, &decs, 1, sflags, sname);
         switch(decs.res) {
             case R_DENY_VIOLATION:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path2.deny",
+                lg(LOG_DEBUG, "syscall.check.check_path2.deny",
                         "Access denied for system call %s()", sname);
                 return decs;
             case R_DENY_RETURN:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path2.predict",
+                lg(LOG_DEBUG, "syscall.check.check_path2.predict",
                         "Access predicted for system call %s()", sname);
                 break;
             case R_ALLOW:
             default:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path2.allow",
+                lg(LOG_DEBUG, "syscall.check.check_path2.allow",
                         "Access allowed for system call %s()", sname);
                 break;
         }
     }
     if (sflags & CHECK_PATH_AT) {
-        lg(LOG_DEBUG, "syscall.syscall_check.check_path_at",
+        lg(LOG_DEBUG, "syscall.check.check_path_at",
                 "System call %s() has CHECK_PATH_AT set, checking", sname);
         syscall_check_path(ctx, child, &decs, 1, sflags, sname);
         switch(decs.res) {
             case R_DENY_VIOLATION:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.deny",
+                lg(LOG_DEBUG, "syscall.check.check_path_at.deny",
                         "Access denied for system call %s()", sname);
                 return decs;
             case R_DENY_RETURN:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.predict",
+                lg(LOG_DEBUG, "syscall.check.check_path_at.predict",
                         "Access predicted for system call %s()", sname);
                 break;
             case R_ALLOW:
             default:
-                lg(LOG_DEBUG, "syscall.syscall_check.check_path_at.allow",
+                lg(LOG_DEBUG, "syscall.check.check_path_at.allow",
                         "Access allowed for system call %s()", sname);
                 break;
         }
@@ -468,7 +468,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     syscall = ptrace_get_syscall(child->pid);
     if (!child->in_syscall) { /* Entering syscall */
-        lg(LOG_DEBUG_CRAZY, "syscall.syscall_handle.syscall_enter",
+        lg(LOG_DEBUG_CRAZY, "syscall.handle.syscall_enter",
                 "Child %i is entering system call number %d",
                 child->pid, syscall);
         decs = syscall_check(ctx, child, syscall);
@@ -488,14 +488,14 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         child->in_syscall = 1;
     }
     else { /* Exiting syscall */
-        lg(LOG_DEBUG_CRAZY, "syscall.syscall_handle.syscall_exit",
+        lg(LOG_DEBUG_CRAZY, "syscall.handle.syscall_exit",
                 "Child %i is exiting system call number %d",
                 child->pid, syscall);
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);
             if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->error_code)) {
-                lg(LOG_ERROR, "syscall.syscall_handle.fail_pokeuser",
+                lg(LOG_ERROR, "syscall.handle.fail_pokeuser",
                         "Failed to set error code to %d: %s", child->error_code,
                         strerror(errno));
                 return -1;

@@ -41,13 +41,13 @@ void tchild_new(struct tchild **head, pid_t pid) {
     newchild->error_code = -1;
     newchild->next = *head; /* link next */
     *head = newchild; /* link head */
-    lg(LOG_DEBUG, "children.tchild_new", "New child %i", pid);
+    lg(LOG_DEBUG, "children.new", "New child %i", pid);
 }
 
 void tchild_free(struct tchild **head) {
     struct tchild *current, *temp;
 
-    lg(LOG_DEBUG, "children.tchild_free", "Freeing children %p", (void *) head);
+    lg(LOG_DEBUG, "children.free", "Freeing children %p", (void *) head);
     current = *head;
     while (current != NULL) {
         temp = current;
@@ -100,7 +100,7 @@ void tchild_setup(struct tchild *child) {
     /* We want to trace all sub children and want special notify to distinguish
      * between normal sigtrap and syscall sigtrap.
      */
-    lg(LOG_DEBUG, "children.tchild_setup",
+    lg(LOG_DEBUG, "children.setup",
             "Setting tracing options for child %i", child->pid);
     if (0 != ptrace(PTRACE_SETOPTIONS,
                     child->pid,
@@ -125,12 +125,12 @@ unsigned int tchild_event(struct tchild *child, int status) {
         sig = WSTOPSIG(status);
         if (sig == SIGSTOP) {
             if (NULL != child && child->need_setup) {
-                lg(LOG_DEBUG, "children.tchild_event.e_setup",
+                lg(LOG_DEBUG, "children.event.e_setup",
                         "Child %i is born and she's ready for tracing", child->pid);
                 return E_SETUP;
             }
             if (NULL == child) {
-                lg(LOG_DEBUG, "children.tchild_event.e_setup_premature",
+                lg(LOG_DEBUG, "children.event.e_setup_premature",
                         "Child is born before fork event and she's ready for tracing");
                 return E_SETUP_PREMATURE;
             }
@@ -143,40 +143,40 @@ unsigned int tchild_event(struct tchild *child, int status) {
             }
             event = (status >> 16) & 0xffff;
             if (PTRACE_EVENT_FORK == event) {
-                lg(LOG_DEBUG, "children.tchild_event.e_fork_fork",
+                lg(LOG_DEBUG, "children.event.e_fork_fork",
                             "Child %i called fork()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_VFORK == event) {
-                lg(LOG_DEBUG, "children.tchild_event.e_fork_vfork",
+                lg(LOG_DEBUG, "children.event.e_fork_vfork",
                             "Child %i called vfork()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_CLONE == event) {
-                lg(LOG_DEBUG, "children.tchild_event.e_fork_clone",
+                lg(LOG_DEBUG, "children.event.e_fork_clone",
                             "Child %i called clone()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_EXEC == event) {
-                lg(LOG_DEBUG, "children.tchild_event.e_execv",
+                lg(LOG_DEBUG, "children.event.e_execv",
                         "Child %i called execve()", child->pid);
                 return E_EXECV;
             }
         }
         else {
             /* Genuine signal directed to child itself */
-            lg(LOG_DEBUG, "children.tchild_event.e_genuine",
+            lg(LOG_DEBUG, "children.event.e_genuine",
                     "Child %i received a signal", child->pid);
             return E_GENUINE;
         }
     }
     else if (WIFEXITED(status)) {
-        lg(LOG_DEBUG, "children.tchild_event.e_exit",
+        lg(LOG_DEBUG, "children.event.e_exit",
                 "Child %i exited normally", child->pid);
         return E_EXIT;
     }
     else if (WIFSIGNALED(status)) {
-        lg(LOG_DEBUG, "children.tchild_event.e_exit_signal",
+        lg(LOG_DEBUG, "children.event.e_exit_signal",
                 "Child %i was terminated by a signal", child->pid);
         return E_EXIT_SIGNAL;
     }
