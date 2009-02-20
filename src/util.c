@@ -200,8 +200,14 @@ int remove_slash(const char *pathname, char *dest) {
         else
             gotslash = 0;
         dest[j++] = pathname[i];
-        if ('\0' == pathname[i])
+        /* Remove trailing slash */
+        if ('\0' == pathname[i]) {
+            if ('/' == dest[j - 2]) {
+                ++nslashes;
+                dest[j - 2] = '\0';
+            }
             break;
+        }
     }
     if (nslashes)
         lg(LOG_DEBUG, "util.remove_slash.removed",
