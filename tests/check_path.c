@@ -27,28 +27,6 @@ START_TEST(check_pathnode_new) {
 }
 END_TEST
 
-START_TEST(check_pathnode_new_path_too_long) {
-    char path_too_long[2 * PATH_MAX];
-    struct pathnode *head = NULL;
-
-    /* Initialize the long path */
-    for (int i = 0; i < 2 * PATH_MAX; i++) {
-        if (PATH_MAX > i)
-            path_too_long[i] = '/';
-        else
-            path_too_long[i] = '*';
-    }
-    path_too_long[2 * PATH_MAX - 1] = '\0';
-    pathnode_new(&head, path_too_long);
-    fail_unless('/' == head->pathname[PATH_MAX - 1],
-            "Expected '/' instead of '%c' in '%s'",
-            head->pathname[PATH_MAX - 1], head->pathname);
-    fail_unless('\0' == head->pathname[PATH_MAX],
-            "Expected end of string instead of '%c' in '%s'",
-            head->pathname[PATH_MAX], head->pathname);
-}
-END_TEST
-
 START_TEST(check_pathnode_free) {
     struct pathnode *head = NULL;
 
@@ -140,7 +118,6 @@ Suite *path_suite_create(void) {
     /* pathnode_* test cases */
     TCase *tc_pathnode = tcase_create("pathnode");
     tcase_add_test(tc_pathnode, check_pathnode_new);
-    tcase_add_test(tc_pathnode, check_pathnode_new_path_too_long);
     tcase_add_test(tc_pathnode, check_pathnode_free);
     suite_add_tcase(s, tc_pathnode);
 
