@@ -361,7 +361,7 @@ int syscall_check_magic(context_t *ctx, struct tchild *child) {
 }
 
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
-    unsigned int sflags, i;
+    unsigned int sno, sflags, i;
     const char *sname;
     struct decision decs;
     for (i = 0; system_calls[i].name; i++) {
@@ -371,14 +371,15 @@ struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall)
     decs.res = R_ALLOW;
     return decs;
 found:
-    sflags = system_calls[i].flags;
+    sno = system_calls[i].no;
     sname = system_calls[i].name;
+    sflags = system_calls[i].flags;
 
     lg(LOG_DEBUG, "syscall.check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
 
     /* Handle magic open calls */
-    if (__NR_open == system_calls[i].no) {
+    if (__NR_open == sno) {
         lg(LOG_DEBUG, "syscall.check.ismagic", "Checking if open() is magic");
         if (syscall_check_magic(ctx, child)) {
             lg(LOG_DEBUG, "syscall.check.magic", "Handled magic open() call");
