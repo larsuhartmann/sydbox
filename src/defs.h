@@ -177,10 +177,10 @@ struct decision {
     char reason[REASON_MAX];
 };
 
-#define CMD_WRITE               "/dev/sydbox/write"
-#define CMD_WRITE_LEN           17
-#define CMD_PREDICT             "/dev/sydbox/predict"
-#define CMD_PREDICT_LEN         19
+#define CMD_WRITE               "/dev/sydbox/write/"
+#define CMD_WRITE_LEN           18
+#define CMD_PREDICT             "/dev/sydbox/predict/"
+#define CMD_PREDICT_LEN         20
 #define CMD_ALLOWED_FORK_COUNT  3
 
 int syscall_check_path(context_t *ctx, struct tchild *child,
