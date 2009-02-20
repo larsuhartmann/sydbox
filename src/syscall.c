@@ -109,6 +109,7 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     int dirfd;
 
     assert(0 == arg || 2 == arg);
+    errno = 0;
     dirfd = ptrace(PTRACE_PEEKUSER, pid, syscall_args[arg], NULL);
     if (0 != errno)
         die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
@@ -208,6 +209,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
     if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
         int mode;
+        errno = 0;
         if (sflags & ACCESS_MODE)
             mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
         else
@@ -233,6 +235,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
     else if (sflags & OPEN_MODE) {
+        errno = 0;
         int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
         if (0 != errno) {
             free(rpath);
@@ -251,6 +254,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
     else if (sflags & OPEN_MODE_AT) {
+        errno = 0;
         int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[2], NULL);
         if (0 != errno) {
             free(rpath);

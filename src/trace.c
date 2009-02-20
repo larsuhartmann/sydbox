@@ -47,6 +47,7 @@
 int ptrace_get_syscall(pid_t pid) {
     int syscall;
 
+    errno = 0;
     syscall = ptrace(PTRACE_PEEKUSER, pid, ORIG_ACCUM, NULL);
     if (0 != errno) {
         lg(LOG_ERROR, "trace.get_syscall.fail",
@@ -78,6 +79,7 @@ void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     addr = 0;
 
     assert(arg >= 0 && arg < MAX_ARGS);
+    errno = 0;
     addr = ptrace(PTRACE_PEEKUSER, pid, syscall_args[arg], NULL);
     if (0 != errno) {
         lg(LOG_ERROR, "trace.get_string.fail",
@@ -112,6 +114,7 @@ void ptrace_set_string(pid_t pid, int arg, char *src, size_t len) {
     } u;
 
     assert(arg >= 0 && arg < MAX_ARGS);
+    errno = 0;
     addr = ptrace(PTRACE_PEEKUSER, pid, syscall_args[arg], NULL);
     if (0 != errno) {
         lg(LOG_ERROR, "trace.set_string.fail_peekuser",
