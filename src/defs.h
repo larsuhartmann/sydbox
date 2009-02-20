@@ -133,8 +133,11 @@ void lg(int level, const char *id, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)));
 void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
+
 void *xmalloc(size_t size);
 char *xstrndup(const char *s, size_t n);
+
+int remove_slash(const char *pathname, char *dest);
 void bash_expand(const char *pathname, char *dest);
 
 /* realpath.c */

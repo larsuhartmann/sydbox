@@ -185,6 +185,30 @@ char *xstrndup (const char *s, size_t n) {
     return t;
 }
 
+int remove_slash(const char *pathname, char *dest) {
+    int gotslash = 0, nslashes = 0;
+
+    for (int i = 0, j = 0; i < PATH_MAX; i++) {
+        if ('/' == pathname[i]) {
+            ++nslashes;
+            if (gotslash)
+                continue;
+            else
+                gotslash = 1;
+        }
+        else
+            gotslash = 0;
+        dest[j++] = pathname[i];
+        if ('\0' == pathname[i])
+            break;
+    }
+    if (nslashes)
+        lg(LOG_DEBUG, "util.remove_slash.removed",
+                "Simplified pathname \"%s\" to \"%s\" by removing %d slashes",
+                pathname, dest, nslashes);
+    return nslashes;
+}
+
 void bash_expand(const char *pathname, char *dest) {
     char command[32 + PATH_MAX] = "/usr/bin/env bash -c 'echo -n \"";
     strncat(command, pathname, PATH_MAX);

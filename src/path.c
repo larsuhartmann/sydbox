@@ -40,10 +40,12 @@ int path_magic_predict(const char *pathname) {
 
 void pathnode_new(struct pathnode **head, const char *pathname) {
     struct pathnode *newnode;
+    char path_simple[PATH_MAX];
 
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
+    remove_slash(pathname, path_simple);
     newnode->pathname = xmalloc(PATH_MAX * sizeof(char));
-    bash_expand(pathname, newnode->pathname);
+    bash_expand(path_simple, newnode->pathname);
     newnode->next = *head; /* link next */
     *head = newnode; /* link head */
     lg(LOG_DEBUG, "path.pathnode_new", "New path item \"%s\"", newnode->pathname);
@@ -97,24 +99,26 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
 
 int pathlist_check(struct pathnode **pathlist, const char *pathname) {
     int ret;
+    char path_simple[PATH_MAX];
     struct pathnode *node;
 
     lg(LOG_DEBUG, "path.pathlist_check", "Checking \"%s\"", pathname);
+    remove_slash(pathname, path_simple);
 
     ret = 0;
     node = *pathlist;
     while (NULL != node) {
-        if (0 == strncmp(pathname, node->pathname, strlen(node->pathname))) {
-            if (strlen(pathname) > strlen(node->pathname)) {
+        if (0 == strncmp(path_simple, node->pathname, strlen(node->pathname))) {
+            if (strlen(path_simple) > strlen(node->pathname)) {
                 /* Pathname begins with one of the allowed paths. Check for a
                  * zero byte or a / on the next character so that for example
                  * /devzero/foo doesn't pass the test when /dev is the only
                  * allowed path.
                  */
-                const char last = pathname[strlen(node->pathname)];
+                const char last = path_simple[strlen(node->pathname)];
                 if ('\0' == last || '/' == last) {
                     lg(LOG_DEBUG, "path.pathlist_check.found",
-                            "\"%s\" begins with \"%s\"", pathname,
+                            "\"%s\" begins with \"%s\"", path_simple,
                             node->pathname);
                     ret = 1;
                     break;
@@ -122,25 +126,25 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
                 else
                     lg(LOG_DEBUG, "path.pathlist_check.not_found",
                             "\"%s\" doesn't begin with \"%s\"",
-                            pathname, node->pathname);
+                            path_simple, node->pathname);
             }
             else {
                 lg(LOG_DEBUG, "path.pathlist_check.found",
-                        "\"%s\" begins with \"%s\"", pathname, node->pathname);
+                        "\"%s\" begins with \"%s\"", path_simple, node->pathname);
                 ret = 1;
                 break;
             }
         }
         else
             lg(LOG_DEBUG, "path.pathlist_check.not_found",
-                    "\"%s\" doesn't begin with \"%s\"", pathname, node->pathname);
+                    "\"%s\" doesn't begin with \"%s\"", path_simple, node->pathname);
         node = node->next;
     }
     if (ret)
         lg(LOG_DEBUG, "pathlist.pathlist_check.success",
-                "Path list check succeeded for \"%s\"", pathname);
+                "Path list check succeeded for \"%s\"", path_simple);
     else
         lg(LOG_DEBUG, "pathlist.pathlist_check.fail",
-                "Path list check failed for \"%s\"", pathname);
+                "Path list check failed for \"%s\"", path_simple);
     return ret;
 }
