@@ -48,6 +48,8 @@ struct pathnode {
     struct pathnode *next;
 };
 
+int path_magic_write(const char *pathname);
+int path_magic_predict(const char *pathname);
 void pathnode_new(struct pathnode **head, const char *pathname);
 void pathnode_free(struct pathnode **head);
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
@@ -91,6 +93,8 @@ unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
+    /* Track fork count to allow/deny magic open() calls */
+    int fork_count;
     int net_allowed;
     struct pathnode *write_prefixes;
     struct pathnode *predict_prefixes;
@@ -101,6 +105,7 @@ typedef struct {
 
 context_t *context_new(void);
 void context_free(context_t *ctx);
+int context_cmd_allowed(context_t *ctx);
 
 /* util.c */
 char log_file[PATH_MAX];
@@ -158,7 +163,8 @@ void ptrace_set_string(pid_t pid, int arg, char *src, size_t len);
 enum result {
     R_DENY_VIOLATION, /* Deny the system call and raise an access violation. */
     R_DENY_RETURN, /* Deny the system call and make it return the specified return code. */
-    R_ALLOW /* Allow the system call to be called */
+    R_ALLOW, /* Allow the system call to be called */
+    R_NONMAGIC /* Internal used by syscall_check_magic() */
 };
 
 #define REASON_MAX (PATH_MAX + 128)
@@ -167,6 +173,12 @@ struct decision {
     int ret;
     char reason[REASON_MAX];
 };
+
+#define CMD_WRITE               "/dev/sydbox/write"
+#define CMD_WRITE_LEN           17
+#define CMD_PREDICT             "/dev/sydbox/predict"
+#define CMD_PREDICT_LEN         19
+#define CMD_ALLOWED_FORK_COUNT  3
 
 int syscall_check_path(context_t *ctx, struct tchild *child,
         struct decision *decs, int arg, int sflags, const char *sname);

@@ -24,6 +24,7 @@
 context_t *context_new(void) {
     context_t *ctx;
     ctx = (context_t *) xmalloc(sizeof(context_t));
+    ctx->fork_count = 0;
     ctx->net_allowed = 1;
     ctx->write_prefixes = NULL;
     ctx->predict_prefixes = NULL;
@@ -40,4 +41,12 @@ void context_free(context_t *ctx) {
     if (NULL != ctx->children)
         tchild_free(&(ctx->children));
     free(ctx);
+}
+
+/* TODO Make this security check smarter */
+int context_cmd_allowed(context_t *ctx) {
+    if (ctx->fork_count < CMD_ALLOWED_FORK_COUNT)
+        return 1;
+    else
+        return 0;
 }

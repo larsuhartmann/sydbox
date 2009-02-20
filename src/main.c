@@ -147,6 +147,7 @@ int trace_loop(void) {
                 }
                 break;
             case E_FORK:
+                ++(ctx->fork_count);
                 /* Get new child's pid */
                 if (0 != ptrace(PTRACE_GETEVENTMSG, pid, NULL, &childpid)) {
                     lg(LOG_ERROR, "main.trace_loop.geteventmsg",

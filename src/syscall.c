@@ -320,6 +320,46 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     return 0;
 }
 
+int syscall_check_magic(context_t *ctx, struct tchild *child) {
+    char pathname[PATH_MAX];
+    const char *rpath;
+
+    ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
+    if (path_magic_write(pathname)) {
+        rpath = pathname + CMD_WRITE_LEN;
+        if (context_cmd_allowed(ctx)) {
+            lg(LOG_NORMAL, "syscall.check_magic.write.allow",
+                    "Approved addwrite(\"%s\")", rpath);
+            pathnode_new(&(ctx->write_prefixes), rpath);
+            /* Change argument to /dev/null */
+            lg(LOG_DEBUG, "syscall.check_magic.write.devnull",
+                    "Changing pathname to /dev/null");
+            ptrace_set_string(child->pid, 0, "/dev/null", 10);
+            return 1;
+        }
+        else
+            lg(LOG_WARNING, "syscall.check_magic.write.deny",
+                    "Denied addwrite(\"%s\")", pathname);
+    }
+    else if (path_magic_predict(pathname)) {
+        rpath = pathname + CMD_PREDICT_LEN;
+        if (context_cmd_allowed(ctx)) {
+            lg(LOG_NORMAL, "syscall.check_magic.predict.allow",
+                    "Approved addpredict(\"%s\")", rpath);
+            pathnode_new(&(ctx->predict_prefixes), rpath);
+            /* Change argument to /dev/null */
+            lg(LOG_DEBUG, "syscall.check_magic.predict.devnull",
+                    "Changing pathname to /dev/null");
+            ptrace_set_string(child->pid, 0, "/dev/null", 10);
+            return 1;
+        }
+        else
+            lg(LOG_WARNING, "syscall.check_magic.cmd_write.deny",
+                    "Denied addpredict(\"%s\")", pathname);
+    }
+    return 0;
+}
+
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
     unsigned int sflags, i;
     const char *sname;
@@ -336,6 +376,18 @@ found:
 
     lg(LOG_DEBUG, "syscall.syscall_check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
+
+    /* Handle magic open calls */
+    if (__NR_open == system_calls[i].no) {
+        lg(LOG_DEBUG, "syscall.check.ismagic", "Checking if open() is magic");
+        if (syscall_check_magic(ctx, child)) {
+            lg(LOG_DEBUG, "syscall.check.magic", "Handled magic open() call");
+            decs.res = R_ALLOW;
+            return decs;
+        }
+        else
+            lg(LOG_DEBUG, "syscall.check.nonmagic", "open() not magic");
+    }
 
     if (sflags & CHECK_PATH) {
         lg(LOG_DEBUG, "syscall.syscall_check.check_path",

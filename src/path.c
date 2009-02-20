@@ -24,6 +24,20 @@
 
 #include "defs.h"
 
+int path_magic_write(const char *pathname) {
+    if (0 == strncmp(pathname, CMD_WRITE, CMD_WRITE_LEN))
+        return 1;
+    else
+        return 0;
+}
+
+int path_magic_predict(const char *pathname) {
+    if (0 == strncmp(pathname, CMD_PREDICT, CMD_PREDICT_LEN))
+        return 1;
+    else
+        return 0;
+}
+
 void pathnode_new(struct pathnode **head, const char *pathname) {
     struct pathnode *newnode;
 
