@@ -190,9 +190,10 @@ int remove_slash(const char *pathname, char *dest) {
 
     for (int i = 0, j = 0; i < PATH_MAX; i++) {
         if ('/' == pathname[i]) {
-            ++nslashes;
-            if (gotslash)
+            if (gotslash) {
+                ++nslashes;
                 continue;
+            }
             else
                 gotslash = 1;
         }
