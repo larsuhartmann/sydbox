@@ -47,7 +47,9 @@
 #define CHECK_PATH_AT   (1 << 7) /* CHECK_PATH for at suffixed functions */
 #define CHECK_PATH_AT2  (1 << 8) /* CHECK_PATH2 for at suffixed functions */
 #define DONT_RESOLV     (1 << 9) /* Don't resolve symlinks */
-#define NET_CALL        (1 << 10) /* Allowing the system call depends on the net flag */
+#define MAGIC_OPEN      (1 << 10) /* Check if the open() call is magic */
+#define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
+#define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
 
 /* System call dispatch table */
 static struct syscall_def {
@@ -60,9 +62,9 @@ static struct syscall_def {
 #if defined(I386)
     {__NR_chown32,      "chown32",      CHECK_PATH},
 #endif
-    {__NR_open,         "open",         CHECK_PATH | RETURNS_FD | OPEN_MODE},
+    {__NR_open,         "open",         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
     {__NR_creat,        "creat",        CHECK_PATH},
-    {__NR_stat,         "stat",         0},
+    {__NR_stat,         "stat",         MAGIC_STAT},
     {__NR_lchown,       "lchown",       CHECK_PATH | DONT_RESOLV},
 #if defined(I386)
     {__NR_lchown32,     "lchown32",     CHECK_PATH | DONT_RESOLV},
@@ -377,7 +379,7 @@ int syscall_check_magic_stat(context_t *ctx, struct tchild *child) {
 }
 
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
-    unsigned int sno, sflags, i;
+    unsigned int sflags, i;
     const char *sname;
     struct decision decs;
     for (i = 0; system_calls[i].name; i++) {
@@ -387,15 +389,14 @@ struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall)
     decs.res = R_ALLOW;
     return decs;
 found:
-    sno = system_calls[i].no;
     sname = system_calls[i].name;
     sflags = system_calls[i].flags;
 
     lg(LOG_DEBUG, "syscall.check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
 
-    /* Handle magic open calls */
-    if (__NR_open == sno) {
+    /* Handle magic calls */
+    if (sflags & MAGIC_OPEN) {
         lg(LOG_DEBUG, "syscall.check.open.ismagic", "Checking if open() is magic");
         if (syscall_check_magic_open(ctx, child)) {
             lg(LOG_DEBUG, "syscall.check.open.magic", "Handled magic open() call");
@@ -405,7 +406,7 @@ found:
         else
             lg(LOG_DEBUG, "syscall.check.open.nonmagic", "open() not magic");
     }
-    else if (__NR_stat == sno) {
+    else if (sflags & MAGIC_STAT) {
         lg(LOG_DEBUG, "syscall.check.stat.ismagic", "Checking if stat() is magic");
         if(syscall_check_magic_stat(ctx, child)) {
             lg(LOG_DEBUG, "syscall.check.stat.magic", "Handled magic stat() call");
