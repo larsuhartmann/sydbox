@@ -16,7 +16,8 @@ int main(void) {
     log_level = LOG_DEBUG;
 
     /* Add suites */
-    SRunner *sr = srunner_create(path_suite_create());
+    SRunner *sr = srunner_create(util_suite_create());
+    srunner_add_suite(sr, path_suite_create());
     srunner_add_suite(sr, children_suite_create());
     srunner_add_suite(sr, trace_suite_create());
     srunner_add_suite(sr, syscall_suite_create());
