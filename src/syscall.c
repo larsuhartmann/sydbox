@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <asm/unistd.h>
+#include <sys/stat.h>
 #include <sys/ptrace.h>
 
 #include "defs.h"
@@ -61,6 +62,7 @@ static struct syscall_def {
 #endif
     {__NR_open,         "open",         CHECK_PATH | RETURNS_FD | OPEN_MODE},
     {__NR_creat,        "creat",        CHECK_PATH},
+    {__NR_stat,         "stat",         0},
     {__NR_lchown,       "lchown",       CHECK_PATH | DONT_RESOLV},
 #if defined(I386)
     {__NR_lchown32,     "lchown32",     CHECK_PATH | DONT_RESOLV},
@@ -320,7 +322,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     return 0;
 }
 
-int syscall_check_magic(context_t *ctx, struct tchild *child) {
+int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
     char pathname[PATH_MAX];
     const char *rpath;
 
@@ -360,6 +362,16 @@ int syscall_check_magic(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
+int syscall_check_magic_stat(context_t *ctx, struct tchild *child) {
+    char pathname[PATH_MAX];
+
+    ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
+    if (path_magic_dir(pathname))
+        return 1;
+    else
+        return 0;
+}
+
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
     unsigned int sno, sflags, i;
     const char *sname;
@@ -380,14 +392,25 @@ found:
 
     /* Handle magic open calls */
     if (__NR_open == sno) {
-        lg(LOG_DEBUG, "syscall.check.ismagic", "Checking if open() is magic");
-        if (syscall_check_magic(ctx, child)) {
-            lg(LOG_DEBUG, "syscall.check.magic", "Handled magic open() call");
+        lg(LOG_DEBUG, "syscall.check.open.ismagic", "Checking if open() is magic");
+        if (syscall_check_magic_open(ctx, child)) {
+            lg(LOG_DEBUG, "syscall.check.open.magic", "Handled magic open() call");
             decs.res = R_ALLOW;
             return decs;
         }
         else
-            lg(LOG_DEBUG, "syscall.check.nonmagic", "open() not magic");
+            lg(LOG_DEBUG, "syscall.check.open.nonmagic", "open() not magic");
+    }
+    else if (__NR_stat == sno) {
+        lg(LOG_DEBUG, "syscall.check.stat.ismagic", "Checking if stat() is magic");
+        if(syscall_check_magic_stat(ctx, child)) {
+            lg(LOG_DEBUG, "syscall.check.stat.magic", "Handled magic stat() call");
+            decs.res = R_DENY_RETURN;
+            decs.ret = 0;
+            return decs;
+        }
+        else
+            lg(LOG_DEBUG, "syscall.check.stat.nonmagic", "stat() not magic");
     }
 
     if (sflags & CHECK_PATH) {
@@ -496,7 +519,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);
             if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->error_code)) {
-                lg(LOG_ERROR, "syscall.handle.fail_pokeuser",
+                lg(LOG_ERROR, "syscall.handle.err.fail.pokeuser",
                         "Failed to set error code to %d: %s", child->error_code,
                         strerror(errno));
                 return -1;

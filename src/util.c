@@ -204,8 +204,8 @@ int remove_slash(const char *pathname, char *dest) {
     }
     if (nslashes)
         lg(LOG_DEBUG, "util.remove_slash.removed",
-                "Simplified pathname \"%s\" to \"%s\" by removing %d slashes",
-                pathname, dest, nslashes);
+                "Simplified pathname \"%s\" to \"%s\"",
+                pathname, dest);
     return nslashes;
 }
 

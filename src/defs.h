@@ -48,6 +48,7 @@ struct pathnode {
     struct pathnode *next;
 };
 
+int path_magic_dir(const char *pathname);
 int path_magic_write(const char *pathname);
 int path_magic_predict(const char *pathname);
 void pathnode_new(struct pathnode **head, const char *pathname);
@@ -177,10 +178,12 @@ struct decision {
     char reason[REASON_MAX];
 };
 
-#define CMD_WRITE               "/dev/sydbox/write/"
-#define CMD_WRITE_LEN           18
-#define CMD_PREDICT             "/dev/sydbox/predict/"
-#define CMD_PREDICT_LEN         20
+#define CMD_PATH                "/dev/sydbox/"
+#define CMD_PATH_LEN            12
+#define CMD_WRITE               CMD_PATH"write/"
+#define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
+#define CMD_PREDICT             CMD_PATH"predict/"
+#define CMD_PREDICT_LEN         (CMD_PATH_LEN + 8)
 #define CMD_ALLOWED_FORK_COUNT  3
 
 int syscall_check_path(context_t *ctx, struct tchild *child,
