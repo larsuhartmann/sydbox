@@ -104,6 +104,21 @@ int trace_loop(void) {
         assert((NULL == child && E_SETUP_PREMATURE == event)
                 || (NULL != child && E_SETUP_PREMATURE != event));
 
+        if (0xb7f == status) {
+            /* Child called abort() */
+            lg(LOG_VERBOSE, "main.trace_loop.abort",
+                    "Child %i called abort()", child->pid);
+            if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
+                lg(LOG_ERROR, "main.trace_loop.abort.kill",
+                        "Failed to kill child %i after abort()", child->pid);
+                die(EX_SOFTWARE, "Failed to kill child %i after abort", child->pid);
+            }
+            if (ctx->eldest == child) {
+                tchild_delete(&(ctx->children), pid);
+                return EXIT_FAILURE;
+            }
+            tchild_delete(&(ctx->children), pid);
+        }
         switch(event) {
             case E_SETUP:
                 tchild_setup(child);
