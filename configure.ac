@@ -97,6 +97,73 @@ dnl {{{ Check headers
 AC_CHECK_HEADERS([sys/reg.h], [], [])
 dnl }}}
 
+dnl {{{ Check for usable /dev/null
+AC_MSG_CHECKING([for usable /dev/null])
+AC_CACHE_VAL(ac_cv_dev_null_usable)
+if ! test -c /dev/null; then
+	AC_MSG_RESULT([NO!])
+	AC_MSG_ERROR([/dev/null is not a special character file])
+fi
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#define DEVNULL "/dev/null"
+#define TEST_STR "What exactly is a dream?"
+#define TEST_LEN 25
+
+int main(void) {
+    int fd;
+    char buf[TEST_LEN];
+
+    fd = open(DEVNULL, O_WRONLY);
+    if (0 > fd) {
+        perror("open_wr");
+        return EXIT_FAILURE;
+    }
+
+    if (0 > write(fd, TEST_STR, TEST_LEN)) {
+        perror("write");
+        return EXIT_FAILURE;
+    }
+    if (0 > close(fd)) {
+        perror("close");
+        return EXIT_FAILURE;
+    }
+
+    fd = open(DEVNULL, O_RDONLY);
+    if (0 > fd) {
+        perror("open_rd");
+        return EXIT_FAILURE;
+    }
+    if (0 > read(fd, buf, TEST_LEN)) {
+        perror("read");
+        return EXIT_FAILURE;
+    }
+    if (0 == strncmp(buf, TEST_STR, TEST_LEN)) {
+        fprintf(stderr, "strings match!\n");
+        return EXIT_FAILURE;
+    }
+    if (0 > close(fd)) {
+        perror("close");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+]])],
+[AC_MSG_RESULT([yes]) ; ac_cv_dev_null_usable=yes],
+[AC_MSG_RESULT([NO!]) ; ac_cv_dev_null_usable=no])
+if test x"$ac_cv_dev_null_usable" = x"no"; then
+	AC_MSG_ERROR([/dev/null fails to discard data])
+fi
+dnl }}}
+
 dnl {{{ Check for usable /proc
 AC_MSG_CHECKING(whether /proc/PID/cwd is usable)
 AC_CACHE_VAL(ac_cv_proc_cwd_usable)
