@@ -306,5 +306,6 @@ AC_OUTPUT(
 	Makefile
 	src/Makefile
 	tests/Makefile
+	tests/progtests/Makefile
 	)
 dnl }}}
