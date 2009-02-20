@@ -94,8 +94,8 @@ unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
-    /* Track fork count to allow/deny magic open() calls */
-    int fork_count;
+    /* Track execv count to allow/deny magic open() calls */
+    int execv_count;
     int net_allowed;
     struct pathnode *write_prefixes;
     struct pathnode *predict_prefixes;
@@ -106,7 +106,7 @@ typedef struct {
 
 context_t *context_new(void);
 void context_free(context_t *ctx);
-int context_cmd_allowed(context_t *ctx);
+int context_cmd_allowed(context_t *ctx, struct tchild *child);
 
 /* util.c */
 char log_file[PATH_MAX];
@@ -184,7 +184,6 @@ struct decision {
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
 #define CMD_PREDICT_LEN         (CMD_PATH_LEN + 8)
-#define CMD_ALLOWED_FORK_COUNT  3
 
 int syscall_check_path(context_t *ctx, struct tchild *child,
         struct decision *decs, int arg, int sflags, const char *sname);
