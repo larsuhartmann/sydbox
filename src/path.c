@@ -63,8 +63,8 @@ int path_magic_predict(const char *pathname) {
 }
 
 void pathnode_new(struct pathnode **head, const char *pathname) {
-    struct pathnode *newnode;
     char path_simple[PATH_MAX];
+    struct pathnode *newnode;
 
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
     remove_slash(pathname, path_simple);
