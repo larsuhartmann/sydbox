@@ -176,6 +176,39 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     }
 }
 
+int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
+        const char *path, const char *rpath, int issymlink, struct decision *decs) {
+    int mode;
+    errno = 0;
+    if (sdef->flags & ACCESS_MODE)
+        mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[1], NULL);
+    else /* if (sdef->flags & ACCESS_MODE_AT) */
+        mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[2], NULL);
+
+    if (0 != errno) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "syscall.check.access",
+                "PTRACE_PEEKUSER failed: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    if (!(mode & W_OK)) {
+        if (issymlink) {
+            lg(LOG_DEBUG, "syscall.check.access.subs.resolved",
+                "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
+                path, rpath);
+            if (sdef->flags & ACCESS_MODE)
+                ptrace_set_string(pid, 0, rpath, PATH_MAX);
+            else
+                ptrace_set_string(pid, 1, rpath, PATH_MAX);
+        }
+        decs->res = R_ALLOW;
+        return 1;
+    }
+    return 0;
+}
+
 int syscall_check_path(context_t *ctx, struct tchild *child,
         int arg, const struct syscall_def *sdef, struct decision *decs) {
     int issymlink;
@@ -216,30 +249,14 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     }
 
     if (sdef->flags & ACCESS_MODE || sdef->flags & ACCESS_MODE_AT) {
-        int mode;
-        errno = 0;
-        if (sdef->flags & ACCESS_MODE)
-            mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
-        else
-            mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[2], NULL);
-
-        if (0 != errno) {
+        int ret = syscall_check_access(child->pid, sdef, path, rpath, issymlink, decs);
+        if (0 > ret) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }
-        if (!(mode & W_OK)) {
-            if (issymlink) {
-                /* Change the path argument with the resolved path to
-                 * prevent symlink races.
-                 */
-                if (sdef->flags & ACCESS_MODE)
-                    ptrace_set_string(child->pid, 0, rpath, PATH_MAX);
-                else
-                    ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
-            }
+        else if (ret) { /* W_OK not in flags */
             free(rpath);
-            decs->res = R_ALLOW;
-            return 0;
+            return ret;
         }
     }
     else if (sdef->flags & OPEN_MODE) {
