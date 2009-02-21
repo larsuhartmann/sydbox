@@ -50,8 +50,12 @@
 #define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
 #define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
 
-static const char *sysnames[] = {
+static const struct syscall_name {
+    int no;
+    const char *name;
+} sysnames[] = {
 #include "syscallent.h"
+{-1,    NULL}
 };
 
 /* System call dispatch table */
@@ -104,6 +108,14 @@ static const struct syscall_def syscalls[] = {
     {-1,                 0}
 };
 
+const char *syscall_get_name(int no) {
+    for (int i = 0; sysnames[i].name != NULL; i++) {
+        if (sysnames[i].no == no)
+            return sysnames[i].name;
+    }
+    return NULL;
+}
+
 int syscall_check_prefix(context_t *ctx, pid_t pid, int arg, const struct syscall_def *sdef,
         const char *path, const char *rpath, int issymlink, struct decision *decs) {
     lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for write access", rpath);
@@ -111,7 +123,7 @@ int syscall_check_prefix(context_t *ctx, pid_t pid, int arg, const struct syscal
     lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for predict access", rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
-    const char *sname = sysnames[sdef->no];
+    const char *sname = syscall_get_name(sdef->no);
     if (!allow_write && !allow_predict) {
         decs->res = R_DENY_VIOLATION;
         if (0 == arg)
@@ -390,7 +402,7 @@ struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall)
     return decs;
 found:
     sdef = &(syscalls[i]);
-    sname = sysnames[sdef->no];
+    sname = syscall_get_name(sdef->no);
 
     lg(LOG_DEBUG, "syscall.check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
@@ -497,7 +509,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     struct decision decs;
 
     syscall = ptrace_get_syscall(child->pid);
-    sname = sysnames[syscall];
+    sname = syscall_get_name(syscall);
     if (!child->in_syscall) { /* Entering syscall */
         lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
                 "Child %i is entering system %s()",

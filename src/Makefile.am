@@ -14,8 +14,9 @@ syscallent.h:
 		sort -n -k 3 |\
 		while read line; do \
 			if [ "$${line#\#define __NR_}" != "$$line" ]; then \
-				name="$$(echo \"$$line\" | cut -d' ' -f2 | $(SED) -e 's:__NR_::')"; \
-				echo "\"$$name\"," >> $@ ;\
+				no="$$(echo \"$$line\" | cut -d' ' -f2)"; \
+				name="$$(echo \"$$no\" | $(SED) -e 's:__NR_::')"; \
+				echo "{$$no, $$name}," >> $@ ;\
 			fi \
 		done
 
