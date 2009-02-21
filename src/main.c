@@ -94,7 +94,7 @@ int trace_loop(void) {
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
         if (0 > pid) {
-            lg(LOG_ERROR, "main.trace_loop.waitpid", "waitpid failed for child %i: %s",
+            lg(LOG_ERROR, "main.tloop.waitpid", "waitpid failed for child %i: %s",
                     pid, strerror(errno));
             die(EX_SOFTWARE, "waitpid failed for child %i: %s",
                     pid, strerror(errno));
@@ -575,7 +575,7 @@ int main(int argc, char **argv) {
         _die(EX_DATAERR, strerror(errno));
     }
     else { /* Parent process */
-        int status;
+        int status, ret;
 
         /* Wait for the SIGSTOP */
         wait(&status);
@@ -592,6 +592,9 @@ int main(int argc, char **argv) {
             ptrace(PTRACE_KILL, pid, NULL, NULL);
             die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
-        return trace_loop();
+        lg(LOG_VERBOSE, "main.tloop.enter", "Entering loop");
+        ret = trace_loop();
+        lg(LOG_VERBOSE, "main.tloop.exit", "Exiting loop with return %d", ret);
+        return ret;
     }
 }
