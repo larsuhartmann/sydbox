@@ -23,6 +23,7 @@ Makefile
 /stamp-h1
 
 src/sydbox
+src/syscallent.h
 tests/check_sydbox
 tests/arnold_layne
 tests/its_not_the_same

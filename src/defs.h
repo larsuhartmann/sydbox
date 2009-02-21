@@ -147,8 +147,8 @@ void *xmalloc(size_t size);
 char *xstrndup(const char *s, size_t n);
 
 int remove_slash(const char *pathname, char *dest);
-char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 void bash_expand(const char *pathname, char *dest);
+char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 
 /* trace.c */
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
@@ -171,7 +171,6 @@ void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len);
 /* syscall.c */
 struct syscall_def {
     int no;
-    const char *name;
     unsigned int flags;
 };
 

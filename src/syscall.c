@@ -50,54 +50,58 @@
 #define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
 #define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
 
+static const char *sysnames[] = {
+#include "syscallent.h"
+};
+
 /* System call dispatch table */
-const struct syscall_def system_calls[] = {
-    {__NR_chmod,        "chmod",        CHECK_PATH},
-    {__NR_chown,        "chown",        CHECK_PATH},
+static const struct syscall_def syscalls[] = {
+    {__NR_chmod,        CHECK_PATH},
+    {__NR_chown,        CHECK_PATH},
 #if defined(I386)
-    {__NR_chown32,      "chown32",      CHECK_PATH},
+    {__NR_chown32,      CHECK_PATH},
 #endif
-    {__NR_open,         "open",         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
-    {__NR_creat,        "creat",        CHECK_PATH},
-    {__NR_stat,         "stat",         MAGIC_STAT},
-    {__NR_lchown,       "lchown",       CHECK_PATH | DONT_RESOLV},
+    {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
+    {__NR_creat,        CHECK_PATH},
+    {__NR_stat,         MAGIC_STAT},
+    {__NR_lchown,       CHECK_PATH | DONT_RESOLV},
 #if defined(I386)
-    {__NR_lchown32,     "lchown32",     CHECK_PATH | DONT_RESOLV},
+    {__NR_lchown32,     CHECK_PATH | DONT_RESOLV},
 #endif
-    {__NR_link,         "link",         CHECK_PATH},
-    {__NR_mkdir,        "mkdir",        CHECK_PATH},
-    {__NR_mknod,        "mknod",        CHECK_PATH},
-    {__NR_access,       "access",       CHECK_PATH | ACCESS_MODE},
-    {__NR_rename,       "rename",       CHECK_PATH | CHECK_PATH2},
-    {__NR_rmdir,        "rmdir",        CHECK_PATH},
-    {__NR_symlink,      "symlink",      CHECK_PATH2 | DONT_RESOLV},
-    {__NR_truncate,     "truncate",     CHECK_PATH},
+    {__NR_link,         CHECK_PATH},
+    {__NR_mkdir,        CHECK_PATH},
+    {__NR_mknod,        CHECK_PATH},
+    {__NR_access,       CHECK_PATH | ACCESS_MODE},
+    {__NR_rename,       CHECK_PATH | CHECK_PATH2},
+    {__NR_rmdir,        CHECK_PATH},
+    {__NR_symlink,      CHECK_PATH2 | DONT_RESOLV},
+    {__NR_truncate,     CHECK_PATH},
 #if defined(I386)
-    {__NR_truncate64,   "truncate64",   CHECK_PATH},
+    {__NR_truncate64,   CHECK_PATH},
 #endif
-    {__NR_mount,        "mount",        CHECK_PATH2},
+    {__NR_mount,        CHECK_PATH2},
 #if defined(I386)
-    {__NR_umount,       "umount",       CHECK_PATH},
+    {__NR_umount,       CHECK_PATH},
 #endif
-    {__NR_umount2,      "umount2",      CHECK_PATH},
-    {__NR_utime,        "utime",        CHECK_PATH},
-    {__NR_unlink,       "unlink",       CHECK_PATH},
-    {__NR_openat,       "openat",       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
-    {__NR_mkdirat,      "mkdirat",      CHECK_PATH_AT},
-    {__NR_mknodat,      "mknodat",      CHECK_PATH_AT},
-    {__NR_fchownat,     "fchownat",     CHECK_PATH_AT},
-    {__NR_unlinkat,     "unlinkat",     CHECK_PATH_AT},
-    {__NR_renameat,     "renameat",     CHECK_PATH_AT | CHECK_PATH_AT2},
-    {__NR_linkat,       "linkat",       CHECK_PATH_AT},
-    {__NR_symlinkat,    "symlinkat",    CHECK_PATH_AT2 | DONT_RESOLV},
-    {__NR_fchmodat,     "fchmodat",     CHECK_PATH_AT},
-    {__NR_faccessat,    "faccessat",    CHECK_PATH_AT | ACCESS_MODE_AT},
+    {__NR_umount2,      CHECK_PATH},
+    {__NR_utime,        CHECK_PATH},
+    {__NR_unlink,       CHECK_PATH},
+    {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
+    {__NR_mkdirat,      CHECK_PATH_AT},
+    {__NR_mknodat,      CHECK_PATH_AT},
+    {__NR_fchownat,     CHECK_PATH_AT},
+    {__NR_unlinkat,     CHECK_PATH_AT},
+    {__NR_renameat,     CHECK_PATH_AT | CHECK_PATH_AT2},
+    {__NR_linkat,       CHECK_PATH_AT},
+    {__NR_symlinkat,    CHECK_PATH_AT2 | DONT_RESOLV},
+    {__NR_fchmodat,     CHECK_PATH_AT},
+    {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
 #if defined(I386)
-    {__NR_socketcall,   "socketcall",   NET_CALL},
+    {__NR_socketcall,   NET_CALL},
 #elif defined(X86_64)
-    {__NR_socket,       "socket",       NET_CALL},
+    {__NR_socket,       NET_CALL},
 #endif
-    {0,                 NULL,           0}
+    {-1,                 0}
 };
 
 int syscall_check_prefix(context_t *ctx, pid_t pid, int arg, const struct syscall_def *sdef,
@@ -107,12 +111,13 @@ int syscall_check_prefix(context_t *ctx, pid_t pid, int arg, const struct syscal
     lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for predict access", rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
+    const char *sname = sysnames[sdef->no];
     if (!allow_write && !allow_predict) {
         decs->res = R_DENY_VIOLATION;
         if (0 == arg)
-            snprintf(decs->reason, REASON_MAX, "%s(\"%s\", ", sdef->name, path);
+            snprintf(decs->reason, REASON_MAX, "%s(\"%s\", ", sname, path);
         else if (1 == arg)
-            snprintf(decs->reason, REASON_MAX, "%s(?, \"%s\", ", sdef->name, path);
+            snprintf(decs->reason, REASON_MAX, "%s(?, \"%s\", ", sname, path);
         if (sdef->flags & ACCESS_MODE)
             strcat(decs->reason, "O_WR)");
         else if (sdef->flags & OPEN_MODE || sdef->flags & OPEN_MODE_AT)
@@ -374,19 +379,21 @@ int syscall_check_magic_stat(struct tchild *child) {
 
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
     unsigned int i;
-    struct decision decs;
+    const char *sname;
     const struct syscall_def *sdef;
-    for (i = 0; system_calls[i].name; i++) {
-        if (system_calls[i].no == syscall)
+    struct decision decs;
+    for (i = 0; syscalls[i].no != -1; i++) {
+        if (syscalls[i].no == syscall)
             goto found;
     }
     decs.res = R_ALLOW;
     return decs;
 found:
-    sdef = &(system_calls[i]);
+    sdef = &(syscalls[i]);
+    sname = sysnames[sdef->no];
 
     lg(LOG_DEBUG, "syscall.check.essential",
-            "Child %i called essential system call %s()", child->pid, sdef->name);
+            "Child %i called essential system call %s()", child->pid, sname);
 
     /* Handle magic calls */
     if (sdef->flags & MAGIC_OPEN) {
@@ -413,61 +420,61 @@ found:
 
     if (sdef->flags & CHECK_PATH) {
         lg(LOG_DEBUG, "syscall.check.check_path",
-                "System call %s() has CHECK_PATH set, checking", sdef->name);
+                "System call %s() has CHECK_PATH set, checking", sname);
         syscall_check_path(ctx, child, 0, sdef, &decs);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.check.check_path.deny",
-                        "Access denied for system call %s()", sdef->name);
+                        "Access denied for system call %s()", sname);
                 return decs;
             case R_DENY_RETURN:
                 lg(LOG_DEBUG, "syscall.check.check_path.predict",
-                        "Access predicted for system call %s()", sdef->name);
+                        "Access predicted for system call %s()", sname);
                 break;
             case R_ALLOW:
             default:
                 lg(LOG_DEBUG, "syscall.check.check_path.allow",
-                        "Access allowed for system call %s()", sdef->name);
+                        "Access allowed for system call %s()", sname);
                 break;
         }
     }
     if (sdef->flags & CHECK_PATH2) {
         lg(LOG_DEBUG, "syscall.check.checkpath2",
-                "System call %s() has CHECK_PATH2 set, checking", sdef->name);
+                "System call %s() has CHECK_PATH2 set, checking", sname);
         syscall_check_path(ctx, child, 1, sdef, &decs);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.check.check_path2.deny",
-                        "Access denied for system call %s()", sdef->name);
+                        "Access denied for system call %s()", sname);
                 return decs;
             case R_DENY_RETURN:
                 lg(LOG_DEBUG, "syscall.check.check_path2.predict",
-                        "Access predicted for system call %s()", sdef->name);
+                        "Access predicted for system call %s()", sname);
                 break;
             case R_ALLOW:
             default:
                 lg(LOG_DEBUG, "syscall.check.check_path2.allow",
-                        "Access allowed for system call %s()", sdef->name);
+                        "Access allowed for system call %s()", sname);
                 break;
         }
     }
     if (sdef->flags & CHECK_PATH_AT) {
         lg(LOG_DEBUG, "syscall.check.check_path_at",
-                "System call %s() has CHECK_PATH_AT set, checking", sdef->name);
+                "System call %s() has CHECK_PATH_AT set, checking", sname);
         syscall_check_path(ctx, child, 1, sdef, &decs);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.check.check_path_at.deny",
-                        "Access denied for system call %s()", sdef->name);
+                        "Access denied for system call %s()", sname);
                 return decs;
             case R_DENY_RETURN:
                 lg(LOG_DEBUG, "syscall.check.check_path_at.predict",
-                        "Access predicted for system call %s()", sdef->name);
+                        "Access predicted for system call %s()", sname);
                 break;
             case R_ALLOW:
             default:
                 lg(LOG_DEBUG, "syscall.check.check_path_at.allow",
-                        "Access allowed for system call %s()", sdef->name);
+                        "Access allowed for system call %s()", sname);
                 break;
         }
     }
@@ -486,13 +493,15 @@ found:
 
 int syscall_handle(context_t *ctx, struct tchild *child) {
     int syscall;
+    const char *sname;
     struct decision decs;
 
     syscall = ptrace_get_syscall(child->pid);
+    sname = sysnames[syscall];
     if (!child->in_syscall) { /* Entering syscall */
         lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
-                "Child %i is entering system call %d",
-                child->pid, syscall);
+                "Child %i is entering system %s()",
+                child->pid, sname);
         decs = syscall_check(ctx, child, syscall);
         switch(decs.res) {
             case R_DENY_VIOLATION:
@@ -511,8 +520,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     }
     else { /* Exiting syscall */
         lg(LOG_DEBUG_CRAZY, "syscall.handle.exit",
-                "Child %i is exiting system call %d",
-                child->pid, syscall);
+                "Child %i is exiting system call %s()",
+                child->pid, sname);
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);
