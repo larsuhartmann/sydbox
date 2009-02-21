@@ -490,8 +490,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     syscall = ptrace_get_syscall(child->pid);
     if (!child->in_syscall) { /* Entering syscall */
-        lg(LOG_DEBUG_CRAZY, "syscall.handle.syscall_enter",
-                "Child %i is entering system call number %d",
+        lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
+                "Child %i is entering system call %d",
                 child->pid, syscall);
         decs = syscall_check(ctx, child, syscall);
         switch(decs.res) {
@@ -510,14 +510,14 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         child->in_syscall = 1;
     }
     else { /* Exiting syscall */
-        lg(LOG_DEBUG_CRAZY, "syscall.handle.syscall_exit",
-                "Child %i is exiting system call number %d",
+        lg(LOG_DEBUG_CRAZY, "syscall.handle.exit",
+                "Child %i is exiting system call %d",
                 child->pid, syscall);
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
             ptrace_set_syscall(child->pid, child->orig_syscall);
             if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->error_code)) {
-                lg(LOG_ERROR, "syscall.handle.err.fail.pokeuser",
+                lg(LOG_ERROR, "syscall.handle.deny.pokeuser.fail",
                         "Failed to set error code to %d: %s", child->error_code,
                         strerror(errno));
                 return -1;
