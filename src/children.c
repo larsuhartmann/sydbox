@@ -20,11 +20,14 @@
  */
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include <sys/ptrace.h>
 #include <linux/ptrace.h>
 
@@ -97,21 +100,21 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid) {
 }
 
 void tchild_setup(struct tchild *child) {
-    /* We want to trace all sub children and want special notify to distinguish
-     * between normal sigtrap and syscall sigtrap.
-     */
-    lg(LOG_DEBUG, "children.setup",
+    /* Setup ptrace options */
+    lg(LOG_DEBUG, "children.setup.ptrace",
             "Setting tracing options for child %i", child->pid);
-    if (0 != ptrace(PTRACE_SETOPTIONS,
-                    child->pid,
-                    NULL,
+    if (0 != ptrace(PTRACE_SETOPTIONS, child->pid, NULL,
                     PTRACE_O_TRACESYSGOOD
                     | PTRACE_O_TRACECLONE
-                    | PTRACE_O_TRACEEXEC
                     | PTRACE_O_TRACEFORK
-                    | PTRACE_O_TRACEVFORK))
-        die(EX_SOFTWARE, "PTRACE_SETOPTIONS failed for child %i: %s",
+                    | PTRACE_O_TRACEVFORK
+                    | PTRACE_O_TRACEEXEC)) {
+        lg(LOG_ERROR, "children.setup.ptrace.fail",
+                "Setting tracing options failed for child %i: %s",
                 child->pid, strerror(errno));
+        die(EX_SOFTWARE, "Setting tracing options failed for child %i: %s",
+                child->pid, strerror(errno));
+    }
     child->need_setup = 0;
 }
 
