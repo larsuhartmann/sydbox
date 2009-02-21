@@ -177,7 +177,7 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
 }
 
 int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
-        const char *path, const char *rpath, int issymlink, struct decision *decs) {
+        const char *path, const char *rpath, int issymlink) {
     int mode;
     errno = 0;
     if (sdef->flags & ACCESS_MODE)
@@ -203,7 +203,31 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
             else
                 ptrace_set_string(pid, 1, rpath, PATH_MAX);
         }
-        decs->res = R_ALLOW;
+        return 1;
+    }
+    return 0;
+}
+
+int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issymlink) {
+    errno = 0;
+    int mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[1], NULL);
+    if (0 != errno) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "syscall.check.open",
+                "PTRACE_PEEKUSER failed: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    if (!(mode & O_WRONLY || mode & O_RDWR)) {
+        if (issymlink) {
+            /* Change the path argument with the resolved path to
+             * prevent symlink races.
+             */
+            lg(LOG_DEBUG, "syscall.check.open.subs.resolved",
+                "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
+                path, rpath);
+            ptrace_set_string(pid, 0, rpath, PATH_MAX);
+        }
         return 1;
     }
     return 0;
@@ -249,33 +273,27 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     }
 
     if (sdef->flags & ACCESS_MODE || sdef->flags & ACCESS_MODE_AT) {
-        int ret = syscall_check_access(child->pid, sdef, path, rpath, issymlink, decs);
+        int ret = syscall_check_access(child->pid, sdef, path, rpath, issymlink);
         if (0 > ret) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }
         else if (ret) { /* W_OK not in flags */
             free(rpath);
+            decs->res = R_ALLOW;
             return ret;
         }
     }
     else if (sdef->flags & OPEN_MODE) {
-        errno = 0;
-        int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
-        if (0 != errno) {
+        int ret = syscall_check_open(child->pid, path, rpath, issymlink);
+        if (0 > ret) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }
-        if (!(mode & O_WRONLY || mode & O_RDWR)) {
-            if (issymlink) {
-                /* Change the path argument with the resolved path to
-                 * prevent symlink races.
-                 */
-                ptrace_set_string(child->pid, 0, rpath, PATH_MAX);
-            }
+        else if (ret) { /* O_WRONLY or O_RDWR not in flags */
             free(rpath);
             decs->res = R_ALLOW;
-            return 0;
+            return ret;
         }
     }
     else if (sdef->flags & OPEN_MODE_AT) {
