@@ -368,7 +368,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
-int syscall_check_magic_stat(context_t *ctx, struct tchild *child) {
+int syscall_check_magic_stat(struct tchild *child) {
     char pathname[PATH_MAX];
 
     ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
@@ -408,7 +408,7 @@ found:
     }
     else if (sflags & MAGIC_STAT) {
         lg(LOG_DEBUG, "syscall.check.stat.ismagic", "Checking if stat() is magic");
-        if(syscall_check_magic_stat(ctx, child)) {
+        if(syscall_check_magic_stat(child)) {
             lg(LOG_DEBUG, "syscall.check.stat.magic", "Handled magic stat() call");
             decs.res = R_DENY_RETURN;
             decs.ret = 0;
