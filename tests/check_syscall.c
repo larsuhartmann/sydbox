@@ -21,11 +21,8 @@
 #include <../src/defs.h>
 #include "check_sydbox.h"
 
-int emily_born = 0;
-
 void syscall_teardown(void) {
-    if (emily_born)
-        rmdir("emily");
+    rmdir("emily");
 }
 
 START_TEST(check_syscall_check_chmod_deny) {
@@ -395,8 +392,6 @@ START_TEST(check_syscall_check_open_wronly_predict) {
         fail("realpath failed: %s", strerror(errno));
     if (0 > mkdir("emily", 0755))
         fail("mkdir failed: %s", strerror(errno));
-    else
-        emily_born = 1;
 
     if (0 > pipe(pfd))
         fail("pipe() failed: %s", strerror(errno));
@@ -570,8 +565,6 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
         fail("realpath failed: %s", strerror(errno));
     if (0 > mkdir("emily", 0755))
         fail("mkdir failed: %s", strerror(errno));
-    else
-        emily_born = 1;
 
     if (0 > pipe(pfd))
         fail("pipe() failed: %s", strerror(errno));
