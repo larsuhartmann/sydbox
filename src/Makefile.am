@@ -7,9 +7,6 @@ sydbox_SOURCES = defs.h syscallent.h \
 		 realpath.c syscall.c trace.c main.c
 sydbox_LDADD= $(confuse_LIBS)
 
-check:
-	make -C $(top_builddir)/tests check
-
 syscallent.h:
 	@echo "Generating $@ from asm/unistd.h"
 	echo "// This is a GENERATED file!" > $@
@@ -21,3 +18,4 @@ syscallent.h:
 				echo "\"$$name\"," >> $@ ;\
 			fi \
 		done
+
