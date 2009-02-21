@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <sysexits.h>
 #include <sys/types.h>
+#include <asm/unistd.h>
 #include <stdio.h> /* FILE */
 
 #ifdef HAVE_CONFIG_H
@@ -47,6 +48,13 @@ struct pathnode {
     char *pathname;
     struct pathnode *next;
 };
+
+#define CMD_PATH                "/dev/sydbox/"
+#define CMD_PATH_LEN            12
+#define CMD_WRITE               CMD_PATH"write/"
+#define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
+#define CMD_PREDICT             CMD_PATH"predict/"
+#define CMD_PREDICT_LEN         (CMD_PATH_LEN + 8)
 
 int path_magic_dir(const char *pathname);
 int path_magic_write(const char *pathname);
@@ -159,9 +167,78 @@ static const int syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 int ptrace_get_syscall(pid_t pid);
 void ptrace_set_syscall(pid_t pid, int syscall);
 void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len);
-void ptrace_set_string(pid_t pid, int arg, char *src, size_t len);
+void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len);
 
 /* syscall.c */
+/* System call dispatch flags */
+#define RETURNS_FD      (1 << 0) /* The function returns a file descriptor */
+#define OPEN_MODE       (1 << 1) /* Check the mode argument of open() */
+#define OPEN_MODE_AT    (1 << 2) /* Check the mode argument of openat() */
+#define ACCESS_MODE     (1 << 3) /* Check the mode argument of access() */
+#define ACCESS_MODE_AT  (1 << 4) /* Check the mode argument of faccessat() */
+#define CHECK_PATH      (1 << 5) /* First argument should be a valid path */
+#define CHECK_PATH2     (1 << 6) /* Second argument should be a valid path */
+#define CHECK_PATH_AT   (1 << 7) /* CHECK_PATH for at suffixed functions */
+#define CHECK_PATH_AT2  (1 << 8) /* CHECK_PATH2 for at suffixed functions */
+#define DONT_RESOLV     (1 << 9) /* Don't resolve symlinks */
+#define MAGIC_OPEN      (1 << 10) /* Check if the open() call is magic */
+#define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
+#define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
+
+/* System call dispatch table */
+static struct syscall_def {
+    int no;
+    const char *name;
+    unsigned int flags;
+} system_calls[] = {
+    {__NR_chmod,        "chmod",        CHECK_PATH},
+    {__NR_chown,        "chown",        CHECK_PATH},
+#if defined(I386)
+    {__NR_chown32,      "chown32",      CHECK_PATH},
+#endif
+    {__NR_open,         "open",         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
+    {__NR_creat,        "creat",        CHECK_PATH},
+    {__NR_stat,         "stat",         MAGIC_STAT},
+    {__NR_lchown,       "lchown",       CHECK_PATH | DONT_RESOLV},
+#if defined(I386)
+    {__NR_lchown32,     "lchown32",     CHECK_PATH | DONT_RESOLV},
+#endif
+    {__NR_link,         "link",         CHECK_PATH},
+    {__NR_mkdir,        "mkdir",        CHECK_PATH},
+    {__NR_mknod,        "mknod",        CHECK_PATH},
+    {__NR_access,       "access",       CHECK_PATH | ACCESS_MODE},
+    {__NR_rename,       "rename",       CHECK_PATH | CHECK_PATH2},
+    {__NR_rmdir,        "rmdir",        CHECK_PATH},
+    {__NR_symlink,      "symlink",      CHECK_PATH2 | DONT_RESOLV},
+    {__NR_truncate,     "truncate",     CHECK_PATH},
+#if defined(I386)
+    {__NR_truncate64,   "truncate64",   CHECK_PATH},
+#endif
+    {__NR_mount,        "mount",        CHECK_PATH2},
+#if defined(I386)
+    {__NR_umount,       "umount",       CHECK_PATH},
+#endif
+    {__NR_umount2,      "umount2",      CHECK_PATH},
+    {__NR_utime,        "utime",        CHECK_PATH},
+    {__NR_unlink,       "unlink",       CHECK_PATH},
+    {__NR_openat,       "openat",       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
+    {__NR_mkdirat,      "mkdirat",      CHECK_PATH_AT},
+    {__NR_mknodat,      "mknodat",      CHECK_PATH_AT},
+    {__NR_fchownat,     "fchownat",     CHECK_PATH_AT},
+    {__NR_unlinkat,     "unlinkat",     CHECK_PATH_AT},
+    {__NR_renameat,     "renameat",     CHECK_PATH_AT | CHECK_PATH_AT2},
+    {__NR_linkat,       "linkat",       CHECK_PATH_AT},
+    {__NR_symlinkat,    "symlinkat",    CHECK_PATH_AT2 | DONT_RESOLV},
+    {__NR_fchmodat,     "fchmodat",     CHECK_PATH_AT},
+    {__NR_faccessat,    "faccessat",    CHECK_PATH_AT | ACCESS_MODE_AT},
+#if defined(I386)
+    {__NR_socketcall,   "socketcall",   NET_CALL},
+#elif defined(X86_64)
+    {__NR_socket,       "socket",       NET_CALL},
+#endif
+    {0,                 NULL,           0}
+};
+
 /* Possible results for a syscall */
 enum result {
     R_DENY_VIOLATION, /* Deny the system call and raise an access violation. */
@@ -177,15 +254,8 @@ struct decision {
     char reason[REASON_MAX];
 };
 
-#define CMD_PATH                "/dev/sydbox/"
-#define CMD_PATH_LEN            12
-#define CMD_WRITE               CMD_PATH"write/"
-#define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
-#define CMD_PREDICT             CMD_PATH"predict/"
-#define CMD_PREDICT_LEN         (CMD_PATH_LEN + 8)
-
 int syscall_check_path(context_t *ctx, struct tchild *child,
-        struct decision *decs, int arg, int sflags, const char *sname);
+        int arg, const struct syscall_def *sdef, struct decision *decs);
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall);
 int syscall_handle(context_t *ctx, struct tchild *child);
 

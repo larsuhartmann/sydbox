@@ -105,7 +105,7 @@ void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     }
 }
 
-void ptrace_set_string(pid_t pid, int arg, char *src, size_t len) {
+void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     int n, m;
     long addr = 0;
     union {

@@ -29,80 +29,60 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <asm/unistd.h>
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 
 #include "defs.h"
 
-/* System call dispatch flags */
-#define RETURNS_FD      (1 << 0) /* The function returns a file descriptor */
-#define OPEN_MODE       (1 << 1) /* Check the mode argument of open() */
-#define OPEN_MODE_AT    (1 << 2) /* Check the mode argument of openat() */
-#define ACCESS_MODE     (1 << 3) /* Check the mode argument of access() */
-#define ACCESS_MODE_AT  (1 << 4) /* Check the mode argument of faccessat() */
-#define CHECK_PATH      (1 << 5) /* First argument should be a valid path */
-#define CHECK_PATH2     (1 << 6) /* Second argument should be a valid path */
-#define CHECK_PATH_AT   (1 << 7) /* CHECK_PATH for at suffixed functions */
-#define CHECK_PATH_AT2  (1 << 8) /* CHECK_PATH2 for at suffixed functions */
-#define DONT_RESOLV     (1 << 9) /* Don't resolve symlinks */
-#define MAGIC_OPEN      (1 << 10) /* Check if the open() call is magic */
-#define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
-#define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
+int syscall_check_prefix(context_t *ctx, pid_t pid, int arg, const struct syscall_def *sdef,
+        const char *path, const char *rpath, int issymlink, struct decision *decs) {
+    lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for write access", rpath);
+    int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
+    lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for predict access", rpath);
+    int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
-/* System call dispatch table */
-static struct syscall_def {
-    int no;
-    const char *name;
-    unsigned int flags;
-} system_calls[] = {
-    {__NR_chmod,        "chmod",        CHECK_PATH},
-    {__NR_chown,        "chown",        CHECK_PATH},
-#if defined(I386)
-    {__NR_chown32,      "chown32",      CHECK_PATH},
-#endif
-    {__NR_open,         "open",         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
-    {__NR_creat,        "creat",        CHECK_PATH},
-    {__NR_stat,         "stat",         MAGIC_STAT},
-    {__NR_lchown,       "lchown",       CHECK_PATH | DONT_RESOLV},
-#if defined(I386)
-    {__NR_lchown32,     "lchown32",     CHECK_PATH | DONT_RESOLV},
-#endif
-    {__NR_link,         "link",         CHECK_PATH},
-    {__NR_mkdir,        "mkdir",        CHECK_PATH},
-    {__NR_mknod,        "mknod",        CHECK_PATH},
-    {__NR_access,       "access",       CHECK_PATH | ACCESS_MODE},
-    {__NR_rename,       "rename",       CHECK_PATH | CHECK_PATH2},
-    {__NR_rmdir,        "rmdir",        CHECK_PATH},
-    {__NR_symlink,      "symlink",      CHECK_PATH2 | DONT_RESOLV},
-    {__NR_truncate,     "truncate",     CHECK_PATH},
-#if defined(I386)
-    {__NR_truncate64,   "truncate64",   CHECK_PATH},
-#endif
-    {__NR_mount,        "mount",        CHECK_PATH2},
-#if defined(I386)
-    {__NR_umount,       "umount",       CHECK_PATH},
-#endif
-    {__NR_umount2,      "umount2",      CHECK_PATH},
-    {__NR_utime,        "utime",        CHECK_PATH},
-    {__NR_unlink,       "unlink",       CHECK_PATH},
-    {__NR_openat,       "openat",       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
-    {__NR_mkdirat,      "mkdirat",      CHECK_PATH_AT},
-    {__NR_mknodat,      "mknodat",      CHECK_PATH_AT},
-    {__NR_fchownat,     "fchownat",     CHECK_PATH_AT},
-    {__NR_unlinkat,     "unlinkat",     CHECK_PATH_AT},
-    {__NR_renameat,     "renameat",     CHECK_PATH_AT | CHECK_PATH_AT2},
-    {__NR_linkat,       "linkat",       CHECK_PATH_AT},
-    {__NR_symlinkat,    "symlinkat",    CHECK_PATH_AT2 | DONT_RESOLV},
-    {__NR_fchmodat,     "fchmodat",     CHECK_PATH_AT},
-    {__NR_faccessat,    "faccessat",    CHECK_PATH_AT | ACCESS_MODE_AT},
-#if defined(I386)
-    {__NR_socketcall,   "socketcall",   NET_CALL},
-#elif defined(X86_64)
-    {__NR_socket,       "socket",       NET_CALL},
-#endif
-    {0,                 NULL,           0}
-};
+    if (!allow_write && !allow_predict) {
+        decs->res = R_DENY_VIOLATION;
+        if (0 == arg)
+            snprintf(decs->reason, REASON_MAX, "%s(\"%s\", ", sdef->name, path);
+        else if (1 == arg)
+            snprintf(decs->reason, REASON_MAX, "%s(?, \"%s\", ", sdef->name, path);
+        if (sdef->flags & ACCESS_MODE)
+            strcat(decs->reason, "O_WR)");
+        else if (sdef->flags & OPEN_MODE || sdef->flags & OPEN_MODE_AT)
+            strcat(decs->reason, "O_WRONLY/O_RDWR, ...)");
+        else
+            strcat(decs->reason, "...)");
+        return 0;
+    }
+    else if (!allow_write && allow_predict) {
+        if (sdef->flags & RETURNS_FD) {
+            lg(LOG_DEBUG, "syscall.check.prefix.subs.devnull",
+                    "System call returns fd and its argument is under a predict path");
+            lg(LOG_DEBUG, "syscall.check.prefix.subs.devnull",
+                    "Changing the path argument to /dev/null");
+            ptrace_set_string(pid, arg, "/dev/null", 10);
+            decs->res = R_ALLOW;
+        }
+        else {
+            decs->res = R_DENY_RETURN;
+            decs->ret = 0;
+        }
+        return 0;
+    }
+
+    if (issymlink) {
+        /* Change the pathname argument with the resolved path to
+        * prevent symlink races.
+        */
+        lg(LOG_DEBUG, "syscall.check.prefix.subs.resolved",
+                "Substituting symlink %s with resolved path %s to prevent races",
+                path, rpath);
+        ptrace_set_string(pid, arg, rpath, PATH_MAX);
+    }
+    decs->res = R_ALLOW;
+    return 0;
+}
 
 void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     int dirfd;
@@ -131,24 +111,24 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
 }
 
 int syscall_check_path(context_t *ctx, struct tchild *child,
-        struct decision *decs, int arg, int sflags, const char *sname) {
+        int arg, const struct syscall_def *sdef, struct decision *decs) {
     int issymlink;
-    char pathname[PATH_MAX];
     char *rpath;
+    char path[PATH_MAX];
 
     assert(0 == arg || 1 == arg);
 
-    if (sflags & CHECK_PATH || sflags & CHECK_PATH2)
-        ptrace_get_string(child->pid, arg, pathname, PATH_MAX);
-    if (sflags & CHECK_PATH_AT)
-        syscall_process_pathat(child->pid, 0, pathname);
-    if (sflags & CHECK_PATH_AT2)
-        syscall_process_pathat(child->pid, 2, pathname);
+    if (sdef->flags & CHECK_PATH || sdef->flags & CHECK_PATH2)
+        ptrace_get_string(child->pid, arg, path, PATH_MAX);
+    if (sdef->flags & CHECK_PATH_AT)
+        syscall_process_pathat(child->pid, 0, path);
+    if (sdef->flags & CHECK_PATH_AT2)
+        syscall_process_pathat(child->pid, 2, path);
 
-    if (!(sflags & DONT_RESOLV))
-        rpath = resolve_path(pathname, child->pid, 1, &issymlink);
+    if (!(sdef->flags & DONT_RESOLV))
+        rpath = resolve_path(path, child->pid, 1, &issymlink);
     else
-        rpath = resolve_path(pathname, child->pid, 0, NULL);
+        rpath = resolve_path(path, child->pid, 0, NULL);
 
     if (NULL == rpath) {
         if (ENOENT == errno) {
@@ -169,10 +149,10 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
-    if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
+    if (sdef->flags & ACCESS_MODE || sdef->flags & ACCESS_MODE_AT) {
         int mode;
         errno = 0;
-        if (sflags & ACCESS_MODE)
+        if (sdef->flags & ACCESS_MODE)
             mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
         else
             mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[2], NULL);
@@ -183,10 +163,10 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
         if (!(mode & W_OK)) {
             if (issymlink) {
-                /* Change the pathname argument with the resolved path to
+                /* Change the path argument with the resolved path to
                  * prevent symlink races.
                  */
-                if (sflags & ACCESS_MODE)
+                if (sdef->flags & ACCESS_MODE)
                     ptrace_set_string(child->pid, 0, rpath, PATH_MAX);
                 else
                     ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
@@ -196,7 +176,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             return 0;
         }
     }
-    else if (sflags & OPEN_MODE) {
+    else if (sdef->flags & OPEN_MODE) {
         errno = 0;
         int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[1], NULL);
         if (0 != errno) {
@@ -205,7 +185,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
         if (!(mode & O_WRONLY || mode & O_RDWR)) {
             if (issymlink) {
-                /* Change the pathname argument with the resolved path to
+                /* Change the path argument with the resolved path to
                  * prevent symlink races.
                  */
                 ptrace_set_string(child->pid, 0, rpath, PATH_MAX);
@@ -215,7 +195,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             return 0;
         }
     }
-    else if (sflags & OPEN_MODE_AT) {
+    else if (sdef->flags & OPEN_MODE_AT) {
         errno = 0;
         int mode = ptrace(PTRACE_PEEKUSER, child->pid, syscall_args[2], NULL);
         if (0 != errno) {
@@ -224,7 +204,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
         if (!(mode & O_WRONLY || mode & O_RDWR)) {
             if (issymlink) {
-                /* Change the pathname argument with the resolved path to
+                /* Change the path argument with the resolved path to
                  * prevent symlink races.
                  */
                 ptrace_set_string(child->pid, 1, rpath, PATH_MAX);
@@ -235,59 +215,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
-    lg(LOG_DEBUG, "syscall.check_path", "Checking \"%s\" for write access", rpath);
-    int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
-    lg(LOG_DEBUG, "syscall.check_path", "Checking \"%s\" for predict access", rpath);
-    int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
-
-    if (!allow_write && !allow_predict) {
-        decs->res = R_DENY_VIOLATION;
-        if (0 == arg)
-            snprintf(decs->reason, REASON_MAX, "%s(\"%s\", ", sname,
-                    pathname);
-        else if (1 == arg)
-            snprintf(decs->reason, REASON_MAX, "%s(?, \"%s\", ", sname,
-                    pathname);
-        if (sflags & ACCESS_MODE)
-            strcat(decs->reason, "O_WR)");
-        else if (sflags & OPEN_MODE || sflags & OPEN_MODE_AT)
-            strcat(decs->reason, "O_WRONLY/O_RDWR, ...)");
-        else
-            strcat(decs->reason, "...)");
-        free(rpath);
-        return 0;
-    }
-    else if (!allow_write && allow_predict) {
-        if (sflags & RETURNS_FD) {
-            /* Change path argument to /dev/null.
-             */
-            lg(LOG_DEBUG, "syscall.check_path.devnull_subs",
-                    "System call returns fd and its argument is under a predict path");
-            lg(LOG_DEBUG, "syscall.check_path.devnull_subs",
-                    "Changing the path argument to /dev/null");
-            ptrace_set_string(child->pid, arg, "/dev/null", 10);
-            decs->res = R_ALLOW;
-        }
-        else {
-            decs->res = R_DENY_RETURN;
-            decs->ret = 0;
-        }
-        free(rpath);
-        return 0;
-    }
-
-    if (issymlink) {
-        /* Change the pathname argument with the resolved path to
-        * prevent symlink races.
-        */
-        lg(LOG_DEBUG, "syscall.check_path.resolved_subs",
-                "Substituting symlink %s with resolved path %s to prevent races",
-                pathname, rpath);
-        ptrace_set_string(child->pid, arg, rpath, PATH_MAX);
-    }
+    int ret = syscall_check_prefix(ctx, child->pid, arg, sdef, path, rpath, issymlink, decs);
     free(rpath);
-    decs->res = R_ALLOW;
-    return 0;
+    return ret;
 }
 
 int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
@@ -341,9 +271,9 @@ int syscall_check_magic_stat(struct tchild *child) {
 }
 
 struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall) {
-    unsigned int sflags, i;
-    const char *sname;
+    unsigned int i;
     struct decision decs;
+    const struct syscall_def *sdef;
     for (i = 0; system_calls[i].name; i++) {
         if (system_calls[i].no == syscall)
             goto found;
@@ -351,14 +281,13 @@ struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall)
     decs.res = R_ALLOW;
     return decs;
 found:
-    sname = system_calls[i].name;
-    sflags = system_calls[i].flags;
+    sdef = &system_calls[i];
 
     lg(LOG_DEBUG, "syscall.check.essential",
-            "Child %i called essential system call %s()", child->pid, sname);
+            "Child %i called essential system call %s()", child->pid, sdef->name);
 
     /* Handle magic calls */
-    if (sflags & MAGIC_OPEN) {
+    if (sdef->flags & MAGIC_OPEN) {
         lg(LOG_DEBUG, "syscall.check.open.ismagic", "Checking if open() is magic");
         if (syscall_check_magic_open(ctx, child)) {
             lg(LOG_DEBUG, "syscall.check.open.magic", "Handled magic open() call");
@@ -368,7 +297,7 @@ found:
         else
             lg(LOG_DEBUG, "syscall.check.open.nonmagic", "open() not magic");
     }
-    else if (sflags & MAGIC_STAT) {
+    else if (sdef->flags & MAGIC_STAT) {
         lg(LOG_DEBUG, "syscall.check.stat.ismagic", "Checking if stat() is magic");
         if(syscall_check_magic_stat(child)) {
             lg(LOG_DEBUG, "syscall.check.stat.magic", "Handled magic stat() call");
@@ -380,67 +309,67 @@ found:
             lg(LOG_DEBUG, "syscall.check.stat.nonmagic", "stat() not magic");
     }
 
-    if (sflags & CHECK_PATH) {
+    if (sdef->flags & CHECK_PATH) {
         lg(LOG_DEBUG, "syscall.check.check_path",
-                "System call %s() has CHECK_PATH set, checking", sname);
-        syscall_check_path(ctx, child, &decs, 0, sflags, sname);
+                "System call %s() has CHECK_PATH set, checking", sdef->name);
+        syscall_check_path(ctx, child, 0, sdef, &decs);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.check.check_path.deny",
-                        "Access denied for system call %s()", sname);
+                        "Access denied for system call %s()", sdef->name);
                 return decs;
             case R_DENY_RETURN:
                 lg(LOG_DEBUG, "syscall.check.check_path.predict",
-                        "Access predicted for system call %s()", sname);
+                        "Access predicted for system call %s()", sdef->name);
                 break;
             case R_ALLOW:
             default:
                 lg(LOG_DEBUG, "syscall.check.check_path.allow",
-                        "Access allowed for system call %s()", sname);
+                        "Access allowed for system call %s()", sdef->name);
                 break;
         }
     }
-    if (sflags & CHECK_PATH2) {
+    if (sdef->flags & CHECK_PATH2) {
         lg(LOG_DEBUG, "syscall.check.checkpath2",
-                "System call %s() has CHECK_PATH2 set, checking", sname);
-        syscall_check_path(ctx, child, &decs, 1, sflags, sname);
+                "System call %s() has CHECK_PATH2 set, checking", sdef->name);
+        syscall_check_path(ctx, child, 1, sdef, &decs);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.check.check_path2.deny",
-                        "Access denied for system call %s()", sname);
+                        "Access denied for system call %s()", sdef->name);
                 return decs;
             case R_DENY_RETURN:
                 lg(LOG_DEBUG, "syscall.check.check_path2.predict",
-                        "Access predicted for system call %s()", sname);
+                        "Access predicted for system call %s()", sdef->name);
                 break;
             case R_ALLOW:
             default:
                 lg(LOG_DEBUG, "syscall.check.check_path2.allow",
-                        "Access allowed for system call %s()", sname);
+                        "Access allowed for system call %s()", sdef->name);
                 break;
         }
     }
-    if (sflags & CHECK_PATH_AT) {
+    if (sdef->flags & CHECK_PATH_AT) {
         lg(LOG_DEBUG, "syscall.check.check_path_at",
-                "System call %s() has CHECK_PATH_AT set, checking", sname);
-        syscall_check_path(ctx, child, &decs, 1, sflags, sname);
+                "System call %s() has CHECK_PATH_AT set, checking", sdef->name);
+        syscall_check_path(ctx, child, 1, sdef, &decs);
         switch(decs.res) {
             case R_DENY_VIOLATION:
                 lg(LOG_DEBUG, "syscall.check.check_path_at.deny",
-                        "Access denied for system call %s()", sname);
+                        "Access denied for system call %s()", sdef->name);
                 return decs;
             case R_DENY_RETURN:
                 lg(LOG_DEBUG, "syscall.check.check_path_at.predict",
-                        "Access predicted for system call %s()", sname);
+                        "Access predicted for system call %s()", sdef->name);
                 break;
             case R_ALLOW:
             default:
                 lg(LOG_DEBUG, "syscall.check.check_path_at.allow",
-                        "Access allowed for system call %s()", sname);
+                        "Access allowed for system call %s()", sdef->name);
                 break;
         }
     }
-    if (sflags & NET_CALL && !(ctx->net_allowed)) {
+    if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
         decs.res = R_DENY_VIOLATION;
 #if defined(I386)
         snprintf(decs.reason, REASON_MAX, "socketcall()");
