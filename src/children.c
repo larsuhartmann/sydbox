@@ -125,12 +125,12 @@ unsigned int tchild_event(struct tchild *child, int status) {
         sig = WSTOPSIG(status);
         if (sig == SIGSTOP) {
             if (NULL != child && child->need_setup) {
-                lg(LOG_DEBUG, "children.event.e_setup",
+                lg(LOG_DEBUG, "children.event.setup",
                         "Child %i is born and she's ready for tracing", child->pid);
                 return E_SETUP;
             }
             if (NULL == child) {
-                lg(LOG_DEBUG, "children.event.e_setup_premature",
+                lg(LOG_DEBUG, "children.event.setup.premature",
                         "Child is born before fork event and she's ready for tracing");
                 return E_SETUP_PREMATURE;
             }
@@ -143,40 +143,40 @@ unsigned int tchild_event(struct tchild *child, int status) {
             }
             event = (status >> 16) & 0xffff;
             if (PTRACE_EVENT_FORK == event) {
-                lg(LOG_DEBUG, "children.event.e_fork_fork",
+                lg(LOG_DEBUG, "children.event.fork.fork",
                             "Child %i called fork()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_VFORK == event) {
-                lg(LOG_DEBUG, "children.event.e_fork_vfork",
+                lg(LOG_DEBUG, "children.event.fork.vfork",
                             "Child %i called vfork()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_CLONE == event) {
-                lg(LOG_DEBUG, "children.event.e_fork_clone",
+                lg(LOG_DEBUG, "children.event.fork.clone",
                             "Child %i called clone()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_EXEC == event) {
-                lg(LOG_DEBUG, "children.event.e_execv",
+                lg(LOG_DEBUG, "children.event.execv",
                         "Child %i called execve()", child->pid);
                 return E_EXECV;
             }
         }
         else {
             /* Genuine signal directed to child itself */
-            lg(LOG_DEBUG, "children.event.e_genuine",
+            lg(LOG_DEBUG, "children.event.genuine",
                     "Child %i received a signal", child->pid);
             return E_GENUINE;
         }
     }
     else if (WIFEXITED(status)) {
-        lg(LOG_DEBUG, "children.event.e_exit",
+        lg(LOG_DEBUG, "children.event.exit",
                 "Child %i exited normally", child->pid);
         return E_EXIT;
     }
     else if (WIFSIGNALED(status)) {
-        lg(LOG_DEBUG, "children.event.e_exit_signal",
+        lg(LOG_DEBUG, "children.event.exit.signal",
                 "Child %i was terminated by a signal", child->pid);
         return E_EXIT_SIGNAL;
     }
