@@ -4,14 +4,14 @@
 # Distributed under the terms of the GNU General Public License v2
 
 str="${HOME}/see.emily.play"
-exstr="$(./t01_util_bash_expand '${HOME}/see.emily.play')"
+exstr="$(./t01_util_shell_expand '${HOME}/see.emily.play')"
 if [[ "$str" != "$exstr" ]]; then
     echo "'$str' != '$exstr'" >&2
     exit 1
 fi
 
 str="/dev/sydbox/predict"
-exstr="$(./t01_util_bash_expand '$(echo -n /dev/sydbox)/predict')"
+exstr="$(./t01_util_shell_expand '$(echo -n /dev/sydbox)/predict')"
 if [[ "$str" != "$exstr" ]]; then
     echo "'$str' != '$exstr'" >&2
     exit 1
