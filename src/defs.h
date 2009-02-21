@@ -94,8 +94,6 @@ unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
-    /* Track execv count to allow/deny magic open() calls */
-    int execv_count;
     int net_allowed;
     struct pathnode *write_prefixes;
     struct pathnode *predict_prefixes;

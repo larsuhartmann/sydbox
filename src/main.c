@@ -178,7 +178,6 @@ int trace_loop(void) {
                 }
                 break;
             case E_EXECV:
-                ++(ctx->execv_count);
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
                     lg(LOG_ERROR, "main.trace_loop.resume_execve",
                             "Failed to resume child %i after execve: %s",

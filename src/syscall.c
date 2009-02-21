@@ -334,11 +334,10 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
 
     ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
     if (path_magic_write(pathname)) {
-        rpath = pathname + CMD_WRITE_LEN;
+        rpath = pathname + CMD_WRITE_LEN - 1;
         if (context_cmd_allowed(ctx, child)) {
             lg(LOG_NORMAL, "syscall.check_magic.write.allow",
-                    "Approved addwrite(\"%s\") due to execv_count = %d",
-                    rpath, ctx->execv_count);
+                    "Approved addwrite(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->write_prefixes), rpath);
             /* Change argument to /dev/null */
             lg(LOG_DEBUG, "syscall.check_magic.write.devnull",
@@ -348,15 +347,13 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
         }
         else
             lg(LOG_WARNING, "syscall.check_magic.write.deny",
-                    "Denied addwrite(\"%s\") due to execv_count = %d",
-                    rpath, ctx->execv_count);
+                    "Denied addwrite(\"%s\") for child %i", rpath, child->pid);
     }
     else if (path_magic_predict(pathname)) {
-        rpath = pathname + CMD_PREDICT_LEN;
+        rpath = pathname + CMD_PREDICT_LEN - 1;
         if (context_cmd_allowed(ctx, child)) {
             lg(LOG_NORMAL, "syscall.check_magic.predict.allow",
-                    "Approved addpredict(\"%s\") due to execv_count = %d",
-                    rpath, ctx->execv_count);
+                    "Approved addpredict(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->predict_prefixes), rpath);
             /* Change argument to /dev/null */
             lg(LOG_DEBUG, "syscall.check_magic.predict.devnull",
@@ -366,8 +363,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
         }
         else
             lg(LOG_WARNING, "syscall.check_magic.predict.deny",
-                    "Denied addpredict(\"%s\") due to execv_count = %d",
-                    rpath, ctx->execv_count);
+                    "Denied addpredict(\"%s\") for child %i", rpath, child->pid);
     }
     return 0;
 }
