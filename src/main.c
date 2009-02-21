@@ -106,10 +106,10 @@ int trace_loop(void) {
 
         if (0xb7f == status) {
             /* Child called abort() */
-            lg(LOG_VERBOSE, "main.trace_loop.abort",
+            lg(LOG_VERBOSE, "main.tloop.abort",
                     "Child %i called abort()", child->pid);
             if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
-                lg(LOG_ERROR, "main.trace_loop.abort.kill",
+                lg(LOG_ERROR, "main.tloop.abort.kill",
                         "Failed to kill child %i after abort()", child->pid);
                 die(EX_SOFTWARE, "Failed to kill child %i after abort", child->pid);
             }
@@ -123,12 +123,15 @@ int trace_loop(void) {
             case E_SETUP:
                 tchild_setup(child);
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_after_setup",
+                    lg(LOG_ERROR, "main.tloop.setup.resume.fail",
                             "Failed to resume child %i after setup: %s",
                             child->pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after setup: %s",
                             child->pid, strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.setup.resume",
+                            "Resumed child %i after setup", child->pid);
                 break;
             case E_SETUP_PREMATURE:
                 tchild_new(&(ctx->children), pid);
@@ -139,67 +142,86 @@ int trace_loop(void) {
                     syscall_handle(ctx, child);
 
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_after_syscall",
+                    lg(LOG_ERROR, "main.tloop.syscall.resume.fail",
                             "Failed to resume child %i after syscall: %s",
                             child->pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after syscall: %s",
                             child->pid, strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.syscall.resume",
+                            "Resumed child %i after syscall", child->pid);
                 break;
             case E_FORK:
                 /* Get new child's pid */
                 if (0 != ptrace(PTRACE_GETEVENTMSG, pid, NULL, &childpid)) {
-                    lg(LOG_ERROR, "main.trace_loop.geteventmsg",
+                    lg(LOG_ERROR, "main.tloop.fork.geteventmsg.fail",
                             "Failed to get the pid of the newborn child: %s",
                             strerror(errno));
                     die(EX_SOFTWARE, "Failed to get the pid of the newborn child: %s",
                             strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.fork.geteventmsg",
+                            "The newborn child's pid is %i", childpid);
+
                 if (tchild_find(&(ctx->children), childpid)) {
                     /* Child is prematurely born, let it continue its life */
                     if (0 != ptrace(PTRACE_SYSCALL, childpid, NULL, NULL)) {
-                        lg(LOG_ERROR, "main.trace_loop.resume_premature",
+                        lg(LOG_ERROR, "main.tloop.premature.resume.fail",
                                 "Failed to resume prematurely born child %i: %s",
                                 pid, strerror(errno));
                         die(EX_SOFTWARE, "Failed to resume prematurely born child %i: %s",
                                 pid, strerror(errno));
                     }
+                    else
+                        lg(LOG_DEBUG_CRAZY, "main.tloop.premature.resume",
+                                "Resumed prematurely born child %i", child->pid);
                 }
                 else {
                     /* Add the child, setup will be done later */
                     tchild_new(&(ctx->children), childpid);
                 }
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_fork",
-                            "Failed to resume child %i after fork, vfork or clone: %s",
+                    lg(LOG_ERROR, "main.tloop.fork.resume.fail",
+                            "Failed to resume child %i after fork(), vfork() or clone(): %s",
                             pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after fork: %s",
+                    die(EX_SOFTWARE, "Failed to resume child %i after fork(): %s",
                             pid, strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.fork.resume",
+                            "Resumed child %i after fork()", child->pid);
                 break;
             case E_EXECV:
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_execve",
-                            "Failed to resume child %i after execve: %s",
+                    lg(LOG_ERROR, "main.tloop.execve.resume.fail",
+                            "Failed to resume child %i after execve(): %s",
                             pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after execve: %s",
+                    die(EX_SOFTWARE, "Failed to resume child %i after execve(): %s",
                             pid, strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.execve.resume",
+                            "Resumed child %i after fork", child->pid);
                 break;
             case E_GENUINE:
                 if (0 != ptrace(PTRACE_SYSCALL, pid, 0, WSTOPSIG(status))) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_genuine",
+                    lg(LOG_ERROR, "main.tloop.genuine.resume.fail",
                             "Failed to resume child %i after genuine signal: %s",
                             pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after genuine signal: %s",
                             pid, strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.genuine.resume",
+                            "Resumed child %i after genuine signal", child->pid);
                 break;
             case E_EXIT:
                 if (ctx->eldest == child) {
                     /* Eldest child, keep the return value */
                     ret = WEXITSTATUS(status);
-                    lg(LOG_VERBOSE, "main.trace_loop.eldest_dead",
+                    lg(LOG_VERBOSE, "main.tloop.eldest.dead",
                             "Eldest child %i exited with return code %d", pid, ret);
                     tchild_delete(&(ctx->children), pid);
                     return ret;
@@ -214,16 +236,19 @@ int trace_loop(void) {
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
-                lg(LOG_DEBUG, "main.trace_loop.unknown",
+                lg(LOG_DEBUG, "main.tloop.unknown",
                         "Unknown signal %#x received from child %i", status, pid);
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
-                    lg(LOG_ERROR, "main.trace_loop.resume_unknown",
+                    lg(LOG_ERROR, "main.tloop.unknown.resume.fail",
                             "Failed to resume child %i after unknown signal %#x: %s",
                             pid, status, strerror(errno));
                     die(EX_SOFTWARE,
                             "Failed to resume child %i after unknown signal %#x: %s",
                             pid, status, strerror(errno));
                 }
+                else
+                    lg(LOG_DEBUG_CRAZY, "main.tloop.unknown.resume",
+                            "Resumed child %i after unknown signal", child->pid);
                 break;
         }
     }
