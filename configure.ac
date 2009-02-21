@@ -286,10 +286,24 @@ if test x"$ac_cv_proc_fd_usable" = x"no"; then
 fi
 dnl }}}
 
-dnl {{{ Extra CFLAGS for gcc
+dnl {{{ Extra CFLAGS
 SYDBOX_CFLAGS=
 if test x"$GCC" = x"yes"; then
-	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -Wall -pedantic -D_GNU_SOURCE"
+	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -Wall -pedantic"
+fi
+AC_MSG_CHECKING([whether libc is gnu])
+AC_CACHE_VAL([ac_cv_glibc])
+AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
+#include <unistd.h>
+
+#ifndef _CS_GNU_LIBC_VERSION
+#error Not glibc
+#endif
+]])],
+[AC_MSG_RESULT([yes]) ; ac_cv_glibc=yes],
+[AC_MSG_RESULT([no]) ; ac_cv_glibc=no])
+if test x"$ac_cv_glibc" = x"yes"; then
+	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -D_GNU_SOURCE"
 fi
 AC_SUBST([SYDBOX_CFLAGS])
 dnl }}}
