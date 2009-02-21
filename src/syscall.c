@@ -291,44 +291,33 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
+    int ret, check_ret = 0;
     if (sdef->flags & ACCESS_MODE || sdef->flags & ACCESS_MODE_AT) {
-        int ret = syscall_check_access(child->pid, sdef, path, rpath, issymlink);
-        if (0 > ret) {
-            free(rpath);
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        }
-        else if (ret) { /* W_OK not in flags */
-            free(rpath);
-            decs->res = R_ALLOW;
-            return ret;
-        }
+        check_ret = 1;
+        ret = syscall_check_access(child->pid, sdef, path, rpath, issymlink);
     }
     else if (sdef->flags & OPEN_MODE) {
-        int ret = syscall_check_open(child->pid, path, rpath, issymlink);
-        if (0 > ret) {
-            free(rpath);
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        }
-        else if (ret) { /* O_WRONLY or O_RDWR not in flags */
-            free(rpath);
-            decs->res = R_ALLOW;
-            return ret;
-        }
+        check_ret = 1;
+        ret = syscall_check_open(child->pid, path, rpath, issymlink);
     }
     else if (sdef->flags & OPEN_MODE_AT) {
-        int ret = syscall_check_openat(child->pid, path, rpath, issymlink);
+        check_ret = 1;
+        ret = syscall_check_openat(child->pid, path, rpath, issymlink);
+    }
+
+    if (check_ret) {
         if (0 > ret) {
             free(rpath);
             die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
         }
-        else if (ret) { /* O_WRONLY or O_RDWR not in flags */
+        else if (ret) { /* W_OK or O_WRONLY and O_RDWR not in flags */
             free(rpath);
             decs->res = R_ALLOW;
             return ret;
         }
     }
 
-    int ret = syscall_check_prefix(ctx, child->pid, arg, sdef, path, rpath, issymlink, decs);
+    ret = syscall_check_prefix(ctx, child->pid, arg, sdef, path, rpath, issymlink, decs);
     free(rpath);
     return ret;
 }
