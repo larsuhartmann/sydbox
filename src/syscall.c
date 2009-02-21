@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -147,60 +146,23 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         syscall_process_pathat(child->pid, 2, pathname);
 
     if (!(sflags & DONT_RESOLV))
-        rpath = safe_realpath(pathname, child->pid, 1, &issymlink);
+        rpath = resolve_path(pathname, child->pid, 1, &issymlink);
     else
-        rpath = safe_realpath(pathname, child->pid, 0, NULL);
+        rpath = resolve_path(pathname, child->pid, 0, NULL);
 
     if (NULL == rpath) {
         if (ENOENT == errno) {
-            /* File doesn't exist, check the directory */
-            char *dirc, *dname;
-            dirc = xstrndup(pathname, PATH_MAX);
-            dname = dirname(dirc);
-            if (!(sflags & DONT_RESOLV))
-                rpath = safe_realpath(dname, child->pid, 1, &issymlink);
-            else
-                rpath = safe_realpath(dname, child->pid, 0, NULL);
-            free(dirc);
-
-            lg(LOG_DEBUG, "syscall.check_path.no_file",
-                    "File \"%s\" doesn't exist, using directory \"%s\"",
-                    pathname, rpath);
-            if (NULL == rpath) {
-                /* FIXME why does this make tar fail? */
-#if 0
-                /* Directory doesn't exist as well.
-                 * The system call will fail, to prevent any kind of races
-                 * we deny access without calling it but don't throw an
-                 * access violation.
-                 *
-                 */
-                lg(LOG_DEBUG, "syscall.check_path.no_file_and_dir",
-                        "Neither file \"%s\" nor its directory exists, deny access without violation",
-                        pathname, rpath);
-                decs->res = R_DENY_RETURN;
-                decs->ret = -1;
-                return 0;
-#endif
-                decs->res = R_ALLOW;
-                return 0;
-
-            }
-            else {
-                lg(LOG_DEBUG, "syscall.check_path.no_file_but_dir",
-                        "File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
-                        pathname, rpath);
-                char *basec, *bname;
-                basec = xstrndup(pathname, PATH_MAX);
-                bname = basename(basec);
-                strncat(rpath, "/", 1);
-                strncat(rpath, bname, strlen(bname));
-                free(basec);
-            }
+            /* Neither directory nor file exists, allow access
+             * XXX This opens a hole for race conditions,
+             * but denying access here makes tar fail.
+             */
+            lg(LOG_DEBUG, "syscall.check_path.file_dir.none",
+                    "Neither file nor directory exists, allowing access");
+            decs->res = R_ALLOW;
+            return 0;
         }
-        else {
-            lg(LOG_WARNING, "syscall.check.safe_realpath_fail",
-                    "safe_realpath() failed for \"%s\": %s", pathname, strerror(errno));
+        else if (0 != errno) {
+            /* safe_realpath() failed */
             decs->res = R_DENY_RETURN;
             decs->ret = -1;
             return 0;

@@ -106,6 +106,9 @@ context_t *context_new(void);
 void context_free(context_t *ctx);
 int context_cmd_allowed(context_t *ctx, struct tchild *child);
 
+/* realpath.c */
+char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
+
 /* util.c */
 char log_file[PATH_MAX];
 FILE *flog;
@@ -137,10 +140,8 @@ void *xmalloc(size_t size);
 char *xstrndup(const char *s, size_t n);
 
 int remove_slash(const char *pathname, char *dest);
+char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 void bash_expand(const char *pathname, char *dest);
-
-/* realpath.c */
-char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
 
 /* trace.c */
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)

@@ -14,4 +14,5 @@ check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.
 check_sydbox_CFLAGS= @SYDBOX_CFLAGS@ @CHECK_CFLAGS@
 check_sydbox_LDADD= @CHECK_LIBS@
 
-t01_util_bash_expand_SOURCES= t01_util_bash_expand.c $(top_builddir)/src/util.c
+t01_util_bash_expand_SOURCES= t01_util_bash_expand.c \
+			      $(top_builddir)/src/realpath.c $(top_builddir)/src/util.c

@@ -18,6 +18,7 @@
  */
 
 #include <errno.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -233,4 +234,56 @@ void bash_expand(const char *pathname, char *dest) {
         lg(LOG_DEBUG, "util.bash_expand",
                 "Expanded path \"%s\" to \"%s\" using bash",
                 pathname, dest);
+}
+
+/* A wrapper around safe_realpath */
+char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
+    char *rpath;
+
+    if (resolve)
+        rpath = safe_realpath(path, pid, 1, issymlink);
+    else
+        rpath = safe_realpath(path, pid, 0, NULL);
+
+    if (NULL == rpath) {
+        if (ENOENT == errno) {
+            /* File doesn't exist, check the directory */
+            char *dirc, *dname;
+            dirc = xstrndup(path, PATH_MAX);
+            dname = dirname(dirc);
+            if (resolve)
+                rpath = safe_realpath(dname, pid, 1, issymlink);
+            else
+                rpath = safe_realpath(dname, pid, 0, NULL);
+            free(dirc);
+
+            lg(LOG_DEBUG, "util.resolve_path.file.none",
+                    "File \"%s\" doesn't exist, using directory \"%s\"",
+                    path, rpath);
+            if (NULL == rpath) {
+                /* Neither file nor the directory exists */
+                errno = ENOENT;
+                return NULL;
+            }
+            else {
+                /* Add the directory back */
+                lg(LOG_DEBUG, "util.resolve_path.dir",
+                        "File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
+                        path, rpath);
+                char *basec, *bname;
+                basec = xstrndup(path, PATH_MAX);
+                bname = basename(basec);
+                strncat(rpath, "/", 1);
+                strncat(rpath, bname, strlen(bname));
+                free(basec);
+            }
+        }
+        else {
+            lg(LOG_WARNING, "util.resolve_path.fail",
+                    "safe_realpath() failed for \"%s\": %s", path, strerror(errno));
+            return NULL;
+        }
+    }
+    errno = 0;
+    return rpath;
 }
