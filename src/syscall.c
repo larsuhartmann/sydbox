@@ -281,7 +281,7 @@ struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall)
     decs.res = R_ALLOW;
     return decs;
 found:
-    sdef = &system_calls[i];
+    sdef = &(system_calls[i]);
 
     lg(LOG_DEBUG, "syscall.check.essential",
             "Child %i called essential system call %s()", child->pid, sdef->name);
