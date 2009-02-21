@@ -147,7 +147,7 @@ void *xmalloc(size_t size);
 char *xstrndup(const char *s, size_t n);
 
 int remove_slash(const char *pathname, char *dest);
-void bash_expand(const char *pathname, char *dest);
+void shell_expand(const char *pathname, char *dest);
 char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 
 /* trace.c */

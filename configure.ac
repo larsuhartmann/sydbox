@@ -40,6 +40,7 @@ if test x"$ac_cv_prog_cc_c99" = x"no"; then
 fi
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
+AC_PROG_SED
 dnl }}}
 
 dnl {{{ check for supported OS

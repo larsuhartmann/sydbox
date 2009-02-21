@@ -217,8 +217,8 @@ int remove_slash(const char *pathname, char *dest) {
     return nslashes;
 }
 
-void bash_expand(const char *pathname, char *dest) {
-    char command[32 + PATH_MAX] = "/usr/bin/env bash -c 'echo -n \"";
+void shell_expand(const char *pathname, char *dest) {
+    char command[32 + PATH_MAX] = "/bin/sh -c 'echo -n \"";
     strncat(command, pathname, PATH_MAX);
     strncat(command, "\"'", 2);
     FILE *bash = popen(command, "r");
@@ -231,8 +231,8 @@ void bash_expand(const char *pathname, char *dest) {
     dest[i-1] = '\0';
     fclose(bash);
     if (0 != strncmp(pathname, dest, PATH_MAX))
-        lg(LOG_DEBUG, "util.bash_expand",
-                "Expanded path \"%s\" to \"%s\" using bash",
+        lg(LOG_DEBUG, "util.shell_expand",
+                "Expanded path \"%s\" to \"%s\" using /bin/sh",
                 pathname, dest);
 }
 
