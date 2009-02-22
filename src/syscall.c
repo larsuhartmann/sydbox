@@ -147,7 +147,8 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
                     "System call returns fd and its argument is under a predict path");
             lg(LOG_DEBUG, "syscall.check.prefix.subs.devnull",
                     "Changing the path argument to /dev/null");
-            ptrace_set_string(child->pid, arg, "/dev/null", 10);
+            if (0 > trace_set_string(child->pid, arg, "/dev/null", 10))
+                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
@@ -164,7 +165,8 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
         lg(LOG_DEBUG, "syscall.check.prefix.subs.resolved",
                 "Substituting symlink %s with resolved path %s to prevent races",
                 path, rpath);
-        ptrace_set_string(child->pid, arg, rpath, PATH_MAX);
+        if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX))
+            die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
     }
     return 1;
 }
@@ -220,10 +222,14 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
             lg(LOG_DEBUG, "syscall.check.access.subs.resolved",
                 "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
                 path, rpath);
-            if (sdef->flags & ACCESS_MODE)
-                ptrace_set_string(pid, 0, rpath, PATH_MAX);
-            else
-                ptrace_set_string(pid, 1, rpath, PATH_MAX);
+            if (sdef->flags & ACCESS_MODE) {
+                if (trace_set_string(pid, 0, rpath, PATH_MAX))
+                    die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
+            }
+            else {
+                if (0 > trace_set_string(pid, 1, rpath, PATH_MAX))
+                    die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
+            }
         }
         return 1;
     }
@@ -243,7 +249,8 @@ int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issym
             lg(LOG_DEBUG, "syscall.check.open.subs.resolved",
                 "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
                 path, rpath);
-            ptrace_set_string(pid, 0, rpath, PATH_MAX);
+            if (0 > trace_set_string(pid, 0, rpath, PATH_MAX))
+                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
         }
         return 1;
     }
@@ -263,7 +270,8 @@ int syscall_check_openat(pid_t pid, const char *path, const char *rpath, int iss
             lg(LOG_DEBUG, "syscall.check.open.subs.resolved",
                 "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
                 path, rpath);
-            ptrace_set_string(pid, 1, rpath, PATH_MAX);
+            if (0 > trace_set_string(pid, 1, rpath, PATH_MAX))
+                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
         }
         return 1;
     }
@@ -357,7 +365,8 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
             /* Change argument to /dev/null */
             lg(LOG_DEBUG, "syscall.check.magic.write.devnull",
                     "Changing pathname to /dev/null");
-            ptrace_set_string(child->pid, 0, "/dev/null", 10);
+            if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
+                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
@@ -375,7 +384,8 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
             /* Change argument to /dev/null */
             lg(LOG_DEBUG, "syscall.check.magic.predict.devnull",
                     "Changing pathname to /dev/null");
-            ptrace_set_string(child->pid, 0, "/dev/null", 10);
+            if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
+                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {

@@ -151,7 +151,7 @@ START_TEST(check_trace_get_string_first) {
                 pid);
 
         fail_if(0 > trace_get_string(pid, 0, pathname, PATH_MAX),
-                "Failed to get string from argument 0: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "/dev/null", 10),
                 "Expected '/dev/null' got '%s'", pathname);
 
@@ -193,7 +193,7 @@ START_TEST(check_trace_get_string_second) {
                 pid);
 
         fail_if(0 > trace_get_string(pid, 1, pathname, PATH_MAX),
-                "Failed to get string from argument 1: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "/dev/null", 10),
                 "Expected '/dev/null' got '%s'", pathname);
 
@@ -235,7 +235,7 @@ START_TEST(check_trace_get_string_third) {
                 pid);
 
         fail_if(0 > trace_get_string(pid, 2, pathname, PATH_MAX),
-                "Failed to get string from argument 2: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "arnold_layne", 13),
                 "Expected 'arnold_layne' got '%s'", pathname);
 
@@ -277,7 +277,7 @@ START_TEST(check_trace_get_string_fourth) {
                 pid);
 
         fail_if(0 > trace_get_string(pid, 3, pathname, PATH_MAX),
-                "Failed to get string from argument 3: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "arnold_layne", 13),
                 "Expected 'arnold_layne' got '%s'", pathname);
 
@@ -287,7 +287,7 @@ START_TEST(check_trace_get_string_fourth) {
 }
 END_TEST
 
-START_TEST(check_ptrace_set_string_first) {
+START_TEST(check_trace_set_string_first) {
     pid_t pid;
 
     pid = fork();
@@ -318,9 +318,10 @@ START_TEST(check_ptrace_set_string_first) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 0, "/dev/zero", 10);
+        fail_if(0 > trace_set_string(pid, 0, "/dev/zero", 10),
+                "Failed to set string: %s", strerror(errno));
         fail_if(0 > trace_get_string(pid, 0, pathname, PATH_MAX),
-                "Failed to get string from argument 0: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "/dev/zero", 10),
                 "Expected '/dev/zero' got '%s'", pathname);
 
@@ -330,7 +331,7 @@ START_TEST(check_ptrace_set_string_first) {
 }
 END_TEST
 
-START_TEST(check_ptrace_set_string_second) {
+START_TEST(check_trace_set_string_second) {
     pid_t pid;
 
     pid = fork();
@@ -361,9 +362,10 @@ START_TEST(check_ptrace_set_string_second) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 1, "/dev/zero", 10);
+        fail_if(0 > trace_set_string(pid, 1, "/dev/zero", 10),
+                "Failed to set string: %s", strerror(errno));
         fail_if(0 > trace_get_string(pid, 1, pathname, PATH_MAX),
-                "Failed to get string from argument 1: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "/dev/zero", 10),
                 "Expected '/dev/zero' got '%s'", pathname);
 
@@ -373,7 +375,7 @@ START_TEST(check_ptrace_set_string_second) {
 }
 END_TEST
 
-START_TEST(check_ptrace_set_string_third) {
+START_TEST(check_trace_set_string_third) {
     pid_t pid;
 
     pid = fork();
@@ -404,9 +406,10 @@ START_TEST(check_ptrace_set_string_third) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 2, "its_not_the_same", 17);
+        fail_if(trace_set_string(pid, 2, "its_not_the_same", 17),
+                "Failed to set string: %s", strerror(errno));
         fail_if(0 > trace_get_string(pid, 2, pathname, PATH_MAX),
-                "Failed to get string from argument 2: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
                 "Expected 'its_not_the_same' got '%s'", pathname);
 
@@ -416,7 +419,7 @@ START_TEST(check_ptrace_set_string_third) {
 }
 END_TEST
 
-START_TEST(check_ptrace_set_string_fourth) {
+START_TEST(check_trace_set_string_fourth) {
     pid_t pid;
 
     pid = fork();
@@ -447,9 +450,10 @@ START_TEST(check_ptrace_set_string_fourth) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_string(pid, 3, "its_not_the_same", 17);
+        fail_if(trace_set_string(pid, 3, "its_not_the_same", 17),
+                "Failed to set string: %s", strerror(errno));
         fail_if(0 > trace_get_string(pid, 3, pathname, PATH_MAX),
-                "Failed to get string from argument 3: %s", strerror(errno));
+                "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
                 "Expected 'its_not_the_same' got '%s'", pathname);
 
@@ -470,10 +474,10 @@ Suite *trace_suite_create(void) {
     tcase_add_test(tc_ptrace, check_trace_get_string_second);
     tcase_add_test(tc_ptrace, check_trace_get_string_third);
     tcase_add_test(tc_ptrace, check_trace_get_string_fourth);
-    tcase_add_test(tc_ptrace, check_ptrace_set_string_first);
-    tcase_add_test(tc_ptrace, check_ptrace_set_string_second);
-    tcase_add_test(tc_ptrace, check_ptrace_set_string_third);
-    tcase_add_test(tc_ptrace, check_ptrace_set_string_fourth);
+    tcase_add_test(tc_ptrace, check_trace_set_string_first);
+    tcase_add_test(tc_ptrace, check_trace_set_string_second);
+    tcase_add_test(tc_ptrace, check_trace_set_string_third);
+    tcase_add_test(tc_ptrace, check_trace_set_string_fourth);
     suite_add_tcase(s, tc_ptrace);
 
     return s;

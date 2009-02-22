@@ -50,9 +50,11 @@ int trace_peek(pid_t pid, long off, long *res) {
     errno = 0;
     val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
     if (-1 == val && 0 != errno) {
+        int save_errno = errno;
         lg(LOG_ERROR, "trace.peek",
                 "ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s",
                 pid, off, strerror(errno));
+        errno = save_errno;
         return -1;
     }
     *res = val;
@@ -135,8 +137,8 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     return 0;
 }
 
-void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {
-    int n, m;
+int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
+    int n, m, save_errno;
     long addr = 0;
     union {
         long val;
@@ -144,9 +146,13 @@ void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     } u;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (0 > trace_peek(pid, syscall_args[arg], &addr))
-        die(EX_SOFTWARE, "Failed to get address of argument %d: %s",
-                arg + 1, strerror(errno));
+    if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
+        save_errno = errno;
+        lg(LOG_ERROR, "trace.set.string",
+                "Failed to get address of argument %d: %s", arg, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
 
     n = 0;
     m = len / sizeof(long);
@@ -154,10 +160,12 @@ void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     while (n < m) {
         memcpy(u.x, src, sizeof(long));
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
-            lg(LOG_ERROR, "trace.set_string.fail_pokedata",
-                    "Failed to set argument %d of the last syscall made by child %i to \"%s\": %s",
-                    arg + 1, pid, src, strerror(errno));
-            die(EX_SOFTWARE, "Failed to set string");
+            save_errno = errno;
+            lg(LOG_ERROR, "trace.set.string.pokedata",
+                    "Failed to set argument %d to \"%s\": %s",
+                    arg, src, strerror(errno));
+            errno = save_errno;
+            return -1;
         }
         ++n;
         src += sizeof(long);
@@ -167,10 +175,13 @@ void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     if (0 != m) {
         memcpy(u.x, src, m);
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
-            lg(LOG_ERROR, "trace.set_string.fail_pokedata",
-                    "Failed to set argument %d of the last syscall made by child %i to \"%s\": %s",
-                    arg + 1, pid, src, strerror(errno));
-            die(EX_SOFTWARE, "Failed to set string");
+            save_errno = errno;
+            lg(LOG_ERROR, "trace.set.string.pokedata",
+                    "Failed to set argument %d to \"%s\": %s",
+                    arg, src, strerror(errno));
+            errno = save_errno;
+            return -1;
         }
     }
+    return 0;
 }

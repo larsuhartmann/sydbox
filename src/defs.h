@@ -165,7 +165,7 @@ int trace_peek(pid_t pid, long off, long *res);
 int trace_get_syscall(pid_t pid, long *syscall);
 int trace_set_syscall(pid_t pid, long syscall);
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len);
-void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len);
+int trace_set_string(pid_t pid, int arg, const char *src, size_t len);
 
 /* syscall.c */
 struct syscall_def {
