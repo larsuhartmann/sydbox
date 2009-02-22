@@ -161,7 +161,7 @@ static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
 static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
 
-int trace_peek(pid_t pid, long off, long *res);
+int trace_get_arg(pid_t pid, int arg, long *res);
 int trace_get_syscall(pid_t pid, long *syscall);
 int trace_set_syscall(pid_t pid, long syscall);
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len);

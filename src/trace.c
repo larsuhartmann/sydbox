@@ -82,6 +82,19 @@ int trace_set_syscall(pid_t pid, long syscall) {
     return 0;
 }
 
+int trace_get_arg(pid_t pid, int arg, long *res) {
+    assert(arg >= 0 && arg < MAX_ARGS);
+
+    if (0 > trace_peek(pid, syscall_args[arg], res)) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.get.arg",
+                "Failed to get argument %d: %s", arg, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     int n, m, save_errno;

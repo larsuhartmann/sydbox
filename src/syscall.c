@@ -175,7 +175,7 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     long dirfd;
 
     assert(0 == arg || 2 == arg);
-    if (0 > trace_peek(pid, syscall_args[arg], &dirfd))
+    if (0 > trace_get_arg(pid, arg, &dirfd))
         die(EX_SOFTWARE, "Failed to get dirfd: %s", strerror(errno));
     if (0 > trace_get_string(pid, arg + 1, dest, PATH_MAX))
         die(EX_SOFTWARE, "Failed to get string from argument %d: %s",
@@ -201,7 +201,7 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
         const char *path, const char *rpath, int issymlink) {
     long mode;
     if (sdef->flags & ACCESS_MODE) {
-        if (0 > trace_peek(pid, syscall_args[1], &mode)) {
+        if (0 > trace_get_arg(pid, 1, &mode)) {
             lg(LOG_ERROR, "syscall.check.access.mode.fail",
                     "Failed to get mode from argument 1: %s",
                     strerror(errno));
@@ -209,7 +209,7 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
         }
     }
     else { /* if (sdef->flags & ACCESS_MODE_AT) */
-        if (0 > trace_peek(pid, syscall_args[2], &mode)) {
+        if (0 > trace_get_arg(pid, 2, &mode)) {
             lg(LOG_ERROR, "syscall.check.access.mode.fail",
                     "Failed to get mode from argument 2: %s",
                     strerror(errno));
@@ -239,7 +239,7 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
 int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issymlink) {
     long mode;
 
-    if (0 > trace_peek(pid, syscall_args[1], &mode)) {
+    if (0 > trace_get_arg(pid, 1, &mode)) {
         lg(LOG_ERROR, "syscall.check.open.mode.fail",
                 "Failed to get mode: %s", strerror(errno));
         return -1;
@@ -260,7 +260,7 @@ int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issym
 int syscall_check_openat(pid_t pid, const char *path, const char *rpath, int issymlink) {
     long mode;
 
-    if (0 > trace_peek(pid, syscall_args[1], &mode)) {
+    if (0 > trace_get_arg(pid, 1, &mode)) {
         lg(LOG_ERROR, "syscall.check.openat.mode.fail",
                 "Failed to get mode: %s", strerror(errno));
         return -1;
