@@ -39,6 +39,7 @@
 #include "defs.h"
 
 context_t *ctx = NULL;
+static char *config_file = NULL;
 static char *phase = NULL;
 
 #define MAX_PHASES 9
@@ -391,9 +392,47 @@ int parse_config(const char *pathname) {
     return 1;
 }
 
+void dump_config(void) {
+    fprintf(stderr, "config_file = %s\n", config_file);
+    fprintf(stderr, "phase = %s\n", phase);
+    fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
+    fprintf(stderr, "log_file = %s\n", '\0' == log_file[0] ? "stderr" : log_file);
+    fprintf(stderr, "log_level = ");
+    switch (log_level) {
+        case LOG_ERROR:
+            fprintf(stderr, "LOG_ERROR\n");
+            break;
+        case LOG_WARNING:
+            fprintf(stderr, "LOG_WARNING\n");
+            break;
+        case LOG_NORMAL:
+            fprintf(stderr, "LOG_NORMAL\n");
+            break;
+        case LOG_VERBOSE:
+            fprintf(stderr, "LOG_VERBOSE\n");
+            break;
+        case LOG_DEBUG:
+            fprintf(stderr, "LOG_DEBUG\n");
+            break;
+    }
+    fprintf(stderr, "network sandboxing = %s\n", ctx->net_allowed ? "off" : "on");
+    struct pathnode *curnode;
+    fprintf(stderr, "write allowed paths:\n");
+    curnode = ctx->write_prefixes;
+    while (NULL != curnode) {
+        fprintf(stderr, "> %s\n", curnode->pathname);
+        curnode = curnode->next;
+    }
+    fprintf(stderr, "write predicted paths:\n");
+    curnode = ctx->predict_prefixes;
+    while (NULL != curnode) {
+        fprintf(stderr, "> %s\n", curnode->pathname);
+        curnode = curnode->next;
+    }
+}
+
 int main(int argc, char **argv) {
     int optc, dump;
-    char *config_file = NULL;
 
     /* Parse command line */
     static struct option long_options[] = {
@@ -500,42 +539,7 @@ int main(int argc, char **argv) {
         ctx->net_allowed = 0;
 
     if (dump) {
-        fprintf(stderr, "config_file = %s\n", config_file);
-        fprintf(stderr, "phase = %s\n", phase);
-        fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
-        fprintf(stderr, "log_file = %s\n", '\0' == log_file[0] ? "stderr" : log_file);
-        fprintf(stderr, "log_level = ");
-        switch (log_level) {
-            case LOG_ERROR:
-                fprintf(stderr, "LOG_ERROR\n");
-                break;
-            case LOG_WARNING:
-                fprintf(stderr, "LOG_WARNING\n");
-                break;
-            case LOG_NORMAL:
-                fprintf(stderr, "LOG_NORMAL\n");
-                break;
-            case LOG_VERBOSE:
-                fprintf(stderr, "LOG_VERBOSE\n");
-                break;
-            case LOG_DEBUG:
-                fprintf(stderr, "LOG_DEBUG\n");
-                break;
-        }
-        fprintf(stderr, "network sandboxing = %s\n", ctx->net_allowed ? "off" : "on");
-        struct pathnode *curnode;
-        fprintf(stderr, "write allowed paths:\n");
-        curnode = ctx->write_prefixes;
-        while (NULL != curnode) {
-            fprintf(stderr, "> %s\n", curnode->pathname);
-            curnode = curnode->next;
-        }
-        fprintf(stderr, "write predicted paths:\n");
-        curnode = ctx->predict_prefixes;
-        while (NULL != curnode) {
-            fprintf(stderr, "> %s\n", curnode->pathname);
-            curnode = curnode->next;
-        }
+        dump_config();
         return EXIT_SUCCESS;
     }
 
