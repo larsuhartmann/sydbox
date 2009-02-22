@@ -50,7 +50,7 @@ int trace_peek(pid_t pid, long off, long *res) {
     errno = 0;
     val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
     if (-1 == val && 0 != errno) {
-        lg(LOG_ERROR, "util.trace_peek",
+        lg(LOG_ERROR, "trace.peek",
                 "ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s",
                 pid, off, strerror(errno));
         return -1;
@@ -68,13 +68,16 @@ int trace_get_syscall(pid_t pid, long *syscall) {
     return 0;
 }
 
-void ptrace_set_syscall(pid_t pid, int syscall) {
+int trace_set_syscall(pid_t pid, long syscall) {
     if (0 > ptrace(PTRACE_POKEUSER, pid, ORIG_ACCUM, syscall)) {
-        lg(LOG_ERROR, "trace.set_syscall.fail",
-                "Failed to set syscall number to %d for child %i: %s",
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.set.syscall",
+                "Failed to set syscall number to %ld for child %i: %s",
                 syscall, pid, strerror(errno));
-        die(EX_SOFTWARE, "Failed to set syscall number: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
     }
+    return 0;
 }
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
