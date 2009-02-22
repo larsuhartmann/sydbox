@@ -431,6 +431,28 @@ void dump_config(void) {
     }
 }
 
+const char *get_username(void) {
+    uid_t uid;
+    struct passwd *pwd;
+
+    uid = geteuid();
+    errno = 0;
+    pwd = getpwuid(uid);
+
+    return 0 == errno ? pwd->pw_name : NULL;
+}
+
+const char *get_groupname(void) {
+    gid_t gid;
+    struct group *grp;
+
+    errno = 0;
+    gid = getegid();
+    grp = getgrgid(gid);
+
+    return 0 == errno ? grp->gr_name : NULL;
+}
+
 int main(int argc, char **argv) {
     int optc, dump;
 
@@ -553,24 +575,15 @@ int main(int argc, char **argv) {
     }
 
     /* Get user name and group name */
-    uid_t uid;
-    gid_t gid;
-    struct passwd *pwd;
-    struct group *grp;
-
-    uid = geteuid();
-    errno = 0;
-    pwd = getpwuid(uid);
-    if (NULL == pwd)
+    const char *username = get_username();
+    if (NULL == username)
         die(EX_SOFTWARE, "Failed to get password file entry: %s", strerror(errno));
-    errno = 0;
-    gid = getegid();
-    grp = getgrgid(gid);
-    if (NULL == getgrgid)
+    const char *groupname = get_groupname();
+    if (NULL == groupname)
         die(EX_SOFTWARE, "Failed to get group file entry: %s", strerror(errno));
 
     lg(LOG_VERBOSE, "main.fork", "Forking to execute '%s' as %s:%s",
-            cmd, pwd->pw_name, grp->gr_name);
+            cmd, username, groupname);
     pid = fork();
     if (0 > pid)
         die(EX_SOFTWARE, strerror(errno));
