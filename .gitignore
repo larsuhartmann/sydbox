@@ -28,4 +28,10 @@ src/syscallent.h
 tests/check_sydbox
 tests/arnold_layne
 tests/its_not_the_same
+tests/t01_util_shell_expand
+tests/progtests/*.log
+tests/progtests/*
+!tests/progtests/*.bash
+!tests/progtests/*.c
+!tests/progtests/Makefile.am
 tests/progtests/test-lib.bash
