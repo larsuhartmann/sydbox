@@ -123,19 +123,21 @@ int syscall_check_prefix(context_t *ctx, pid_t pid, int arg, const struct syscal
     lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for predict access", rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
+    char reason[PATH_MAX + 128];
     const char *sname = syscall_get_name(sdef->no);
     if (!allow_write && !allow_predict) {
         decs->res = R_DENY_VIOLATION;
         if (0 == arg)
-            snprintf(decs->reason, REASON_MAX, "%s(\"%s\", ", sname, path);
+            strcpy(reason, "%s(\"%s\", ");
         else if (1 == arg)
-            snprintf(decs->reason, REASON_MAX, "%s(?, \"%s\", ", sname, path);
+            strcpy(reason, "%s(?, \"%s\", ");
         if (sdef->flags & ACCESS_MODE)
-            strcat(decs->reason, "O_WR)");
+            strcat(reason, "O_WR)");
         else if (sdef->flags & OPEN_MODE || sdef->flags & OPEN_MODE_AT)
-            strcat(decs->reason, "O_WRONLY/O_RDWR, ...)");
+            strcat(reason, "O_WRONLY/O_RDWR)");
         else
-            strcat(decs->reason, "...)");
+            strcat(reason, "...)");
+        access_error(pid, reason, sname, path);
         return 0;
     }
     else if (!allow_write && allow_predict) {
@@ -493,9 +495,9 @@ found:
     if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
         decs.res = R_DENY_VIOLATION;
 #if defined(I386)
-        snprintf(decs.reason, REASON_MAX, "socketcall()");
+        access_error(child->pid, "socketcall()");
 #elif defined(X86_64)
-        snprintf(decs.reason, REASON_MAX, "socket()");
+        access_error(child->pid, "socket()");
 #endif
         decs.ret = -1;
         return decs;
@@ -517,7 +519,6 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         decs = syscall_check(ctx, child, syscall);
         switch(decs.res) {
             case R_DENY_VIOLATION:
-                access_error(child->pid, decs.reason);
                 decs.ret = -1;
             case R_DENY_RETURN:
                 child->retval = decs.ret;

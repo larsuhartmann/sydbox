@@ -180,11 +180,9 @@ enum result {
     R_NONMAGIC /* Internal used by syscall_check_magic() */
 };
 
-#define REASON_MAX (PATH_MAX + 128)
 struct decision {
     enum result res;
     int ret;
-    char reason[REASON_MAX];
 };
 
 int syscall_check_path(context_t *ctx, struct tchild *child,
