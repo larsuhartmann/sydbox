@@ -7,6 +7,7 @@ sydbox_SOURCES = defs.h syscallent.h \
 		 realpath.c syscall.c trace.c main.c
 sydbox_LDADD= $(confuse_LIBS)
 
+if GCC
 syscallent.h:
 	@echo "Generating $@ from asm/unistd.h"
 	echo "// This is a GENERATED file!" > $@
@@ -19,4 +20,9 @@ syscallent.h:
 				echo "{$$no, $$name}," >> $@ ;\
 			fi \
 		done
+else
+syscallent.h:
+	@echo "Generating dummy syscallent.h because compiler isn't gcc"
+	echo >syscallent.h
 
+endif

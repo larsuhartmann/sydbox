@@ -287,7 +287,8 @@ if test x"$ac_cv_proc_fd_usable" = x"no"; then
 fi
 dnl }}}
 
-dnl {{{ Extra CFLAGS
+dnl {{{ Check for gcc and glibc
+AM_CONDITIONAL(GCC, test x"$GCC" = x"yes")
 SYDBOX_CFLAGS=
 if test x"$GCC" = x"yes"; then
 	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -Wall -pedantic"
