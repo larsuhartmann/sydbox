@@ -172,22 +172,9 @@ struct syscall_def {
     unsigned int flags;
 };
 
-/* Possible results for a syscall */
-enum result {
-    R_DENY_VIOLATION, /* Deny the system call and raise an access violation. */
-    R_DENY_RETURN, /* Deny the system call and make it return the specified return code. */
-    R_ALLOW, /* Allow the system call to be called */
-    R_NONMAGIC /* Internal used by syscall_check_magic() */
-};
-
-struct decision {
-    enum result res;
-    int ret;
-};
-
 int syscall_check_path(context_t *ctx, struct tchild *child,
-        int arg, const struct syscall_def *sdef, struct decision *decs);
-struct decision syscall_check(context_t *ctx, struct tchild *child, int syscall);
+        int arg, const struct syscall_def *sdef);
+int syscall_check(context_t *ctx, struct tchild *child, int syscall);
 int syscall_handle(context_t *ctx, struct tchild *child);
 
 #endif /* SYDBOX_GUARD_DEFS_H */

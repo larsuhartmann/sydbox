@@ -39,7 +39,6 @@ START_TEST(check_syscall_check_chmod_deny) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
@@ -58,13 +57,11 @@ START_TEST(check_syscall_check_chmod_deny) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_DENY_VIOLATION == decs.res,
-                "Expected R_DENY_VIOLATION, got %d", decs.res);
+        fail_if(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
 
         kill(pid, SIGTERM);
     }
-
 }
 END_TEST
 
@@ -82,7 +79,6 @@ START_TEST(check_syscall_check_chmod_predict) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
         tchild_new(&(ctx->children), pid);
@@ -103,11 +99,10 @@ START_TEST(check_syscall_check_chmod_predict) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_DENY_RETURN == decs.res,
-                "Expected R_DENY_RETURN, got %d", decs.res);
-        fail_unless(0 == decs.ret,
-                "Expected 0 got %d", decs.ret);
+        fail_if(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected deny");
+        fail_unless(0 == ctx->eldest->retval,
+                "Expected 0 got %d", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -128,7 +123,6 @@ START_TEST(check_syscall_check_chmod_allow) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
         tchild_new(&(ctx->children), pid);
@@ -149,9 +143,8 @@ START_TEST(check_syscall_check_chmod_allow) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW== decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -172,7 +165,6 @@ START_TEST(check_syscall_check_chown_deny) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
@@ -191,9 +183,8 @@ START_TEST(check_syscall_check_chown_deny) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_DENY_VIOLATION == decs.res,
-                "Expected R_DENY_VIOLATION, got %d", decs.res);
+        fail_if(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
 
         kill(pid, SIGTERM);
     }
@@ -215,7 +206,6 @@ START_TEST(check_syscall_check_chown_predict) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
         tchild_new(&(ctx->children), pid);
@@ -236,11 +226,10 @@ START_TEST(check_syscall_check_chown_predict) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_DENY_RETURN == decs.res,
-                "Expected R_DENY_RETURN, got %d", decs.res);
-        fail_unless(0 == decs.ret,
-                "Expected 0 got %d", decs.ret);
+        fail_if(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected deny");
+        fail_unless(0 == ctx->eldest->retval,
+                "Expected 0 got %d", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -261,7 +250,6 @@ START_TEST(check_syscall_check_chown_allow) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
         tchild_new(&(ctx->children), pid);
@@ -282,9 +270,8 @@ START_TEST(check_syscall_check_chown_allow) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW == decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -305,7 +292,6 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
@@ -325,9 +311,8 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW == decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -348,7 +333,6 @@ START_TEST(check_syscall_check_open_wronly_deny) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
@@ -368,9 +352,8 @@ START_TEST(check_syscall_check_open_wronly_deny) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_DENY_VIOLATION == decs.res,
-                "Expected R_DENY_VIOLATION, got %d", decs.res);
+        fail_if(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
 
         kill(pid, SIGTERM);
     }
@@ -411,7 +394,6 @@ START_TEST(check_syscall_check_open_wronly_predict) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         close(pfd[1]);
 
@@ -434,9 +416,8 @@ START_TEST(check_syscall_check_open_wronly_predict) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW == decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
@@ -477,7 +458,6 @@ START_TEST(check_syscall_check_open_wronly_allow) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
         tchild_new(&(ctx->children), pid);
@@ -498,9 +478,8 @@ START_TEST(check_syscall_check_open_wronly_allow) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW == decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -521,7 +500,6 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
@@ -541,9 +519,8 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_DENY_VIOLATION == decs.res,
-                "Expected R_DENY_VIOLATION, got %d", decs.res);
+        fail_if(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
 
         kill(pid, SIGTERM);
     }
@@ -584,7 +561,6 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         close(pfd[1]);
 
@@ -607,9 +583,8 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW == decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
@@ -650,7 +625,6 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
     else { /* parent */
         int status, syscall;
         context_t *ctx = context_new();
-        struct decision decs;
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
         tchild_new(&(ctx->children), pid);
@@ -671,9 +645,8 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
                 pid);
 
         syscall = ptrace_get_syscall(pid);
-        decs = syscall_check(ctx, ctx->eldest, syscall);
-        fail_unless(R_ALLOW == decs.res,
-                "Expected R_ALLOW, got %d", decs.res);
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
