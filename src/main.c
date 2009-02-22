@@ -150,7 +150,7 @@ int trace_loop(void) {
                 }
                 else
                     lg(LOG_DEBUG_CRAZY, "main.tloop.syscall.resume",
-                            "Resumed child %i after syscall", child->pid);
+                            "Resumed child %i before/after syscall", child->pid);
                 break;
             case E_FORK:
                 /* Get new child's pid */
