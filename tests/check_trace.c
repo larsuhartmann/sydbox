@@ -23,7 +23,7 @@
 #include "../src/defs.h"
 #include "check_sydbox.h"
 
-START_TEST(check_ptrace_get_syscall) {
+START_TEST(check_trace_get_syscall) {
     pid_t pid;
 
     pid = fork();
@@ -33,9 +33,11 @@ START_TEST(check_ptrace_get_syscall) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDONLY);
+        pause();
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -53,7 +55,8 @@ START_TEST(check_ptrace_get_syscall) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(__NR_open == syscall,
                 "Expected __NR_open, got %d", syscall);
 
@@ -75,7 +78,8 @@ START_TEST(check_ptrace_set_syscall) {
         open("/dev/null", O_RDONLY);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -103,7 +107,8 @@ START_TEST(check_ptrace_set_syscall) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(0xbadca11 == syscall,
                 "Expected 0xbadca11, got %d", syscall);
 
@@ -450,7 +455,7 @@ Suite *trace_suite_create(void) {
 
     /* ptrace_* test cases */
     TCase *tc_ptrace = tcase_create("ptrace");
-    tcase_add_test(tc_ptrace, check_ptrace_get_syscall);
+    tcase_add_test(tc_ptrace, check_trace_get_syscall);
     tcase_add_test(tc_ptrace, check_ptrace_set_syscall);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_first);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_second);

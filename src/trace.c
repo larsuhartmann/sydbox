@@ -44,13 +44,13 @@
 
 #include "defs.h"
 
-int upeek(pid_t pid, long off, long *res) {
+int trace_peek(pid_t pid, long off, long *res) {
     long val;
 
     errno = 0;
     val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
     if (-1 == val && 0 != errno) {
-        lg(LOG_ERROR, "util.upeek",
+        lg(LOG_ERROR, "util.trace_peek",
                 "ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s",
                 pid, off, strerror(errno));
         return -1;
@@ -59,12 +59,13 @@ int upeek(pid_t pid, long off, long *res) {
     return 0;
 }
 
-int ptrace_get_syscall(pid_t pid) {
-    long syscall;
-
-    if (0 > upeek(pid, ORIG_ACCUM, &syscall))
-        die(EX_SOFTWARE, "Failed to get syscall number: %s", strerror(errno));
-    return syscall;
+int trace_get_syscall(pid_t pid, long *syscall) {
+    if (0 > trace_peek(pid, ORIG_ACCUM, syscall)) {
+        lg(LOG_ERROR, "trace.get.syscall",
+                "Failed to get syscall: %s", strerror(errno));
+        return -1;
+    }
+    return 0;
 }
 
 void ptrace_set_syscall(pid_t pid, int syscall) {
@@ -89,7 +90,7 @@ void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     addr = 0;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (0 > upeek(pid, syscall_args[arg], &addr))
+    if (0 > trace_peek(pid, syscall_args[arg], &addr))
         die(EX_SOFTWARE, "Failed to get address of argument %d: %s",
                 arg + 1, strerror(errno));
 
@@ -119,7 +120,7 @@ void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     } u;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (0 > upeek(pid, syscall_args[arg], &addr))
+    if (0 > trace_peek(pid, syscall_args[arg], &addr))
         die(EX_SOFTWARE, "Failed to get address of argument %d: %s",
                 arg + 1, strerror(errno));
 

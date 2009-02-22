@@ -37,7 +37,8 @@ START_TEST(check_syscall_check_chmod_deny) {
         chmod("/dev/null", 0755);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
@@ -56,7 +57,8 @@ START_TEST(check_syscall_check_chmod_deny) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
 
@@ -77,7 +79,8 @@ START_TEST(check_syscall_check_chmod_predict) {
         chmod("/dev/null", 0755);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
@@ -98,7 +101,8 @@ START_TEST(check_syscall_check_chmod_predict) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected deny");
         fail_unless(0 == ctx->eldest->retval,
@@ -121,7 +125,8 @@ START_TEST(check_syscall_check_chmod_allow) {
         chmod("/dev/null", 0755);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
@@ -142,7 +147,8 @@ START_TEST(check_syscall_check_chmod_allow) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
@@ -163,7 +169,8 @@ START_TEST(check_syscall_check_chown_deny) {
         chown("/dev/null", 0, 0);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
@@ -182,7 +189,8 @@ START_TEST(check_syscall_check_chown_deny) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
 
@@ -204,7 +212,8 @@ START_TEST(check_syscall_check_chown_predict) {
         chown("/dev/null", 0, 0);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
@@ -225,7 +234,8 @@ START_TEST(check_syscall_check_chown_predict) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected deny");
         fail_unless(0 == ctx->eldest->retval,
@@ -248,7 +258,8 @@ START_TEST(check_syscall_check_chown_allow) {
         chown("/dev/null", 0, 0);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
@@ -269,7 +280,8 @@ START_TEST(check_syscall_check_chown_allow) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
@@ -290,7 +302,8 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
         open("/dev/null", O_RDONLY);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
@@ -310,7 +323,8 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
@@ -331,7 +345,8 @@ START_TEST(check_syscall_check_open_wronly_deny) {
         open("/dev/null", O_WRONLY);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
@@ -351,7 +366,8 @@ START_TEST(check_syscall_check_open_wronly_deny) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
 
@@ -392,7 +408,8 @@ START_TEST(check_syscall_check_open_wronly_predict) {
         pause();
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         close(pfd[1]);
@@ -415,7 +432,8 @@ START_TEST(check_syscall_check_open_wronly_predict) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
@@ -456,7 +474,8 @@ START_TEST(check_syscall_check_open_wronly_allow) {
         open("/dev/null", O_WRONLY);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
@@ -477,7 +496,8 @@ START_TEST(check_syscall_check_open_wronly_allow) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
@@ -498,7 +518,8 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
         open("/dev/null", O_RDWR);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
@@ -518,7 +539,8 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
 
@@ -559,7 +581,8 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
         pause();
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         close(pfd[1]);
@@ -582,7 +605,8 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
@@ -644,7 +668,8 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        syscall = ptrace_get_syscall(pid);
+        fail_unless(0 == trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
         fail_unless(syscall_check(ctx, ctx->eldest, syscall),
                 "Denied access, expected allow");
 
