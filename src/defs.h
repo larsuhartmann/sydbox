@@ -77,18 +77,16 @@ enum {
     E_UNKNOWN
 };
 
+/* TCHILD_ flags */
+#define TCHILD_NEEDSETUP (1 << 0) /* Child needs setup */
+#define TCHILD_INSYSCALL (1 << 1) /* Child is in syscall */
+
 /* Per process tracking data */
 struct tchild {
-    /* process id of the traced child */
+    int flags; /* TCHILD_ flags */
     pid_t pid;
-    /* we will get a stop signal from child and will setup tracing flags */
-    int need_setup;
-    /* child is in syscall */
-    int in_syscall;
-    /* original syscall number when a syscall is faked */
-    unsigned long orig_syscall;
-    /* faked syscall will fail with this error code */
-    int error_code;
+    unsigned long syscall; /* original syscall when system call is faked */
+    int retval; /* faked syscall will return this value */
     struct tchild *next;
 };
 

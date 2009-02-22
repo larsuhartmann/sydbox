@@ -25,10 +25,10 @@ START_TEST(check_tchild_new) {
 
     fail_unless(NULL != tc);
     fail_unless(666 == tc->pid);
-    fail_unless(0 != tc->need_setup);
-    fail_unless(0 == tc->in_syscall);
-    fail_unless(0xbadca11 == tc->orig_syscall);
-    fail_unless(-1 == tc->error_code);
+    fail_unless(tc->flags & TCHILD_NEEDSETUP);
+    fail_if(tc->flags & TCHILD_INSYSCALL);
+    fail_unless(0xbadca11 == tc->syscall);
+    fail_unless(-1 == tc->retval);
 
     tchild_free(&tc);
 }
@@ -111,7 +111,7 @@ START_TEST(check_tchild_setup) {
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
         tchild_setup(tc);
-        fail_unless(0 == tc->need_setup);
+        fail_if(tc->flags & TCHILD_NEEDSETUP);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);

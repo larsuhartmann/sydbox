@@ -510,7 +510,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     syscall = ptrace_get_syscall(child->pid);
     sname = syscall_get_name(syscall);
-    if (!child->in_syscall) { /* Entering syscall */
+    if (!(child->flags & TCHILD_INSYSCALL)) { /* Entering syscall */
         lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
                 "Child %i is entering system %s()",
                 child->pid, sname);
@@ -520,15 +520,15 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 access_error(child->pid, decs.reason);
                 decs.ret = -1;
             case R_DENY_RETURN:
-                child->error_code = decs.ret;
-                child->orig_syscall = syscall;
+                child->retval = decs.ret;
+                child->syscall = syscall;
                 ptrace_set_syscall(child->pid, 0xbadca11);
                 break;
             case R_ALLOW:
             default:
                 break;
         }
-        child->in_syscall = 1;
+        child->flags ^= TCHILD_INSYSCALL;
     }
     else { /* Exiting syscall */
         lg(LOG_DEBUG_CRAZY, "syscall.handle.exit",
@@ -536,15 +536,15 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 child->pid, sname);
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
-            ptrace_set_syscall(child->pid, child->orig_syscall);
-            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->error_code)) {
+            ptrace_set_syscall(child->pid, child->syscall);
+            if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->retval)) {
                 lg(LOG_ERROR, "syscall.handle.deny.pokeuser.fail",
-                        "Failed to set error code to %d: %s", child->error_code,
+                        "Failed to set error code to %d: %s", child->retval,
                         strerror(errno));
                 return -1;
             }
         }
-        child->in_syscall = 0;
+        child->flags ^= TCHILD_INSYSCALL;
     }
     return 0;
 }

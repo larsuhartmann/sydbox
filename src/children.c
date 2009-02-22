@@ -37,11 +37,10 @@ void tchild_new(struct tchild **head, pid_t pid) {
     struct tchild *newchild;
 
     newchild = (struct tchild *) xmalloc(sizeof(struct tchild));
+    newchild->flags = TCHILD_NEEDSETUP;
     newchild->pid = pid;
-    newchild->need_setup = 1;
-    newchild->in_syscall = 0;
-    newchild->orig_syscall = 0xbadca11;
-    newchild->error_code = -1;
+    newchild->syscall = 0xbadca11;
+    newchild->retval = -1;
     newchild->next = *head; /* link next */
     *head = newchild; /* link head */
     lg(LOG_DEBUG, "children.new", "New child %i", pid);
@@ -115,7 +114,7 @@ void tchild_setup(struct tchild *child) {
         die(EX_SOFTWARE, "Setting tracing options failed for child %i: %s",
                 child->pid, strerror(errno));
     }
-    child->need_setup = 0;
+    child->flags ^= TCHILD_NEEDSETUP;
 }
 
 /* Learn the cause of the signal received from child. */
@@ -127,7 +126,7 @@ unsigned int tchild_event(struct tchild *child, int status) {
         /* Execution of child stopped by a signal */
         sig = WSTOPSIG(status);
         if (sig == SIGSTOP) {
-            if (NULL != child && child->need_setup) {
+            if (NULL != child && child->flags & TCHILD_NEEDSETUP) {
                 lg(LOG_DEBUG, "children.event.setup",
                         "Child %i is born and she's ready for tracing", child->pid);
                 return E_SETUP;
