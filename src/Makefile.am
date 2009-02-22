@@ -7,6 +7,7 @@ sydbox_SOURCES = defs.h syscallent.h \
 		 realpath.c syscall.c trace.c main.c
 sydbox_LDADD= $(confuse_LIBS)
 
+BUILT_SOURCES= syscallent.h
 if GCC
 syscallent.h:
 	@echo "Generating $@ from asm/unistd.h"
