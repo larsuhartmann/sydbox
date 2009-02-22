@@ -472,7 +472,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         if (!syscall_check(ctx, child, syscall)) {
             /* Deny access */
             child->syscall = syscall;
-            ptrace_set_syscall(child->pid, 0xbadca11);
+            if (0 > trace_set_syscall(child->pid, 0xbadca11))
+                die(EX_SOFTWARE, "Failed to set syscall: %s", strerror(errno));
         }
         child->flags ^= TCHILD_INSYSCALL;
     }
@@ -482,7 +483,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 child->pid, sname);
         if (0xbadca11 == syscall) {
             /* Restore real call number and return our error code */
-            ptrace_set_syscall(child->pid, child->syscall);
+            if (0 > trace_set_syscall(child->pid, child->syscall))
+                die(EX_SOFTWARE, "Failed to restore syscall: %s", strerror(errno));
             if (0 != ptrace(PTRACE_POKEUSER, child->pid, ACCUM, child->retval)) {
                 lg(LOG_ERROR, "syscall.handle.deny.pokeuser.fail",
                         "Failed to set error code to %d: %s", child->retval,

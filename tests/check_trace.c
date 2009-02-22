@@ -55,7 +55,7 @@ START_TEST(check_trace_get_syscall) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        fail_unless(0 == trace_get_syscall(pid, &syscall),
+        fail_if(0 > trace_get_syscall(pid, &syscall),
                 "Failed to get syscall: %s", strerror(errno));
         fail_unless(__NR_open == syscall,
                 "Expected __NR_open, got %d", syscall);
@@ -66,7 +66,7 @@ START_TEST(check_trace_get_syscall) {
 }
 END_TEST
 
-START_TEST(check_ptrace_set_syscall) {
+START_TEST(check_trace_set_syscall) {
     pid_t pid;
 
     pid = fork();
@@ -97,7 +97,8 @@ START_TEST(check_ptrace_set_syscall) {
                 "child %i didn't stop by sending itself SIGTRAP",
                 pid);
 
-        ptrace_set_syscall(pid, 0xbadca11);
+        fail_if(0 > trace_set_syscall(pid, 0xbadca11),
+                "Failed to set syscall: %s", strerror(errno));
 
         /* Resume the child, it will stop at the end of the system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -456,7 +457,7 @@ Suite *trace_suite_create(void) {
     /* ptrace_* test cases */
     TCase *tc_ptrace = tcase_create("ptrace");
     tcase_add_test(tc_ptrace, check_trace_get_syscall);
-    tcase_add_test(tc_ptrace, check_ptrace_set_syscall);
+    tcase_add_test(tc_ptrace, check_trace_set_syscall);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_first);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_second);
     tcase_add_test(tc_ptrace, check_ptrace_get_string_third);
