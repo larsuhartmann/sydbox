@@ -39,6 +39,8 @@
 #include "defs.h"
 
 context_t *ctx = NULL;
+static char *phase = NULL;
+
 #define MAX_PHASES 9
 const char *phases[MAX_PHASES] = {
     "default", "loadenv", "saveenv", "unpack", "prepare",
@@ -82,6 +84,13 @@ void usage(void) {
     for (i = 0; i < MAX_PHASES - 2; i++)
         fprintf(stderr, "%s, ", phases[i]);
     fprintf(stderr, "%s\n", phases[++i]);
+}
+
+void cleanup(void) {
+    if (NULL != ctx)
+        context_free(ctx);
+    if (NULL != flog)
+        fclose(flog);
 }
 
 int trace_loop(void) {
@@ -255,13 +264,6 @@ int trace_loop(void) {
     return ret;
 }
 
-void cleanup(void) {
-    if (NULL != ctx)
-        context_free(ctx);
-    if (NULL != flog)
-        fclose(flog);
-}
-
 int legal_phase(const char *phase) {
     for (int i = 0; i < MAX_PHASES; i++) {
         if (0 == strncmp(phase, phases[i], strlen(phases[i]) + 1))
@@ -270,96 +272,7 @@ int legal_phase(const char *phase) {
     return 0;
 }
 
-int main(int argc, char **argv) {
-    int optc, dump;
-    char *config_file = NULL;
-    char *phase = NULL;
-    ctx = context_new();
-
-    /* Parse command line */
-    static struct option long_options[] = {
-        {"version",  no_argument, NULL, 'V'},
-        {"help",     no_argument, NULL, 'h'},
-        {"verbose",  no_argument, NULL, 'v'},
-        {"debug",    no_argument, NULL, 'd'},
-        {"nocolour", no_argument, NULL, 'C'},
-        {"phase",    required_argument, NULL, 'p'},
-        {"log-file", required_argument, NULL, 'l'},
-        {"config",   required_argument, NULL, 'c'},
-        {"dump",     no_argument, NULL, 'D'},
-        {0, 0, NULL, 0}
-    };
-    pid_t pid;
-
-    colour = -1;
-    log_level = -1;
-    dump = 0;
-    log_file[0] = '\0';
-    flog = NULL;
-    atexit(cleanup);
-    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:l:c:D", long_options, NULL))) {
-        switch (optc) {
-            case 'h':
-                usage();
-                return EXIT_SUCCESS;
-            case 'V':
-                about();
-                return EXIT_SUCCESS;
-            case 'v':
-                log_level = LOG_VERBOSE;
-                break;
-            case 'd':
-                if (LOG_DEBUG == log_level)
-                    log_level = LOG_DEBUG_CRAZY;
-                else if (LOG_DEBUG_CRAZY != log_level)
-                    log_level = LOG_DEBUG;
-                break;
-            case 'C':
-                colour = 0;
-                break;
-            case 'p':
-                phase = optarg;
-                break;
-            case 'l':
-                strncpy(log_file, optarg, PATH_MAX);
-                break;
-            case 'c':
-                config_file = optarg;
-                break;
-            case 'D':
-                dump = 1;
-                break;
-            case '?':
-            default:
-                die(EX_USAGE, "try %s --help for more information", PACKAGE);
-        }
-    }
-
-    if (!dump) {
-        if (argc < optind + 1)
-            die(EX_USAGE, "no command given");
-        else if (0 != strncmp("--", argv[optind - 1], 3))
-            die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
-        else {
-            argc -= optind;
-            argv += optind;
-        }
-    }
-
-    if (NULL == phase) {
-        phase = getenv(ENV_PHASE);
-        if (NULL == phase)
-            phase = "default";
-    }
-    if (!legal_phase(phase))
-        die(EX_USAGE, "invalid phase '%s'", phase);
-
-    /* Parse configuration file */
-    if (NULL == config_file)
-        config_file = getenv(ENV_CONFIG);
-    if (NULL == config_file)
-        config_file = SYSCONFDIR"/sydbox.conf";
-
+int parse_config(const char *pathname) {
     cfg_opt_t default_opts[] = {
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
@@ -433,9 +346,9 @@ int main(int argc, char **argv) {
 
     cfg_t *cfg = cfg_init(sydbox_opts, CFGF_NONE);
 
-    if (CFG_PARSE_ERROR == cfg_parse(cfg, config_file)) {
+    if (CFG_PARSE_ERROR == cfg_parse(cfg, pathname)) {
         free(cfg);
-        die(EX_USAGE, "Parse error in file %s", config_file);
+        return 0;
     }
 
     if ('\0' == log_file[0] && NULL != cfg_getstr(cfg, "log_file"))
@@ -475,6 +388,99 @@ int main(int argc, char **argv) {
         }
     }
     cfg_free(cfg);
+    return 1;
+}
+
+int main(int argc, char **argv) {
+    int optc, dump;
+    char *config_file = NULL;
+
+    /* Parse command line */
+    static struct option long_options[] = {
+        {"version",  no_argument, NULL, 'V'},
+        {"help",     no_argument, NULL, 'h'},
+        {"verbose",  no_argument, NULL, 'v'},
+        {"debug",    no_argument, NULL, 'd'},
+        {"nocolour", no_argument, NULL, 'C'},
+        {"phase",    required_argument, NULL, 'p'},
+        {"log-file", required_argument, NULL, 'l'},
+        {"config",   required_argument, NULL, 'c'},
+        {"dump",     no_argument, NULL, 'D'},
+        {0, 0, NULL, 0}
+    };
+    pid_t pid;
+
+    ctx = context_new();
+    colour = -1;
+    log_level = -1;
+    dump = 0;
+    log_file[0] = '\0';
+    flog = NULL;
+    atexit(cleanup);
+    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:l:c:D", long_options, NULL))) {
+        switch (optc) {
+            case 'h':
+                usage();
+                return EXIT_SUCCESS;
+            case 'V':
+                about();
+                return EXIT_SUCCESS;
+            case 'v':
+                log_level = LOG_VERBOSE;
+                break;
+            case 'd':
+                if (LOG_DEBUG == log_level)
+                    log_level = LOG_DEBUG_CRAZY;
+                else if (LOG_DEBUG_CRAZY != log_level)
+                    log_level = LOG_DEBUG;
+                break;
+            case 'C':
+                colour = 0;
+                break;
+            case 'p':
+                phase = optarg;
+                break;
+            case 'l':
+                strncpy(log_file, optarg, PATH_MAX);
+                break;
+            case 'c':
+                config_file = optarg;
+                break;
+            case 'D':
+                dump = 1;
+                break;
+            case '?':
+            default:
+                die(EX_USAGE, "try %s --help for more information", PACKAGE);
+        }
+    }
+
+    if (!dump) {
+        if (argc < optind + 1)
+            die(EX_USAGE, "no command given");
+        else if (0 != strncmp("--", argv[optind - 1], 3))
+            die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
+        else {
+            argc -= optind;
+            argv += optind;
+        }
+    }
+
+    if (NULL == phase) {
+        phase = getenv(ENV_PHASE);
+        if (NULL == phase)
+            phase = "default";
+    }
+    if (!legal_phase(phase))
+        die(EX_USAGE, "invalid phase '%s'", phase);
+
+    /* Parse configuration file */
+    if (NULL == config_file)
+        config_file = getenv(ENV_CONFIG);
+    if (NULL == config_file)
+        config_file = SYSCONFDIR"/sydbox.conf";
+    if (!parse_config(config_file))
+        die(EX_USAGE, "Parse error in file %s", config_file);
 
     /* Parse environment variables */
     char *log_env, *write_env, *predict_env, *net_env;
