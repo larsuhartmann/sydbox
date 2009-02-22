@@ -343,6 +343,8 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
     const char *rpath;
 
     ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
+    lg(LOG_DEBUG, "syscall.check.magic.open.ismagic",
+            "Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
         rpath = pathname + CMD_WRITE_LEN - 1;
         if (context_cmd_allowed(ctx, child)) {
@@ -350,31 +352,37 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
                     "Approved addwrite(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->write_prefixes), rpath);
             /* Change argument to /dev/null */
-            lg(LOG_DEBUG, "syscall.check_magic.write.devnull",
+            lg(LOG_DEBUG, "syscall.check.magic.write.devnull",
                     "Changing pathname to /dev/null");
             ptrace_set_string(child->pid, 0, "/dev/null", 10);
             return 1;
         }
-        else
-            lg(LOG_WARNING, "syscall.check_magic.write.deny",
+        else {
+            lg(LOG_WARNING, "syscall.check.magic.write.deny",
                     "Denied addwrite(\"%s\") for child %i", rpath, child->pid);
+            return 0;
+        }
     }
     else if (path_magic_predict(pathname)) {
         rpath = pathname + CMD_PREDICT_LEN - 1;
         if (context_cmd_allowed(ctx, child)) {
-            lg(LOG_NORMAL, "syscall.check_magic.predict.allow",
+            lg(LOG_NORMAL, "syscall.check.magic.predict.allow",
                     "Approved addpredict(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->predict_prefixes), rpath);
             /* Change argument to /dev/null */
-            lg(LOG_DEBUG, "syscall.check_magic.predict.devnull",
+            lg(LOG_DEBUG, "syscall.check.magic.predict.devnull",
                     "Changing pathname to /dev/null");
             ptrace_set_string(child->pid, 0, "/dev/null", 10);
             return 1;
         }
-        else
-            lg(LOG_WARNING, "syscall.check_magic.predict.deny",
+        else {
+            lg(LOG_WARNING, "syscall.check.magic.predict.deny",
                     "Denied addpredict(\"%s\") for child %i", rpath, child->pid);
+            return 0;
+        }
     }
+    lg(LOG_DEBUG, "syscall.check.magic.open.nonmagic",
+            "open(\"%s\", ...) not magic", pathname);
     return 0;
 }
 
@@ -382,10 +390,18 @@ int syscall_check_magic_stat(struct tchild *child) {
     char pathname[PATH_MAX];
 
     ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
-    if (path_magic_dir(pathname))
+    lg(LOG_DEBUG, "syscall.check.magic.stat.ismagic",
+            "Checking if stat(\"%s\") is magic", pathname);
+    if (path_magic_dir(pathname)) {
+        lg(LOG_DEBUG, "syscall.check.magic.stat.magic",
+                "stat(\"%s\") is magic", pathname);
         return 1;
-    else
+    }
+    else {
+        lg(LOG_DEBUG, "syscall.check.magic.stat.nonmagic",
+                "stat(\"%s\") is not magic", pathname);
         return 0;
+    }
 }
 
 int syscall_check(context_t *ctx, struct tchild *child, int syscall) {
@@ -405,24 +421,13 @@ found:
             "Child %i called essential system call %s()", child->pid, sname);
 
     /* Handle magic calls */
-    if (sdef->flags & MAGIC_OPEN) {
-        lg(LOG_DEBUG, "syscall.check.open.ismagic", "Checking if open() is magic");
-        if (syscall_check_magic_open(ctx, child)) {
-            lg(LOG_DEBUG, "syscall.check.open.magic", "Handled magic open() call");
-            return 1;
-        }
-        else
-            lg(LOG_DEBUG, "syscall.check.open.nonmagic", "open() not magic");
-    }
+    if (sdef->flags & MAGIC_OPEN && syscall_check_magic_open(ctx, child))
+        return 1;
     else if (sdef->flags & MAGIC_STAT) {
-        lg(LOG_DEBUG, "syscall.check.stat.ismagic", "Checking if stat() is magic");
         if(syscall_check_magic_stat(child)) {
-            lg(LOG_DEBUG, "syscall.check.stat.magic", "Handled magic stat() call");
             child->retval = 0;
-            return 1;
+            return 0;
         }
-        else
-            lg(LOG_DEBUG, "syscall.check.stat.nonmagic", "stat() not magic");
     }
 
     if (sdef->flags & CHECK_PATH) {
