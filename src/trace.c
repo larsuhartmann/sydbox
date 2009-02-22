@@ -81,37 +81,58 @@ int trace_set_syscall(pid_t pid, long syscall) {
 }
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
-void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len) {
-    int n, m;
-    long addr;
+int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
+    int n, m, save_errno;
+    long addr = 0;
     union {
         long val;
         char x[sizeof(long)];
     } u;
 
-    /* Shut the compiler up */
-    addr = 0;
-
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (0 > trace_peek(pid, syscall_args[arg], &addr))
-        die(EX_SOFTWARE, "Failed to get address of argument %d: %s",
-                arg + 1, strerror(errno));
+    if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
+        save_errno = errno;
+        lg(LOG_ERROR, "trace.set.string",
+                "Failed to get address of argument %d: %s",
+                arg, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
 
     if (addr & (sizeof(long) -1)) {
         /* addr not a multiple of sizeof(long) */
         n = addr - (addr & -sizeof(long)); /* residue */
         addr &= -sizeof(long); /* residue */
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
+        if (-1 == u.val && 0 != errno) {
+            save_errno = errno;
+            lg(LOG_ERROR, "trace.set.string",
+                    "ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s",
+                    pid, addr, strerror(errno));
+            errno = save_errno;
+            return -1;
+        }
         memcpy(dest, &u.x[n], m = MIN(sizeof(long) - n, len));
         addr += sizeof(long), dest += m, len -= m;
     }
     while (len > 0) {
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (EIO == errno)
-            break;
+        if (-1 == u.val) {
+            if (EIO == errno)
+                break;
+            else if (0 != errno) {
+                save_errno = errno;
+                lg(LOG_ERROR, "trace.set.string.rest",
+                        "ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s",
+                        pid, addr, strerror(errno));
+                errno = save_errno;
+                return -1;
+            }
+        }
         memcpy(dest, u.x, m = MIN(sizeof(long), len));
         addr += sizeof(long), dest += m, len -= m;
     }
+    return 0;
 }
 
 void ptrace_set_string(pid_t pid, int arg, const char *src, size_t len) {

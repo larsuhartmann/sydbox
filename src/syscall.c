@@ -175,7 +175,9 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     assert(0 == arg || 2 == arg);
     if (0 > trace_peek(pid, syscall_args[arg], &dirfd))
         die(EX_SOFTWARE, "Failed to get dirfd: %s", strerror(errno));
-    ptrace_get_string(pid, arg + 1, dest, PATH_MAX);
+    if (0 > trace_get_string(pid, arg + 1, dest, PATH_MAX))
+        die(EX_SOFTWARE, "Failed to get string from argument %d: %s",
+                arg + 1, strerror(errno));
 
     if (AT_FDCWD != dirfd && '/' != dest[0]) {
         int n;
@@ -276,8 +278,11 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
     assert(0 == arg || 1 == arg);
 
-    if (sdef->flags & CHECK_PATH || sdef->flags & CHECK_PATH2)
-        ptrace_get_string(child->pid, arg, path, PATH_MAX);
+    if (sdef->flags & CHECK_PATH || sdef->flags & CHECK_PATH2) {
+        if (0 > trace_get_string(child->pid, arg, path, PATH_MAX))
+            die(EX_SOFTWARE, "Failed to get string from argument %d: %s",
+                    arg, strerror(errno));
+    }
     if (sdef->flags & CHECK_PATH_AT)
         syscall_process_pathat(child->pid, 0, path);
     if (sdef->flags & CHECK_PATH_AT2)
@@ -339,7 +344,8 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
     char pathname[PATH_MAX];
     const char *rpath;
 
-    ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
+    if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
+        die(EX_SOFTWARE, "Failed to get string from argument 0: %s", strerror(errno));
     lg(LOG_DEBUG, "syscall.check.magic.open.ismagic",
             "Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
@@ -386,7 +392,8 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
 int syscall_check_magic_stat(struct tchild *child) {
     char pathname[PATH_MAX];
 
-    ptrace_get_string(child->pid, 0, pathname, PATH_MAX);
+    if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
+        die(EX_SOFTWARE, "Failed to get string from argument 0: %s", strerror(errno));
     lg(LOG_DEBUG, "syscall.check.magic.stat.ismagic",
             "Checking if stat(\"%s\") is magic", pathname);
     if (path_magic_dir(pathname)) {
