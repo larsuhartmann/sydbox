@@ -140,14 +140,14 @@ void access_error(pid_t pid, const char *fmt, ...) {
 
     now = time(NULL);
     if (colour) {
-        fprintf(stderr, "%s@%ld: " MAGENTA "Access violation!" NORMAL "\n", PACKAGE, now);
-        fprintf(stderr, "%s@%ld: " MAGENTA "Child pid: " PINK "%i" NORMAL "\n", PACKAGE, now, pid);
-        fprintf(stderr, "%s@%ld: " MAGENTA "Reason: " PINK, PACKAGE, now);
+        fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Access violation!"NORMAL"\n", now);
+        fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Child pid: "PINK"%i"NORMAL"\n", now, pid);
+        fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Reason: "PINK, now);
     }
     else {
-        fprintf(stderr, "%s@%ld: Access violation!\n", PACKAGE, now);
-        fprintf(stderr, "%s@%ld: Child pid: %i\n", PACKAGE, now, pid);
-        fprintf(stderr, "%s@%ld: Reason: ", PACKAGE, now);
+        fprintf(stderr, PACKAGE"@%ld: Access violation!\n", now);
+        fprintf(stderr, PACKAGE"@%ld: Child pid: %i\n", now, pid);
+        fprintf(stderr, PACKAGE"@%ld: Reason: ", now);
     }
 
     va_start(args, fmt);
