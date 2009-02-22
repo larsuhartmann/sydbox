@@ -170,20 +170,18 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
 }
 
 void syscall_process_pathat(pid_t pid, int arg, char *dest) {
-    int dirfd;
+    long dirfd;
 
     assert(0 == arg || 2 == arg);
-    errno = 0;
-    dirfd = ptrace(PTRACE_PEEKUSER, pid, syscall_args[arg], NULL);
-    if (0 != errno)
-        die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+    if (0 > upeek(pid, syscall_args[arg], &dirfd))
+        die(EX_SOFTWARE, "Failed to get dirfd: %s", strerror(errno));
     ptrace_get_string(pid, arg + 1, dest, PATH_MAX);
 
     if (AT_FDCWD != dirfd && '/' != dest[0]) {
         int n;
         char dname[PATH_MAX], res_dname[PATH_MAX];
 
-        snprintf(dname, PATH_MAX, "/proc/%i/fd/%i", pid, dirfd);
+        snprintf(dname, PATH_MAX, "/proc/%i/fd/%ld", pid, dirfd);
         n = readlink(dname, res_dname, PATH_MAX - 1);
         if (0 > n)
             die(EX_SOFTWARE, "readlink failed for %s: %s", dname, strerror(errno));
@@ -197,19 +195,22 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
 
 int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
         const char *path, const char *rpath, int issymlink) {
-    int mode;
-    errno = 0;
-    if (sdef->flags & ACCESS_MODE)
-        mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[1], NULL);
-    else /* if (sdef->flags & ACCESS_MODE_AT) */
-        mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[2], NULL);
-
-    if (0 != errno) {
-        int save_errno = errno;
-        lg(LOG_ERROR, "syscall.check.access",
-                "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        errno = save_errno;
-        return -1;
+    long mode;
+    if (sdef->flags & ACCESS_MODE) {
+        if (0 > upeek(pid, syscall_args[1], &mode)) {
+            lg(LOG_ERROR, "syscall.check.access.mode.fail",
+                    "Failed to get mode from argument 1: %s",
+                    strerror(errno));
+            return -1;
+        }
+    }
+    else { /* if (sdef->flags & ACCESS_MODE_AT) */
+        if (0 > upeek(pid, syscall_args[2], &mode)) {
+            lg(LOG_ERROR, "syscall.check.access.mode.fail",
+                    "Failed to get mode from argument 2: %s",
+                    strerror(errno));
+            return -1;
+        }
     }
 
     if (!(mode & W_OK)) {
@@ -228,13 +229,11 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
 }
 
 int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issymlink) {
-    errno = 0;
-    int mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[1], NULL);
-    if (0 != errno) {
-        int save_errno = errno;
-        lg(LOG_ERROR, "syscall.check.open",
-                "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        errno = save_errno;
+    long mode;
+
+    if (0 > upeek(pid, syscall_args[1], &mode)) {
+        lg(LOG_ERROR, "syscall.check.open.mode.fail",
+                "Failed to get mode: %s", strerror(errno));
         return -1;
     }
     if (!(mode & O_WRONLY || mode & O_RDWR)) {
@@ -250,13 +249,11 @@ int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issym
 }
 
 int syscall_check_openat(pid_t pid, const char *path, const char *rpath, int issymlink) {
-    errno = 0;
-    int mode = ptrace(PTRACE_PEEKUSER, pid, syscall_args[2], NULL);
-    if (0 != errno) {
-        int save_errno = errno;
-        lg(LOG_ERROR, "syscall.check.openat",
-                "PTRACE_PEEKUSER failed: %s", strerror(errno));
-        errno = save_errno;
+    long mode;
+
+    if (0 > upeek(pid, syscall_args[1], &mode)) {
+        lg(LOG_ERROR, "syscall.check.openat.mode.fail",
+                "Failed to get mode: %s", strerror(errno));
         return -1;
     }
     if (!(mode & O_WRONLY || mode & O_RDWR)) {
@@ -325,7 +322,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     if (check_ret) {
         if (0 > ret) {
             free(rpath);
-            die(EX_SOFTWARE, "PTRACE_PEEKUSER failed: %s", strerror(errno));
+            die(EX_SOFTWARE, "ptrace: %s", strerror(errno));
         }
         else if (ret) { /* W_OK or O_WRONLY and O_RDWR not in flags */
             free(rpath);

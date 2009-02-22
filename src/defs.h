@@ -161,6 +161,7 @@ static const int syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
 static const int syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
 
+int upeek(pid_t pid, long off, long *res);
 int ptrace_get_syscall(pid_t pid);
 void ptrace_set_syscall(pid_t pid, int syscall);
 void ptrace_get_string(pid_t pid, int arg, char *dest, size_t len);
