@@ -127,7 +127,7 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
     char reason[PATH_MAX + 128];
     const char *sname = syscall_get_name(sdef->no);
     if (!allow_write && !allow_predict) {
-        child->retval = -1;
+        child->retval = -EPERM;
         if (0 == arg)
             strcpy(reason, "%s(\"%s\", ");
         else if (1 == arg)
@@ -313,7 +313,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
         else if (0 != errno) {
             /* safe_realpath() failed */
-            child->retval = -1;
+            child->retval = -errno;
             return 0;
         }
     }
@@ -469,7 +469,7 @@ found:
 #elif defined(X86_64)
         access_error(child->pid, "socket()");
 #endif
-        child->retval = -1;
+        child->retval = -EACCES;
         return 0;
     }
     return 1;
