@@ -7,6 +7,7 @@
 #ifndef SYDBOX_GUARD_TEST_SYDBOX_H
 #define SYDBOX_GUARD_TEST_SYDBOX_H 1
 
+Suite *util_suite_create(void);
 Suite *path_suite_create(void);
 Suite *children_suite_create(void);
 Suite *trace_suite_create(void);

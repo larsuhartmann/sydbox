@@ -496,7 +496,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         }
         else
             lg(LOG_DEBUG_CRAZY, "syscall.handle.allow",
-                    "Allowing access to system call %s()", sname, child->pid);
+                    "Allowing access to system call %s()", sname);
         child->flags ^= TCHILD_INSYSCALL;
     }
     else { /* Exiting syscall */

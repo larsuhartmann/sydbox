@@ -647,7 +647,8 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
         open("/dev/null", O_RDWR);
     }
     else { /* parent */
-        int status, syscall;
+        int status;
+        long syscall;
         context_t *ctx = context_new();
 
         pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
