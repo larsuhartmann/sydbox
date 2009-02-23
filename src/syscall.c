@@ -118,9 +118,9 @@ const char *syscall_get_name(int no) {
 int syscall_check_prefix(context_t *ctx, struct tchild *child,
         int arg, const struct syscall_def *sdef,
         const char *path, const char *rpath, int issymlink) {
-    lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for write access", rpath);
+    lg(LOG_DEBUG, __func__, "Checking \"%s\" for write access", rpath);
     int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
-    lg(LOG_DEBUG, "syscall.check.prefix", "Checking \"%s\" for predict access", rpath);
+    lg(LOG_DEBUG, __func__, "Checking \"%s\" for predict access", rpath);
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
     char reason[PATH_MAX + 128];
@@ -142,10 +142,9 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
     }
     else if (!allow_write && allow_predict) {
         if (sdef->flags & RETURNS_FD) {
-            lg(LOG_DEBUG, "syscall.check.prefix.subs.devnull",
+            lg(LOG_DEBUG, __func__,
                     "System call returns fd and its argument is under a predict path");
-            lg(LOG_DEBUG, "syscall.check.prefix.subs.devnull",
-                    "Changing the path argument to /dev/null");
+            lg(LOG_DEBUG, __func__, "Changing the path argument to /dev/null");
             if (0 > trace_set_string(child->pid, arg, "/dev/null", 10))
                 die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
             return 1;
@@ -161,7 +160,7 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
         /* Change the pathname argument with the resolved path to
         * prevent symlink races.
         */
-        lg(LOG_DEBUG, "syscall.check.prefix.subs.resolved",
+        lg(LOG_DEBUG, __func__,
                 "Substituting symlink %s with resolved path %s to prevent races",
                 path, rpath);
         if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX))
@@ -201,16 +200,14 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
     long mode;
     if (sdef->flags & ACCESS_MODE) {
         if (0 > trace_get_arg(pid, 1, &mode)) {
-            lg(LOG_ERROR, "syscall.check.access.mode.fail",
-                    "Failed to get mode from argument 1: %s",
+            lg(LOG_ERROR, __func__, "Failed to get mode from argument 1: %s",
                     strerror(errno));
             return -1;
         }
     }
     else { // if (sdef->flags & ACCESS_MODE_AT)
         if (0 > trace_get_arg(pid, 2, &mode)) {
-            lg(LOG_ERROR, "syscall.check.access.mode.fail",
-                    "Failed to get mode from argument 2: %s",
+            lg(LOG_ERROR, __func__, "Failed to get mode from argument 2: %s",
                     strerror(errno));
             return -1;
         }
@@ -218,7 +215,7 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
 
     if (!(mode & W_OK)) {
         if (issymlink) {
-            lg(LOG_DEBUG, "syscall.check.access.subs.resolved",
+            lg(LOG_DEBUG, __func__,
                 "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
                 path, rpath);
             if (sdef->flags & ACCESS_MODE) {
@@ -239,13 +236,12 @@ int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issym
     long mode;
 
     if (0 > trace_get_arg(pid, 1, &mode)) {
-        lg(LOG_ERROR, "syscall.check.open.mode.fail",
-                "Failed to get mode: %s", strerror(errno));
+        lg(LOG_ERROR, __func__, "Failed to get mode: %s", strerror(errno));
         return -1;
     }
     if (!(mode & O_WRONLY || mode & O_RDWR)) {
         if (issymlink) {
-            lg(LOG_DEBUG, "syscall.check.open.subs.resolved",
+            lg(LOG_DEBUG, __func__,
                 "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
                 path, rpath);
             if (0 > trace_set_string(pid, 0, rpath, PATH_MAX))
@@ -260,13 +256,12 @@ int syscall_check_openat(pid_t pid, const char *path, const char *rpath, int iss
     long mode;
 
     if (0 > trace_get_arg(pid, 1, &mode)) {
-        lg(LOG_ERROR, "syscall.check.openat.mode.fail",
-                "Failed to get mode: %s", strerror(errno));
+        lg(LOG_ERROR, __func__, "Failed to get mode: %s", strerror(errno));
         return -1;
     }
     if (!(mode & O_WRONLY || mode & O_RDWR)) {
         if (issymlink) {
-            lg(LOG_DEBUG, "syscall.check.open.subs.resolved",
+            lg(LOG_DEBUG, __func__,
                 "Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
                 path, rpath);
             if (0 > trace_set_string(pid, 1, rpath, PATH_MAX))
@@ -306,8 +301,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
              * XXX This opens a hole for race conditions,
              * but denying access here makes tar fail.
              */
-            lg(LOG_DEBUG, "syscall.check_path.file_dir.none",
-                    "Neither file nor directory exists, allowing access");
+            lg(LOG_DEBUG, __func__, "Neither file nor directory exists, allowing access");
             return 1;
         }
         else if (0 != errno) {
@@ -353,48 +347,44 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
 
     if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
         die(EX_SOFTWARE, "Failed to get string from argument 0: %s", strerror(errno));
-    lg(LOG_DEBUG, "syscall.check.magic.open.ismagic",
-            "Checking if open(\"%s\", ...) is magic", pathname);
+    lg(LOG_DEBUG, __func__, "Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
         rpath = pathname + CMD_WRITE_LEN - 1;
         if (context_cmd_allowed(ctx, child)) {
-            lg(LOG_NORMAL, "syscall.check_magic.write.allow",
+            lg(LOG_NORMAL, __func__,
                     "Approved addwrite(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->write_prefixes), rpath);
             // Change argument to /dev/null
-            lg(LOG_DEBUG, "syscall.check.magic.write.devnull",
-                    "Changing pathname to /dev/null");
+            lg(LOG_DEBUG, __func__, "Changing pathname to /dev/null");
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
                 die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
-            lg(LOG_WARNING, "syscall.check.magic.write.deny",
-                    "Denied addwrite(\"%s\") for child %i", rpath, child->pid);
+            lg(LOG_WARNING, __func__, "Denied addwrite(\"%s\") for child %i",
+                    rpath, child->pid);
             return 0;
         }
     }
     else if (path_magic_predict(pathname)) {
         rpath = pathname + CMD_PREDICT_LEN - 1;
         if (context_cmd_allowed(ctx, child)) {
-            lg(LOG_NORMAL, "syscall.check.magic.predict.allow",
-                    "Approved addpredict(\"%s\") for child %i", rpath, child->pid);
+            lg(LOG_NORMAL, __func__, "Approved addpredict(\"%s\") for child %i",
+                    rpath, child->pid);
             pathnode_new(&(ctx->predict_prefixes), rpath);
             // Change argument to /dev/null
-            lg(LOG_DEBUG, "syscall.check.magic.predict.devnull",
-                    "Changing pathname to /dev/null");
+            lg(LOG_DEBUG, __func__, "Changing pathname to /dev/null");
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
                 die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
-            lg(LOG_WARNING, "syscall.check.magic.predict.deny",
-                    "Denied addpredict(\"%s\") for child %i", rpath, child->pid);
+            lg(LOG_WARNING, __func__, "Denied addpredict(\"%s\") for child %i",
+                    rpath, child->pid);
             return 0;
         }
     }
-    lg(LOG_DEBUG, "syscall.check.magic.open.nonmagic",
-            "open(\"%s\", ...) not magic", pathname);
+    lg(LOG_DEBUG, __func__, "open(\"%s\", ...) not magic", pathname);
     return 0;
 }
 
@@ -403,16 +393,13 @@ int syscall_check_magic_stat(struct tchild *child) {
 
     if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
         die(EX_SOFTWARE, "Failed to get string from argument 0: %s", strerror(errno));
-    lg(LOG_DEBUG, "syscall.check.magic.stat.ismagic",
-            "Checking if stat(\"%s\") is magic", pathname);
+    lg(LOG_DEBUG, __func__, "Checking if stat(\"%s\") is magic", pathname);
     if (path_magic_dir(pathname)) {
-        lg(LOG_DEBUG, "syscall.check.magic.stat.magic",
-                "stat(\"%s\") is magic", pathname);
+        lg(LOG_DEBUG, __func__, "stat(\"%s\") is magic", pathname);
         return 1;
     }
     else {
-        lg(LOG_DEBUG, "syscall.check.magic.stat.nonmagic",
-                "stat(\"%s\") is not magic", pathname);
+        lg(LOG_DEBUG, __func__, "stat(\"%s\") is not magic", pathname);
         return 0;
     }
 }
@@ -430,8 +417,8 @@ found:
     sdef = &(syscalls[i]);
     sname = syscall_get_name(sdef->no);
 
-    lg(LOG_DEBUG, "syscall.check.essential",
-            "Child %i called essential system call %s()", child->pid, sname);
+    lg(LOG_DEBUG, __func__, "Child %i called essential system call %s()",
+            child->pid, sname);
 
     // Handle magic calls
     if (sdef->flags & MAGIC_OPEN && syscall_check_magic_open(ctx, child))
@@ -444,8 +431,8 @@ found:
     }
 
     if (sdef->flags & CHECK_PATH) {
-        lg(LOG_DEBUG, "syscall.check.check_path",
-                "System call %s() has CHECK_PATH set, checking", sname);
+        lg(LOG_DEBUG, __func__, "System call %s() has CHECK_PATH set, checking",
+                sname);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH and CHECK_PATH2 set.
          */
@@ -453,13 +440,13 @@ found:
             return 0;
     }
     if (sdef->flags & CHECK_PATH2) {
-        lg(LOG_DEBUG, "syscall.check.checkpath2",
-                "System call %s() has CHECK_PATH2 set, checking", sname);
+        lg(LOG_DEBUG, __func__, "System call %s() has CHECK_PATH2 set, checking",
+                sname);
         return syscall_check_path(ctx, child, 1, sdef);
     }
     if (sdef->flags & CHECK_PATH_AT) {
-        lg(LOG_DEBUG, "syscall.check.check_path_at",
-                "System call %s() has CHECK_PATH_AT set, checking", sname);
+        lg(LOG_DEBUG, __func__, "System call %s() has CHECK_PATH_AT set, checking",
+                sname);
         return syscall_check_path(ctx, child, 1, sdef);
     }
     if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
@@ -482,28 +469,25 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         die(EX_SOFTWARE, "Failed to get syscall: %s", strerror(errno));
     sname = syscall_get_name(syscall);
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
-        lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
-                "Child %i is entering system call %s()",
+        lg(LOG_DEBUG_CRAZY, __func__, "Child %i is entering system call %s()",
                 child->pid, sname);
         if (!syscall_check(ctx, child, syscall)) {
             // Deny access
-            lg(LOG_DEBUG, "syscall.handle.deny",
-                    "Denying access to system call %s()", sname);
+            lg(LOG_DEBUG, __func__, "Denying access to system call %s()", sname);
             child->syscall = syscall;
             if (0 > trace_set_syscall(child->pid, 0xbadca11))
                 die(EX_SOFTWARE, "Failed to set syscall: %s", strerror(errno));
         }
         else
-            lg(LOG_DEBUG_CRAZY, "syscall.handle.allow",
-                    "Allowing access to system call %s()", sname);
+            lg(LOG_DEBUG_CRAZY, __func__, "Allowing access to system call %s()",
+                    sname);
         child->flags ^= TCHILD_INSYSCALL;
     }
     else { // Exiting syscall
-        lg(LOG_DEBUG_CRAZY, "syscall.handle.exit",
-                "Child %i is exiting system call %s()",
+        lg(LOG_DEBUG_CRAZY, __func__, "Child %i is exiting system call %s()",
                 child->pid, sname);
         if (0xbadca11 == syscall) {
-            lg(LOG_DEBUG, "syscall.handle.restore",
+            lg(LOG_DEBUG, __func__,
                     "Restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->syscall))

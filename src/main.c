@@ -103,7 +103,7 @@ int trace_loop(void) {
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
         if (0 > pid) {
-            lg(LOG_ERROR, "main.tloop.waitpid", "waitpid failed for child %i: %s",
+            lg(LOG_ERROR, __func__, "waitpid failed for child %i: %s",
                     pid, strerror(errno));
             die(EX_SOFTWARE, "waitpid failed for child %i: %s",
                     pid, strerror(errno));
@@ -115,10 +115,9 @@ int trace_loop(void) {
 
         if (0xb7f == status) {
             // Child called abort()
-            lg(LOG_VERBOSE, "main.tloop.abort",
-                    "Child %i called abort()", child->pid);
+            lg(LOG_VERBOSE, __func__, "Child %i called abort()", child->pid);
             if (0 > trace_kill(pid)) {
-                lg(LOG_ERROR, "main.tloop.abort.kill",
+                lg(LOG_ERROR, __func__,
                         "Failed to kill child %i after abort()", child->pid);
                 die(EX_SOFTWARE, "Failed to kill child %i after abort", child->pid);
             }
@@ -132,14 +131,14 @@ int trace_loop(void) {
             case E_SETUP:
                 tchild_setup(child);
                 if (0 > trace_syscall(pid, 0)) {
-                    lg(LOG_ERROR, "main.tloop.setup.resume.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to resume child %i after setup: %s",
                             child->pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after setup: %s",
                             child->pid, strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.setup.resume",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "Resumed child %i after setup", child->pid);
                 break;
             case E_SETUP_PREMATURE:
@@ -151,40 +150,40 @@ int trace_loop(void) {
                     syscall_handle(ctx, child);
 
                 if (0 > trace_syscall(pid, 0)) {
-                    lg(LOG_ERROR, "main.tloop.syscall.resume.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to resume child %i after syscall: %s",
                             child->pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after syscall: %s",
                             child->pid, strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.syscall.resume",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "Resumed child %i before/after syscall", child->pid);
                 break;
             case E_FORK:
                 // Get new child's pid
                 if (0 > trace_geteventmsg(pid, &childpid)) {
-                    lg(LOG_ERROR, "main.tloop.fork.geteventmsg.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to get the pid of the newborn child: %s",
                             strerror(errno));
                     die(EX_SOFTWARE, "Failed to get the pid of the newborn child: %s",
                             strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.fork.geteventmsg",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "The newborn child's pid is %i", childpid);
 
                 if (tchild_find(&(ctx->children), childpid)) {
                     // Child is prematurely born, let it continue its life
                     if (0 > trace_syscall(childpid, 0)) {
-                        lg(LOG_ERROR, "main.tloop.premature.resume.fail",
+                        lg(LOG_ERROR, __func__,
                                 "Failed to resume prematurely born child %i: %s",
                                 pid, strerror(errno));
                         die(EX_SOFTWARE, "Failed to resume prematurely born child %i: %s",
                                 pid, strerror(errno));
                     }
                     else
-                        lg(LOG_DEBUG_CRAZY, "main.tloop.premature.resume",
+                        lg(LOG_DEBUG_CRAZY, __func__,
                                 "Resumed prematurely born child %i", child->pid);
                 }
                 else {
@@ -192,45 +191,45 @@ int trace_loop(void) {
                     tchild_new(&(ctx->children), childpid);
                 }
                 if (0 > trace_syscall(pid, 0)) {
-                    lg(LOG_ERROR, "main.tloop.fork.resume.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to resume child %i after fork(), vfork() or clone(): %s",
                             pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after fork(): %s",
                             pid, strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.fork.resume",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "Resumed child %i after fork()", child->pid);
                 break;
             case E_EXECV:
                 if (0 > trace_syscall(pid, 0)) {
-                    lg(LOG_ERROR, "main.tloop.execve.resume.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to resume child %i after execve(): %s",
                             pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after execve(): %s",
                             pid, strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.execve.resume",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "Resumed child %i after fork", child->pid);
                 break;
             case E_GENUINE:
                 if (0 > trace_syscall(pid, WSTOPSIG(status))) {
-                    lg(LOG_ERROR, "main.tloop.genuine.resume.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to resume child %i after genuine signal: %s",
                             pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after genuine signal: %s",
                             pid, strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.genuine.resume",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "Resumed child %i after genuine signal", child->pid);
                 break;
             case E_EXIT:
                 if (ctx->eldest == child) {
                     // Eldest child, keep the return value
                     ret = WEXITSTATUS(status);
-                    lg(LOG_VERBOSE, "main.tloop.eldest.dead",
+                    lg(LOG_VERBOSE, __func__,
                             "Eldest child %i exited with return code %d", pid, ret);
                     tchild_delete(&(ctx->children), pid);
                     return ret;
@@ -245,10 +244,10 @@ int trace_loop(void) {
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
-                lg(LOG_DEBUG, "main.tloop.unknown",
+                lg(LOG_DEBUG, __func__,
                         "Unknown signal %#x received from child %i", status, pid);
                 if (0 > trace_syscall(pid, 0)) {
-                    lg(LOG_ERROR, "main.tloop.unknown.resume.fail",
+                    lg(LOG_ERROR, __func__,
                             "Failed to resume child %i after unknown signal %#x: %s",
                             pid, status, strerror(errno));
                     die(EX_SOFTWARE,
@@ -256,7 +255,7 @@ int trace_loop(void) {
                             pid, status, strerror(errno));
                 }
                 else
-                    lg(LOG_DEBUG_CRAZY, "main.tloop.unknown.resume",
+                    lg(LOG_DEBUG_CRAZY, __func__,
                             "Resumed child %i after unknown signal", child->pid);
                 break;
         }
@@ -552,9 +551,9 @@ int main(int argc, char **argv) {
     if ('\0' == log_file[0] && NULL != log_env)
         strncpy(log_file, log_env, PATH_MAX);
 
-    lg(LOG_DEBUG, "main.env_write", "Initializing path list using "ENV_WRITE);
+    lg(LOG_DEBUG, __func__, "Initializing path list using "ENV_WRITE);
     pathlist_init(&(ctx->write_prefixes), write_env);
-    lg(LOG_DEBUG, "main.env_predict", "Initializing path list using "ENV_PREDICT);
+    lg(LOG_DEBUG, __func__, "Initializing path list using "ENV_PREDICT);
     pathlist_init(&(ctx->predict_prefixes), predict_env);
     if (NULL != net_env)
         ctx->net_allowed = 0;
@@ -581,7 +580,7 @@ int main(int argc, char **argv) {
     if (NULL == groupname)
         die(EX_SOFTWARE, "Failed to get group file entry: %s", strerror(errno));
 
-    lg(LOG_VERBOSE, "main.fork", "Forking to execute '%s' as %s:%s",
+    lg(LOG_VERBOSE, __func__, "Forking to execute '%s' as %s:%s",
             cmd, username, groupname);
     pid = fork();
     if (0 > pid)
@@ -609,14 +608,14 @@ int main(int argc, char **argv) {
         ctx->eldest = ctx->children;
         tchild_setup(ctx->eldest);
 
-        lg(LOG_VERBOSE, "main.resume", "Child %i is ready to go, resuming", pid);
+        lg(LOG_VERBOSE, __func__, "Child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {
             trace_kill(pid);
             die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
-        lg(LOG_VERBOSE, "main.tloop.enter", "Entering loop");
+        lg(LOG_VERBOSE, __func__, "Entering loop");
         ret = trace_loop();
-        lg(LOG_VERBOSE, "main.tloop.exit", "Exiting loop with return %d", ret);
+        lg(LOG_VERBOSE, __func__, "Exiting loop with return %d", ret);
         return ret;
     }
 }

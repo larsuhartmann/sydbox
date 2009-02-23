@@ -57,7 +57,7 @@ void _die(int err, const char *fmt, ...) {
     _exit(err);
 }
 
-void lg(int level, const char *id, const char *fmt, ...) {
+void lg(int level, const char *funcname, const char *fmt, ...) {
     static int log_file_opened = 0;
     static int isstderr;
     va_list args;
@@ -116,9 +116,9 @@ void lg(int level, const char *id, const char *fmt, ...) {
                     fprintf(flog, "CRAZY ");
         }
         if (isstderr)
-            fprintf(stderr, "%s] ", id);
+            fprintf(stderr, "%s] ", funcname);
         else
-            fprintf(flog, "%s] ", id);
+            fprintf(flog, "%s] ", funcname);
 
         va_start(args, fmt);
         if (isstderr)
@@ -211,8 +211,7 @@ int remove_slash(const char *pathname, char *dest) {
         }
     }
     if (nslashes)
-        lg(LOG_DEBUG, "util.remove_slash.removed",
-                "Simplified pathname \"%s\" to \"%s\"",
+        lg(LOG_DEBUG, __func__, "Simplified pathname \"%s\" to \"%s\"",
                 pathname, dest);
     return nslashes;
 }
@@ -231,8 +230,7 @@ void shell_expand(const char *pathname, char *dest) {
     dest[i-1] = '\0';
     fclose(bash);
     if (0 != strncmp(pathname, dest, PATH_MAX))
-        lg(LOG_DEBUG, "util.shell_expand",
-                "Expanded path \"%s\" to \"%s\" using /bin/sh",
+        lg(LOG_DEBUG, __func__, "Expanded path \"%s\" to \"%s\" using /bin/sh",
                 pathname, dest);
 }
 
@@ -257,7 +255,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
                 rpath = safe_realpath(dname, pid, 0, NULL);
             free(dirc);
 
-            lg(LOG_DEBUG, "util.resolve_path.file.none",
+            lg(LOG_DEBUG, __func__,
                     "File \"%s\" doesn't exist, using directory \"%s\"",
                     path, rpath);
             if (NULL == rpath) {
@@ -267,7 +265,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             }
             else {
                 /* Add the directory back */
-                lg(LOG_DEBUG, "util.resolve_path.dir",
+                lg(LOG_DEBUG, __func__,
                         "File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
                         path, rpath);
                 char *basec, *bname;
@@ -279,7 +277,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             }
         }
         else {
-            lg(LOG_WARNING, "util.resolve_path.fail",
+            lg(LOG_WARNING, __func__,
                     "safe_realpath() failed for \"%s\": %s", path, strerror(errno));
             return NULL;
         }

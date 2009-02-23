@@ -136,7 +136,7 @@ void die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
 void _die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
-void lg(int level, const char *id, const char *fmt, ...)
+void lg(int level, const char *funcname, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)));
 void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));

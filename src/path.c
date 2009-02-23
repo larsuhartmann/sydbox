@@ -72,13 +72,13 @@ void pathnode_new(struct pathnode **head, const char *pathname) {
     shell_expand(path_simple, newnode->pathname);
     newnode->next = *head; // link next
     *head = newnode; // link head
-    lg(LOG_DEBUG, "path.node_new", "New path item \"%s\"", newnode->pathname);
+    lg(LOG_DEBUG, __func__, "New path item \"%s\"", newnode->pathname);
 }
 
 void pathnode_free(struct pathnode **head) {
     struct pathnode *current, *temp;
 
-    lg(LOG_DEBUG, "path.node_free", "Freeing pathlist %p", (void *) head);
+    lg(LOG_DEBUG, __func__, "Freeing pathlist %p", (void *) head);
     current = *head;
     while (NULL != current) {
         temp = current;
@@ -94,9 +94,9 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
     int pos, itemlen, numpaths = 0;
     char *delim;
 
-    lg(LOG_DEBUG, "path.list_init", "Initializing path list");
+    lg(LOG_DEBUG, __func__, "Initializing path list");
     if (NULL == pathlist_env) {
-        lg(LOG_DEBUG, "path.list_init.env_unset", "The given environment variable isn't set");
+        lg(LOG_DEBUG, __func__, "The given environment variable isn't set");
         return 0;
     }
 
@@ -106,7 +106,7 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         delim = strchr(pathlist_env + pos, ':');
         itemlen = delim ? delim - (pathlist_env + pos) : strlen(pathlist_env) - pos;
         if (0 == itemlen)
-            lg(LOG_WARNING, "path.list_init",
+            lg(LOG_WARNING, __func__,
                     "Ignoring empty path element in position %d", numpaths);
         else {
             memcpy(item, pathlist_env + pos, itemlen);
@@ -116,7 +116,7 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         }
         pos += ++itemlen;
     }
-    lg(LOG_DEBUG, "path.list_init.done",
+    lg(LOG_DEBUG, __func__,
             "Initialized path list with %d pathnames", numpaths);
     return numpaths;
 }
@@ -126,7 +126,7 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
     char path_simple[PATH_MAX];
     struct pathnode *node;
 
-    lg(LOG_DEBUG, "path.list_check", "Checking \"%s\"", pathname);
+    lg(LOG_DEBUG, __func__, "Checking \"%s\"", pathname);
     remove_slash(pathname, path_simple);
 
     ret = 0;
@@ -141,34 +141,31 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
                  */
                 const char last = path_simple[strlen(node->pathname)];
                 if ('\0' == last || '/' == last) {
-                    lg(LOG_DEBUG, "path.list_check.found",
-                            "\"%s\" begins with \"%s\"", path_simple,
-                            node->pathname);
+                    lg(LOG_DEBUG, __func__, "\"%s\" begins with \"%s\"",
+                            path_simple, node->pathname);
                     ret = 1;
                     break;
                 }
                 else
-                    lg(LOG_DEBUG, "path.list_check.not_found",
-                            "\"%s\" doesn't begin with \"%s\"",
+                    lg(LOG_DEBUG, __func__, "\"%s\" doesn't begin with \"%s\"",
                             path_simple, node->pathname);
             }
             else {
-                lg(LOG_DEBUG, "path.list_check.found",
-                        "\"%s\" begins with \"%s\"", path_simple, node->pathname);
+                lg(LOG_DEBUG, __func__, "\"%s\" begins with \"%s\"",
+                        path_simple, node->pathname);
                 ret = 1;
                 break;
             }
         }
         else
-            lg(LOG_DEBUG, "path.list_check.not_found",
-                    "\"%s\" doesn't begin with \"%s\"", path_simple, node->pathname);
+            lg(LOG_DEBUG, __func__, "\"%s\" doesn't begin with \"%s\"",
+                    path_simple, node->pathname);
         node = node->next;
     }
     if (ret)
-        lg(LOG_DEBUG, "path.list_check.success",
-                "Path list check succeeded for \"%s\"", path_simple);
+        lg(LOG_DEBUG, __func__, "Path list check succeeded for \"%s\"",
+                path_simple);
     else
-        lg(LOG_DEBUG, "path.list_check.fail",
-                "Path list check failed for \"%s\"", path_simple);
+        lg(LOG_DEBUG, __func__, "Path list check failed for \"%s\"", path_simple);
     return ret;
 }
