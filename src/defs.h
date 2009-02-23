@@ -149,6 +149,10 @@ void shell_expand(const char *pathname, char *dest);
 char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 
 /* trace.c */
+int trace_me(void);
+int trace_kill(pid_t pid);
+int trace_syscall(pid_t pid, int data);
+int trace_geteventmsg(pid_t pid, void *data);
 int trace_get_arg(pid_t pid, int arg, long *res);
 int trace_get_syscall(pid_t pid, long *syscall);
 int trace_set_syscall(pid_t pid, long syscall);

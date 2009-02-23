@@ -56,6 +56,50 @@ static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
 static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
 
+int trace_me(void) {
+    if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.me", "Failed to set tracing: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
+int trace_kill(pid_t pid) {
+    if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.kill", "Failed to kill child %i: %s",
+                pid, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
+int trace_syscall(pid_t pid, int data) {
+    if (0 > ptrace(PTRACE_SYSCALL, pid, NULL, data)) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.syscall", "Failed to resume child %i: %s",
+                pid, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
+int trace_geteventmsg(pid_t pid, void *data) {
+    if (0 > ptrace(PTRACE_GETEVENTMSG, pid, NULL, data)) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.geteventmsg",
+                "Failed to get event message of child %i: %s",
+                pid, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
 int trace_peek(pid_t pid, long off, long *res) {
     long val;
 

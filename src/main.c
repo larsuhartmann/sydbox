@@ -118,7 +118,7 @@ int trace_loop(void) {
             // Child called abort()
             lg(LOG_VERBOSE, "main.tloop.abort",
                     "Child %i called abort()", child->pid);
-            if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
+            if (0 > trace_kill(pid)) {
                 lg(LOG_ERROR, "main.tloop.abort.kill",
                         "Failed to kill child %i after abort()", child->pid);
                 die(EX_SOFTWARE, "Failed to kill child %i after abort", child->pid);
@@ -132,7 +132,7 @@ int trace_loop(void) {
         switch(event) {
             case E_SETUP:
                 tchild_setup(child);
-                if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
+                if (0 > trace_syscall(pid, 0)) {
                     lg(LOG_ERROR, "main.tloop.setup.resume.fail",
                             "Failed to resume child %i after setup: %s",
                             child->pid, strerror(errno));
@@ -151,7 +151,7 @@ int trace_loop(void) {
                 if (NULL != child)
                     syscall_handle(ctx, child);
 
-                if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
+                if (0 > trace_syscall(pid, 0)) {
                     lg(LOG_ERROR, "main.tloop.syscall.resume.fail",
                             "Failed to resume child %i after syscall: %s",
                             child->pid, strerror(errno));
@@ -164,7 +164,7 @@ int trace_loop(void) {
                 break;
             case E_FORK:
                 // Get new child's pid
-                if (0 != ptrace(PTRACE_GETEVENTMSG, pid, NULL, &childpid)) {
+                if (0 > trace_geteventmsg(pid, &childpid)) {
                     lg(LOG_ERROR, "main.tloop.fork.geteventmsg.fail",
                             "Failed to get the pid of the newborn child: %s",
                             strerror(errno));
@@ -177,7 +177,7 @@ int trace_loop(void) {
 
                 if (tchild_find(&(ctx->children), childpid)) {
                     // Child is prematurely born, let it continue its life
-                    if (0 != ptrace(PTRACE_SYSCALL, childpid, NULL, NULL)) {
+                    if (0 > trace_syscall(childpid, 0)) {
                         lg(LOG_ERROR, "main.tloop.premature.resume.fail",
                                 "Failed to resume prematurely born child %i: %s",
                                 pid, strerror(errno));
@@ -192,7 +192,7 @@ int trace_loop(void) {
                     // Add the child, setup will be done later
                     tchild_new(&(ctx->children), childpid);
                 }
-                if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
+                if (0 > trace_syscall(pid, 0)) {
                     lg(LOG_ERROR, "main.tloop.fork.resume.fail",
                             "Failed to resume child %i after fork(), vfork() or clone(): %s",
                             pid, strerror(errno));
@@ -204,7 +204,7 @@ int trace_loop(void) {
                             "Resumed child %i after fork()", child->pid);
                 break;
             case E_EXECV:
-                if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
+                if (0 > trace_syscall(pid, 0)) {
                     lg(LOG_ERROR, "main.tloop.execve.resume.fail",
                             "Failed to resume child %i after execve(): %s",
                             pid, strerror(errno));
@@ -216,7 +216,7 @@ int trace_loop(void) {
                             "Resumed child %i after fork", child->pid);
                 break;
             case E_GENUINE:
-                if (0 != ptrace(PTRACE_SYSCALL, pid, 0, WSTOPSIG(status))) {
+                if (0 > trace_syscall(pid, WSTOPSIG(status))) {
                     lg(LOG_ERROR, "main.tloop.genuine.resume.fail",
                             "Failed to resume child %i after genuine signal: %s",
                             pid, strerror(errno));
@@ -248,7 +248,7 @@ int trace_loop(void) {
             case E_UNKNOWN:
                 lg(LOG_DEBUG, "main.tloop.unknown",
                         "Unknown signal %#x received from child %i", status, pid);
-                if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
+                if (0 > trace_syscall(pid, 0)) {
                     lg(LOG_ERROR, "main.tloop.unknown.resume.fail",
                             "Failed to resume child %i after unknown signal %#x: %s",
                             pid, status, strerror(errno));
@@ -588,11 +588,11 @@ int main(int argc, char **argv) {
     if (0 > pid)
         die(EX_SOFTWARE, strerror(errno));
     else if (0 == pid) { // Child process
-        if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL))
-            _die(EX_SOFTWARE, "couldn't set tracing: %s", strerror(errno));
-        // Stop and wait the parent to resume us with PTRACE_SYSCALL
+        if (0 > trace_me())
+            _die(EX_SOFTWARE, "Failed to set tracing: %s", strerror(errno));
+        // Stop and wait the parent to resume us with trace_syscall
         if (0 > kill(getpid(), SIGSTOP))
-            _die(EX_SOFTWARE, "failed to send SIGSTOP: %s", strerror(errno));
+            _die(EX_SOFTWARE, "Failed to send SIGSTOP: %s", strerror(errno));
         // Start the fun!
         execvp(argv[0], argv);
         _die(EX_DATAERR, strerror(errno));
@@ -611,8 +611,8 @@ int main(int argc, char **argv) {
         tchild_setup(ctx->eldest);
 
         lg(LOG_VERBOSE, "main.resume", "Child %i is ready to go, resuming", pid);
-        if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
-            ptrace(PTRACE_KILL, pid, NULL, NULL);
+        if (0 > trace_syscall(pid, 0)) {
+            trace_kill(pid);
             die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
         lg(LOG_VERBOSE, "main.tloop.enter", "Entering loop");
