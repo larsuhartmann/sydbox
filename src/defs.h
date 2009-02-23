@@ -145,7 +145,7 @@ void lg(int level, const char *funcname, const char *fmt, ...)
 #define LOGW(...)   lg(LOG_WARNING, __func__, __VA_ARGS__)
 #define LOGN(...)   lg(LOG_NORMAL, __func__, __VA_ARGS__)
 #define LOGV(...)   lg(LOG_VERBOSE, __func__, __VA_ARGS__)
-#define LOGD(...)   lg(LOG_VERBOSE, __func__, __VA_ARGS__)
+#define LOGD(...)   lg(LOG_DEBUG, __func__, __VA_ARGS__)
 #define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __VA_ARGS__)
 
 void *xmalloc(size_t size);
