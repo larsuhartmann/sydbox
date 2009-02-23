@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <asm/unistd.h>
 #include <sys/stat.h>
-#include <sys/ptrace.h>
 
 #include "defs.h"
 
