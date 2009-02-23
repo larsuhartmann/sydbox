@@ -43,13 +43,13 @@ void tchild_new(struct tchild **head, pid_t pid) {
     newchild->retval = -1;
     newchild->next = *head; // link next
     *head = newchild; // link head
-    lg(LOG_DEBUG, __func__, "New child %i", pid);
+    LOGD("New child %i", pid);
 }
 
 void tchild_free(struct tchild **head) {
     struct tchild *current, *temp;
 
-    lg(LOG_DEBUG, __func__, "Freeing children %p", (void *) head);
+    LOGD("Freeing children %p", (void *) head);
     current = *head;
     while (current != NULL) {
         temp = current;
@@ -100,19 +100,15 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid) {
 
 void tchild_setup(struct tchild *child) {
     // Setup ptrace options
-    lg(LOG_DEBUG, __func__,
-            "Setting tracing options for child %i", child->pid);
+    LOGD("Setting tracing options for child %i", child->pid);
     if (0 != ptrace(PTRACE_SETOPTIONS, child->pid, NULL,
                     PTRACE_O_TRACESYSGOOD
                     | PTRACE_O_TRACECLONE
                     | PTRACE_O_TRACEFORK
                     | PTRACE_O_TRACEVFORK
                     | PTRACE_O_TRACEEXEC)) {
-        lg(LOG_ERROR, __func__,
-                "Setting tracing options failed for child %i: %s",
-                child->pid, strerror(errno));
-        die(EX_SOFTWARE, "Setting tracing options failed for child %i: %s",
-                child->pid, strerror(errno));
+        LOGE("Setting tracing options failed for child %i: %s", child->pid, strerror(errno));
+        die(EX_SOFTWARE, "Setting tracing options failed for child %i: %s", child->pid, strerror(errno));
     }
     child->flags ^= TCHILD_NEEDSETUP;
 }
@@ -127,13 +123,11 @@ unsigned int tchild_event(struct tchild *child, int status) {
         sig = WSTOPSIG(status);
         if (sig == SIGSTOP) {
             if (NULL != child && child->flags & TCHILD_NEEDSETUP) {
-                lg(LOG_DEBUG, __func__,
-                        "Child %i is born and she's ready for tracing", child->pid);
+                LOGD("Child %i is born and she's ready for tracing", child->pid);
                 return E_SETUP;
             }
             if (NULL == child) {
-                lg(LOG_DEBUG, __func__,
-                        "Child is born before fork event and she's ready for tracing");
+                LOGD("Child is born before fork event and she's ready for tracing");
                 return E_SETUP_PREMATURE;
             }
         }
@@ -145,34 +139,34 @@ unsigned int tchild_event(struct tchild *child, int status) {
             }
             event = (status >> 16) & 0xffff;
             if (PTRACE_EVENT_FORK == event) {
-                lg(LOG_DEBUG, __func__, "Child %i called fork()", child->pid);
+                LOGD("Child %i called fork()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_VFORK == event) {
-                lg(LOG_DEBUG, __func__, "Child %i called vfork()", child->pid);
+                LOGD("Child %i called vfork()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_CLONE == event) {
-                lg(LOG_DEBUG, __func__, "Child %i called clone()", child->pid);
+                LOGD("Child %i called clone()", child->pid);
                 return E_FORK;
             }
             else if (PTRACE_EVENT_EXEC == event) {
-                lg(LOG_DEBUG, __func__, "Child %i called execve()", child->pid);
+                LOGD("Child %i called execve()", child->pid);
                 return E_EXECV;
             }
         }
         else {
             // Genuine signal directed to child itself
-            lg(LOG_DEBUG, __func__, "Child %i received a signal", child->pid);
+            LOGD("Child %i received a signal", child->pid);
             return E_GENUINE;
         }
     }
     else if (WIFEXITED(status)) {
-        lg(LOG_DEBUG, __func__, "Child %i exited normally", child->pid);
+        LOGD("Child %i exited normally", child->pid);
         return E_EXIT;
     }
     else if (WIFSIGNALED(status)) {
-        lg(LOG_DEBUG, __func__, "Child %i was terminated by a signal", child->pid);
+        LOGD("Child %i was terminated by a signal", child->pid);
         return E_EXIT_SIGNAL;
     }
     return E_UNKNOWN;

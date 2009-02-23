@@ -59,7 +59,7 @@ static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 int trace_me(void) {
     if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to set tracing: %s", strerror(errno));
+        LOGE("Failed to set tracing: %s", strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -69,8 +69,7 @@ int trace_me(void) {
 int trace_kill(pid_t pid) {
     if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to kill child %i: %s",
-                pid, strerror(errno));
+        LOGE("Failed to kill child %i: %s", pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -80,8 +79,7 @@ int trace_kill(pid_t pid) {
 int trace_syscall(pid_t pid, int data) {
     if (0 > ptrace(PTRACE_SYSCALL, pid, NULL, data)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to resume child %i: %s",
-                pid, strerror(errno));
+        LOGE("Failed to resume child %i: %s", pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -91,8 +89,7 @@ int trace_syscall(pid_t pid, int data) {
 int trace_geteventmsg(pid_t pid, void *data) {
     if (0 > ptrace(PTRACE_GETEVENTMSG, pid, NULL, data)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to get event message of child %i: %s",
-                pid, strerror(errno));
+        LOGE("Failed to get event message of child %i: %s", pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -106,8 +103,7 @@ int trace_peek(pid_t pid, long off, long *res) {
     val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
     if (-1 == val && 0 != errno) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s",
-                pid, off, strerror(errno));
+        LOGE("ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s", pid, off, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -120,7 +116,7 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 
     if (0 > trace_peek(pid, syscall_args[arg], res)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to get argument %d: %s", arg, strerror(errno));
+        LOGE("Failed to get argument %d: %s", arg, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -129,7 +125,7 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 
 int trace_get_syscall(pid_t pid, long *syscall) {
     if (0 > trace_peek(pid, ORIG_ACCUM, syscall)) {
-        lg(LOG_ERROR, __func__, "Failed to get syscall: %s", strerror(errno));
+        LOGE("Failed to get syscall: %s", strerror(errno));
         return -1;
     }
     return 0;
@@ -138,9 +134,7 @@ int trace_get_syscall(pid_t pid, long *syscall) {
 int trace_set_syscall(pid_t pid, long syscall) {
     if (0 > ptrace(PTRACE_POKEUSER, pid, ORIG_ACCUM, syscall)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__,
-                "Failed to set syscall number to %ld for child %i: %s",
-                syscall, pid, strerror(errno));
+        LOGE("Failed to set syscall number to %ld for child %i: %s", syscall, pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -150,8 +144,7 @@ int trace_set_syscall(pid_t pid, long syscall) {
 int trace_set_return(pid_t pid, long val) {
     if (0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val)) {
         int save_errno = errno;
-        lg(LOG_ERROR, __func__, "ptrace(PTRACE_POKEUSER,%i,ACCUM,%ld) failed: %s",
-                pid, val, strerror(errno));
+        LOGE("ptrace(PTRACE_POKEUSER,%i,ACCUM,%ld) failed: %s", pid, val, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -170,8 +163,7 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     assert(arg >= 0 && arg < MAX_ARGS);
     if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
         save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to get address of argument %d: %s",
-                arg, strerror(errno));
+        LOGE("Failed to get address of argument %d: %s", arg, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -183,8 +175,7 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
         if (-1 == u.val && 0 != errno) {
             save_errno = errno;
-            lg(LOG_ERROR, __func__, "ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s",
-                    pid, addr, strerror(errno));
+            LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
             errno = save_errno;
             return -1;
         }
@@ -198,9 +189,7 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
                 break;
             else if (0 != errno) {
                 save_errno = errno;
-                lg(LOG_ERROR, __func__,
-                        "ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s",
-                        pid, addr, strerror(errno));
+                LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
                 errno = save_errno;
                 return -1;
             }
@@ -222,8 +211,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     assert(arg >= 0 && arg < MAX_ARGS);
     if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
         save_errno = errno;
-        lg(LOG_ERROR, __func__, "Failed to get address of argument %d: %s",
-                arg, strerror(errno));
+        LOGE("Failed to get address of argument %d: %s", arg, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -235,8 +223,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
         memcpy(u.x, src, sizeof(long));
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            lg(LOG_ERROR, __func__, "Failed to set argument %d to \"%s\": %s",
-                    arg, src, strerror(errno));
+            LOGE("Failed to set argument %d to \"%s\": %s", arg, src, strerror(errno));
             errno = save_errno;
             return -1;
         }
@@ -249,8 +236,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
         memcpy(u.x, src, m);
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            lg(LOG_ERROR, __func__, "Failed to set argument %d to \"%s\": %s",
-                    arg, src, strerror(errno));
+            LOGE("Failed to set argument %d to \"%s\": %s", arg, src, strerror(errno));
             errno = save_errno;
             return -1;
         }

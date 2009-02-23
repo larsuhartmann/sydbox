@@ -211,8 +211,7 @@ int remove_slash(const char *pathname, char *dest) {
         }
     }
     if (nslashes)
-        lg(LOG_DEBUG, __func__, "Simplified pathname \"%s\" to \"%s\"",
-                pathname, dest);
+        LOGD("Simplified pathname \"%s\" to \"%s\"", pathname, dest);
     return nslashes;
 }
 
@@ -230,8 +229,7 @@ void shell_expand(const char *pathname, char *dest) {
     dest[i-1] = '\0';
     fclose(bash);
     if (0 != strncmp(pathname, dest, PATH_MAX))
-        lg(LOG_DEBUG, __func__, "Expanded path \"%s\" to \"%s\" using /bin/sh",
-                pathname, dest);
+        LOGD("Expanded path \"%s\" to \"%s\" using /bin/sh", pathname, dest);
 }
 
 /* A wrapper around safe_realpath */
@@ -255,9 +253,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
                 rpath = safe_realpath(dname, pid, 0, NULL);
             free(dirc);
 
-            lg(LOG_DEBUG, __func__,
-                    "File \"%s\" doesn't exist, using directory \"%s\"",
-                    path, rpath);
+            LOGD("File \"%s\" doesn't exist, using directory \"%s\"", path, rpath);
             if (NULL == rpath) {
                 /* Neither file nor the directory exists */
                 errno = ENOENT;
@@ -265,8 +261,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             }
             else {
                 /* Add the directory back */
-                lg(LOG_DEBUG, __func__,
-                        "File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
+                LOGD("File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
                         path, rpath);
                 char *basec, *bname;
                 basec = xstrndup(path, PATH_MAX);
@@ -277,8 +272,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             }
         }
         else {
-            lg(LOG_WARNING, __func__,
-                    "safe_realpath() failed for \"%s\": %s", path, strerror(errno));
+            LOGW("safe_realpath() failed for \"%s\": %s", path, strerror(errno));
             return NULL;
         }
     }

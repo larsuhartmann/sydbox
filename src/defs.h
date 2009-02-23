@@ -136,10 +136,17 @@ void die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
 void _die(int err, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
-void lg(int level, const char *funcname, const char *fmt, ...)
-    __attribute__ ((__format__ (__printf__, 3, 4)));
 void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
+
+void lg(int level, const char *funcname, const char *fmt, ...)
+    __attribute__ ((__format__ (__printf__, 3, 4)));
+#define LOGE(...)   lg(LOG_ERROR, __func__, __VA_ARGS__)
+#define LOGW(...)   lg(LOG_WARNING, __func__, __VA_ARGS__)
+#define LOGN(...)   lg(LOG_NORMAL, __func__, __VA_ARGS__)
+#define LOGV(...)   lg(LOG_VERBOSE, __func__, __VA_ARGS__)
+#define LOGD(...)   lg(LOG_VERBOSE, __func__, __VA_ARGS__)
+#define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __VA_ARGS__)
 
 void *xmalloc(size_t size);
 char *xstrndup(const char *s, size_t n);
