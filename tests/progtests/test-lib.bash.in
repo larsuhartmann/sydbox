@@ -59,7 +59,7 @@ cleanup() {
 trap 'cleanup' EXIT
 
 sydbox() {
-    @TOP_BUILDDIR@/src/sydbox -l "${SANDBOX_LOG}" -d "$@"
+    @TOP_BUILDDIR@/src/sydbox -l "${SANDBOX_LOG}" -d -d "$@"
 }
 
 say() {
