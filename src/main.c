@@ -93,10 +93,103 @@ void cleanup(void) {
         fclose(flog);
 }
 
+// Event handlers
+void xabort(struct tchild *child) {
+    LOGV("Child %i called abort()", child->pid);
+    if (0 > trace_kill(child->pid)) {
+        LOGE("Failed to kill child %i after abort()", child->pid);
+        die(EX_SOFTWARE, "Failed to kill child %i after abort()", child->pid);
+    }
+    tchild_delete(&(ctx->children), child->pid);
+}
+
+void xsetup(struct tchild *child) {
+    if (0 > trace_setup(child->pid))
+        die(EX_SOFTWARE, "Failed to set tracing options: %s", strerror(errno));
+    else
+        child->flags &= ~TCHILD_NEEDSETUP;
+    if (0 > trace_syscall(child->pid, 0)) {
+        LOGE("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
+        die(EX_SOFTWARE, "Failed to resume child %i after setup: %s", child->pid, strerror(errno));
+    }
+    else
+        LOGC("Resumed child %i after setup", child->pid);
+}
+
+void xsetup_premature(pid_t pid) {
+    struct tchild *child;
+
+    tchild_new(&(ctx->children), pid);
+    child = tchild_find(&(ctx->children), pid);
+    xsetup(child);
+}
+
+void xsyscall(struct tchild *child) {
+    if (0 > trace_syscall(child->pid, 0)) {
+        LOGE("Failed to resume child %i before/after syscall: %s", child->pid, strerror(errno));
+        die(EX_SOFTWARE, "Failed to resume child %i before/after syscall: %s", child->pid,
+                strerror(errno));
+    }
+    else
+        LOGC("Resumed child %i before/after syscall", child->pid);
+}
+
+void xfork(struct tchild *child) {
+    pid_t childpid;
+
+    // Get new child's pid
+    if (0 > trace_geteventmsg(child->pid, &childpid))
+        die(EX_SOFTWARE, "Failed to get the pid of the newborn child: %s", strerror(errno));
+    else
+        LOGC("The newborn child's pid is %i", childpid);
+
+    if (tchild_find(&(ctx->children), childpid)) {
+        // Child is prematurely born, let it continue its life
+        if (0 > trace_syscall(childpid, 0))
+            die(EX_SOFTWARE, "Failed to resume prematurely born child %i: %s", childpid, strerror(errno));
+        else
+            LOGC("Resumed prematurely born child %i", childpid);
+    }
+    else {
+        // Add the child, setup will be done later
+        tchild_new(&(ctx->children), childpid);
+    }
+    if (0 > trace_syscall(child->pid, 0))
+        die(EX_SOFTWARE, "Failed to resume child %i after fork(): %s", child->pid, strerror(errno));
+    else
+        LOGC("Resumed child %i after fork()", child->pid);
+}
+
+void xexecv(struct tchild *child) {
+    if (0 > trace_syscall(child->pid, 0))
+        die(EX_SOFTWARE, "Failed to resume child %i after execve(): %s", child->pid, strerror(errno));
+    else
+        LOGC("Resumed child %i after execve()", child->pid);
+}
+
+void xgenuine(struct tchild *child, int status) {
+    if (0 > trace_syscall(child->pid, WSTOPSIG(status)))
+        die(EX_SOFTWARE, "Failed to resume child %i after genuine signal: %s", child->pid,
+                strerror(errno));
+    else
+        LOGC("Resumed child %i after genuine signal", child->pid);
+}
+
+void xunknown(struct tchild *child, int status) {
+    if (0 > trace_syscall(child->pid, 0)) {
+        LOGE("Failed to resume child %i after unknown signal %#x: %s",
+                child->pid, status, strerror(errno));
+        die(EX_SOFTWARE, "Failed to resume child %i after unknown signal %#x: %s",
+                child->pid, status, strerror(errno));
+    }
+    else
+        LOGC("Resumed child %i after unknown signal %#x", child->pid, status);
+}
+
 int trace_loop(void) {
     int status, ret;
     unsigned int event;
-    pid_t pid, childpid;
+    pid_t pid;
     struct tchild *child;
 
     ret = EXIT_SUCCESS;
@@ -113,100 +206,35 @@ int trace_loop(void) {
                 || (NULL != child && E_SETUP_PREMATURE != event));
 
         if (0xb7f == status) {
-            // Child called abort()
-            LOGV("Child %i called abort()", child->pid);
-            if (0 > trace_kill(pid) && ESRCH != errno) {
-                LOGE("Failed to kill child %i after abort()", child->pid);
-                die(EX_SOFTWARE, "Failed to kill child %i after abort", child->pid);
-            }
-            if (ctx->eldest == child) {
-                tchild_delete(&(ctx->children), pid);
-                return EXIT_FAILURE;
-            }
-            tchild_delete(&(ctx->children), pid);
+            xabort(child);
+            return EX_SOFTWARE;
         }
         switch(event) {
             case E_SETUP:
-                if (0 > trace_setup(pid))
-                    die(EX_SOFTWARE, "Failed to setup tracing options: %s", strerror(errno));
-                else
-                    child->flags &= ~TCHILD_NEEDSETUP;
-                if (0 > trace_syscall(pid, 0)) {
-                    LOGE("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after setup: %s",
-                            child->pid, strerror(errno));
-                }
-                else
-                    LOGC("Resumed child %i after setup", child->pid);
+                xsetup(child);
                 break;
             case E_SETUP_PREMATURE:
-                tchild_new(&(ctx->children), pid);
-                if (0 > trace_setup(pid))
-                    die(EX_SOFTWARE, "Failed to setup tracing options: %s", strerror(errno));
-                else
-                    child->flags &= ~TCHILD_NEEDSETUP;
+                xsetup_premature(pid);
                 break;
             case E_SYSCALL:
-                if (NULL != child)
+                if (NULL != child) {
                     syscall_handle(ctx, child);
-
-                if (0 > trace_syscall(pid, 0)) {
-                    LOGE("Failed to resume child %i after syscall: %s", child->pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after syscall: %s",
-                            child->pid, strerror(errno));
+                    xsyscall(child);
                 }
-                else
-                    LOGC("Resumed child %i before/after syscall", child->pid);
-                break;
-            case E_FORK:
-                // Get new child's pid
-                if (0 > trace_geteventmsg(pid, &childpid)) {
-                    LOGE("Failed to get the pid of the newborn child: %s", strerror(errno));
-                    die(EX_SOFTWARE, "Failed to get the pid of the newborn child: %s",
+                else if (0 > trace_syscall(pid, 0)) {
+                    LOGE("Failed to resume child %i before syscall: %s", pid, strerror(errno));
+                    die(EX_SOFTWARE, "Failed to resume child %i before syscall: %s", pid,
                             strerror(errno));
                 }
-                else
-                    LOGC("The newborn child's pid is %i", childpid);
-
-                if (tchild_find(&(ctx->children), childpid)) {
-                    // Child is prematurely born, let it continue its life
-                    if (0 > trace_syscall(childpid, 0)) {
-                        LOGE("Failed to resume prematurely born child %i: %s", pid, strerror(errno));
-                        die(EX_SOFTWARE, "Failed to resume prematurely born child %i: %s",
-                                pid, strerror(errno));
-                    }
-                    else
-                        LOGC("Resumed prematurely born child %i", child->pid);
-                }
-                else {
-                    // Add the child, setup will be done later
-                    tchild_new(&(ctx->children), childpid);
-                }
-                if (0 > trace_syscall(pid, 0)) {
-                    LOGE("Failed to resume child %i after fork(), vfork() or clone(): %s",
-                            pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after fork(): %s", pid, strerror(errno));
-                }
-                else
-                    LOGC("Resumed child %i after fork()", child->pid);
+                break;
+            case E_FORK:
+                xfork(child);
                 break;
             case E_EXECV:
-                if (0 > trace_syscall(pid, 0)) {
-                    LOGE("Failed to resume child %i after execve(): %s", pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after execve(): %s",
-                            pid, strerror(errno));
-                }
-                else
-                    LOGC("Resumed child %i after execve()", child->pid);
+                xexecv(child);
                 break;
             case E_GENUINE:
-                if (0 > trace_syscall(pid, WSTOPSIG(status))) {
-                    LOGE("Failed to resume child %i after genuine signal: %s", pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after genuine signal: %s",
-                            pid, strerror(errno));
-                }
-                else
-                    LOGC("Resumed child %i after genuine signal", child->pid);
+                xgenuine(child, status);
                 break;
             case E_EXIT:
                 if (ctx->eldest == child) {
@@ -226,15 +254,8 @@ int trace_loop(void) {
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
-                LOGD("Unknown signal %#x received from child %i", status, pid);
-                if (0 > trace_syscall(pid, 0)) {
-                    LOGE("Failed to resume child %i after unknown signal %#x: %s",
-                            pid, status, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i after unknown signal %#x: %s",
-                            pid, status, strerror(errno));
-                }
-                else
-                    LOGC("Resumed child %i after unknown signal", child->pid);
+                LOGV("Unknown signal %#x received from child %i", status, pid);
+                xunknown(child, status);
                 break;
         }
     }
