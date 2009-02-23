@@ -321,6 +321,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
         else if (ret) { // W_OK or O_WRONLY and O_RDWR not in flags
             free(rpath);
+            LOGD("Flags don't include W_OK, O_WRONLY or O_RDWR, allowing access");
             return 1;
         }
     }
