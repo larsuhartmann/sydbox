@@ -484,7 +484,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     sname = syscall_get_name(syscall);
     if (!(child->flags & TCHILD_INSYSCALL)) { /* Entering syscall */
         lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
-                "Child %i is entering system %s()",
+                "Child %i is entering system call %s()",
                 child->pid, sname);
         if (!syscall_check(ctx, child, syscall)) {
             /* Deny access */
