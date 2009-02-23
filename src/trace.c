@@ -93,6 +93,16 @@ int trace_kill(pid_t pid) {
     return 0;
 }
 
+int trace_cont(pid_t pid) {
+    if (0 > ptrace(PTRACE_CONT, pid, NULL, NULL)) {
+        int save_errno = errno;
+        LOGE("Failed to continue child %i: %s", pid, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
 int trace_syscall(pid_t pid, int data) {
     if (0 > ptrace(PTRACE_SYSCALL, pid, NULL, data)) {
         int save_errno = errno;

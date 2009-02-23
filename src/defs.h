@@ -158,6 +158,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 int trace_me(void);
 int trace_setup(pid_t pid);
 int trace_kill(pid_t pid);
+int trace_cont(pid_t pid);
 int trace_syscall(pid_t pid, int data);
 int trace_geteventmsg(pid_t pid, void *data);
 int trace_get_arg(pid_t pid, int arg, long *res);

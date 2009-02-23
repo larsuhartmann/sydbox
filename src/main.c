@@ -96,7 +96,7 @@ void cleanup(void) {
 // Event handlers
 int xabort(struct tchild *child) {
     pid_t pid = child->pid;
-    LOGV("Child %i called abort()", pid);
+    LOGW("Child %i called abort()", pid);
     if (ctx->eldest == child) {
         tchild_delete(&(ctx->children), pid);
         trace_cont(pid);
