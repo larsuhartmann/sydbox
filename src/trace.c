@@ -222,3 +222,130 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     }
     return 0;
 }
+
+void trace_request_name(int request, char *dest) {
+    switch (request) {
+        case PTRACE_PEEKTEXT:
+            strcpy(dest, "PTRACE_PEEKTEXT");
+            break;
+        case PTRACE_PEEKDATA:
+            strcpy(dest, "PTRACE_PEEKDATA");
+            break;
+        case PTRACE_PEEKUSER:
+            strcpy(dest, "PTRACE_PEEKUSER");
+            break;
+        case PTRACE_POKETEXT:
+            strcpy(dest, "PTRACE_POKETEXT");
+            break;
+        case PTRACE_POKEUSER:
+            strcpy(dest, "PTRACE_POKEDATA");
+            break;
+        case PTRACE_CONT:
+            strcpy(dest, "PTRACE_PTRACECONT");
+            break;
+        case PTRACE_SINGLESTEP:
+            strcpy(dest, "PTRACE_SINGLESTEP");
+            break;
+        case PTRACE_GETREGS:
+            strcpy(dest, "PTRACE_GETREGS");
+            break;
+        case PTRACE_SETREGS:
+            strcpy(dest, "PTRACE_SETREGS");
+            break;
+        case PTRACE_GETFPREGS:
+            strcpy(dest, "PTRACE_GETFPREGS");
+            break;
+        case PTRACE_SETFPREGS:
+            strcpy(dest, "PTRACE_SETFPREGS");
+            break;
+        case PTRACE_GETFPXREGS:
+            strcpy(dest, "PTRACE_GETFPXREGS");
+            break;
+        case PTRACE_SETFPXREGS:
+            strcpy(dest, "PTRACE_SETFPXREGS");
+            break;
+        case PTRACE_SYSCALL:
+            strcpy(dest, "PTRACE_SYSCALL");
+            break;
+        case PTRACE_GETEVENTMSG:
+            strcpy(dest, "PTRACE_GETEVENTMSG");
+            break;
+        case PTRACE_GETSIGINFO:
+            strcpy(dest, "PTRACE_GETSIGINFO");
+            break;
+        case PTRACE_SETSIGINFO:
+            strcpy(dest, "PTRACE_SETSIGINFO");
+            break;
+        default:
+            strcpy(dest, "UNKNOWN");
+            break;
+    }
+}
+
+int trace_emulate(struct tchild *child) {
+    int request;
+    pid_t pid;
+    void *addr, *data;
+    long ret;
+
+    if (0 > trace_get_arg(child->pid, 0, (long *) &request)) {
+        lg(LOG_ERROR, "trace.emulate",
+                "Failed to get request argument of ptrace: %s", strerror(errno));
+        return -1;
+    }
+    else if (0 > trace_get_arg(child->pid, 1, (long *) &pid)) {
+        lg(LOG_ERROR, "trace.emulate",
+                "Failed to get pid argument of ptrace: %s", strerror(errno));
+        return -1;
+    }
+    else if (0 > trace_get_arg(child->pid, 2, (long *) &addr)) {
+        lg(LOG_ERROR, "trace.emulate",
+                "Failed to get addr argument of ptrace: %s", strerror(errno));
+        return -1;
+    }
+    else if (0 > trace_get_arg(child->pid, 3, (long *) &data)) {
+        lg(LOG_ERROR, "trace.emulate",
+                "Failed to get data argument of ptrace: %s", strerror(errno));
+        return -1;
+    }
+
+    if (PTRACE_TRACEME == request) {
+        lg(LOG_DEBUG, "trace.emulate",
+                "PTRACE_TRACEME requested, no need to call ptrace()");
+        child->retval = 0;
+        return 0;
+    }
+    else if (PTRACE_ATTACH == request) {
+        lg(LOG_DEBUG, "trace.emulate",
+                "PTRACE_ATTACH requested, no need to call ptrace()");
+        child->retval = 0;
+        return 0;
+    }
+    else if (PTRACE_DETACH == request) {
+        lg(LOG_DEBUG, "trace.emulate",
+                "PTRACE_DETACH requested, refusing to detach");
+        child->retval = 0;
+        return 0;
+    }
+    else if (PTRACE_SETOPTIONS == request) {
+        lg(LOG_DEBUG, "trace.emulate",
+                "PTRACE_SETOPTIONS requested, refusing to set options");
+        child->retval = 0;
+        return 0;
+    }
+
+    if (LOG_DEBUG <= log_level) {
+        char rname[24];
+        trace_request_name(request, rname);
+        lg(LOG_DEBUG, "trace.emulate",
+                "Calling ptrace(%s,%i,%p,%p", rname, pid, addr, data);
+    }
+
+    ret = ptrace(request, pid, addr, data);
+    if (0 != errno)
+        child->retval = -errno;
+    else
+        child->retval = ret;
+
+    return 0;
+}
