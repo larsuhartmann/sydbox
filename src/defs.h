@@ -155,7 +155,6 @@ int trace_set_syscall(pid_t pid, long syscall);
 int trace_set_return(pid_t pid, long val);
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len);
 int trace_set_string(pid_t pid, int arg, const char *src, size_t len);
-int trace_emulate(struct tchild *child);
 
 /* syscall.c */
 struct syscall_def {

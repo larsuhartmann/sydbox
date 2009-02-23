@@ -48,8 +48,7 @@
 #define DONT_RESOLV     (1 << 9) /* Don't resolve symlinks */
 #define MAGIC_OPEN      (1 << 10) /* Check if the open() call is magic */
 #define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
-#define EMULATE_PTRACE  (1 << 12) /* Emulate ptrace() system call */
-#define NET_CALL        (1 << 13) /* Allowing the system call depends on the net flag */
+#define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
 
 static const struct syscall_name {
     int no;
@@ -106,7 +105,6 @@ static const struct syscall_def syscalls[] = {
 #elif defined(X86_64)
     {__NR_socket,       NET_CALL},
 #endif
-    {__NR_ptrace,       EMULATE_PTRACE},
     {-1,                 0}
 };
 
@@ -446,15 +444,6 @@ found:
         }
     }
 
-    /* Handle ptrace emulation */
-    if (sdef->flags & EMULATE_PTRACE) {
-        lg(LOG_DEBUG, "syscall.check.emulate",
-                "System call %s() has EMULATE_PTRACE set, emulating ptrace", sname);
-        if (0 > trace_emulate(child))
-            die(EX_SOFTWARE, "Failed to emulate ptrace: %s", strerror(errno));
-        return 0;
-    }
-
     if (sdef->flags & CHECK_PATH) {
         lg(LOG_DEBUG, "syscall.check.check_path",
                 "System call %s() has CHECK_PATH set, checking", sname);
@@ -507,7 +496,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         }
         else
             lg(LOG_DEBUG_CRAZY, "syscall.handle.allow",
-                    "Allowing access to system call %s()", sname);
+                    "Allowing access to system call %s()", sname, child->pid);
         child->flags ^= TCHILD_INSYSCALL;
     }
     else { /* Exiting syscall */
