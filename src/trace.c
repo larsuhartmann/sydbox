@@ -66,6 +66,23 @@ int trace_me(void) {
     return 0;
 }
 
+int trace_setup(pid_t pid) {
+    // Setup ptrace options
+    LOGD("Setting tracing options for child %i", pid);
+    if (0 > ptrace(PTRACE_SETOPTIONS, pid, NULL,
+                    PTRACE_O_TRACESYSGOOD
+                    | PTRACE_O_TRACECLONE
+                    | PTRACE_O_TRACEFORK
+                    | PTRACE_O_TRACEVFORK
+                    | PTRACE_O_TRACEEXEC)) {
+        int save_errno = errno;
+        LOGE("Setting tracing options failed for child %i: %s", pid, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
 int trace_kill(pid_t pid) {
     if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
         int save_errno = errno;

@@ -45,7 +45,8 @@ START_TEST(check_trace_get_syscall) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -87,7 +88,8 @@ START_TEST(check_trace_set_syscall) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -140,7 +142,8 @@ START_TEST(check_trace_get_string_first) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -182,7 +185,8 @@ START_TEST(check_trace_get_string_second) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -224,7 +228,8 @@ START_TEST(check_trace_get_string_third) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -266,7 +271,8 @@ START_TEST(check_trace_get_string_fourth) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -308,7 +314,8 @@ START_TEST(check_trace_set_string_first) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -352,7 +359,8 @@ START_TEST(check_trace_set_string_second) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -396,7 +404,8 @@ START_TEST(check_trace_set_string_third) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -440,7 +449,8 @@ START_TEST(check_trace_set_string_fourth) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),

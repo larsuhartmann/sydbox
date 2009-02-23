@@ -115,7 +115,7 @@ int trace_loop(void) {
         if (0xb7f == status) {
             // Child called abort()
             LOGV("Child %i called abort()", child->pid);
-            if (0 > trace_kill(pid)) {
+            if (0 > trace_kill(pid) && ESRCH != errno) {
                 LOGE("Failed to kill child %i after abort()", child->pid);
                 die(EX_SOFTWARE, "Failed to kill child %i after abort", child->pid);
             }
@@ -127,7 +127,10 @@ int trace_loop(void) {
         }
         switch(event) {
             case E_SETUP:
-                tchild_setup(child);
+                if (0 > trace_setup(pid))
+                    die(EX_SOFTWARE, "Failed to setup tracing options: %s", strerror(errno));
+                else
+                    child->flags &= ~TCHILD_NEEDSETUP;
                 if (0 > trace_syscall(pid, 0)) {
                     LOGE("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
                     die(EX_SOFTWARE, "Failed to resume child %i after setup: %s",
@@ -138,7 +141,10 @@ int trace_loop(void) {
                 break;
             case E_SETUP_PREMATURE:
                 tchild_new(&(ctx->children), pid);
-                tchild_setup(ctx->children);
+                if (0 > trace_setup(pid))
+                    die(EX_SOFTWARE, "Failed to setup tracing options: %s", strerror(errno));
+                else
+                    child->flags &= ~TCHILD_NEEDSETUP;
                 break;
             case E_SYSCALL:
                 if (NULL != child)
@@ -577,7 +583,8 @@ int main(int argc, char **argv) {
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        tchild_setup(ctx->eldest);
+        if (0 > trace_setup(pid))
+            die(EX_SOFTWARE, "Failed to setup tracing options: %s", strerror(errno));
 
         LOGV("Child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {

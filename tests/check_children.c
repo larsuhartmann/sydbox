@@ -91,34 +91,6 @@ START_TEST(check_tchild_find) {
 }
 END_TEST
 
-START_TEST(check_tchild_setup) {
-    pid_t pid;
-
-    pid = fork();
-    if (0 > pid)
-        fail("fork() failed: %s", strerror(errno));
-    else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-        kill(getpid(), SIGSTOP);
-    }
-    else { /* parent */
-        int status;
-        struct tchild *tc = NULL;
-
-        tchild_new(&tc, pid);
-        wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        tchild_setup(tc);
-        fail_if(tc->flags & TCHILD_NEEDSETUP);
-
-        tchild_free(&tc);
-        kill(pid, SIGTERM);
-    }
-}
-END_TEST
-
 START_TEST(check_tchild_event_e_setup) {
     pid_t pid;
 
@@ -195,7 +167,8 @@ START_TEST(check_tchild_event_e_syscall) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
@@ -242,7 +215,8 @@ START_TEST(check_tchild_event_e_genuine) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will receive a SIGINT */
         fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
@@ -279,7 +253,8 @@ START_TEST(check_tchild_event_e_exit) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will exit. */
         fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
@@ -315,7 +290,8 @@ START_TEST(check_tchild_event_e_exit_signal) {
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGSTOP",
                 pid);
-        tchild_setup(tc);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child. */
         fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
@@ -342,7 +318,6 @@ Suite *children_suite_create(void) {
     tcase_add_test(tc_tchild, check_tchild_delete_first);
     tcase_add_test(tc_tchild, check_tchild_delete);
     tcase_add_test(tc_tchild, check_tchild_find);
-    tcase_add_test(tc_tchild, check_tchild_setup);
     tcase_add_test(tc_tchild, check_tchild_event_e_setup);
     tcase_add_test(tc_tchild, check_tchild_event_e_setup_premature);
     tcase_add_test(tc_tchild, check_tchild_event_e_syscall);

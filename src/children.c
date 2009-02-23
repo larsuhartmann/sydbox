@@ -98,21 +98,6 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid) {
     return NULL;
 }
 
-void tchild_setup(struct tchild *child) {
-    // Setup ptrace options
-    LOGD("Setting tracing options for child %i", child->pid);
-    if (0 != ptrace(PTRACE_SETOPTIONS, child->pid, NULL,
-                    PTRACE_O_TRACESYSGOOD
-                    | PTRACE_O_TRACECLONE
-                    | PTRACE_O_TRACEFORK
-                    | PTRACE_O_TRACEVFORK
-                    | PTRACE_O_TRACEEXEC)) {
-        LOGE("Setting tracing options failed for child %i: %s", child->pid, strerror(errno));
-        die(EX_SOFTWARE, "Setting tracing options failed for child %i: %s", child->pid, strerror(errno));
-    }
-    child->flags ^= TCHILD_NEEDSETUP;
-}
-
 // Learn the cause of the signal received from child.
 unsigned int tchild_event(struct tchild *child, int status) {
     unsigned int event;

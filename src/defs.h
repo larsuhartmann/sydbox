@@ -94,7 +94,6 @@ void tchild_new(struct tchild **head, pid_t pid);
 void tchild_free(struct tchild **head);
 void tchild_delete(struct tchild **head, pid_t pid);
 struct tchild *tchild_find(struct tchild **head, pid_t pid);
-void tchild_setup(struct tchild *child);
 unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
@@ -157,6 +156,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 
 /* trace.c */
 int trace_me(void);
+int trace_setup(pid_t pid);
 int trace_kill(pid_t pid);
 int trace_syscall(pid_t pid, int data);
 int trace_geteventmsg(pid_t pid, void *data);
