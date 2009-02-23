@@ -488,10 +488,15 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 child->pid, sname);
         if (!syscall_check(ctx, child, syscall)) {
             /* Deny access */
+            lg(LOG_DEBUG, "syscall.handle.deny",
+                    "Denying access to system call %s()", sname);
             child->syscall = syscall;
             if (0 > trace_set_syscall(child->pid, 0xbadca11))
                 die(EX_SOFTWARE, "Failed to set syscall: %s", strerror(errno));
         }
+        else
+            lg(LOG_DEBUG_CRAZY, "syscall.handle.allow",
+                    "Allowing access to system call %s()", sname, child->pid);
         child->flags ^= TCHILD_INSYSCALL;
     }
     else { /* Exiting syscall */
@@ -499,6 +504,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 "Child %i is exiting system call %s()",
                 child->pid, sname);
         if (0xbadca11 == syscall) {
+            lg(LOG_DEBUG, "syscall.handle.restore",
+                    "Restoring real call number for denied system call %s()", sname);
             /* Restore real call number and return our error code */
             if (0 > trace_set_syscall(child->pid, child->syscall))
                 die(EX_SOFTWARE, "Failed to restore syscall: %s", strerror(errno));
