@@ -203,9 +203,8 @@ int trace_loop(void) {
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
         if (0 > pid) {
-            LOGE("waitpid failed for child %i: %s", pid, strerror(errno));
-            die(EX_SOFTWARE, "waitpid failed for child %i: %s",
-                    pid, strerror(errno));
+            LOGE("waitpid failed: %s", pid, strerror(errno));
+            die(EX_SOFTWARE, "waitpid failed: %s", pid, strerror(errno));
         }
         child = tchild_find(&(ctx->children), pid);
         event = tchild_event(child, status);
