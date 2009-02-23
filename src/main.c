@@ -94,13 +94,20 @@ void cleanup(void) {
 }
 
 // Event handlers
-void xabort(struct tchild *child) {
-    LOGV("Child %i called abort()", child->pid);
-    if (0 > trace_kill(child->pid)) {
-        LOGE("Failed to kill child %i after abort()", child->pid);
-        die(EX_SOFTWARE, "Failed to kill child %i after abort()", child->pid);
+int xabort(struct tchild *child) {
+    pid_t pid = child->pid;
+    LOGV("Child %i called abort()", pid);
+    if (ctx->eldest == child) {
+        tchild_delete(&(ctx->children), pid);
+        trace_cont(pid);
+        return EX_SOFTWARE;
     }
-    tchild_delete(&(ctx->children), child->pid);
+    else if (0 > trace_cont(pid) && ESRCH != errno) {
+        LOGE("Failed to make child %i continue after abort()", pid);
+        die(EX_SOFTWARE, "Failed to make child %i continue after abort()", pid);
+    }
+    tchild_delete(&(ctx->children), pid);
+    return 0;
 }
 
 void xsetup(struct tchild *child) {
@@ -206,8 +213,9 @@ int trace_loop(void) {
                 || (NULL != child && E_SETUP_PREMATURE != event));
 
         if (0xb7f == status) {
-            xabort(child);
-            return EX_SOFTWARE;
+            ret = xabort(child);
+            if (0 != ret)
+                return ret;
         }
         switch(event) {
             case E_SETUP:
