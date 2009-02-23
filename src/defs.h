@@ -86,7 +86,7 @@ struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
     unsigned long syscall; /* original syscall when system call is faked */
-    int retval; /* faked syscall will return this value */
+    long retval; /* faked syscall will return this value */
     struct tchild *next;
 };
 
@@ -149,21 +149,10 @@ void shell_expand(const char *pathname, char *dest);
 char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 
 /* trace.c */
-#define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
-#define MAX_ARGS        4
-#if defined(I386)
-#define ORIG_ACCUM      (4 * ORIG_EAX)
-#define ACCUM           (4 * EAX)
-static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
-#elif defined(X86_64)
-#define ORIG_ACCUM      (8 * ORIG_RAX)
-#define ACCUM           (8 * RAX)
-static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
-#endif
-
 int trace_get_arg(pid_t pid, int arg, long *res);
 int trace_get_syscall(pid_t pid, long *syscall);
 int trace_set_syscall(pid_t pid, long syscall);
+int trace_set_return(pid_t pid, long val);
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len);
 int trace_set_string(pid_t pid, int arg, const char *src, size_t len);
 

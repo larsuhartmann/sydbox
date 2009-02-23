@@ -44,6 +44,18 @@
 
 #include "defs.h"
 
+#define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
+#define MAX_ARGS        4
+#if defined(I386)
+#define ORIG_ACCUM      (4 * ORIG_EAX)
+#define ACCUM           (4 * EAX)
+static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
+#elif defined(X86_64)
+#define ORIG_ACCUM      (8 * ORIG_RAX)
+#define ACCUM           (8 * RAX)
+static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
+#endif
+
 int trace_peek(pid_t pid, long off, long *res) {
     long val;
 
@@ -58,6 +70,19 @@ int trace_peek(pid_t pid, long off, long *res) {
         return -1;
     }
     *res = val;
+    return 0;
+}
+
+int trace_get_arg(pid_t pid, int arg, long *res) {
+    assert(arg >= 0 && arg < MAX_ARGS);
+
+    if (0 > trace_peek(pid, syscall_args[arg], res)) {
+        int save_errno = errno;
+        lg(LOG_ERROR, "trace.get.arg",
+                "Failed to get argument %d: %s", arg, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
     return 0;
 }
 
@@ -82,13 +107,12 @@ int trace_set_syscall(pid_t pid, long syscall) {
     return 0;
 }
 
-int trace_get_arg(pid_t pid, int arg, long *res) {
-    assert(arg >= 0 && arg < MAX_ARGS);
-
-    if (0 > trace_peek(pid, syscall_args[arg], res)) {
+int trace_set_return(pid_t pid, long val) {
+    if (0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val)) {
         int save_errno = errno;
-        lg(LOG_ERROR, "trace.get.arg",
-                "Failed to get argument %d: %s", arg, strerror(errno));
+        lg(LOG_ERROR, "trace.set.return",
+                "ptrace(PTRACE_POKEUSER,%i,ACCUM,%ld) failed: %s",
+                pid, val, strerror(errno));
         errno = save_errno;
         return -1;
     }
