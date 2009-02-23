@@ -19,7 +19,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define _ATFILE_SOURCE /* AT_FDCWD */
+#define _ATFILE_SOURCE // AT_FDCWD
 
 #include <assert.h>
 #include <errno.h>
@@ -35,20 +35,20 @@
 
 #include "defs.h"
 
-/* System call dispatch flags */
-#define RETURNS_FD      (1 << 0) /* The function returns a file descriptor */
-#define OPEN_MODE       (1 << 1) /* Check the mode argument of open() */
-#define OPEN_MODE_AT    (1 << 2) /* Check the mode argument of openat() */
-#define ACCESS_MODE     (1 << 3) /* Check the mode argument of access() */
-#define ACCESS_MODE_AT  (1 << 4) /* Check the mode argument of faccessat() */
-#define CHECK_PATH      (1 << 5) /* First argument should be a valid path */
-#define CHECK_PATH2     (1 << 6) /* Second argument should be a valid path */
-#define CHECK_PATH_AT   (1 << 7) /* CHECK_PATH for at suffixed functions */
-#define CHECK_PATH_AT2  (1 << 8) /* CHECK_PATH2 for at suffixed functions */
-#define DONT_RESOLV     (1 << 9) /* Don't resolve symlinks */
-#define MAGIC_OPEN      (1 << 10) /* Check if the open() call is magic */
-#define MAGIC_STAT      (1 << 11) /* Check if the stat() call is magic */
-#define NET_CALL        (1 << 12) /* Allowing the system call depends on the net flag */
+// System call dispatch flags
+#define RETURNS_FD      (1 << 0) // The function returns a file descriptor
+#define OPEN_MODE       (1 << 1) // Check the mode argument of open()
+#define OPEN_MODE_AT    (1 << 2) // Check the mode argument of openat()
+#define ACCESS_MODE     (1 << 3) // Check the mode argument of access()
+#define ACCESS_MODE_AT  (1 << 4) // Check the mode argument of faccessat()
+#define CHECK_PATH      (1 << 5) // First argument should be a valid path
+#define CHECK_PATH2     (1 << 6) // Second argument should be a valid path
+#define CHECK_PATH_AT   (1 << 7) // CHECK_PATH for at suffixed functions
+#define CHECK_PATH_AT2  (1 << 8) // CHECK_PATH2 for at suffixed functions
+#define DONT_RESOLV     (1 << 9) // Don't resolve symlinks
+#define MAGIC_OPEN      (1 << 10) // Check if the open() call is magic
+#define MAGIC_STAT      (1 << 11) // Check if the stat() call is magic
+#define NET_CALL        (1 << 12) // Allowing the system call depends on the net flag
 
 static const struct syscall_name {
     int no;
@@ -58,7 +58,7 @@ static const struct syscall_name {
 {-1,    NULL}
 };
 
-/* System call dispatch table */
+// System call dispatch table
 static const struct syscall_def syscalls[] = {
     {__NR_chmod,        CHECK_PATH},
     {__NR_chown,        CHECK_PATH},
@@ -208,7 +208,7 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
             return -1;
         }
     }
-    else { /* if (sdef->flags & ACCESS_MODE_AT) */
+    else { // if (sdef->flags & ACCESS_MODE_AT)
         if (0 > trace_get_arg(pid, 2, &mode)) {
             lg(LOG_ERROR, "syscall.check.access.mode.fail",
                     "Failed to get mode from argument 2: %s",
@@ -312,7 +312,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             return 1;
         }
         else if (0 != errno) {
-            /* safe_realpath() failed */
+            // safe_realpath() failed
             child->retval = -errno;
             return 0;
         }
@@ -337,7 +337,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
             free(rpath);
             die(EX_SOFTWARE, "ptrace: %s", strerror(errno));
         }
-        else if (ret) { /* W_OK or O_WRONLY and O_RDWR not in flags */
+        else if (ret) { // W_OK or O_WRONLY and O_RDWR not in flags
             free(rpath);
             return 1;
         }
@@ -362,7 +362,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
             lg(LOG_NORMAL, "syscall.check_magic.write.allow",
                     "Approved addwrite(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->write_prefixes), rpath);
-            /* Change argument to /dev/null */
+            // Change argument to /dev/null
             lg(LOG_DEBUG, "syscall.check.magic.write.devnull",
                     "Changing pathname to /dev/null");
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
@@ -381,7 +381,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
             lg(LOG_NORMAL, "syscall.check.magic.predict.allow",
                     "Approved addpredict(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->predict_prefixes), rpath);
-            /* Change argument to /dev/null */
+            // Change argument to /dev/null
             lg(LOG_DEBUG, "syscall.check.magic.predict.devnull",
                     "Changing pathname to /dev/null");
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
@@ -434,7 +434,7 @@ found:
     lg(LOG_DEBUG, "syscall.check.essential",
             "Child %i called essential system call %s()", child->pid, sname);
 
-    /* Handle magic calls */
+    // Handle magic calls
     if (sdef->flags & MAGIC_OPEN && syscall_check_magic_open(ctx, child))
         return 1;
     else if (sdef->flags & MAGIC_STAT) {
@@ -482,12 +482,12 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     if (0 > trace_get_syscall(child->pid, &syscall))
         die(EX_SOFTWARE, "Failed to get syscall: %s", strerror(errno));
     sname = syscall_get_name(syscall);
-    if (!(child->flags & TCHILD_INSYSCALL)) { /* Entering syscall */
+    if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         lg(LOG_DEBUG_CRAZY, "syscall.handle.enter",
                 "Child %i is entering system call %s()",
                 child->pid, sname);
         if (!syscall_check(ctx, child, syscall)) {
-            /* Deny access */
+            // Deny access
             lg(LOG_DEBUG, "syscall.handle.deny",
                     "Denying access to system call %s()", sname);
             child->syscall = syscall;
@@ -499,14 +499,14 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     "Allowing access to system call %s()", sname);
         child->flags ^= TCHILD_INSYSCALL;
     }
-    else { /* Exiting syscall */
+    else { // Exiting syscall
         lg(LOG_DEBUG_CRAZY, "syscall.handle.exit",
                 "Child %i is exiting system call %s()",
                 child->pid, sname);
         if (0xbadca11 == syscall) {
             lg(LOG_DEBUG, "syscall.handle.restore",
                     "Restoring real call number for denied system call %s()", sname);
-            /* Restore real call number and return our error code */
+            // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->syscall))
                 die(EX_SOFTWARE, "Failed to restore syscall: %s", strerror(errno));
             if (0 > trace_set_return(child->pid, child->retval))

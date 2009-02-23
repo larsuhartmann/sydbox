@@ -28,19 +28,19 @@ int path_magic_dir(const char *pathname) {
     char mdir[PATH_MAX];
 
     strncpy(mdir, CMD_PATH, CMD_PATH_LEN + 1);
-    /* Remove the trailing slash */
+    // Remove the trailing slash
     mdir[CMD_PATH_LEN - 1] = '\0';
     if (0 == strncmp(pathname, mdir, CMD_PATH_LEN))
         return 1;
 
     strncpy(mdir, CMD_WRITE, CMD_WRITE_LEN + 1);
-    /* Remove the trailing slash */
+    // Remove the trailing slash
     mdir[CMD_WRITE_LEN - 1] = '\0';
     if (0 == strncmp(pathname, mdir, CMD_WRITE_LEN))
         return 1;
 
     strncpy(mdir, CMD_PREDICT, CMD_PREDICT_LEN + 1);
-    /* Remove the trailing slash */
+    // Remove the trailing slash
     mdir[CMD_PREDICT_LEN - 1] = '\0';
     if (0 == strncmp(pathname, mdir, CMD_PREDICT_LEN))
         return 1;
@@ -70,8 +70,8 @@ void pathnode_new(struct pathnode **head, const char *pathname) {
     remove_slash(pathname, path_simple);
     newnode->pathname = xmalloc(PATH_MAX * sizeof(char));
     shell_expand(path_simple, newnode->pathname);
-    newnode->next = *head; /* link next */
-    *head = newnode; /* link head */
+    newnode->next = *head; // link next
+    *head = newnode; // link head
     lg(LOG_DEBUG, "path.node_new", "New path item \"%s\"", newnode->pathname);
 }
 
@@ -100,7 +100,7 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         return 0;
     }
 
-    /* Use a loop with strchr, because strtok sucks */
+    // Use a loop with strchr, because strtok sucks
     pos = 0;
     while (pos < strlen(pathlist_env)) {
         delim = strchr(pathlist_env + pos, ':');

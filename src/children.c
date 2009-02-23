@@ -41,8 +41,8 @@ void tchild_new(struct tchild **head, pid_t pid) {
     newchild->pid = pid;
     newchild->syscall = 0xbadca11;
     newchild->retval = -1;
-    newchild->next = *head; /* link next */
-    *head = newchild; /* link head */
+    newchild->next = *head; // link next
+    *head = newchild; // link head
     lg(LOG_DEBUG, "children.new", "New child %i", pid);
 }
 
@@ -63,7 +63,7 @@ void tchild_delete(struct tchild **head, pid_t pid) {
     struct tchild *temp;
     struct tchild *previous, *current;
 
-    if (pid == (*head)->pid) { /* Deleting first node */
+    if (pid == (*head)->pid) { // Deleting first node
         temp = *head;
         *head = (*head)->next;
         free(temp);
@@ -72,7 +72,7 @@ void tchild_delete(struct tchild **head, pid_t pid) {
         previous = *head;
         current = (*head)->next;
 
-        /* Find the correct location */
+        // Find the correct location
         while (NULL != current && pid != current->pid) {
             previous = current;
             current = current->next;
@@ -99,7 +99,7 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid) {
 }
 
 void tchild_setup(struct tchild *child) {
-    /* Setup ptrace options */
+    // Setup ptrace options
     lg(LOG_DEBUG, "children.setup.ptrace",
             "Setting tracing options for child %i", child->pid);
     if (0 != ptrace(PTRACE_SETOPTIONS, child->pid, NULL,
@@ -117,13 +117,13 @@ void tchild_setup(struct tchild *child) {
     child->flags ^= TCHILD_NEEDSETUP;
 }
 
-/* Learn the cause of the signal received from child. */
+// Learn the cause of the signal received from child.
 unsigned int tchild_event(struct tchild *child, int status) {
     unsigned int event;
     int sig;
 
     if (WIFSTOPPED(status)) {
-        /* Execution of child stopped by a signal */
+        // Execution of child stopped by a signal
         sig = WSTOPSIG(status);
         if (sig == SIGSTOP) {
             if (NULL != child && child->flags & TCHILD_NEEDSETUP) {
@@ -138,9 +138,9 @@ unsigned int tchild_event(struct tchild *child, int status) {
             }
         }
         else if (sig & SIGTRAP) {
-            /* We got a signal from ptrace. */
+            // We got a signal from ptrace.
             if (sig == (SIGTRAP | 0x80)) {
-                /* Child made a system call */
+                // Child made a system call
                 return E_SYSCALL;
             }
             event = (status >> 16) & 0xffff;
@@ -166,7 +166,7 @@ unsigned int tchild_event(struct tchild *child, int status) {
             }
         }
         else {
-            /* Genuine signal directed to child itself */
+            // Genuine signal directed to child itself
             lg(LOG_DEBUG, "children.event.genuine",
                     "Child %i received a signal", child->pid);
             return E_GENUINE;

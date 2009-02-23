@@ -139,9 +139,9 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     }
 
     if (addr & (sizeof(long) -1)) {
-        /* addr not a multiple of sizeof(long) */
-        n = addr - (addr & -sizeof(long)); /* residue */
-        addr &= -sizeof(long); /* residue */
+        // addr not a multiple of sizeof(long)
+        n = addr - (addr & -sizeof(long)); // residue
+        addr &= -sizeof(long); // residue
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
         if (-1 == u.val && 0 != errno) {
             save_errno = errno;

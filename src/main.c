@@ -115,7 +115,7 @@ int trace_loop(void) {
                 || (NULL != child && E_SETUP_PREMATURE != event));
 
         if (0xb7f == status) {
-            /* Child called abort() */
+            // Child called abort()
             lg(LOG_VERBOSE, "main.tloop.abort",
                     "Child %i called abort()", child->pid);
             if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
@@ -163,7 +163,7 @@ int trace_loop(void) {
                             "Resumed child %i before/after syscall", child->pid);
                 break;
             case E_FORK:
-                /* Get new child's pid */
+                // Get new child's pid
                 if (0 != ptrace(PTRACE_GETEVENTMSG, pid, NULL, &childpid)) {
                     lg(LOG_ERROR, "main.tloop.fork.geteventmsg.fail",
                             "Failed to get the pid of the newborn child: %s",
@@ -176,7 +176,7 @@ int trace_loop(void) {
                             "The newborn child's pid is %i", childpid);
 
                 if (tchild_find(&(ctx->children), childpid)) {
-                    /* Child is prematurely born, let it continue its life */
+                    // Child is prematurely born, let it continue its life
                     if (0 != ptrace(PTRACE_SYSCALL, childpid, NULL, NULL)) {
                         lg(LOG_ERROR, "main.tloop.premature.resume.fail",
                                 "Failed to resume prematurely born child %i: %s",
@@ -189,7 +189,7 @@ int trace_loop(void) {
                                 "Resumed prematurely born child %i", child->pid);
                 }
                 else {
-                    /* Add the child, setup will be done later */
+                    // Add the child, setup will be done later
                     tchild_new(&(ctx->children), childpid);
                 }
                 if (0 != ptrace(PTRACE_SYSCALL, pid, NULL, NULL)) {
@@ -229,7 +229,7 @@ int trace_loop(void) {
                 break;
             case E_EXIT:
                 if (ctx->eldest == child) {
-                    /* Eldest child, keep the return value */
+                    // Eldest child, keep the return value
                     ret = WEXITSTATUS(status);
                     lg(LOG_VERBOSE, "main.tloop.eldest.dead",
                             "Eldest child %i exited with return code %d", pid, ret);
@@ -456,7 +456,7 @@ const char *get_groupname(void) {
 int main(int argc, char **argv) {
     int optc, dump;
 
-    /* Parse command line */
+    // Parse command line
     static struct option long_options[] = {
         {"version",  no_argument, NULL, 'V'},
         {"help",     no_argument, NULL, 'h'},
@@ -535,7 +535,7 @@ int main(int argc, char **argv) {
     if (!legal_phase(phase))
         die(EX_USAGE, "invalid phase '%s'", phase);
 
-    /* Parse configuration file */
+    // Parse configuration file
     if (NULL == config_file)
         config_file = getenv(ENV_CONFIG);
     if (NULL == config_file)
@@ -543,7 +543,7 @@ int main(int argc, char **argv) {
     if (!parse_config(config_file))
         die(EX_USAGE, "Parse error in file %s", config_file);
 
-    /* Parse environment variables */
+    // Parse environment variables
     char *log_env, *write_env, *predict_env, *net_env;
     log_env = getenv(ENV_LOG);
     write_env = getenv(ENV_WRITE);
@@ -574,7 +574,7 @@ int main(int argc, char **argv) {
         cmdsize -= (strlen(argv[i]) + 1);
     }
 
-    /* Get user name and group name */
+    // Get user name and group name
     const char *username = get_username();
     if (NULL == username)
         die(EX_SOFTWARE, "Failed to get password file entry: %s", strerror(errno));
@@ -587,20 +587,20 @@ int main(int argc, char **argv) {
     pid = fork();
     if (0 > pid)
         die(EX_SOFTWARE, strerror(errno));
-    else if (0 == pid) { /* Child process */
+    else if (0 == pid) { // Child process
         if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL))
             _die(EX_SOFTWARE, "couldn't set tracing: %s", strerror(errno));
-        /* Stop and wait the parent to resume us with PTRACE_SYSCALL */
+        // Stop and wait the parent to resume us with PTRACE_SYSCALL
         if (0 > kill(getpid(), SIGSTOP))
             _die(EX_SOFTWARE, "failed to send SIGSTOP: %s", strerror(errno));
-        /* Start the fun! */
+        // Start the fun!
         execvp(argv[0], argv);
         _die(EX_DATAERR, strerror(errno));
     }
-    else { /* Parent process */
+    else { // Parent process
         int status, ret;
 
-        /* Wait for the SIGSTOP */
+        // Wait for the SIGSTOP
         wait(&status);
         if (WIFEXITED(status))
             die(WEXITSTATUS(status), "wtf? child died before sending SIGSTOP");

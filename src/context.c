@@ -42,7 +42,7 @@ void context_free(context_t *ctx) {
     free(ctx);
 }
 
-/* TODO Find a nice way to do this */
+// TODO Find a nice way to do this!
 int context_cmd_allowed(context_t *ctx, struct tchild *child) {
     return 1;
 }
