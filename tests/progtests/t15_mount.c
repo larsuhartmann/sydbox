@@ -9,12 +9,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    if (0 > mount("/dev", "see.emily.play",
-                "pinkfs", MS_BIND, "")) {
-        if (0 != errno) {
-            /* Access denied by system not sydbox */
-            return EXIT_SUCCESS;
-        }
+    if (0 > mount("/dev", "see.emily.play", "pinkfs", MS_BIND, "")) {
         return EXIT_FAILURE;
     }
     else

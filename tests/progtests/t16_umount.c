@@ -10,10 +10,6 @@
 
 int main(void) {
     if (0 > umount("see.emily.play")) {
-        if (0 != errno) {
-            /* Access denied by system not sydbox */
-            return EXIT_SUCCESS;
-        }
         return EXIT_FAILURE;
     }
     else
