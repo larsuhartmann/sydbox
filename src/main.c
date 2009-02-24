@@ -235,8 +235,8 @@ int trace_loop(void) {
         }
         child = tchild_find(&(ctx->children), pid);
         event = tchild_event(child, status);
-        assert((NULL == child && E_SETUP_PREMATURE == event)
-                || (NULL != child && E_SETUP_PREMATURE != event));
+//        assert((NULL == child && E_SETUP_PREMATURE == event)
+//            || (NULL != child && E_SETUP_PREMATURE != event));
 
         switch(event) {
             case E_SETUP:
@@ -260,7 +260,11 @@ int trace_loop(void) {
             case E_SYSCALL:
                 LOGC("Latest event for child %i is E_SYSCALL, calling event handler", pid);
                 if (NULL != child) {
-                    syscall_handle(ctx, child);
+                    ret = syscall_handle(ctx, child);
+                    if (0 != ret) {
+                        LOGD("Syscall handler returned nonzero, exiting loop");
+                        return ret;
+                    }
                     ret = xsyscall(child);
                     if (0 != ret) {
                         LOGD("Event handler returned nonzero for event E_SYSCALL, exiting loop");

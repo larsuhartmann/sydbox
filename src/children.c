@@ -147,11 +147,11 @@ unsigned int tchild_event(struct tchild *child, int status) {
         }
     }
     else if (WIFEXITED(status)) {
-        LOGD("Child %i exited normally", child->pid);
+        LOGV("Child %i exited with return code: %d", NULL == child ? -1 : child->pid, WEXITSTATUS(status));
         return E_EXIT;
     }
     else if (WIFSIGNALED(status)) {
-        LOGD("Child %i was terminated by a signal", child->pid);
+        LOGV("Child %i was terminated by a signal %d", NULL == child ? -1 : child->pid, WSTOPSIG(status));
         return E_EXIT_SIGNAL;
     }
     return E_UNKNOWN;

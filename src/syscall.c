@@ -488,8 +488,12 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     long syscall;
     const char *sname;
 
-    if (0 > trace_get_syscall(child->pid, &syscall))
-        DIESOFT("Failed to get syscall: %s", strerror(errno));
+    if (0 > trace_get_syscall(child->pid, &syscall)) {
+        if (ESRCH == errno)
+            return handle_esrch(ctx, child);
+        else
+            DIESOFT("Failed to get syscall: %s", strerror(errno));
+    }
     sname = syscall_get_name(syscall);
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
@@ -497,8 +501,12 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             // Deny access
             LOGD("Denying access to system call %s()", sname);
             child->syscall = syscall;
-            if (0 > trace_set_syscall(child->pid, 0xbadca11))
-                DIESOFT("Failed to set syscall: %s", strerror(errno));
+            if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
+                if (ESRCH == errno)
+                    return handle_esrch(ctx, child);
+                else
+                    DIESOFT("Failed to set syscall: %s", strerror(errno));
+            }
         }
         else
             LOGC("Allowing access to system call %s()", sname);
@@ -510,10 +518,18 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         if (0xbadca11 == syscall) {
             LOGD("Restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
-            if (0 > trace_set_syscall(child->pid, child->syscall))
-                DIESOFT("Failed to restore syscall: %s", strerror(errno));
-            if (0 > trace_set_return(child->pid, child->retval))
-                DIESOFT("Failed to set return code: %s", strerror(errno));
+            if (0 > trace_set_syscall(child->pid, child->syscall)) {
+                if (ESRCH == errno)
+                    return handle_esrch(ctx, child);
+                else
+                    DIESOFT("Failed to restore syscall: %s", strerror(errno));
+            }
+            if (0 > trace_set_return(child->pid, child->retval)) {
+                if (ESRCH == errno)
+                    return handle_esrch(ctx, child);
+                else
+                    DIESOFT("Failed to set return code: %s", strerror(errno));
+            }
         }
         child->flags ^= TCHILD_INSYSCALL;
     }
