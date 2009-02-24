@@ -288,19 +288,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         rpath = resolve_path(path, child->pid, 0, NULL);
 
     if (NULL == rpath) {
-        if (ENOENT == errno) {
-            /* Neither directory nor file exists, allow access
-             * XXX This opens a hole for race conditions,
-             * but denying access here makes tar fail.
-             */
-            LOGD("Neither file nor directory exists, allowing access");
-            return 1;
-        }
-        else if (0 != errno) {
-            // safe_realpath() failed
-            child->retval = -errno;
-            return 0;
-        }
+        LOGD("safe_realpath() failed for both file and directory, denying access");
+        child->retval = -errno;
+        return 0;
     }
 
     int ret, check_ret = 0;

@@ -256,7 +256,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             LOGD("File \"%s\" doesn't exist, using directory \"%s\"", path, rpath);
             if (NULL == rpath) {
                 /* Neither file nor the directory exists */
-                errno = ENOENT;
+                errno = ENOTDIR;
                 return NULL;
             }
             else {
@@ -272,7 +272,7 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             }
         }
         else {
-            LOGW("safe_realpath() failed for \"%s\": %s", path, strerror(errno));
+            // LOGW("safe_realpath() failed for \"%s\": %s", path, strerror(errno));
             return NULL;
         }
     }
