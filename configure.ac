@@ -186,7 +186,7 @@ int main(void) {
         exit(1);
     if (0 == pid) {
         pause();
-        exit(0);
+        _exit(0);
     }
     else {
         char proc[32], path[PATH_MAX];
@@ -249,7 +249,7 @@ int main(void) {
         close(pfd[1]);
 
         pause();
-        exit(0);
+        _exit(0);
     }
     else {
         int dfd, n;
