@@ -856,7 +856,7 @@ START_TEST(check_syscall_check_creat_allow) {
     else if (0 == pid) { /* child */
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
         kill(getpid(), SIGSTOP);
-        creat("emily/syd.txt", 0666);
+        creat("emily/syd.txt", 0644);
         pause();
     }
     else { /* parent */
