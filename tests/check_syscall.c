@@ -18,7 +18,7 @@
 
 #include <check.h>
 
-#include <../src/defs.h>
+#include "../src/defs.h"
 #include "check_sydbox.h"
 
 void syscall_setup(void) {
