@@ -69,7 +69,7 @@ static const struct syscall_def syscalls[] = {
     {__NR_chown32,      CHECK_PATH},
 #endif
     {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
-    {__NR_creat,        CHECK_PATH | CAN_CREAT},
+    {__NR_creat,        CHECK_PATH | CAN_CREAT | RETURNS_FD},
     {__NR_stat,         MAGIC_STAT},
     {__NR_lchown,       CHECK_PATH | DONT_RESOLV},
 #if defined(I386)
@@ -163,7 +163,6 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
             child->retval = 0;
             return 0;
         }
-        return 0;
     }
 
     if (ctx->paranoid && issymlink) {
