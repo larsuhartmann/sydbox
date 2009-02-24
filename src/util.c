@@ -252,3 +252,12 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
     errno = 0;
     return rpath;
 }
+
+// Handle the ESRCH errno which means child is dead
+int handle_esrch(context_t *ctx, struct tchild *child) {
+    int ret = 0;
+    if (ctx->eldest == child)
+        ret = EX_SOFTWARE;
+    tchild_delete(&(ctx->children), child->pid);
+    return ret;
+}

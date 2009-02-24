@@ -15,4 +15,5 @@ check_sydbox_CFLAGS= @SYDBOX_CFLAGS@ @CHECK_CFLAGS@
 check_sydbox_LDADD= @CHECK_LIBS@
 
 t01_util_shell_expand_SOURCES= t01_util_shell_expand.c \
-			      $(top_builddir)/src/realpath.c $(top_builddir)/src/util.c
+			      $(top_builddir)/src/realpath.c $(top_builddir)/src/children.c \
+			      $(top_builddir)/src/util.c

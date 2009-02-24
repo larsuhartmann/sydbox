@@ -159,6 +159,7 @@ int remove_slash(const char *pathname, char *dest);
 void shell_expand(const char *pathname, char *dest);
 char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
 
+int handle_esrch(context_t *ctx, struct tchild *child);
 /* trace.c */
 int trace_me(void);
 int trace_setup(pid_t pid);
