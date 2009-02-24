@@ -51,25 +51,18 @@ START_TEST(check_syscall_check_chmod_deny) {
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected violation");
-        fail_unless(-EPERM == ctx->eldest->retval,
-                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
+                ctx->eldest->retval);
         kill(pid, SIGTERM);
     }
 }
@@ -97,25 +90,17 @@ START_TEST(check_syscall_check_chmod_predict) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected deny");
-        fail_unless(0 == ctx->eldest->retval,
-                "Expected 0 got %d", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(0 == ctx->eldest->retval, "Expected 0 got %d", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -144,23 +129,16 @@ START_TEST(check_syscall_check_chmod_allow) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -187,25 +165,18 @@ START_TEST(check_syscall_check_chown_deny) {
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected violation");
-        fail_unless(-EPERM == ctx->eldest->retval,
-                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
+                ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -234,25 +205,17 @@ START_TEST(check_syscall_check_chown_predict) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected deny");
-        fail_unless(0 == ctx->eldest->retval,
-                "Expected 0 got %d", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(0 == ctx->eldest->retval, "Expected 0 got %d", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -281,23 +244,16 @@ START_TEST(check_syscall_check_chown_allow) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -325,23 +281,16 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -369,25 +318,18 @@ START_TEST(check_syscall_check_open_wronly_deny) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected violation");
-        fail_unless(-EPERM == ctx->eldest->retval,
-                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
+                ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -434,23 +376,16 @@ START_TEST(check_syscall_check_open_wronly_predict) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -498,23 +433,16 @@ START_TEST(check_syscall_check_open_wronly_allow) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -542,25 +470,18 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected violation");
-        fail_unless(-EPERM == ctx->eldest->retval,
-                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
+                ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -607,23 +528,16 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -671,23 +585,16 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -716,22 +623,16 @@ START_TEST(check_syscall_check_open_magic_write) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP", pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected deny");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
 
         fail_if(0 == pathlist_check(&(ctx->write_prefixes), "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
@@ -763,22 +664,16 @@ START_TEST(check_syscall_check_open_magic_predict) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP", pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected deny");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
 
         fail_if(0 == pathlist_check(&(ctx->predict_prefixes), "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
@@ -808,25 +703,18 @@ START_TEST(check_syscall_check_creat_deny) {
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall),
-                "Allowed access, expected violation");
-        fail_unless(-EPERM == ctx->eldest->retval,
-                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
+                ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -872,23 +760,16 @@ START_TEST(check_syscall_check_creat_predict) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -946,25 +827,18 @@ START_TEST(check_syscall_check_creat_allow) {
         ctx->eldest = ctx->children;
 
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall),
-                "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
-                "Denied access, expected allow");
-        fail_unless(0 > stat("emily/syd.txt", &buf),
-                "Allowed access but file doesn't exist: %s", strerror(errno));
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(0 > stat("emily/syd.txt", &buf), "Allowed access but file doesn't exist: %s",
+                strerror(errno));
         kill(pid, SIGTERM);
     }
 }

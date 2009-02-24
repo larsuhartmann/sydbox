@@ -67,8 +67,7 @@ START_TEST(check_tchild_delete) {
 
     curtc = tc;
     while (NULL != curtc) {
-        fail_unless(666 != curtc->pid,
-                "Deleted pid found at node %d", i++);
+        fail_unless(666 != curtc->pid, "Deleted pid found at node %d", i++);
         curtc = curtc->next;
     }
 
@@ -82,11 +81,9 @@ START_TEST(check_tchild_find) {
     for(int i = 666; i < 670; i++)
         tchild_new(&tc, i);
     for(int i = 666; i < 670; i++)
-        fail_unless(NULL != tchild_find(&tc, i),
-                "Failed to find pid %d", i);
+        fail_unless(NULL != tchild_find(&tc, i), "Failed to find pid %d", i);
     for(int i = 670; i < 680; i++)
-        fail_unless(NULL == tchild_find(&tc, i),
-                "Found pid %d", i);
+        fail_unless(NULL == tchild_find(&tc, i), "Found pid %d", i);
     tchild_free(&tc);
 }
 END_TEST
@@ -107,9 +104,7 @@ START_TEST(check_tchild_event_e_setup) {
 
         tchild_new(&tc, pid);
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         ret = tchild_event(tc, status);
         fail_unless(E_SETUP == ret, "Expected E_SETUP got %d", ret);
 
@@ -135,12 +130,9 @@ START_TEST(check_tchild_event_e_setup_premature) {
 
         /* tchild_new(&tc, pid); */
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         ret = tchild_event(tc, status);
-        fail_unless(E_SETUP_PREMATURE == ret,
-                "Expected E_SETUP_PREMATURE got %d", ret);
+        fail_unless(E_SETUP_PREMATURE == ret, "Expected E_SETUP_PREMATURE got %d", ret);
 
         kill(pid, SIGTERM);
     }
@@ -164,23 +156,17 @@ START_TEST(check_tchild_event_e_syscall) {
 
         tchild_new(&tc, pid);
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGTRAP",
-                pid);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         /* Check the event */
         ret = tchild_event(tc, status);
-        fail_unless(E_SYSCALL == ret,
-                "Expected E_SYSCALL got %d", ret);
+        fail_unless(E_SYSCALL == ret, "Expected E_SYSCALL got %d", ret);
 
         kill(pid, SIGTERM);
     }
@@ -211,11 +197,8 @@ START_TEST(check_tchild_event_e_genuine) {
 
         tchild_new(&tc, pid);
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will receive a SIGINT */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -223,8 +206,7 @@ START_TEST(check_tchild_event_e_genuine) {
 
         /* Check the event */
         ret = tchild_event(tc, status);
-        fail_unless(E_GENUINE == ret,
-                "Expected E_GENUINE got %d", ret);
+        fail_unless(E_GENUINE == ret, "Expected E_GENUINE got %d", ret);
 
         kill(pid, SIGTERM);
     }
@@ -248,11 +230,8 @@ START_TEST(check_tchild_event_e_exit) {
 
         tchild_new(&tc, pid);
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will exit. */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -260,8 +239,7 @@ START_TEST(check_tchild_event_e_exit) {
 
         /* Check the event */
         ret = tchild_event(tc, status);
-        fail_unless(E_EXIT == ret,
-                "Expected E_EXIT got %d", ret);
+        fail_unless(E_EXIT == ret, "Expected E_EXIT got %d", ret);
     }
 }
 END_TEST
@@ -284,11 +262,8 @@ START_TEST(check_tchild_event_e_exit_signal) {
 
         tchild_new(&tc, pid);
         wait(&status);
-        fail_unless(WIFSTOPPED(status),
-                "child %i didn't stop by sending itself SIGSTOP",
-                pid);
-        fail_unless(0 == trace_setup(pid),
-                "Failed to set tracing options: %s", strerror(errno));
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child. */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -298,8 +273,7 @@ START_TEST(check_tchild_event_e_exit_signal) {
 
         /* Check the event */
         ret = tchild_event(tc, status);
-        fail_unless(E_EXIT_SIGNAL == ret,
-                "Expected E_EXIT_SIGNAL got %d", ret);
+        fail_unless(E_EXIT_SIGNAL == ret, "Expected E_EXIT_SIGNAL got %d", ret);
     }
 }
 END_TEST
