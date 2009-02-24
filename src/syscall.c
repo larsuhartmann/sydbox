@@ -328,7 +328,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         if (MC_ERROR == ret)
             DIESOFT("Failed to check mode: %s", strerror(errno));
         else if (MC_NOWRITE == ret) {
-            LOGD("No write or create flags not set, allowing access");
+            LOGD("No write or create flags set, allowing access");
             return 1;
         }
     }
