@@ -7,8 +7,6 @@
 #include <limits.h>
 #include <string.h>
 
-#include <stdio.h> /* XXX */
-
 #include <check.h>
 
 #include "../src/defs.h"
