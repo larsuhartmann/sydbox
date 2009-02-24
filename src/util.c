@@ -69,7 +69,7 @@ void lg(int level, const char *funcname, const char *fmt, ...) {
         else {
             flog = fopen(log_file, "a");
             if (NULL == flog)
-                die(EX_SOFTWARE, "Failed to open log file \"%s\": %s", log_file, strerror(errno));
+                DIESOFT("Failed to open log file \"%s\": %s", log_file, strerror(errno));
         }
         log_file_opened = 1;
     }
@@ -140,7 +140,7 @@ void *xmalloc (size_t size) {
 
     t = malloc(size);
     if (NULL == t)
-        die(EX_OSERR, "not enough memory");
+        DIEOS("not enough memory");
 
     return t;
 }
@@ -149,7 +149,7 @@ char *xstrndup (const char *s, size_t n) {
     char *t;
 
     if (NULL == s)
-        die(EX_SOFTWARE, "bug in xstrndup call");
+        DIESOFT("bug in xstrndup call");
 
     t = xmalloc(n + 1);
     strncpy(t, s, n);
@@ -193,7 +193,7 @@ void shell_expand(const char *pathname, char *dest) {
     strncat(command, "\"'", 2);
     FILE *bash = popen(command, "r");
     if (NULL == bash)
-        die(EX_SOFTWARE, "bug in popen call: %s", strerror(errno));
+        DIESOFT("bug in popen call: %s", strerror(errno));
 
     int i = 0;
     while (!feof(bash))

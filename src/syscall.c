@@ -156,7 +156,7 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
             LOGD("System call returns fd and its argument is under a predict path");
             LOGD("Changing the path argument to /dev/null");
             if (0 > trace_set_string(child->pid, arg, "/dev/null", 10))
-                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
+                DIESOFT("Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
@@ -172,7 +172,7 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
         */
         LOGV("Paranoia! Substituting symlink %s with resolved path %s to prevent races", path, rpath);
         if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX))
-            die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
+            DIESOFT("Failed to set string: %s", strerror(errno));
     }
     return 1;
 }
@@ -182,10 +182,9 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
 
     assert(1 == arg || 3 == arg);
     if (0 > trace_get_arg(pid, arg - 1, &dirfd))
-        die(EX_SOFTWARE, "Failed to get dirfd: %s", strerror(errno));
+        DIESOFT("Failed to get dirfd: %s", strerror(errno));
     if (0 > trace_get_string(pid, arg, dest, PATH_MAX))
-        die(EX_SOFTWARE, "Failed to get string from argument %d: %s",
-                arg, strerror(errno));
+        DIESOFT("Failed to get string from argument %d: %s", arg, strerror(errno));
 
     if (AT_FDCWD != dirfd && '/' != dest[0]) {
         int n;
@@ -194,7 +193,7 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
         snprintf(dname, PATH_MAX, "/proc/%i/fd/%ld", pid, dirfd);
         n = readlink(dname, res_dname, PATH_MAX - 1);
         if (0 > n)
-            die(EX_SOFTWARE, "readlink() failed for %s: %s", dname, strerror(errno));
+            DIESOFT("readlink() failed for %s: %s", dname, strerror(errno));
         res_dname[n] = '\0';
 
         char *destc = xstrndup(dest, PATH_MAX);
@@ -327,7 +326,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
     if (check_ret) {
         if (MC_ERROR == ret)
-            die(EX_SOFTWARE, "Failed to check mode: %s", strerror(errno));
+            DIESOFT("Failed to check mode: %s", strerror(errno));
         else if (MC_NOWRITE == ret) {
             LOGD("No write or create flags not set, allowing access");
             return 1;
@@ -336,7 +335,7 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
 
     if (sdef->flags & CHECK_PATH || sdef->flags & CHECK_PATH2) {
         if (0 > trace_get_string(child->pid, arg, path, PATH_MAX))
-            die(EX_SOFTWARE, "Failed to get string from argument %d: %s", arg, strerror(errno));
+            DIESOFT("Failed to get string from argument %d: %s", arg, strerror(errno));
     }
     if (sdef->flags & CHECK_PATH_AT || sdef->flags & CHECK_PATH_AT2)
         syscall_process_pathat(child->pid, arg, path);
@@ -373,7 +372,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
     const char *rpath;
 
     if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
-        die(EX_SOFTWARE, "Failed to get string from argument 0: %s", strerror(errno));
+        DIESOFT("Failed to get string from argument 0: %s", strerror(errno));
     LOGD("Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
         rpath = pathname + CMD_WRITE_LEN - 1;
@@ -383,7 +382,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
             // Change argument to /dev/null
             LOGD("Changing pathname to /dev/null");
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
-                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
+                DIESOFT("Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
@@ -399,7 +398,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
             // Change argument to /dev/null
             LOGD("Changing pathname to /dev/null");
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
-                die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
+                DIESOFT("Failed to set string: %s", strerror(errno));
             return 1;
         }
         else {
@@ -415,7 +414,7 @@ int syscall_check_magic_stat(struct tchild *child) {
     char pathname[PATH_MAX];
 
     if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
-        die(EX_SOFTWARE, "Failed to get string from argument 0: %s", strerror(errno));
+        DIESOFT("Failed to get string from argument 0: %s", strerror(errno));
     LOGD("Checking if stat(\"%s\") is magic", pathname);
     if (path_magic_dir(pathname)) {
         LOGD("stat(\"%s\") is magic", pathname);
@@ -490,7 +489,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     const char *sname;
 
     if (0 > trace_get_syscall(child->pid, &syscall))
-        die(EX_SOFTWARE, "Failed to get syscall: %s", strerror(errno));
+        DIESOFT("Failed to get syscall: %s", strerror(errno));
     sname = syscall_get_name(syscall);
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
@@ -499,7 +498,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             LOGD("Denying access to system call %s()", sname);
             child->syscall = syscall;
             if (0 > trace_set_syscall(child->pid, 0xbadca11))
-                die(EX_SOFTWARE, "Failed to set syscall: %s", strerror(errno));
+                DIESOFT("Failed to set syscall: %s", strerror(errno));
         }
         else
             LOGC("Allowing access to system call %s()", sname);
@@ -512,9 +511,9 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             LOGD("Restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->syscall))
-                die(EX_SOFTWARE, "Failed to restore syscall: %s", strerror(errno));
+                DIESOFT("Failed to restore syscall: %s", strerror(errno));
             if (0 > trace_set_return(child->pid, child->retval))
-                die(EX_SOFTWARE, "Failed to set return code: %s", strerror(errno));
+                DIESOFT("Failed to set return code: %s", strerror(errno));
         }
         child->flags ^= TCHILD_INSYSCALL;
     }

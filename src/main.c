@@ -120,7 +120,7 @@ int xsetup(struct tchild *child) {
         if (ESRCH == errno) // Child died
             return handle_esrch(child);
         else
-            die(EX_SOFTWARE, "Failed to set tracing options: %s", strerror(errno));
+            DIESOFT("Failed to set tracing options: %s", strerror(errno));
     }
     else
         child->flags &= ~TCHILD_NEEDSETUP;
@@ -130,7 +130,7 @@ int xsetup(struct tchild *child) {
             return handle_esrch(child);
         else {
             LOGE("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
-            die(EX_SOFTWARE, "Failed to resume child %i after setup: %s", child->pid, strerror(errno));
+            DIESOFT("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
         }
     }
     else
@@ -148,7 +148,7 @@ int xsetup_premature(pid_t pid) {
             return handle_esrch(child);
         }
         else
-            die(EX_SOFTWARE, "Failed to set tracing options: %s", strerror(errno));
+            DIESOFT("Failed to set tracing options: %s", strerror(errno));
     }
     return 0;
 }
@@ -159,8 +159,7 @@ int xsyscall(struct tchild *child) {
             return handle_esrch(child);
         else {
             LOGE("Failed to resume child %i: %s", child->pid, strerror(errno));
-            die(EX_SOFTWARE, "Failed to resume child %i: %s", child->pid,
-                    strerror(errno));
+            DIESOFT("Failed to resume child %i: %s", child->pid, strerror(errno));
         }
     }
     else
@@ -177,7 +176,7 @@ int xfork(struct tchild *child) {
         if (ESRCH == errno)
             return handle_esrch(child);
         else
-            die(EX_SOFTWARE, "Failed to get the pid of the newborn child: %s", strerror(errno));
+            DIESOFT("Failed to get the pid of the newborn child: %s", strerror(errno));
     }
     else
         LOGD("The newborn child's pid is %i", childpid);
@@ -189,8 +188,7 @@ int xfork(struct tchild *child) {
             if (ESRCH == errno)
                 return handle_esrch(newchild);
             else
-                die(EX_SOFTWARE, "Failed to resume prematurely born child %i: %s", newchild->pid,
-                        strerror(errno));
+                DIESOFT("Failed to resume prematurely born child %i: %s", newchild->pid, strerror(errno));
         }
         else
             LOGC("Resumed prematurely born child %i", newchild->pid);
@@ -207,8 +205,7 @@ int xgenuine(struct tchild *child, int status) {
         if (ESRCH == errno)
             return handle_esrch(child);
         else
-            die(EX_SOFTWARE, "Failed to resume child %i after genuine signal: %s", child->pid,
-                strerror(errno));
+            DIESOFT("Failed to resume child %i after genuine signal: %s", child->pid, strerror(errno));
     }
     else
         LOGC("Resumed child %i after genuine signal", child->pid);
@@ -222,8 +219,8 @@ int xunknown(struct tchild *child, int status) {
         else {
             LOGE("Failed to resume child %i after unknown signal %#x: %s", child->pid, status,
                     strerror(errno));
-            die(EX_SOFTWARE, "Failed to resume child %i after unknown signal %#x: %s", child->pid,
-                    status, strerror(errno));
+            DIESOFT("Failed to resume child %i after unknown signal %#x: %s", child->pid, status,
+                    strerror(errno));
         }
     }
     else
@@ -241,7 +238,7 @@ int trace_loop(void) {
         pid = waitpid(-1, &status, __WALL);
         if (0 > pid) {
             LOGE("waitpid failed: %s", strerror(errno));
-            die(EX_SOFTWARE, "waitpid failed: %s", strerror(errno));
+            DIESOFT("waitpid failed: %s", strerror(errno));
         }
         child = tchild_find(&(ctx->children), pid);
         event = tchild_event(child, status);
@@ -279,8 +276,7 @@ int trace_loop(void) {
                 }
                 else if (0 > trace_syscall(pid, 0) && ESRCH != errno) {
                     LOGE("Failed to resume child %i before syscall: %s", pid, strerror(errno));
-                    die(EX_SOFTWARE, "Failed to resume child %i before syscall: %s", pid,
-                            strerror(errno));
+                    DIESOFT("Failed to resume child %i before syscall: %s", pid, strerror(errno));
                 }
                 LOGC("Successfully handled event E_SYSCALL for child %i", pid);
                 break;
@@ -601,15 +597,15 @@ int main(int argc, char **argv) {
                 break;
             case '?':
             default:
-                die(EX_USAGE, "try %s --help for more information", PACKAGE);
+                DIEUSER("try %s --help for more information", PACKAGE);
         }
     }
 
     if (!dump) {
         if (argc < optind + 1)
-            die(EX_USAGE, "no command given");
+            DIEUSER("no command given");
         else if (0 != strncmp("--", argv[optind - 1], 3))
-            die(EX_USAGE, "expected '--' instead of '%s'", argv[optind]);
+            DIEUSER("expected '--' instead of '%s'", argv[optind]);
         else {
             argc -= optind;
             argv += optind;
@@ -622,7 +618,7 @@ int main(int argc, char **argv) {
             phase = "default";
     }
     if (!legal_phase(phase))
-        die(EX_USAGE, "invalid phase '%s'", phase);
+        DIEUSER("invalid phase '%s'", phase);
 
     // Parse configuration file
     if (NULL == config_file)
@@ -630,7 +626,7 @@ int main(int argc, char **argv) {
     if (NULL == config_file)
         config_file = SYSCONFDIR"/sydbox.conf";
     if (!parse_config(config_file))
-        die(EX_USAGE, "Parse error in file %s", config_file);
+        DIEUSER("Parse error in file %s", config_file);
 
     // Parse environment variables
     char *log_env, *write_env, *predict_env, *net_env;
@@ -666,15 +662,15 @@ int main(int argc, char **argv) {
     // Get user name and group name
     const char *username = get_username();
     if (NULL == username)
-        die(EX_SOFTWARE, "Failed to get password file entry: %s", strerror(errno));
+        DIESOFT("Failed to get password file entry: %s", strerror(errno));
     const char *groupname = get_groupname();
     if (NULL == groupname)
-        die(EX_SOFTWARE, "Failed to get group file entry: %s", strerror(errno));
+        DIESOFT("Failed to get group file entry: %s", strerror(errno));
 
     LOGV("Forking to execute '%s' as %s:%s", cmd, username, groupname);
     pid = fork();
     if (0 > pid)
-        die(EX_SOFTWARE, strerror(errno));
+        DIESOFT("Failed to fork: %s", strerror(errno));
     else if (0 == pid) { // Child process
         if (0 > trace_me())
             _die(EX_SOFTWARE, "Failed to set tracing: %s", strerror(errno));
@@ -697,12 +693,12 @@ int main(int argc, char **argv) {
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
         if (0 > trace_setup(pid))
-            die(EX_SOFTWARE, "Failed to setup tracing options: %s", strerror(errno));
+            DIESOFT("Failed to setup tracing options: %s", strerror(errno));
 
         LOGV("Child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {
             trace_kill(pid);
-            die(EX_SOFTWARE, "Failed to resume eldest child %i: %s", pid, strerror(errno));
+            DIESOFT("Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
         LOGV("Entering loop");
         ret = trace_loop();
