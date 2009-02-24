@@ -181,6 +181,7 @@ int trace_set_return(pid_t pid, long val) {
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
     int n, m, save_errno;
+    int started = 0;
     long addr = 0;
     union {
         long val;
@@ -199,28 +200,42 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
         // addr not a multiple of sizeof(long)
         n = addr - (addr & -sizeof(long)); // residue
         addr &= -sizeof(long); // residue
+        errno = 0;
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (-1 == u.val && 0 != errno) {
-            save_errno = errno;
-            LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
-            errno = save_errno;
+        if (0 != errno) {
+            if (started && (EPERM == errno || EIO == errno)) {
+                // Ran into end of memory - stupid "printpath"
+                return 0;
+            }
+            // But if not started, we had a bogus address
+            if (0 != addr && EIO != errno) {
+                save_errno = errno;
+                LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
+                errno = save_errno;
+            }
             return -1;
         }
+        started = 1;
         memcpy(dest, &u.x[n], m = MIN(sizeof(long) - n, len));
         addr += sizeof(long), dest += m, len -= m;
     }
     while (len > 0) {
+        errno = 0;
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (-1 == u.val) {
-            if (EIO == errno)
-                break;
-            else if (0 != errno) {
+        if (0 != errno) {
+            if (started && (EPERM == errno || EIO == errno)) {
+                // Ran into end of memory - stupid "printpath"
+                return 0;
+            }
+            // But if not started, we had a bogus address
+            if (0 != addr && EIO != errno) {
                 save_errno = errno;
                 LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
                 errno = save_errno;
-                return -1;
             }
+            return -1;
         }
+        started = 1;
         memcpy(dest, u.x, m = MIN(sizeof(long), len));
         addr += sizeof(long), dest += m, len -= m;
     }
