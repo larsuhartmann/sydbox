@@ -65,10 +65,11 @@ void usage(void) {
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "\t-h, --help\t\tYou're looking at it :)\n");
     fprintf(stderr, "\t-V, --version\t\tShow version information\n");
+    fprintf(stderr, "\t-p, --paranoid\t\tParanoid mode (EXPERIMENTAL)\n");
     fprintf(stderr, "\t-v, --verbose\t\tBe verbose\n");
     fprintf(stderr, "\t-d, --debug\t\tEnable debug messages\n");
     fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
-    fprintf(stderr, "\t-p PHASE, --phase=PHASE\tSpecify phase (required)\n");
+    fprintf(stderr, "\t-P PHASE, --phase=PHASE\tSpecify phase (required)\n");
     fprintf(stderr, "\t-c PATH, --config=PATH\tSpecify PATH to the configuration file\n");
     fprintf(stderr, "\t-l PATH, --log-file=PATH\n\t\t\t\tSpecify PATH to the log file\n");
     fprintf(stderr, "\t-D, --dump\t\tDump configuration and exit\n");
@@ -84,6 +85,18 @@ void usage(void) {
     for (i = 0; i < MAX_PHASES - 2; i++)
         fprintf(stderr, "%s, ", phases[i]);
     fprintf(stderr, "%s\n", phases[++i]);
+    fprintf(stderr, "Paranoid Mode:\n");
+    fprintf(stderr, "\tIn this mode, sydbox tries hard to ensure security of the sandbox.\n");
+    fprintf(stderr, "\tFor example if a system call's path argument is a symlink, sydbox\n");
+    fprintf(stderr, "\twill attempt to change it with the resolved path to prevent symlink races.\n");
+    fprintf(stderr, "\tWith this mode on many packages are known to fail. An example is bash with\n");
+    fprintf(stderr, "\tmalloc debugger enabled.\n");
+    fprintf(stderr, "\tWithout this mode on, sydbox is NOT considered to be a security tool.\n");
+    fprintf(stderr, "\tIt just helps package managers like paludis to ensure nothing wrong\n");
+    fprintf(stderr, "\thappens during package installs. It's NOT meant to be a protection against\n");
+    fprintf(stderr, "\tevil upstream or evil packagers.\n");
+    fprintf(stderr, "\tAnd the sea isn't green, and i love the queen, and\n");
+    fprintf(stderr, "\twhat exactly is a dream, what exactly is a joke?\n");
 }
 
 void cleanup(void) {
@@ -342,57 +355,66 @@ int legal_phase(const char *phase) {
 
 int parse_config(const char *pathname) {
     cfg_opt_t default_opts[] = {
+        CFG_INT("paranoid", 0, CFGF_NONE),
+        CFG_INT("net", 1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", 1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t loadenv_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t saveenv_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t unpack_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t prepare_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t configure_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t compile_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t test_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t install_opts[] = {
+        CFG_INT("paranoid", -1, CFGF_NONE),
+        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t sydbox_opts[] = {
@@ -442,6 +464,7 @@ int parse_config(const char *pathname) {
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
         for (int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
+        ctx->paranoid = cfg_getint(cfg_phase, "paranoid");
         ctx->net_allowed = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
@@ -451,6 +474,8 @@ int parse_config(const char *pathname) {
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
             for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
+            if (-1 == ctx->paranoid)
+                cfg_getint(cfg_default, "paranoid");
             if (-1 == ctx->net_allowed)
                 cfg_getint(cfg_default, "net");
         }
@@ -527,10 +552,11 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
         {"version",  no_argument, NULL, 'V'},
         {"help",     no_argument, NULL, 'h'},
+        {"paranoid", no_argument, NULL, 'p'},
         {"verbose",  no_argument, NULL, 'v'},
         {"debug",    no_argument, NULL, 'd'},
         {"nocolour", no_argument, NULL, 'C'},
-        {"phase",    required_argument, NULL, 'p'},
+        {"phase",    required_argument, NULL, 'P'},
         {"log-file", required_argument, NULL, 'l'},
         {"config",   required_argument, NULL, 'c'},
         {"dump",     no_argument, NULL, 'D'},
@@ -545,7 +571,7 @@ int main(int argc, char **argv) {
     log_file[0] = '\0';
     flog = NULL;
     atexit(cleanup);
-    while (-1 != (optc = getopt_long(argc, argv, "hVvdCp:l:c:D", long_options, NULL))) {
+    while (-1 != (optc = getopt_long(argc, argv, "hVpvdCP:l:c:D", long_options, NULL))) {
         switch (optc) {
             case 'h':
                 usage();
@@ -553,6 +579,9 @@ int main(int argc, char **argv) {
             case 'V':
                 about();
                 return EXIT_SUCCESS;
+            case 'p':
+                ctx->paranoid = 1;
+                break;
             case 'v':
                 log_level = LOG_VERBOSE;
                 break;
@@ -565,7 +594,7 @@ int main(int argc, char **argv) {
             case 'C':
                 colour = 0;
                 break;
-            case 'p':
+            case 'P':
                 phase = optarg;
                 break;
             case 'l':

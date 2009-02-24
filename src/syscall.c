@@ -155,11 +155,11 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
         return 0;
     }
 
-    if (issymlink) {
+    if (ctx->paranoid && issymlink) {
         /* Change the pathname argument with the resolved path to
         * prevent symlink races.
         */
-        LOGD("Substituting symlink %s with resolved path %s to prevent races", path, rpath);
+        LOGV("Paranoia! Substituting symlink %s with resolved path %s to prevent races", path, rpath);
         if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX))
             die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
     }
@@ -192,7 +192,7 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     }
 }
 
-int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
+int syscall_check_access(context_t *ctx, pid_t pid, const struct syscall_def *sdef,
         const char *path, const char *rpath, int issymlink) {
     long mode;
     if (sdef->flags & ACCESS_MODE) {
@@ -209,8 +209,9 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
     }
 
     if (!(mode & W_OK)) {
-        if (issymlink) {
-            LOGD("Substituting symlink \"%s\" with resolved path \"%s\" to prevent races", path, rpath);
+        if (ctx->paranoid && issymlink) {
+            LOGV("Paranoia! Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
+                    path, rpath);
             if (sdef->flags & ACCESS_MODE) {
                 if (trace_set_string(pid, 0, rpath, PATH_MAX))
                     die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
@@ -225,7 +226,7 @@ int syscall_check_access(pid_t pid, const struct syscall_def *sdef,
     return 0;
 }
 
-int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issymlink) {
+int syscall_check_open(context_t *ctx, pid_t pid, const char *path, const char *rpath, int issymlink) {
     long mode;
 
     if (0 > trace_get_arg(pid, 1, &mode)) {
@@ -233,8 +234,9 @@ int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issym
         return -1;
     }
     if (!(mode & O_WRONLY || mode & O_RDWR)) {
-        if (issymlink) {
-            LOGD("Substituting symlink \"%s\" with resolved path \"%s\" to prevent races", path, rpath);
+        if (ctx->paranoid && issymlink) {
+            LOGV("Paranoia! Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
+                    path, rpath);
             if (0 > trace_set_string(pid, 0, rpath, PATH_MAX))
                 die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
         }
@@ -243,7 +245,7 @@ int syscall_check_open(pid_t pid, const char *path, const char *rpath, int issym
     return 0;
 }
 
-int syscall_check_openat(pid_t pid, const char *path, const char *rpath, int issymlink) {
+int syscall_check_openat(context_t *ctx, pid_t pid, const char *path, const char *rpath, int issymlink) {
     long mode;
 
     if (0 > trace_get_arg(pid, 1, &mode)) {
@@ -251,8 +253,9 @@ int syscall_check_openat(pid_t pid, const char *path, const char *rpath, int iss
         return -1;
     }
     if (!(mode & O_WRONLY || mode & O_RDWR)) {
-        if (issymlink) {
-            LOGD("Substituting symlink \"%s\" with resolved path \"%s\" to prevent races", path, rpath);
+        if (ctx->paranoid && issymlink) {
+            LOGV("Paranoia! Substituting symlink \"%s\" with resolved path \"%s\" to prevent races",
+                    path, rpath);
             if (0 > trace_set_string(pid, 1, rpath, PATH_MAX))
                 die(EX_SOFTWARE, "Failed to set string: %s", strerror(errno));
         }
@@ -303,15 +306,15 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     int ret, check_ret = 0;
     if (sdef->flags & ACCESS_MODE || sdef->flags & ACCESS_MODE_AT) {
         check_ret = 1;
-        ret = syscall_check_access(child->pid, sdef, path, rpath, issymlink);
+        ret = syscall_check_access(ctx, child->pid, sdef, path, rpath, issymlink);
     }
     else if (sdef->flags & OPEN_MODE) {
         check_ret = 1;
-        ret = syscall_check_open(child->pid, path, rpath, issymlink);
+        ret = syscall_check_open(ctx, child->pid, path, rpath, issymlink);
     }
     else if (sdef->flags & OPEN_MODE_AT) {
         check_ret = 1;
-        ret = syscall_check_openat(child->pid, path, rpath, issymlink);
+        ret = syscall_check_openat(ctx, child->pid, path, rpath, issymlink);
     }
 
     if (check_ret) {

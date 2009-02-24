@@ -98,6 +98,7 @@ unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
+    int paranoid;
     int net_allowed;
     struct pathnode *write_prefixes;
     struct pathnode *predict_prefixes;
