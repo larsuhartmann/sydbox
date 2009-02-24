@@ -25,6 +25,7 @@ void syscall_setup(void) {
     if (0 > mkdir("emily", 0755))
         fail("mkdir(\"emily\", 0755) failed: %s", strerror(errno));
 }
+
 void syscall_teardown(void) {
     unlink("emily/syd.txt");
     rmdir("emily");
