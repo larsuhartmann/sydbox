@@ -23,6 +23,7 @@
 
 void syscall_setup(void) {
     mkdir("emily", 0755);
+    symlink("arnold_layne", "/dev/null");
 }
 
 void syscall_teardown(void) {
@@ -30,7 +31,7 @@ void syscall_teardown(void) {
     rmdir("emily");
 }
 
-START_TEST(check_syscall_check_chmod_deny) {
+START_TEST(syscall_check_chmod_deny) {
     pid_t pid;
 
     pid = fork();
@@ -68,7 +69,7 @@ START_TEST(check_syscall_check_chmod_deny) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_chmod_predict) {
+START_TEST(syscall_check_chmod_predict) {
     pid_t pid;
 
     pid = fork();
@@ -85,7 +86,7 @@ START_TEST(check_syscall_check_chmod_predict) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->predict_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -107,7 +108,7 @@ START_TEST(check_syscall_check_chmod_predict) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_chmod_allow) {
+START_TEST(syscall_check_chmod_allow) {
     pid_t pid;
 
     pid = fork();
@@ -124,7 +125,7 @@ START_TEST(check_syscall_check_chmod_allow) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->write_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -145,7 +146,7 @@ START_TEST(check_syscall_check_chmod_allow) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_chown_deny) {
+START_TEST(syscall_check_chown_deny) {
     pid_t pid;
 
     pid = fork();
@@ -184,7 +185,7 @@ START_TEST(check_syscall_check_chown_deny) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_chown_predict) {
+START_TEST(syscall_check_chown_predict) {
     pid_t pid;
 
     pid = fork();
@@ -201,7 +202,7 @@ START_TEST(check_syscall_check_chown_predict) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->predict_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -223,7 +224,7 @@ START_TEST(check_syscall_check_chown_predict) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_chown_allow) {
+START_TEST(syscall_check_chown_allow) {
     pid_t pid;
 
     pid = fork();
@@ -240,7 +241,7 @@ START_TEST(check_syscall_check_chown_allow) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->write_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -254,14 +255,15 @@ START_TEST(check_syscall_check_chown_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_rdonly_allow) {
+START_TEST(syscall_check_open_rdonly_allow) {
     pid_t pid;
 
     pid = fork();
@@ -291,14 +293,15 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_wronly_deny) {
+START_TEST(syscall_check_open_wronly_deny) {
     pid_t pid;
 
     pid = fork();
@@ -339,7 +342,7 @@ START_TEST(check_syscall_check_open_wronly_deny) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_wronly_predict) {
+START_TEST(syscall_check_open_wronly_predict) {
     pid_t pid;
     int pfd[2];
     char cwd[PATH_MAX];
@@ -387,7 +390,8 @@ START_TEST(check_syscall_check_open_wronly_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -413,7 +417,7 @@ START_TEST(check_syscall_check_open_wronly_predict) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_wronly_allow) {
+START_TEST(syscall_check_open_wronly_allow) {
     pid_t pid;
 
     pid = fork();
@@ -430,7 +434,7 @@ START_TEST(check_syscall_check_open_wronly_allow) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->write_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -444,14 +448,15 @@ START_TEST(check_syscall_check_open_wronly_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_rdwr_deny) {
+START_TEST(syscall_check_open_rdwr_deny) {
     pid_t pid;
 
     pid = fork();
@@ -492,7 +497,7 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_rdwr_predict) {
+START_TEST(syscall_check_open_rdwr_predict) {
     pid_t pid;
     int pfd[2];
     char cwd[PATH_MAX];
@@ -540,7 +545,8 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -566,7 +572,7 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_rdwr_allow) {
+START_TEST(syscall_check_open_rdwr_allow) {
     pid_t pid;
 
     pid = fork();
@@ -583,7 +589,7 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->write_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -597,14 +603,15 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_magic_write) {
+START_TEST(syscall_check_open_magic_write) {
     pid_t pid;
 
     pid = fork();
@@ -621,7 +628,7 @@ START_TEST(check_syscall_check_open_magic_write) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->write_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -635,7 +642,8 @@ START_TEST(check_syscall_check_open_magic_write) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         fail_if(0 == pathlist_check(&(ctx->write_prefixes), "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
@@ -645,7 +653,7 @@ START_TEST(check_syscall_check_open_magic_write) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_open_magic_predict) {
+START_TEST(syscall_check_open_magic_predict) {
     pid_t pid;
 
     pid = fork();
@@ -662,7 +670,7 @@ START_TEST(check_syscall_check_open_magic_predict) {
         long syscall;
         context_t *ctx = context_new();
 
-        pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
+        pathlist_init(&(ctx->predict_prefixes), "/dev:/tmp");
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
 
@@ -676,7 +684,8 @@ START_TEST(check_syscall_check_open_magic_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         fail_if(0 == pathlist_check(&(ctx->predict_prefixes), "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
@@ -686,7 +695,7 @@ START_TEST(check_syscall_check_open_magic_predict) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_creat_deny) {
+START_TEST(syscall_check_creat_deny) {
     pid_t pid;
 
     pid = fork();
@@ -725,7 +734,7 @@ START_TEST(check_syscall_check_creat_deny) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_creat_predict) {
+START_TEST(syscall_check_creat_predict) {
     pid_t pid;
     int pfd[2];
     char cwd[PATH_MAX];
@@ -773,7 +782,8 @@ START_TEST(check_syscall_check_creat_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -799,7 +809,7 @@ START_TEST(check_syscall_check_creat_predict) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_creat_allow) {
+START_TEST(syscall_check_creat_allow) {
     pid_t pid;
     char cwd[PATH_MAX];
     char *rcwd;
@@ -840,7 +850,8 @@ START_TEST(check_syscall_check_creat_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
         fail_unless(0 > stat("emily/syd.txt", &buf), "Allowed access but file doesn't exist: %s",
                 strerror(errno));
         kill(pid, SIGTERM);
@@ -848,7 +859,7 @@ START_TEST(check_syscall_check_creat_allow) {
 }
 END_TEST
 
-START_TEST(check_syscall_check_stat_magic) {
+START_TEST(syscall_check_stat_magic) {
     pid_t pid;
     struct stat buf;
 
@@ -879,14 +890,15 @@ START_TEST(check_syscall_check_stat_magic) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
 
-START_TEST(check_syscall_check_stat_magic_write) {
+START_TEST(syscall_check_stat_magic_write) {
     pid_t pid;
     struct stat buf;
 
@@ -917,14 +929,15 @@ START_TEST(check_syscall_check_stat_magic_write) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
 }
 END_TEST
 
-START_TEST(check_syscall_check_stat_magic_predict) {
+START_TEST(syscall_check_stat_magic_predict) {
     pid_t pid;
     struct stat buf;
 
@@ -955,7 +968,142 @@ START_TEST(check_syscall_check_stat_magic_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(syscall_check_lchown_deny) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        lchown("arnold_layne", 0, 0);
+        pause();
+    }
+    else { /* parent */
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        pathlist_init(&(ctx->write_prefixes), "/dev:/tmp");
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
+                ctx->eldest->retval);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(syscall_check_lchown_predict) {
+    pid_t pid;
+    char cwd[PATH_MAX];
+    char *rcwd;
+
+    if (NULL == getcwd(cwd, PATH_MAX))
+        fail("getcwd failed: %s", strerror(errno));
+    rcwd = realpath(cwd, NULL);
+    if (NULL == rcwd)
+        fail("realpath failed: %s", strerror(errno));
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        lchown("arnold_layne", 0, 0);
+        pause();
+    }
+    else { /* parent */
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        pathnode_new(&(ctx->predict_prefixes), rcwd);
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(0 == ctx->eldest->retval, "Expected 0 got %d", ctx->eldest->retval);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(syscall_check_lchown_allow) {
+    pid_t pid;
+    char cwd[PATH_MAX];
+    char *rcwd;
+
+    if (NULL == getcwd(cwd, PATH_MAX))
+        fail("getcwd failed: %s", strerror(errno));
+    rcwd = realpath(cwd, NULL);
+    if (NULL == rcwd)
+        fail("realpath failed: %s", strerror(errno));
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        lchown("arnold_layne", 0, 0);
+        pause();
+    }
+    else { /* parent */
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        pathnode_new(&(ctx->write_prefixes), rcwd);
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -966,30 +1114,33 @@ Suite *syscall_suite_create(void) {
     Suite *s = suite_create("syscall");
 
     /* syscall_check test cases */
-    TCase *tc_syscall_check = tcase_create("syscall_check");
-    tcase_add_checked_fixture(tc_syscall_check, syscall_setup, syscall_teardown);
-    tcase_add_test(tc_syscall_check, check_syscall_check_chmod_deny);
-    tcase_add_test(tc_syscall_check, check_syscall_check_chmod_predict);
-    tcase_add_test(tc_syscall_check, check_syscall_check_chmod_allow);
-    tcase_add_test(tc_syscall_check, check_syscall_check_chown_deny);
-    tcase_add_test(tc_syscall_check, check_syscall_check_chown_predict);
-    tcase_add_test(tc_syscall_check, check_syscall_check_chown_allow);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_rdonly_allow);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_wronly_deny);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_wronly_predict);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_wronly_allow);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_rdwr_deny);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_rdwr_predict);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_rdwr_allow);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_magic_write);
-    tcase_add_test(tc_syscall_check, check_syscall_check_open_magic_predict);
-    tcase_add_test(tc_syscall_check, check_syscall_check_creat_deny);
-    tcase_add_test(tc_syscall_check, check_syscall_check_creat_predict);
-    tcase_add_test(tc_syscall_check, check_syscall_check_creat_allow);
-    tcase_add_test(tc_syscall_check, check_syscall_check_stat_magic);
-    tcase_add_test(tc_syscall_check, check_syscall_check_stat_magic_write);
-    tcase_add_test(tc_syscall_check, check_syscall_check_stat_magic_predict);
-    suite_add_tcase(s, tc_syscall_check);
+    TCase *tc_syscall = tcase_create("syscall");
+    tcase_add_checked_fixture(tc_syscall, syscall_setup, syscall_teardown);
+    tcase_add_test(tc_syscall, syscall_check_chmod_deny);
+    tcase_add_test(tc_syscall, syscall_check_chmod_predict);
+    tcase_add_test(tc_syscall, syscall_check_chmod_allow);
+    tcase_add_test(tc_syscall, syscall_check_chown_deny);
+    tcase_add_test(tc_syscall, syscall_check_chown_predict);
+    tcase_add_test(tc_syscall, syscall_check_chown_allow);
+    tcase_add_test(tc_syscall, syscall_check_open_rdonly_allow);
+    tcase_add_test(tc_syscall, syscall_check_open_wronly_deny);
+    tcase_add_test(tc_syscall, syscall_check_open_wronly_predict);
+    tcase_add_test(tc_syscall, syscall_check_open_wronly_allow);
+    tcase_add_test(tc_syscall, syscall_check_open_rdwr_deny);
+    tcase_add_test(tc_syscall, syscall_check_open_rdwr_predict);
+    tcase_add_test(tc_syscall, syscall_check_open_rdwr_allow);
+    tcase_add_test(tc_syscall, syscall_check_open_magic_write);
+    tcase_add_test(tc_syscall, syscall_check_open_magic_predict);
+    tcase_add_test(tc_syscall, syscall_check_creat_deny);
+    tcase_add_test(tc_syscall, syscall_check_creat_predict);
+    tcase_add_test(tc_syscall, syscall_check_creat_allow);
+    tcase_add_test(tc_syscall, syscall_check_stat_magic);
+    tcase_add_test(tc_syscall, syscall_check_stat_magic_write);
+    tcase_add_test(tc_syscall, syscall_check_stat_magic_predict);
+    tcase_add_test(tc_syscall, syscall_check_lchown_deny);
+    tcase_add_test(tc_syscall, syscall_check_lchown_predict);
+    tcase_add_test(tc_syscall, syscall_check_lchown_allow);
+    suite_add_tcase(s, tc_syscall);
 
     return s;
 }
