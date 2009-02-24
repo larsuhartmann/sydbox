@@ -212,7 +212,6 @@ START_TEST(check_syscall_check_chown_deny) {
 
         kill(pid, SIGTERM);
     }
-
 }
 END_TEST
 
@@ -709,6 +708,102 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
 }
 END_TEST
 
+START_TEST(check_syscall_check_open_magic_write) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        open(CMD_WRITE"/var/empty", O_WRONLY);
+        pause();
+    }
+    else { /* parent */
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        pathlist_init(&(ctx->write_prefixes), "/home/emily:/dev:/tmp");
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
+                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected deny");
+
+        fail_if(0 == pathlist_check(&(ctx->write_prefixes), "/var/empty"),
+                "Pathlist check failed for /var/empty, expected success");
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_syscall_check_open_magic_predict) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        kill(getpid(), SIGSTOP);
+        open(CMD_PREDICT"/var/empty", O_WRONLY);
+        pause();
+    }
+    else { /* parent */
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        pathlist_init(&(ctx->predict_prefixes), "/home/emily:/dev:/tmp");
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGSTOP",
+                pid);
+        fail_unless(0 == trace_setup(pid),
+                "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
+                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status),
+                "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall),
+                "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected deny");
+
+        fail_if(0 == pathlist_check(&(ctx->predict_prefixes), "/var/empty"),
+                "Pathlist check failed for /var/empty, expected success");
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
 START_TEST(check_syscall_check_creat_deny) {
     pid_t pid;
 
@@ -914,6 +1009,8 @@ Suite *syscall_suite_create(void) {
     tcase_add_test(tc_syscall_check, check_syscall_check_open_rdwr_deny);
     tcase_add_test(tc_syscall_check, check_syscall_check_open_rdwr_predict);
     tcase_add_test(tc_syscall_check, check_syscall_check_open_rdwr_allow);
+    tcase_add_test(tc_syscall_check, check_syscall_check_open_magic_write);
+    tcase_add_test(tc_syscall_check, check_syscall_check_open_magic_predict);
     tcase_add_test(tc_syscall_check, check_syscall_check_creat_deny);
     tcase_add_test(tc_syscall_check, check_syscall_check_creat_predict);
     tcase_add_test(tc_syscall_check, check_syscall_check_creat_allow);
