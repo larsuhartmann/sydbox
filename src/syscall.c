@@ -111,7 +111,7 @@ static const struct syscall_def syscalls[] = {
     {-1,                 0}
 };
 
-enum mode_check {
+enum mode_check_res {
     MC_ERROR, // Error occured while checking mode
     MC_WRITE, // Write flags set in mode (O_WR, O_WRONLY or O_RDWR)
     MC_NOWRITE, // No write flags in mode
@@ -201,7 +201,7 @@ static void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     }
 }
 
-static enum mode_check syscall_checkmode_access(pid_t pid) {
+static enum mode_check_res syscall_checkmode_access(pid_t pid) {
     long mode;
     LOGD("Checking mode argument of access() for child %i", pid);
     if (0 > trace_get_arg(pid, 1, &mode)) {
@@ -219,7 +219,7 @@ static enum mode_check syscall_checkmode_access(pid_t pid) {
     }
 }
 
-static enum mode_check syscall_checkmode_accessat(pid_t pid) {
+static enum mode_check_res syscall_checkmode_accessat(pid_t pid) {
     long mode;
 
     LOGD("Checking mode argument of faccessat() for child %i", pid);
@@ -238,7 +238,7 @@ static enum mode_check syscall_checkmode_accessat(pid_t pid) {
     }
 }
 
-static enum mode_check syscall_checkmode_open(pid_t pid) {
+static enum mode_check_res syscall_checkmode_open(pid_t pid) {
     long mode;
 
     LOGD("Checking mode argument of open() for child %i", pid);
@@ -261,7 +261,7 @@ static enum mode_check syscall_checkmode_open(pid_t pid) {
     }
 }
 
-static enum mode_check syscall_checkmode_openat(pid_t pid) {
+static enum mode_check_res syscall_checkmode_openat(pid_t pid) {
     long mode;
 
     LOGD("Checking mode argument of openat() for child %i", pid);
