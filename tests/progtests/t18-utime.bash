@@ -18,3 +18,5 @@ if [[ 0 != $? ]]; then
     echo "Failed to predict utime"
 fi
 end_test
+
+# No t18-utime-write because of possible noatime, nomtime mount options
