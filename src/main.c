@@ -85,7 +85,7 @@ void usage(void) {
     for (i = 0; i < MAX_PHASES - 2; i++)
         fprintf(stderr, "%s, ", phases[i]);
     fprintf(stderr, "%s\n", phases[++i]);
-    fprintf(stderr, "Paranoid Mode:\n");
+    fprintf(stderr, "\nParanoid Mode:\n");
     fprintf(stderr, "\tIn this mode, sydbox tries hard to ensure security of the sandbox.\n");
     fprintf(stderr, "\tFor example if a system call's path argument is a symlink, sydbox\n");
     fprintf(stderr, "\twill attempt to change it with the resolved path to prevent symlink races.\n");
@@ -355,63 +355,54 @@ int legal_phase(const char *phase) {
 
 int parse_config(const char *pathname) {
     cfg_opt_t default_opts[] = {
-        CFG_INT("paranoid", 0, CFGF_NONE),
         CFG_INT("net", 1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t loadenv_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t saveenv_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t unpack_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t prepare_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t configure_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t compile_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t test_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
     cfg_opt_t install_opts[] = {
-        CFG_INT("paranoid", -1, CFGF_NONE),
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
@@ -421,6 +412,7 @@ int parse_config(const char *pathname) {
         CFG_BOOL("colour", 1, CFGF_NONE),
         CFG_STR("log_file", NULL, CFGF_NONE),
         CFG_INT("log_level", -1, CFGF_NONE),
+        CFG_BOOL("paranoid", 0, CFGF_NONE),
         CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("loadenv", loadenv_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("saveenv", saveenv_opts, CFGF_TITLE | CFGF_MULTI),
@@ -457,6 +449,9 @@ int parse_config(const char *pathname) {
             colour = cfg_getbool(cfg, "colour");
     }
 
+    if (0 == ctx->paranoid)
+        ctx->paranoid = cfg_getbool(cfg, "paranoid");
+
     cfg_t *cfg_default, *cfg_phase;
     for (int i = 0; i < cfg_size(cfg, phase); i++) {
         cfg_phase = cfg_getnsec(cfg, phase, i);
@@ -464,7 +459,6 @@ int parse_config(const char *pathname) {
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
         for (int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
-        ctx->paranoid = cfg_getint(cfg_phase, "paranoid");
         ctx->net_allowed = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
@@ -474,8 +468,6 @@ int parse_config(const char *pathname) {
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
             for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
-            if (-1 == ctx->paranoid)
-                cfg_getint(cfg_default, "paranoid");
             if (-1 == ctx->net_allowed)
                 cfg_getint(cfg_default, "net");
         }
@@ -486,6 +478,7 @@ int parse_config(const char *pathname) {
 
 void dump_config(void) {
     fprintf(stderr, "config_file = %s\n", config_file);
+    fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
     fprintf(stderr, "phase = %s\n", phase);
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
     fprintf(stderr, "log_file = %s\n", '\0' == log_file[0] ? "stderr" : log_file);
