@@ -102,22 +102,6 @@ int handle_esrch(struct tchild *child) {
 }
 
 // Event handlers
-int xabort(struct tchild *child) {
-    pid_t pid = child->pid;
-    LOGW("Child %i called abort()", pid);
-    if (ctx->eldest == child) {
-        tchild_delete(&(ctx->children), pid);
-        trace_cont(pid);
-        return EX_SOFTWARE;
-    }
-    else if (0 > trace_cont(pid) && ESRCH != errno) {
-        LOGE("Failed to make child %i continue after abort()", pid);
-        die(EX_SOFTWARE, "Failed to make child %i continue after abort()", pid);
-    }
-    tchild_delete(&(ctx->children), pid);
-    return 0;
-}
-
 int xsetup(struct tchild *child) {
     if (0 > trace_setup(child->pid)) {
         if (ESRCH == errno) // Child died
@@ -251,11 +235,6 @@ int trace_loop(void) {
         assert((NULL == child && E_SETUP_PREMATURE == event)
                 || (NULL != child && E_SETUP_PREMATURE != event));
 
-        if (0xb7f == status) {
-            ret = xabort(child);
-            if (0 != ret)
-                return ret;
-        }
         switch(event) {
             case E_SETUP:
                 LOGD("Latest event for child %i is E_SETUP, calling event handler", pid);
