@@ -180,7 +180,14 @@ struct syscall_def {
     unsigned int flags;
 };
 
-int syscall_check(context_t *ctx, struct tchild *child, int syscall);
+enum res_syscall {
+    RS_DENY, // Deny access
+    RS_ALLOW, // Allow access
+    RS_NONMAGIC, // open() or stat() not magic (internal)
+    RS_ERROR = EX_SOFTWARE // An error occured while checking access
+};
+
+enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int syscall);
 int syscall_handle(context_t *ctx, struct tchild *child);
 
 #endif /* SYDBOX_GUARD_DEFS_H */

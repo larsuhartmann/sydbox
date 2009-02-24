@@ -22,8 +22,7 @@
 #include "check_sydbox.h"
 
 void syscall_setup(void) {
-    if (0 > mkdir("emily", 0755))
-        fail("mkdir(\"emily\", 0755) failed: %s", strerror(errno));
+    mkdir("emily", 0755);
 }
 
 void syscall_teardown(void) {
@@ -60,7 +59,8 @@ START_TEST(check_syscall_check_chmod_deny) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
         fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
                 ctx->eldest->retval);
         kill(pid, SIGTERM);
@@ -99,7 +99,7 @@ START_TEST(check_syscall_check_chmod_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
         fail_unless(0 == ctx->eldest->retval, "Expected 0 got %d", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
@@ -138,7 +138,7 @@ START_TEST(check_syscall_check_chmod_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -174,7 +174,8 @@ START_TEST(check_syscall_check_chown_deny) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
         fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
                 ctx->eldest->retval);
 
@@ -214,7 +215,7 @@ START_TEST(check_syscall_check_chown_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
         fail_unless(0 == ctx->eldest->retval, "Expected 0 got %d", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
@@ -253,7 +254,7 @@ START_TEST(check_syscall_check_chown_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -290,7 +291,7 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -327,7 +328,8 @@ START_TEST(check_syscall_check_open_wronly_deny) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
         fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
                 ctx->eldest->retval);
 
@@ -385,7 +387,7 @@ START_TEST(check_syscall_check_open_wronly_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -442,7 +444,7 @@ START_TEST(check_syscall_check_open_wronly_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -479,7 +481,8 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
         fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
                 ctx->eldest->retval);
 
@@ -537,7 +540,7 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -594,7 +597,7 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -632,7 +635,7 @@ START_TEST(check_syscall_check_open_magic_write) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         fail_if(0 == pathlist_check(&(ctx->write_prefixes), "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
@@ -673,7 +676,7 @@ START_TEST(check_syscall_check_open_magic_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected deny");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         fail_if(0 == pathlist_check(&(ctx->predict_prefixes), "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
@@ -712,7 +715,8 @@ START_TEST(check_syscall_check_creat_deny) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_if(syscall_check(ctx, ctx->eldest, syscall), "Allowed access, expected violation");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, syscall),
+                "Allowed access, expected violation");
         fail_unless(-EPERM == ctx->eldest->retval, "Failed to set retval to EPERM (got %d)",
                 ctx->eldest->retval);
 
@@ -769,7 +773,7 @@ START_TEST(check_syscall_check_creat_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
         fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
@@ -836,7 +840,7 @@ START_TEST(check_syscall_check_creat_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
         fail_unless(0 > stat("emily/syd.txt", &buf), "Allowed access but file doesn't exist: %s",
                 strerror(errno));
         kill(pid, SIGTERM);
@@ -875,7 +879,7 @@ START_TEST(check_syscall_check_stat_magic) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -913,7 +917,7 @@ START_TEST(check_syscall_check_stat_magic_write) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -951,7 +955,7 @@ START_TEST(check_syscall_check_stat_magic_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
