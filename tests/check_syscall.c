@@ -410,8 +410,7 @@ START_TEST(check_syscall_check_open_wronly_predict) {
         kill(getpid(), SIGSTOP);
 
         char buf[16];
-        snprintf(buf, 16, "%d",
-                open("emily/syd.txt", O_WRONLY));
+        snprintf(buf, 16, "%d", open("emily/syd.txt", O_WRONLY | O_CREAT));
         write(pfd[1], buf, 16);
         pause();
     }
@@ -586,8 +585,7 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
         kill(getpid(), SIGSTOP);
 
         char buf[16];
-        snprintf(buf, 16, "%d",
-                open("emily/syd.txt", O_RDWR));
+        snprintf(buf, 16, "%d", open("emily/syd.txt", O_RDWR | O_CREAT));
         write(pfd[1], buf, 16);
         pause();
     }
