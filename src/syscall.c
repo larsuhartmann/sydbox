@@ -118,7 +118,7 @@ enum mode_check {
     MC_CREAT, // O_CREAT is in mode
 };
 
-const char *syscall_get_name(int no) {
+static const char *syscall_get_name(int no) {
     for (int i = 0; sysnames[i].name != NULL; i++) {
         if (sysnames[i].no == no)
             return sysnames[i].name;
@@ -126,7 +126,7 @@ const char *syscall_get_name(int no) {
     return NULL;
 }
 
-int syscall_check_prefix(context_t *ctx, struct tchild *child,
+static int syscall_check_prefix(context_t *ctx, struct tchild *child,
         int arg, const struct syscall_def *sdef,
         const char *path, const char *rpath, int issymlink) {
     LOGD("Checking \"%s\" for write access", rpath);
@@ -176,7 +176,7 @@ int syscall_check_prefix(context_t *ctx, struct tchild *child,
     return 1;
 }
 
-void syscall_process_pathat(pid_t pid, int arg, char *dest) {
+static void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     long dirfd;
 
     assert(1 == arg || 3 == arg);
@@ -201,7 +201,7 @@ void syscall_process_pathat(pid_t pid, int arg, char *dest) {
     }
 }
 
-enum mode_check syscall_checkmode_access(pid_t pid) {
+static enum mode_check syscall_checkmode_access(pid_t pid) {
     long mode;
     LOGD("Checking mode argument of access() for child %i", pid);
     if (0 > trace_get_arg(pid, 1, &mode)) {
@@ -219,7 +219,7 @@ enum mode_check syscall_checkmode_access(pid_t pid) {
     }
 }
 
-enum mode_check syscall_checkmode_accessat(pid_t pid) {
+static enum mode_check syscall_checkmode_accessat(pid_t pid) {
     long mode;
 
     LOGD("Checking mode argument of faccessat() for child %i", pid);
@@ -238,7 +238,7 @@ enum mode_check syscall_checkmode_accessat(pid_t pid) {
     }
 }
 
-enum mode_check syscall_checkmode_open(pid_t pid) {
+static enum mode_check syscall_checkmode_open(pid_t pid) {
     long mode;
 
     LOGD("Checking mode argument of open() for child %i", pid);
@@ -261,7 +261,7 @@ enum mode_check syscall_checkmode_open(pid_t pid) {
     }
 }
 
-enum mode_check syscall_checkmode_openat(pid_t pid) {
+static enum mode_check syscall_checkmode_openat(pid_t pid) {
     long mode;
 
     LOGD("Checking mode argument of openat() for child %i", pid);
@@ -284,7 +284,7 @@ enum mode_check syscall_checkmode_openat(pid_t pid) {
     }
 }
 
-int syscall_can_creat(int arg, int flags) {
+static int syscall_can_creat(int arg, int flags) {
     if (0 == arg && flags & CAN_CREAT)
         return 1;
     else if (1 == arg && flags & CAN_CREAT2)
@@ -297,8 +297,8 @@ int syscall_can_creat(int arg, int flags) {
         return 0;
 }
 
-int syscall_check_path(context_t *ctx, struct tchild *child,
-        int arg, const struct syscall_def *sdef) {
+static int syscall_check_path(context_t *ctx, struct tchild *child, int arg,
+        const struct syscall_def *sdef, const char *openpath) {
     int issymlink;
     char path[PATH_MAX];
     char *rpath = NULL;
@@ -332,11 +332,21 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
-    if (sdef->flags & CHECK_PATH || sdef->flags & CHECK_PATH2) {
+    if (sdef->flags & CHECK_PATH) {
+        if (sdef->flags & MAGIC_OPEN && NULL != openpath) {
+            /* Special case, we've already got the pathname argument while
+             * checking magic open() so we use it here.
+             */
+            strncpy(path, openpath, PATH_MAX);
+        }
+        else if (0 > trace_get_string(child->pid, arg, path, PATH_MAX))
+            DIESOFT("Failed to get string from argument %d: %s", arg, strerror(errno));
+    }
+    else if (sdef->flags & CHECK_PATH2) {
         if (0 > trace_get_string(child->pid, arg, path, PATH_MAX))
             DIESOFT("Failed to get string from argument %d: %s", arg, strerror(errno));
     }
-    if (sdef->flags & CHECK_PATH_AT || sdef->flags & CHECK_PATH_AT2)
+    else if (sdef->flags & CHECK_PATH_AT || sdef->flags & CHECK_PATH_AT2)
         syscall_process_pathat(child->pid, arg, path);
 
     if (syscall_can_creat(arg, sdef->flags) ||
@@ -366,12 +376,9 @@ int syscall_check_path(context_t *ctx, struct tchild *child,
     return ret;
 }
 
-int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
-    char pathname[PATH_MAX];
+static int syscall_check_magic_open(context_t *ctx, struct tchild *child, const char *pathname) {
     const char *rpath;
 
-    if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
-        DIESOFT("Failed to get string from argument 0: %s", strerror(errno));
     LOGD("Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
         rpath = pathname + CMD_WRITE_LEN - 1;
@@ -409,7 +416,7 @@ int syscall_check_magic_open(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
-int syscall_check_magic_stat(struct tchild *child) {
+static int syscall_check_magic_stat(struct tchild *child) {
     char pathname[PATH_MAX];
 
     if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX))
@@ -427,6 +434,7 @@ int syscall_check_magic_stat(struct tchild *child) {
 
 int syscall_check(context_t *ctx, struct tchild *child, int syscall) {
     unsigned int i;
+    char *openpath;
     const char *sname;
     const struct syscall_def *sdef;
     for (i = 0; syscalls[i].no != -1; i++) {
@@ -437,12 +445,22 @@ int syscall_check(context_t *ctx, struct tchild *child, int syscall) {
 found:
     sdef = &(syscalls[i]);
     sname = syscall_get_name(sdef->no);
+    openpath = NULL;
 
     LOGD("Child %i called essential system call %s()", child->pid, sname);
 
     // Handle magic calls
-    if (sdef->flags & MAGIC_OPEN && syscall_check_magic_open(ctx, child))
-        return 1;
+    if (sdef->flags & MAGIC_OPEN) {
+        /* Special case, to avoid getting the pathname argument of open()
+         * twice, one for this one and one for CHECK_PATH, we get it here and
+         * pass it to syscall_check_path.
+         */
+        openpath = (char *) xmalloc(sizeof(char) * PATH_MAX);
+        if (0 > trace_get_string(child->pid, 0, openpath, PATH_MAX))
+            DIESOFT("Failed to get string from argument 0: %s", strerror(errno));
+        if (syscall_check_magic_open(ctx, child, openpath))
+            return 1;
+    }
     else if (sdef->flags & MAGIC_STAT) {
         if(syscall_check_magic_stat(child)) {
             if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
@@ -456,21 +474,23 @@ found:
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH and CHECK_PATH2 set.
          */
-        if (!syscall_check_path(ctx, child, 0, sdef))
+        int ret = syscall_check_path(ctx, child, 0, sdef, openpath);
+        free(openpath);
+        if (!ret)
             return 0;
     }
     if (sdef->flags & CHECK_PATH2) {
         LOGD("System call %s() has CHECK_PATH2 set, checking", sname);
-        return syscall_check_path(ctx, child, 1, sdef);
+        return syscall_check_path(ctx, child, 1, sdef, NULL);
     }
     if (sdef->flags & CHECK_PATH_AT) {
         LOGD("System call %s() has CHECK_PATH_AT set, checking", sname);
-        if(!syscall_check_path(ctx, child, 1, sdef))
+        if(!syscall_check_path(ctx, child, 1, sdef, NULL))
             return 0;
     }
     if (sdef->flags & CHECK_PATH_AT2) {
         LOGD("System call %s() has CHECK_PATH_AT2 set, checking", sname);
-        return syscall_check_path(ctx, child, 3, sdef);
+        return syscall_check_path(ctx, child, 3, sdef, NULL);
     }
     if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
 #if defined(I386)

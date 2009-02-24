@@ -123,7 +123,7 @@ int trace_geteventmsg(pid_t pid, void *data) {
     return 0;
 }
 
-int trace_peek(pid_t pid, long off, long *res) {
+static int trace_peek(pid_t pid, long off, long *res) {
     long val;
 
     errno = 0;

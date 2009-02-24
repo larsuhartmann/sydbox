@@ -47,14 +47,14 @@ const char *phases[MAX_PHASES] = {
     "configure", "compile", "test", "install"
 };
 
-void about(void) {
+static void about(void) {
     fprintf(stderr, PACKAGE"-"VERSION);
     if (0 != strlen(GITHEAD))
         fprintf(stderr, "-"GITHEAD);
     fputc('\n', stderr);
 }
 
-void usage(void) {
+static void usage(void) {
     int i;
 
     fprintf(stderr, PACKAGE"-"VERSION);
@@ -107,7 +107,7 @@ void cleanup(void) {
 }
 
 // Event handlers
-int xsetup(struct tchild *child) {
+static int xsetup(struct tchild *child) {
     if (0 > trace_setup(child->pid)) {
         if (ESRCH == errno) // Child died
             return handle_esrch(ctx, child);
@@ -130,7 +130,7 @@ int xsetup(struct tchild *child) {
     return 0;
 }
 
-int xsetup_premature(pid_t pid) {
+static int xsetup_premature(pid_t pid) {
     struct tchild *child;
 
     tchild_new(&(ctx->children), pid);
@@ -145,7 +145,7 @@ int xsetup_premature(pid_t pid) {
     return 0;
 }
 
-int xsyscall(struct tchild *child) {
+static int xsyscall(struct tchild *child) {
     if (0 > trace_syscall(child->pid, 0)) {
         if (ESRCH == errno)
             return handle_esrch(ctx, child);
@@ -159,7 +159,7 @@ int xsyscall(struct tchild *child) {
     return 0;
 }
 
-int xfork(struct tchild *child) {
+static int xfork(struct tchild *child) {
     pid_t childpid;
     struct tchild *newchild;
 
@@ -192,7 +192,7 @@ int xfork(struct tchild *child) {
     return xsyscall(child);
 }
 
-int xgenuine(struct tchild *child, int status) {
+static int xgenuine(struct tchild *child, int status) {
     if (0 > trace_syscall(child->pid, WSTOPSIG(status))) {
         if (ESRCH == errno)
             return handle_esrch(ctx, child);
@@ -204,7 +204,7 @@ int xgenuine(struct tchild *child, int status) {
     return 0;
 }
 
-int xunknown(struct tchild *child, int status) {
+static int xunknown(struct tchild *child, int status) {
     if (0 > trace_syscall(child->pid, WSTOPSIG(status))) {
         if (ESRCH == errno)
             return handle_esrch(ctx, child);
@@ -220,7 +220,7 @@ int xunknown(struct tchild *child, int status) {
     return 0;
 }
 
-int trace_loop(void) {
+static int trace_loop(void) {
     int status, ret;
     unsigned int event;
     pid_t pid;
@@ -338,7 +338,7 @@ int trace_loop(void) {
     return ret;
 }
 
-int legal_phase(const char *phase) {
+static int legal_phase(const char *phase) {
     for (int i = 0; i < MAX_PHASES; i++) {
         if (0 == strncmp(phase, phases[i], strlen(phases[i]) + 1))
             return 1;
@@ -346,7 +346,7 @@ int legal_phase(const char *phase) {
     return 0;
 }
 
-int parse_config(const char *pathname) {
+static int parse_config(const char *pathname) {
     cfg_opt_t default_opts[] = {
         CFG_INT("net", 1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
@@ -469,7 +469,7 @@ int parse_config(const char *pathname) {
     return 1;
 }
 
-void dump_config(void) {
+static void dump_config(void) {
     fprintf(stderr, "config_file = %s\n", config_file);
     fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
     fprintf(stderr, "phase = %s\n", phase);
@@ -509,7 +509,7 @@ void dump_config(void) {
     }
 }
 
-const char *get_username(void) {
+static const char *get_username(void) {
     uid_t uid;
     struct passwd *pwd;
 
@@ -520,7 +520,7 @@ const char *get_username(void) {
     return 0 == errno ? pwd->pw_name : NULL;
 }
 
-const char *get_groupname(void) {
+static const char *get_groupname(void) {
     gid_t gid;
     struct group *grp;
 

@@ -180,8 +180,6 @@ struct syscall_def {
     unsigned int flags;
 };
 
-int syscall_check_path(context_t *ctx, struct tchild *child,
-        int arg, const struct syscall_def *sdef);
 int syscall_check(context_t *ctx, struct tchild *child, int syscall);
 int syscall_handle(context_t *ctx, struct tchild *child);
 
