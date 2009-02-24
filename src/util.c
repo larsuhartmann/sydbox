@@ -247,16 +247,17 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             char *dirc, *dname;
             dirc = xstrndup(path, PATH_MAX);
             dname = dirname(dirc);
+            LOGD("File \"%s\" doesn't exist, using directory \"%s\"", path, dname);
             if (resolve)
                 rpath = safe_realpath(dname, pid, 1, issymlink);
             else
                 rpath = safe_realpath(dname, pid, 0, NULL);
             free(dirc);
 
-            LOGD("File \"%s\" doesn't exist, using directory \"%s\"", path, rpath);
             if (NULL == rpath) {
                 /* Neither file nor the directory exists */
-                errno = ENOTDIR;
+                LOGD("Directory doesn't exist as well, setting errno to ENOENT");
+                errno = ENOENT;
                 return NULL;
             }
             else {
