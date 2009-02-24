@@ -970,6 +970,120 @@ START_TEST(check_syscall_check_creat_allow) {
 }
 END_TEST
 
+START_TEST(check_syscall_check_stat_magic) {
+    pid_t pid;
+    struct stat buf;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { // child
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        stat(CMD_PATH, &buf);
+        pause();
+    }
+    else { // parent
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_syscall_check_stat_magic_write) {
+    pid_t pid;
+    struct stat buf;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { // child
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        stat(CMD_WRITE, &buf);
+        pause();
+    }
+    else { // parent
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_syscall_check_stat_magic_predict) {
+    pid_t pid;
+    struct stat buf;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { // child
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        stat(CMD_PREDICT, &buf);
+        pause();
+    }
+    else { // parent
+        int status;
+        long syscall;
+        context_t *ctx = context_new();
+
+        tchild_new(&(ctx->children), pid);
+        ctx->eldest = ctx->children;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
 Suite *syscall_suite_create(void) {
     Suite *s = suite_create("syscall");
 
@@ -994,6 +1108,9 @@ Suite *syscall_suite_create(void) {
     tcase_add_test(tc_syscall_check, check_syscall_check_creat_deny);
     tcase_add_test(tc_syscall_check, check_syscall_check_creat_predict);
     tcase_add_test(tc_syscall_check, check_syscall_check_creat_allow);
+    tcase_add_test(tc_syscall_check, check_syscall_check_stat_magic);
+    tcase_add_test(tc_syscall_check, check_syscall_check_stat_magic_write);
+    tcase_add_test(tc_syscall_check, check_syscall_check_stat_magic_predict);
     suite_add_tcase(s, tc_syscall_check);
 
     return s;
