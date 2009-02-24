@@ -30,7 +30,7 @@ START_TEST(check_trace_get_syscall) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDONLY);
         pause();
@@ -74,7 +74,7 @@ START_TEST(check_trace_set_syscall) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDONLY);
     }
@@ -128,7 +128,7 @@ START_TEST(check_trace_get_string_first) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDONLY);
     }
@@ -171,7 +171,7 @@ START_TEST(check_trace_get_string_second) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         openat(AT_FDCWD, "/dev/null", O_RDONLY);
     }
@@ -214,7 +214,7 @@ START_TEST(check_trace_get_string_third) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         symlinkat("emily", AT_FDCWD, "arnold_layne");
     }
@@ -257,7 +257,7 @@ START_TEST(check_trace_get_string_fourth) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         linkat(AT_FDCWD, "emily", AT_FDCWD, "arnold_layne", 0600);
     }
@@ -300,7 +300,7 @@ START_TEST(check_trace_set_string_first) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDONLY);
     }
@@ -345,7 +345,7 @@ START_TEST(check_trace_set_string_second) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         openat(AT_FDCWD, "/dev/null", O_RDONLY);
     }
@@ -390,7 +390,7 @@ START_TEST(check_trace_set_string_third) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         symlinkat("emily", AT_FDCWD, "arnold_layne");
     }
@@ -435,7 +435,7 @@ START_TEST(check_trace_set_string_fourth) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         linkat(AT_FDCWD, "emily", AT_FDCWD, "arnold_layne", 0600);
     }

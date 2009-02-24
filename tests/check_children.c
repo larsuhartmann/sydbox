@@ -98,7 +98,7 @@ START_TEST(check_tchild_event_e_setup) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
     }
     else { /* parent */
@@ -126,7 +126,7 @@ START_TEST(check_tchild_event_e_setup_premature) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
     }
     else { /* parent */
@@ -154,7 +154,7 @@ START_TEST(check_tchild_event_e_syscall) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         sleep(1);
     }
@@ -202,7 +202,7 @@ START_TEST(check_tchild_event_e_genuine) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         kill(getpid(), SIGINT);
     }
@@ -240,7 +240,7 @@ START_TEST(check_tchild_event_e_exit) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         exit(EXIT_SUCCESS);
     }
@@ -276,7 +276,7 @@ START_TEST(check_tchild_event_e_exit_signal) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         for(;;)
             sleep(1);

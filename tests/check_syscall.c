@@ -38,7 +38,7 @@ START_TEST(check_syscall_check_chmod_deny) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         chmod("/dev/null", 0755);
         pause();
@@ -83,7 +83,7 @@ START_TEST(check_syscall_check_chmod_predict) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         chmod("/dev/null", 0755);
         pause();
@@ -131,7 +131,7 @@ START_TEST(check_syscall_check_chmod_allow) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         chmod("/dev/null", 0755);
         pause();
@@ -177,7 +177,7 @@ START_TEST(check_syscall_check_chown_deny) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         chown("/dev/null", 0, 0);
         pause();
@@ -223,7 +223,7 @@ START_TEST(check_syscall_check_chown_predict) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         chown("/dev/null", 0, 0);
         pause();
@@ -271,7 +271,7 @@ START_TEST(check_syscall_check_chown_allow) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         chown("/dev/null", 0, 0);
         pause();
@@ -317,7 +317,7 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDONLY);
         pause();
@@ -362,7 +362,7 @@ START_TEST(check_syscall_check_open_wronly_deny) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_WRONLY);
         pause();
@@ -422,7 +422,7 @@ START_TEST(check_syscall_check_open_wronly_predict) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
 
         char buf[16];
@@ -493,7 +493,7 @@ START_TEST(check_syscall_check_open_wronly_allow) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_WRONLY);
         pause();
@@ -539,7 +539,7 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDWR);
         pause();
@@ -599,7 +599,7 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
 
         char buf[16];
@@ -670,7 +670,7 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open("/dev/null", O_RDWR);
         pause();
@@ -716,7 +716,7 @@ START_TEST(check_syscall_check_open_magic_write) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open(CMD_WRITE"/var/empty", O_WRONLY);
         pause();
@@ -764,7 +764,7 @@ START_TEST(check_syscall_check_open_magic_predict) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         open(CMD_PREDICT"/var/empty", O_WRONLY);
         pause();
@@ -812,7 +812,7 @@ START_TEST(check_syscall_check_creat_deny) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         creat("emily/syd.txt", 0644);
         pause();
@@ -870,7 +870,7 @@ START_TEST(check_syscall_check_creat_predict) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
 
         char buf[16];
@@ -950,7 +950,7 @@ START_TEST(check_syscall_check_creat_allow) {
     if (0 > pid)
         fail("fork() failed: %s", strerror(errno));
     else if (0 == pid) { /* child */
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        trace_me();
         kill(getpid(), SIGSTOP);
         creat("emily/syd.txt", 0644);
         pause();
