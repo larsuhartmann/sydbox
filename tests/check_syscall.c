@@ -21,7 +21,12 @@
 #include <../src/defs.h>
 #include "check_sydbox.h"
 
+void syscall_setup(void) {
+    if (0 > mkdir("emily", 0755))
+        fail("mkdir(\"emily\", 0755) failed: %s", strerror(errno));
+}
 void syscall_teardown(void) {
+    unlink("emily/syd.txt");
     rmdir("emily");
 }
 
@@ -63,7 +68,8 @@ START_TEST(check_syscall_check_chmod_deny) {
                 "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
-
+        fail_unless(-EPERM == ctx->eldest->retval,
+                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
         kill(pid, SIGTERM);
     }
 }
@@ -201,6 +207,8 @@ START_TEST(check_syscall_check_chown_deny) {
                 "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval,
+                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -386,6 +394,8 @@ START_TEST(check_syscall_check_open_wronly_deny) {
                 "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval,
+                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -405,8 +415,6 @@ START_TEST(check_syscall_check_open_wronly_predict) {
     rcwd = realpath(cwd, NULL);
     if (NULL == rcwd)
         fail("realpath failed: %s", strerror(errno));
-    if (0 > mkdir("emily", 0755))
-        fail("mkdir failed: %s", strerror(errno));
 
     if (0 > pipe(pfd))
         fail("pipe() failed: %s", strerror(errno));
@@ -563,6 +571,8 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
                 "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval,
+                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -582,8 +592,6 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
     rcwd = realpath(cwd, NULL);
     if (NULL == rcwd)
         fail("realpath failed: %s", strerror(errno));
-    if (0 > mkdir("emily", 0755))
-        fail("mkdir failed: %s", strerror(errno));
 
     if (0 > pipe(pfd))
         fail("pipe() failed: %s", strerror(errno));
@@ -739,6 +747,8 @@ START_TEST(check_syscall_check_creat_deny) {
                 "Failed to get syscall: %s", strerror(errno));
         fail_if(syscall_check(ctx, ctx->eldest, syscall),
                 "Allowed access, expected violation");
+        fail_unless(-EPERM == ctx->eldest->retval,
+                "Failed to set retval to EPERM (got %d)", ctx->eldest->retval);
 
         kill(pid, SIGTERM);
     }
@@ -757,8 +767,6 @@ START_TEST(check_syscall_check_creat_predict) {
     rcwd = realpath(cwd, NULL);
     if (NULL == rcwd)
         fail("realpath failed: %s", strerror(errno));
-    if (0 > mkdir("emily", 0755))
-        fail("mkdir failed: %s", strerror(errno));
 
     if (0 > pipe(pfd))
         fail("pipe() failed: %s", strerror(errno));
@@ -841,8 +849,6 @@ START_TEST(check_syscall_check_creat_allow) {
     rcwd = realpath(cwd, NULL);
     if (NULL == rcwd)
         fail("realpath failed: %s", strerror(errno));
-    if (0 > mkdir("emily", 0755))
-        fail("mkdir failed: %s", strerror(errno));
 
     pid = fork();
     if (0 > pid)
@@ -884,7 +890,6 @@ START_TEST(check_syscall_check_creat_allow) {
                 "Denied access, expected allow");
         fail_unless(0 > stat("emily/syd.txt", &buf),
                 "Allowed access but file doesn't exist: %s", strerror(errno));
-        unlink("emily/syd.txt");
         kill(pid, SIGTERM);
     }
 }
@@ -895,7 +900,7 @@ Suite *syscall_suite_create(void) {
 
     /* syscall_check test cases */
     TCase *tc_syscall_check = tcase_create("syscall_check");
-    tcase_add_checked_fixture(tc_syscall_check, NULL, syscall_teardown);
+    tcase_add_checked_fixture(tc_syscall_check, syscall_setup, syscall_teardown);
     tcase_add_test(tc_syscall_check, check_syscall_check_chmod_deny);
     tcase_add_test(tc_syscall_check, check_syscall_check_chmod_predict);
     tcase_add_test(tc_syscall_check, check_syscall_check_chmod_allow);
