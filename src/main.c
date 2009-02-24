@@ -200,7 +200,7 @@ int xfork(struct tchild *child) {
     }
     else {
         // Add the child, setup will be done later
-        tchild_new(&(ctx->children), newchild->pid);
+        tchild_new(&(ctx->children), childpid);
     }
     return xsyscall(child);
 }
