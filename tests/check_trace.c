@@ -49,8 +49,7 @@ START_TEST(check_trace_get_syscall) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -92,8 +91,7 @@ START_TEST(check_trace_set_syscall) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -103,8 +101,7 @@ START_TEST(check_trace_set_syscall) {
                 "Failed to set syscall: %s", strerror(errno));
 
         /* Resume the child, it will stop at the end of the system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -146,8 +143,7 @@ START_TEST(check_trace_get_string_first) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -189,8 +185,7 @@ START_TEST(check_trace_get_string_second) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -232,8 +227,7 @@ START_TEST(check_trace_get_string_third) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -275,8 +269,7 @@ START_TEST(check_trace_get_string_fourth) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -318,8 +311,7 @@ START_TEST(check_trace_set_string_first) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -363,8 +355,7 @@ START_TEST(check_trace_set_string_second) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -408,8 +399,7 @@ START_TEST(check_trace_set_string_third) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -453,8 +443,7 @@ START_TEST(check_trace_set_string_fourth) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -477,18 +466,18 @@ Suite *trace_suite_create(void) {
     Suite *s = suite_create("trace");
 
     /* ptrace_* test cases */
-    TCase *tc_ptrace = tcase_create("ptrace");
-    tcase_add_test(tc_ptrace, check_trace_get_syscall);
-    tcase_add_test(tc_ptrace, check_trace_set_syscall);
-    tcase_add_test(tc_ptrace, check_trace_get_string_first);
-    tcase_add_test(tc_ptrace, check_trace_get_string_second);
-    tcase_add_test(tc_ptrace, check_trace_get_string_third);
-    tcase_add_test(tc_ptrace, check_trace_get_string_fourth);
-    tcase_add_test(tc_ptrace, check_trace_set_string_first);
-    tcase_add_test(tc_ptrace, check_trace_set_string_second);
-    tcase_add_test(tc_ptrace, check_trace_set_string_third);
-    tcase_add_test(tc_ptrace, check_trace_set_string_fourth);
-    suite_add_tcase(s, tc_ptrace);
+    TCase *tc_trace = tcase_create("trace");
+    tcase_add_test(tc_trace, check_trace_get_syscall);
+    tcase_add_test(tc_trace, check_trace_set_syscall);
+    tcase_add_test(tc_trace, check_trace_get_string_first);
+    tcase_add_test(tc_trace, check_trace_get_string_second);
+    tcase_add_test(tc_trace, check_trace_get_string_third);
+    tcase_add_test(tc_trace, check_trace_get_string_fourth);
+    tcase_add_test(tc_trace, check_trace_set_string_first);
+    tcase_add_test(tc_trace, check_trace_set_string_second);
+    tcase_add_test(tc_trace, check_trace_set_string_third);
+    tcase_add_test(tc_trace, check_trace_set_string_fourth);
+    suite_add_tcase(s, tc_trace);
 
     return s;
 }

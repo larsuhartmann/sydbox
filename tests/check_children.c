@@ -171,8 +171,7 @@ START_TEST(check_tchild_event_e_syscall) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -219,8 +218,7 @@ START_TEST(check_tchild_event_e_genuine) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will receive a SIGINT */
-        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
-                "PTRACE_CONT failed: %s", strerror(errno));
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
         wait(&status);
 
         /* Check the event */
@@ -257,8 +255,7 @@ START_TEST(check_tchild_event_e_exit) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will exit. */
-        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
-                "PTRACE_CONT failed: %s", strerror(errno));
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
         wait(&status);
 
         /* Check the event */
@@ -294,8 +291,7 @@ START_TEST(check_tchild_event_e_exit_signal) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child. */
-        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
-                "PTRACE_CONT failed: %s", strerror(errno));
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
         /* Kill it with a signal. */
         kill(pid, SIGKILL);
         wait(&status);

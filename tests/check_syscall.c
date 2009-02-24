@@ -58,8 +58,7 @@ START_TEST(check_syscall_check_chmod_deny) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -105,8 +104,7 @@ START_TEST(check_syscall_check_chmod_predict) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -153,8 +151,7 @@ START_TEST(check_syscall_check_chmod_allow) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -197,8 +194,7 @@ START_TEST(check_syscall_check_chown_deny) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -245,8 +241,7 @@ START_TEST(check_syscall_check_chown_predict) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -293,8 +288,7 @@ START_TEST(check_syscall_check_chown_allow) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -338,8 +332,7 @@ START_TEST(check_syscall_check_open_rdonly_allow) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -383,8 +376,7 @@ START_TEST(check_syscall_check_open_wronly_deny) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -449,8 +441,7 @@ START_TEST(check_syscall_check_open_wronly_predict) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -462,8 +453,7 @@ START_TEST(check_syscall_check_open_wronly_predict) {
                 "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
-        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
-                "PTRACE_CONT failed: %s", strerror(errno));
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
 
         int fd, n;
         char buf[16], proc[PATH_MAX], rpath[PATH_MAX];
@@ -515,8 +505,7 @@ START_TEST(check_syscall_check_open_wronly_allow) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -560,8 +549,7 @@ START_TEST(check_syscall_check_open_rdwr_deny) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -626,8 +614,7 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -639,8 +626,7 @@ START_TEST(check_syscall_check_open_rdwr_predict) {
                 "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
-        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
-                "PTRACE_CONT failed: %s", strerror(errno));
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
 
         int fd, n;
         char buf[16], proc[PATH_MAX], rpath[PATH_MAX];
@@ -692,8 +678,7 @@ START_TEST(check_syscall_check_open_rdwr_allow) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -738,8 +723,7 @@ START_TEST(check_syscall_check_open_magic_write) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP", pid);
@@ -786,8 +770,7 @@ START_TEST(check_syscall_check_open_magic_predict) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP", pid);
@@ -832,8 +815,7 @@ START_TEST(check_syscall_check_creat_deny) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -897,8 +879,7 @@ START_TEST(check_syscall_check_creat_predict) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
@@ -910,8 +891,7 @@ START_TEST(check_syscall_check_creat_predict) {
                 "Denied access, expected allow");
 
         /* Resume the child so it writes to the pipe */
-        fail_unless(0 == ptrace(PTRACE_CONT, pid, NULL, NULL),
-                "PTRACE_CONT failed: %s", strerror(errno));
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
 
         int fd, n;
         char buf[16], proc[PATH_MAX], rpath[PATH_MAX];
@@ -973,8 +953,7 @@ START_TEST(check_syscall_check_creat_allow) {
                 "Failed to set tracing options: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
-        fail_unless(0 == ptrace(PTRACE_SYSCALL, pid, NULL, NULL),
-                "PTRACE_SYSCALL failed: %s", strerror(errno));
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
         wait(&status);
         fail_unless(WIFSTOPPED(status),
                 "child %i didn't stop by sending itself SIGTRAP",
