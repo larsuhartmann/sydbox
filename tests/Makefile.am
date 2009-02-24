@@ -1,7 +1,5 @@
 SUBDIRS = . progtests
 
-CLEANFILES= arnold_layne its_not_the_same
-
 TESTS= check_sydbox t01-util-shell-expand.sh
 check_PROGRAMS= check_sydbox t01_util_shell_expand
 

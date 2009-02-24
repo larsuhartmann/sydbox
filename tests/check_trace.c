@@ -23,6 +23,11 @@
 #include "../src/defs.h"
 #include "check_sydbox.h"
 
+void trace_teardown(void) {
+    unlink("arnold_layne");
+    unlink("its_not_the_same");
+}
+
 START_TEST(check_trace_get_syscall) {
     pid_t pid;
 
@@ -406,6 +411,7 @@ Suite *trace_suite_create(void) {
 
     /* ptrace_* test cases */
     TCase *tc_trace = tcase_create("trace");
+    tcase_add_checked_fixture(tc_trace, NULL, trace_teardown);
     tcase_add_test(tc_trace, check_trace_get_syscall);
     tcase_add_test(tc_trace, check_trace_set_syscall);
     tcase_add_test(tc_trace, check_trace_get_string_first);
