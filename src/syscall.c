@@ -445,8 +445,9 @@ found:
         return 1;
     else if (sdef->flags & MAGIC_STAT) {
         if(syscall_check_magic_stat(child)) {
-            child->retval = 0;
-            return 0;
+            if (0 > trace_set_string(child->pid, 0, "/dev/null", 10))
+                DIESOFT("Failed to change stat()'s path argument: %s", strerror(errno));
+            return 1;
         }
     }
 
