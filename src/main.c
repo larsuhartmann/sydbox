@@ -530,9 +530,37 @@ static const char *get_groupname(void) {
 
     return 0 == errno ? grp->gr_name : NULL;
 }
-
 int main(int argc, char **argv) {
     int optc, dump;
+    pid_t pid;
+    char **argv_bash = NULL;
+    ctx = context_new();
+    colour = -1;
+    log_level = -1;
+    dump = 0;
+    log_file[0] = '\0';
+    flog = NULL;
+    atexit(cleanup);
+
+    char *basec = xstrndup(argv[0], PATH_MAX);
+    char *bname = basename(basec);
+    if (0 == strncmp(bname, "sandbox", 8)) {
+        // Aliased to sandbox
+        free(basec);
+        if (2 > argc) {
+            // Use /bin/bash as default program
+            argv_bash = (char **) xmalloc(2 * sizeof(char *));
+            argv_bash[0] = (char *) xstrndup("/bin/bash", 10);
+            argv_bash[1] = NULL;
+        }
+        else {
+            argv++;
+            argc--;
+        }
+        goto skip_commandline;
+    }
+    else
+        free(basec);
 
     // Parse command line
     static struct option long_options[] = {
@@ -548,15 +576,7 @@ int main(int argc, char **argv) {
         {"dump",     no_argument, NULL, 'D'},
         {0, 0, NULL, 0}
     };
-    pid_t pid;
 
-    ctx = context_new();
-    colour = -1;
-    log_level = -1;
-    dump = 0;
-    log_file[0] = '\0';
-    flog = NULL;
-    atexit(cleanup);
     while (-1 != (optc = getopt_long(argc, argv, "hVpvdCP:l:c:D", long_options, NULL))) {
         switch (optc) {
             case 'h':
@@ -609,6 +629,7 @@ int main(int argc, char **argv) {
         }
     }
 
+skip_commandline:
     if (NULL == phase) {
         phase = getenv(ENV_PHASE);
         if (NULL == phase)
@@ -647,14 +668,18 @@ int main(int argc, char **argv) {
         return EXIT_SUCCESS;
     }
 
-    int cmdsize = 4096;
-    char cmd[4096] = { 0 };
-    for (int i = 0; i < argc; i++) {
-        strncat(cmd, argv[i], cmdsize);
-        if (argc - 1 != i)
-            strncat(cmd, " ", 1);
-        cmdsize -= (strlen(argv[i]) + 1);
+    int cmdsize = 1024;
+    char cmd[1024] = { 0 };
+    if (NULL == argv_bash) {
+        for (int i = 0; i < argc; i++) {
+            strncat(cmd, argv[i], cmdsize);
+            if (argc - 1 != i)
+                strncat(cmd, " ", 1);
+            cmdsize -= (strlen(argv[i]) + 1);
+        }
     }
+    else
+        strncpy(cmd, argv_bash[0], strlen(argv_bash[0]));
 
     // Get user name and group name
     const char *username = get_username();
@@ -675,7 +700,10 @@ int main(int argc, char **argv) {
         if (0 > kill(getpid(), SIGSTOP))
             _die(EX_SOFTWARE, "Failed to send SIGSTOP: %s", strerror(errno));
         // Start the fun!
-        execvp(argv[0], argv);
+        if (NULL != argv_bash)
+            execvp(argv_bash[0], argv_bash);
+        else
+            execvp(argv[0], argv);
         _die(EX_DATAERR, strerror(errno));
     }
     else { // Parent process
