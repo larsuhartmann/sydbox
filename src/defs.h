@@ -84,7 +84,7 @@ struct pathnode {
 int path_magic_dir(const char *pathname);
 int path_magic_write(const char *pathname);
 int path_magic_predict(const char *pathname);
-void pathnode_new(struct pathnode **head, const char *pathname);
+int pathnode_new(struct pathnode **head, const char *pathname);
 void pathnode_free(struct pathnode **head);
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
 int pathlist_check(struct pathnode **pathlist, const char *pathname);

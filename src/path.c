@@ -62,10 +62,14 @@ int path_magic_predict(const char *pathname) {
         return 0;
 }
 
-void pathnode_new(struct pathnode **head, const char *pathname) {
+int pathnode_new(struct pathnode **head, const char *pathname) {
     char path_simple[PATH_MAX];
     struct pathnode *newnode;
 
+    if (NULL == pathname) {
+        LOGW("Pathname is NULL, not adding to list");
+        return -1;
+    }
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
     remove_slash(pathname, path_simple);
     newnode->pathname = xmalloc(PATH_MAX * sizeof(char));
@@ -73,6 +77,7 @@ void pathnode_new(struct pathnode **head, const char *pathname) {
     newnode->next = *head; // link next
     *head = newnode; // link head
     LOGD("New path item \"%s\"", newnode->pathname);
+    return 0;
 }
 
 void pathnode_free(struct pathnode **head) {
