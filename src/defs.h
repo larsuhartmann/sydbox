@@ -33,6 +33,32 @@
 #include <sys/reg.h>
 #endif /* HAVE_SYS_REG_H */
 
+/* pink floyd */
+#define PINK_FLOYD  "       ..uu.\n" \
+                    "       ?$\"\"`?i           z'\n" \
+                    "       `M  .@\"          x\"\n" \
+                    "       'Z :#\"  .   .    f 8M\n" \
+                    "       '&H?`  :$f U8   <  MP   x#'\n" \
+                    "       d#`    XM  $5.  $  M' xM\"\n" \
+                    "     .!\">     @  'f`$L:M  R.@!`\n" \
+                    "    +`  >     R  X  \"NXF  R\"*L\n" \
+                    "        k    'f  M   \"$$ :E  5.\n" \
+                    "        %%    `~  \"    `  'K  'M\n" \
+                    "            .uH          'E   `h\n" \
+                    "         .x*`             X     `\n" \
+                    "      .uf`                *\n" \
+                    "    .@8     .\n" \
+                    "   'E9F  uf\"          ,     ,\n" \
+                    "     9h+\"   $M    eH. 8b. .8    .....\n" \
+                    "    .8`     $'   M 'E  `R;'   d?\"\"\"`\"#\n" \
+                    "   ` E      @    b  d   9R    ?*     @\n" \
+                    "     >      K.zM `%%M'   9'    Xf   .f\n" \
+                    "    ;       R'          9     M  .=`\n" \
+                    "    t                   M     Mx~\n" \
+                    "    @                  lR    z\"\n" \
+                    "    @                  `   ;\"\n" \
+                    "                          `\n"
+
 /* environment */
 #define ENV_PHASE       "SANDBOX_PHASE"
 #define ENV_LOG         "SANDBOX_LOG"

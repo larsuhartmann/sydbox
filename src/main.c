@@ -700,8 +700,10 @@ skip_commandline:
         if (0 > kill(getpid(), SIGSTOP))
             _die(EX_SOFTWARE, "Failed to send SIGSTOP: %s", strerror(errno));
         // Start the fun!
-        if (NULL != argv_bash)
+        if (NULL != argv_bash) {
+            fprintf(stderr, PINK PINK_FLOYD NORMAL);
             execvp(argv_bash[0], argv_bash);
+        }
         else
             execvp(argv[0], argv);
         _die(EX_DATAERR, strerror(errno));
