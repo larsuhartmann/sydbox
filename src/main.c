@@ -445,13 +445,14 @@ static int parse_config(const char *pathname) {
     if (0 == ctx->paranoid)
         ctx->paranoid = cfg_getbool(cfg, "paranoid");
 
+    LOGV("Initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_phase;
     for (int i = 0; i < cfg_size(cfg, phase); i++) {
         cfg_phase = cfg_getnsec(cfg, phase, i);
         for (int i = 0; i < cfg_size(cfg_phase, "write"); i++)
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
         for (int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "predict", i));
         ctx->net_allowed = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
@@ -460,7 +461,7 @@ static int parse_config(const char *pathname) {
             for (int i = 0; i < cfg_size(cfg_default, "write"); i++)
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
             for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
-                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
+                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "predict", i));
             if (-1 == ctx->net_allowed)
                 cfg_getint(cfg_default, "net");
         }
@@ -656,9 +657,9 @@ skip_commandline:
     if ('\0' == log_file[0] && NULL != log_env)
         strncpy(log_file, log_env, PATH_MAX);
 
-    LOGD("Initializing path list using "ENV_WRITE);
+    LOGV("Extending path list using environment variable "ENV_WRITE);
     pathlist_init(&(ctx->write_prefixes), write_env);
-    LOGD("Initializing path list using "ENV_PREDICT);
+    LOGV("Extending path list using environment variable "ENV_PREDICT);
     pathlist_init(&(ctx->predict_prefixes), predict_env);
     if (NULL != net_env)
         ctx->net_allowed = 0;

@@ -67,7 +67,7 @@ int pathnode_new(struct pathnode **head, const char *pathname) {
     struct pathnode *newnode;
 
     if (NULL == pathname) {
-        LOGW("Pathname is NULL, not adding to list");
+        LOGD("Pathname is NULL not adding to list");
         return -1;
     }
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
@@ -76,7 +76,7 @@ int pathnode_new(struct pathnode **head, const char *pathname) {
     shell_expand(path_simple, newnode->pathname);
     newnode->next = *head; // link next
     *head = newnode; // link head
-    LOGD("New path item \"%s\"", newnode->pathname);
+    LOGV("New path item \"%s\"", newnode->pathname);
     return 0;
 }
 
@@ -99,9 +99,8 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
     int pos, itemlen, numpaths = 0;
     char *delim;
 
-    LOGD("Initializing path list");
     if (NULL == pathlist_env) {
-        LOGD("The given environment variable isn't set");
+        LOGV("The given environment variable isn't set");
         return 0;
     }
 
@@ -120,7 +119,7 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         }
         pos += ++itemlen;
     }
-    LOGD("Initialized path list with %d pathnames", numpaths);
+    LOGV("Initialized path list with %d pathnames", numpaths);
     return numpaths;
 }
 
