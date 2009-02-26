@@ -722,6 +722,9 @@ skip_commandline:
         ctx->eldest = ctx->children;
         if (0 > trace_setup(pid))
             DIESOFT("Failed to setup tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        if (NULL == ctx->eldest->cwd)
+            DIESOFT("Failed to get current working directory: %s", strerror(errno));
 
         LOGV("Child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {

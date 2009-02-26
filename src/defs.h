@@ -111,6 +111,7 @@ enum {
 struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
+    char *cwd; /* child's current working directory */
     unsigned long syscall; /* original syscall when system call is faked */
     long retval; /* faked syscall will return this value */
     struct tchild *next;
@@ -138,7 +139,8 @@ void context_free(context_t *ctx);
 int context_cmd_allowed(context_t *ctx, struct tchild *child);
 
 /* realpath.c */
-char *safe_realpath(const char *path, pid_t pid, int resolv, int *issymlink);
+char *getcwd_pid(char *dest, size_t size, pid_t pid);
+char *safe_realpath(const char *path, const char *cwd, int resolv, int *issymlink);
 
 /* util.c */
 char log_file[PATH_MAX];
@@ -183,7 +185,7 @@ char *xstrndup(const char *s, size_t n);
 
 int remove_slash(const char *pathname, char *dest);
 void shell_expand(const char *pathname, char *dest);
-char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink);
+char *resolve_path(const char *path, const char *cwd, int resolve, int *issymlink);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
 /* trace.c */
@@ -196,6 +198,7 @@ int trace_geteventmsg(pid_t pid, void *data);
 int trace_get_arg(pid_t pid, int arg, long *res);
 int trace_get_syscall(pid_t pid, long *syscall);
 int trace_set_syscall(pid_t pid, long syscall);
+int trace_get_return(pid_t pid, long *res);
 int trace_set_return(pid_t pid, long val);
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len);
 int trace_set_string(pid_t pid, int arg, const char *src, size_t len);

@@ -381,16 +381,16 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
             (check_ret && RM_CREAT == ret)) {
         // The syscall may create the file, use the wrapper function
         if (!(sdef->flags & DONT_RESOLV))
-            rpath = resolve_path(path, child->pid, 1, &issymlink);
+            rpath = resolve_path(path, child->cwd, 1, &issymlink);
         else
-            rpath = resolve_path(path, child->pid, 0, NULL);
+            rpath = resolve_path(path, child->cwd, 0, NULL);
     }
     else {
         // The syscall can't create the file, use safe_realpath()
         if (!(sdef->flags & DONT_RESOLV))
-            rpath = safe_realpath(path, child->pid, 1, &issymlink);
+            rpath = safe_realpath(path, child->cwd, 1, &issymlink);
         else
-            rpath = safe_realpath(path, child->pid, 0, NULL);
+            rpath = safe_realpath(path, child->cwd, 0, NULL);
     }
 
     if (NULL == rpath) {
@@ -618,6 +618,22 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     return handle_esrch(ctx, child);
                 else
                     DIESOFT("Failed to set return code: %s", strerror(errno));
+            }
+        }
+        else if (__NR_chdir == syscall || __NR_fchdir == syscall) {
+            long retval;
+            if (0 > trace_get_return(child->pid, &retval)) {
+                if (ESRCH == errno)
+                    return handle_esrch(ctx, child);
+                else
+                    DIESOFT("Failed to get return code: %s", strerror(errno));
+            }
+            if (0 == retval) {
+                // Child has successfully changed directory
+                if (NULL == getcwd_pid(child->cwd, PATH_MAX, child->pid))
+                    DIESOFT("Failed to get current working directory of child %i: %s",
+                            child->pid, strerror(errno));
+                LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
             }
         }
         child->flags ^= TCHILD_INSYSCALL;

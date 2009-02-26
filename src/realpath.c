@@ -54,21 +54,20 @@
 #define MAXSYMLINKS 256
 #endif
 
-/* TODO is there a better way to do this? */
-char *getcwd_pid(char *buf, size_t size, pid_t pid) {
+char *getcwd_pid(char *dest, size_t size, pid_t pid) {
     int n;
     char cwd[PATH_MAX];
 
     snprintf(cwd, PATH_MAX, "/proc/%i/cwd", pid);
-    n = readlink(cwd, buf, size - 1);
+    n = readlink(cwd, dest, size - 1);
     if (0 > n)
         return NULL;
     /* Readlink does NOT append a NULL byte to buf. */
-    buf[n] = '\0';
-    return buf;
+    dest[n] = '\0';
+    return dest;
 }
 
-char *safe_realpath(const char *path, pid_t pid, int resolve, int *issymlink) {
+char *safe_realpath(const char *path, const char *cwd, int resolve, int *issymlink) {
     int readlinks = 0;
     char *npath, *resolved_path;
     char link_path[PATH_MAX + 1];
@@ -80,8 +79,9 @@ char *safe_realpath(const char *path, pid_t pid, int resolve, int *issymlink) {
 
     /* If it's a relative pathname use getcwd for starters. */
     if (*path != '/') {
-        if (!getcwd_pid(npath, PATH_MAX - 1, pid))
-            return NULL;
+        if (NULL == cwd)
+            DIESOFT("Bug in safe_realpath() call");
+        strncpy(npath, cwd, PATH_MAX - 1);
         npath += strlen(npath);
         if (npath[-1] != '/')
             *npath++ = '/';
@@ -139,13 +139,12 @@ char *safe_realpath(const char *path, pid_t pid, int resolve, int *issymlink) {
             /* EINVAL means the file exists but isn't a symlink. */
             if (errno != EINVAL)
                 goto err;
-            else if (NULL != issymlink)
-                *issymlink = 0;
         } else {
-            if (NULL != issymlink)
-                *issymlink = 1;
             int m;
             char *newbuf;
+
+            if (NULL != issymlink)
+                *issymlink = 1;
 
             /* Note: readlink doesn't add the null byte. */
             link_path[n] = '\0';

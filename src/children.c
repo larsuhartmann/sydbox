@@ -36,14 +36,21 @@
 void tchild_new(struct tchild **head, pid_t pid) {
     struct tchild *newchild;
 
+    LOGD("New child %i", pid);
     newchild = (struct tchild *) xmalloc(sizeof(struct tchild));
     newchild->flags = TCHILD_NEEDSETUP;
     newchild->pid = pid;
     newchild->syscall = 0xbadca11;
     newchild->retval = -1;
     newchild->next = *head; // link next
+    if (NULL != newchild->next && NULL != newchild->next->cwd) {
+        LOGD("Child %i inherits parent %i's current working directory '%s'", pid,
+                newchild->next->pid, newchild->next->cwd);
+        newchild->cwd = xstrndup(newchild->next->cwd, PATH_MAX);
+    }
+    else
+        newchild->cwd = NULL;
     *head = newchild; // link head
-    LOGD("New child %i", pid);
 }
 
 void tchild_free(struct tchild **head) {
@@ -54,6 +61,8 @@ void tchild_free(struct tchild **head) {
     while (current != NULL) {
         temp = current;
         current = current->next;
+        if (NULL != temp->cwd)
+            free(temp->cwd);
         free(temp);
     }
     *head = NULL;
@@ -81,6 +90,8 @@ void tchild_delete(struct tchild **head, pid_t pid) {
         if (NULL != current) {
             temp = current;
             previous->next = current->next;
+            if (NULL != temp->cwd)
+                free(temp->cwd);
             free(temp);
         }
     }

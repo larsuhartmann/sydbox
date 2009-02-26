@@ -168,6 +168,16 @@ int trace_set_syscall(pid_t pid, long syscall) {
     return 0;
 }
 
+int trace_get_return(pid_t pid, long *res) {
+    if (0 > trace_peek(pid, ACCUM, res)) {
+        int save_errno = errno;
+        LOGE("Failed to get return value: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
 int trace_set_return(pid_t pid, long val) {
     if (0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val)) {
         int save_errno = errno;

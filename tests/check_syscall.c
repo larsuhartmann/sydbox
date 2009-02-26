@@ -53,6 +53,8 @@ START_TEST(syscall_check_chmod_deny) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -93,6 +95,8 @@ START_TEST(syscall_check_chmod_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -132,6 +136,8 @@ START_TEST(syscall_check_chmod_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -139,7 +145,8 @@ START_TEST(syscall_check_chmod_allow) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall), "Denied access, expected allow");
+        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, syscall),
+                "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -168,6 +175,8 @@ START_TEST(syscall_check_chown_deny) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -209,6 +218,8 @@ START_TEST(syscall_check_chown_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -248,6 +259,8 @@ START_TEST(syscall_check_chown_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -286,6 +299,8 @@ START_TEST(syscall_check_open_rdonly_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -324,6 +339,8 @@ START_TEST(syscall_check_open_wronly_deny) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -372,6 +389,7 @@ START_TEST(syscall_check_open_wronly_predict) {
     else { /* parent */
         int status;
         long syscall;
+
         context_t *ctx = context_new();
 
         close(pfd[1]);
@@ -383,6 +401,8 @@ START_TEST(syscall_check_open_wronly_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -441,6 +461,8 @@ START_TEST(syscall_check_open_wronly_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -479,6 +501,8 @@ START_TEST(syscall_check_open_rdwr_deny) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -538,6 +562,8 @@ START_TEST(syscall_check_open_rdwr_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -596,6 +622,8 @@ START_TEST(syscall_check_open_rdwr_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -635,6 +663,8 @@ START_TEST(syscall_check_open_magic_write) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -677,6 +707,8 @@ START_TEST(syscall_check_open_magic_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -717,6 +749,8 @@ START_TEST(syscall_check_creat_deny) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -775,6 +809,8 @@ START_TEST(syscall_check_creat_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -843,6 +879,8 @@ START_TEST(syscall_check_creat_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -883,6 +921,8 @@ START_TEST(syscall_check_stat_magic) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -922,6 +962,8 @@ START_TEST(syscall_check_stat_magic_write) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -961,6 +1003,8 @@ START_TEST(syscall_check_stat_magic_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -999,6 +1043,8 @@ START_TEST(syscall_check_lchown_deny) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -1048,6 +1094,8 @@ START_TEST(syscall_check_lchown_predict) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
@@ -1095,6 +1143,8 @@ START_TEST(syscall_check_lchown_allow) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        fail_if(NULL == ctx->eldest->cwd, "Failed to get cwd: %s", strerror(errno));
 
         /* Resume the child, it will stop at the next system call. */
         fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));

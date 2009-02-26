@@ -205,13 +205,13 @@ void shell_expand(const char *pathname, char *dest) {
 }
 
 /* A wrapper around safe_realpath */
-char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
+char *resolve_path(const char *path, const char *cwd, int resolve, int *issymlink) {
     char *rpath;
 
     if (resolve)
-        rpath = safe_realpath(path, pid, 1, issymlink);
+        rpath = safe_realpath(path, cwd, 1, issymlink);
     else
-        rpath = safe_realpath(path, pid, 0, NULL);
+        rpath = safe_realpath(path, cwd, 0, NULL);
 
     if (NULL == rpath) {
         if (ENOENT == errno) {
@@ -221,9 +221,9 @@ char *resolve_path(const char *path, pid_t pid, int resolve, int *issymlink) {
             dname = dirname(dirc);
             LOGD("File \"%s\" doesn't exist, using directory \"%s\"", path, dname);
             if (resolve)
-                rpath = safe_realpath(dname, pid, 1, issymlink);
+                rpath = safe_realpath(dname, cwd, 1, issymlink);
             else
-                rpath = safe_realpath(dname, pid, 0, NULL);
+                rpath = safe_realpath(dname, cwd, 0, NULL);
             free(dirc);
 
             if (NULL == rpath) {
