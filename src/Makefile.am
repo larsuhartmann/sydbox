@@ -12,7 +12,7 @@ if GCC
 syscallent.h:
 	@echo "Generating $@ from asm/unistd.h"
 	echo "// This is a GENERATED file!" > $@
-	echo '' | $(CC) -E --include asm/unistd.h -dM - |\
+	echo '' | $(CC) $(CFLAGS) -E --include asm/unistd.h -dM - |\
 		sort -n -k 3 |\
 		while read line; do \
 			if [ "$${line#\#define __NR_}" != "$$line" ]; then \
