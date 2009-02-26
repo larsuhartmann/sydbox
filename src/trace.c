@@ -153,7 +153,9 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 
 int trace_get_syscall(pid_t pid, long *syscall) {
     if (0 > trace_peek(pid, ORIG_ACCUM, syscall)) {
+        int save_errno = errno;
         LOGE("Failed to get syscall: %s", strerror(errno));
+        errno = save_errno;
         return -1;
     }
     return 0;
