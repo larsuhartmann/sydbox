@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/ptrace.h>
+#include <linux/ptrace.h>
 
 #include "defs.h"
 
