@@ -118,7 +118,7 @@ enum res_mode {
     RM_CREAT, // O_CREAT is in mode
 };
 
-static const char *syscall_get_name(int no) {
+static inline const char *syscall_get_name(int no) {
     for (int i = 0; sysnames[i].name != NULL; i++) {
         if (sysnames[i].no == no)
             return sysnames[i].name;
