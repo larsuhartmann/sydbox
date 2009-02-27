@@ -160,20 +160,20 @@ int log_level;
 int colour;
 
 void die(int err, const char *fmt, ...)
-    __attribute__ ((__noreturn__))
-    __attribute__ ((__format__ (__printf__, 2, 3)));
+    __attribute__ ((noreturn))
+    __attribute__ ((format (printf, 2, 3)));
 #define DIESOFT(...)    die(EX_SOFTWARE, __VA_ARGS__)
 #define DIEDATA(...)    die(EX_DATAERR, __VA_ARGS__)
 #define DIEOS(...)      die(EX_OSERR, __VA_ARGS__)
 #define DIEUSER(...)    die(EX_USAGE, __VA_ARGS__)
 void _die(int err, const char *fmt, ...)
-    __attribute__ ((__noreturn__))
-    __attribute__ ((__format__ (__printf__, 2, 3)));
+    __attribute__ ((noreturn))
+    __attribute__ ((format (printf, 2, 3)));
 void access_error(pid_t pid, const char *fmt, ...)
-    __attribute__ ((__format__ (__printf__, 2, 3)));
+    __attribute__ ((format (printf, 2, 3)));
 
 void lg(int level, const char *func, const char *fmt, ...)
-    __attribute__ ((__format__ (__printf__, 3, 4)));
+    __attribute__ ((format (printf, 3, 4)));
 #define LOGE(...)   lg(LOG_ERROR, __func__, __VA_ARGS__)
 #define LOGW(...)   lg(LOG_WARNING, __func__, __VA_ARGS__)
 #define LOGN(...)   lg(LOG_NORMAL, __func__, __VA_ARGS__)
