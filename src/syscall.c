@@ -128,7 +128,7 @@ static inline const char *syscall_get_name(int no) {
 
 static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *child,
         int arg, const struct syscall_def *sdef,
-        const char *path, const char *rpath, int issymlink) {
+        const char *path, const char *rpath) {
     LOGD("Checking \"%s\" for write access", rpath);
     int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
     LOGD("Checking \"%s\" for predict access", rpath);
@@ -165,11 +165,11 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
         }
     }
 
-    if (ctx->paranoid && issymlink) {
+    if (ctx->paranoid && !(sdef->flags & DONT_RESOLV)) {
         /* Change the pathname argument with the resolved path to
         * prevent symlink races.
         */
-        LOGV("Paranoia! Substituting symlink %s with resolved path %s to prevent races", path, rpath);
+        LOGV("Paranoia! System call has DONT_RESOLV unset, substituting pathname with resolved path");
         if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX)) {
             int save_errno = errno;
             LOGE("Failed to set string: %s", strerror(errno));
@@ -313,7 +313,7 @@ static int syscall_can_creat(int arg, int flags) {
 
 static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child, int arg,
         const struct syscall_def *sdef, const char *openpath) {
-    int issymlink, save_errno;
+    int save_errno;
     char path[PATH_MAX];
     char *rpath = NULL;
 
@@ -377,31 +377,39 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
             return RS_ERROR;
     }
 
-    if (syscall_can_creat(arg, sdef->flags) ||
-            (check_ret && RM_CREAT == ret)) {
-        // The syscall may create the file, use the wrapper function
-        if (!(sdef->flags & DONT_RESOLV))
-            rpath = resolve_path(path, child->cwd, 1, &issymlink);
+    if ('/' != path[0]) {
+        // Add current working directory
+        char *pathc;
+        LOGD("`%s' is not an absolute pathname, adding cwd `%s'", path, child->cwd);
+        pathc = xstrndup(path, PATH_MAX);
+        snprintf(pathc, PATH_MAX, "%s/%s", child->cwd, path);
+        strncpy(path, pathc, PATH_MAX);
+        free(pathc);
+    }
+
+    if (syscall_can_creat(arg, sdef->flags) || (check_ret && RM_CREAT == ret)) {
+        LOGC("System call may create the file, using wrapper function");
+        if (sdef->flags & DONT_RESOLV)
+            rpath = resolve_path(path, 0);
         else
-            rpath = resolve_path(path, child->cwd, 0, NULL);
+            rpath = resolve_path(path, 1);
     }
     else {
-        // The syscall can't create the file, use safe_realpath()
-        if (!(sdef->flags & DONT_RESOLV))
-            rpath = safe_realpath(path, child->cwd, 1, &issymlink);
+        LOGC("System call can't create the file, using realpath()");
+        if (sdef->flags & DONT_RESOLV)
+            rpath = erealpath(path, NULL);
         else
-            rpath = safe_realpath(path, child->cwd, 0, NULL);
+            rpath = erealpath(path, NULL);
     }
 
     if (NULL == rpath) {
-        save_errno = errno;
-        LOGD("safe_realpath() failed for \"%s\", setting errno and denying access", path);
-        errno = save_errno;
         child->retval = -errno;
+        LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+        errno = save_errno;
         return RS_DENY;
     }
 
-    ret = syscall_check_prefix(ctx, child, arg, sdef, path, rpath, issymlink);
+    ret = syscall_check_prefix(ctx, child, arg, sdef, path, rpath);
     free(rpath);
     return ret;
 }

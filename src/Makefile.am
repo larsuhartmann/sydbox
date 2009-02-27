@@ -3,8 +3,8 @@ CLEANFILES= syscallent.h
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGITHEAD=\"$(GITHEAD)\" $(confuse_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = defs.h syscallent.h \
-		 children.c util.c context.c path.c \
-		 realpath.c syscall.c trace.c main.c
+		 canonicalize.c children.c util.c context.c \
+		 path.c syscall.c trace.c main.c
 sydbox_LDADD= $(confuse_LIBS)
 
 BUILT_SOURCES= syscallent.h

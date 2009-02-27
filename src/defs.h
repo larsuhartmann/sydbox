@@ -138,9 +138,8 @@ context_t *context_new(void);
 void context_free(context_t *ctx);
 int context_cmd_allowed(context_t *ctx, struct tchild *child);
 
-/* realpath.c */
-char *getcwd_pid(char *dest, size_t size, pid_t pid);
-char *safe_realpath(const char *path, const char *cwd, int resolv, int *issymlink);
+/* canonicalize.c */
+char *erealpath(const char *name, char *resolved);
 
 /* util.c */
 char log_file[PATH_MAX];
@@ -189,7 +188,8 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
 
 int remove_slash(const char *pathname, char *dest);
 void shell_expand(const char *pathname, char *dest);
-char *resolve_path(const char *path, const char *cwd, int resolve, int *issymlink);
+char *getcwd_pid(char *dest, size_t size, pid_t pid);
+char *resolve_path(const char *path, int resolve);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
 /* trace.c */

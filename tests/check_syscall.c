@@ -23,10 +23,11 @@
 
 void syscall_setup(void) {
     mkdir("emily", 0755);
-    symlink("arnold_layne", "/dev/null");
+    symlink("/dev/null", "arnold_layne");
 }
 
 void syscall_teardown(void) {
+    unlink("arnold_layne");
     unlink("emily/syd.txt");
     rmdir("emily");
 }

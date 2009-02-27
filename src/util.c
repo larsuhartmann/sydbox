@@ -223,52 +223,58 @@ void shell_expand(const char *pathname, char *dest) {
         LOGD("Expanded path \"%s\" to \"%s\" using /bin/sh", pathname, dest);
 }
 
-/* A wrapper around safe_realpath */
-char *resolve_path(const char *path, const char *cwd, int resolve, int *issymlink) {
+char *getcwd_pid(char *dest, size_t size, pid_t pid) {
+    int n;
+    char cwd[PATH_MAX];
+
+    snprintf(cwd, PATH_MAX, "/proc/%i/cwd", pid);
+    n = readlink(cwd, dest, size - 1);
+    if (0 > n)
+        return NULL;
+    /* Readlink does NOT append a NULL byte to buf. */
+    dest[n] = '\0';
+    return dest;
+}
+
+char *resolve_path(const char *path, int resolve) {
     char *rpath;
 
-    if (resolve)
-        rpath = safe_realpath(path, cwd, 1, issymlink);
+    if (NULL == path)
+        return NULL;
+
+    if (!resolve)
+        rpath = erealpath(path, NULL);
     else
-        rpath = safe_realpath(path, cwd, 0, NULL);
+        rpath = realpath(path, NULL);
 
-    if (NULL == rpath) {
-        if (ENOENT == errno) {
-            /* File doesn't exist, check the directory */
-            char *dirc, *dname;
-            dirc = xstrndup(path, PATH_MAX);
-            dname = dirname(dirc);
-            LOGD("File \"%s\" doesn't exist, using directory \"%s\"", path, dname);
-            if (resolve)
-                rpath = safe_realpath(dname, cwd, 1, issymlink);
-            else
-                rpath = safe_realpath(dname, cwd, 0, NULL);
-            free(dirc);
+    if (NULL == rpath && ENOENT == errno) {
+        // File doesn't exist, check the parent directory.
+        char *dirc, *dname;
+        dirc = xstrndup(path, PATH_MAX);
+        dname = dirname(dirc);
+        LOGD("File `%s' doesn't exist, using directory `%s'", path, dname);
 
-            if (NULL == rpath) {
-                /* Neither file nor the directory exists */
-                LOGD("Directory doesn't exist as well, setting errno to ENOENT");
-                errno = ENOENT;
-                return NULL;
-            }
-            else {
-                /* Add the directory back */
-                LOGD("File \"%s\" doesn't exist but directory \"%s\" exists, adding basename",
-                        path, rpath);
-                char *basec, *bname;
-                basec = xstrndup(path, PATH_MAX);
-                bname = basename(basec);
-                strncat(rpath, "/", 1);
-                strncat(rpath, bname, strlen(bname));
-                free(basec);
-            }
-        }
-        else {
-            // LOGW("safe_realpath() failed for \"%s\": %s", path, strerror(errno));
+        if (!resolve)
+            rpath = erealpath(dname, NULL);
+        else
+            rpath = realpath(dname, NULL);
+        free(dirc);
+
+        if (NULL == rpath) {
+            LOGD("Directory doesn't exist as well, setting errno to ENOENT");
+            errno = ENOENT;
             return NULL;
         }
+        else {
+            char *basec, *bname;
+            LOGD("File `%s' doesn't exist but directory `%s' exists, adding basename", path, rpath);
+            basec = xstrndup(path, PATH_MAX);
+            bname = basename(basec);
+            strncat(rpath, "/", 1);
+            strncat(rpath, bname, strlen(bname));
+            free(basec);
+        }
     }
-    errno = 0;
     return rpath;
 }
 
