@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
 
     char dest[PATH_MAX];
-    shell_expand(argv[1], dest);
+    shell_expand(dest, argv[1]);
 
     printf("%s", dest);
     return EXIT_SUCCESS;

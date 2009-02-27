@@ -206,9 +206,9 @@ int remove_slash(char *dest, const char *src) {
     return nslashes;
 }
 
-void shell_expand(const char *pathname, char *dest) {
+void shell_expand(char *dest, const char *src) {
     char command[32 + PATH_MAX] = "/bin/sh -c 'echo -n \"";
-    strncat(command, pathname, PATH_MAX);
+    strncat(command, src, PATH_MAX);
     strncat(command, "\"'", 2);
     FILE *bash = popen(command, "r");
     if (NULL == bash)
@@ -219,8 +219,8 @@ void shell_expand(const char *pathname, char *dest) {
         dest[i++] = fgetc(bash);
     dest[i-1] = '\0';
     fclose(bash);
-    if (0 != strncmp(pathname, dest, PATH_MAX))
-        LOGD("Expanded path \"%s\" to \"%s\" using /bin/sh", pathname, dest);
+    if (0 != strncmp(src, dest, PATH_MAX))
+        LOGD("Expanded path \"%s\" to \"%s\" using /bin/sh", src, dest);
 }
 
 char *getcwd_pid(char *dest, size_t size, pid_t pid) {

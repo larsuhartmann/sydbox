@@ -187,7 +187,7 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
 #define xstrndup(_str, _size)   __xstrndup(_str, _size, __FILE__, __func__, __LINE__)
 
 int remove_slash(char *dest, const char *src);
-void shell_expand(const char *pathname, char *dest);
+void shell_expand(char *dest, const char *src);
 char *getcwd_pid(char *dest, size_t size, pid_t pid);
 char *resolve_path(const char *path, int resolve);
 
