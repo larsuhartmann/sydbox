@@ -165,11 +165,6 @@ void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, siz
 char *__xstrndup(const char *str, size_t size, const char *file, const char *func, size_t line) {
     char *t;
 
-    if (NULL == str) {
-        LOGE("%s:%s():%zu: bug in xstrndup call", file, func, line);
-        DIESOFT("bug in xstrndup call");
-    }
-
     t = __xmalloc(size + 1, file, func, line);
     strncpy(t, str, size);
     t[size] = '\0';

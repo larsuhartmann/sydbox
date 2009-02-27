@@ -186,7 +186,8 @@ void *__xmalloc(size_t size, const char *file, const char *func, size_t line)
 void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, size_t line)
     __attribute__ ((alloc_size(2)));
 char *__xstrndup(const char *str, size_t size, const char *file, const char *func, size_t line)
-    __attribute__ ((alloc_size(2)));
+    __attribute__ ((alloc_size(2)))
+    __attribute__ ((nonnull(1)));
 #define xmalloc(_size)          __xmalloc(_size, __FILE__, __func__, __LINE__)
 #define xrealloc(_ptr, _size)   __xrealloc(_ptr, _size, __FILE__, __func__, __LINE__)
 #define xstrndup(_str, _size)   __xstrndup(_str, _size, __FILE__, __func__, __LINE__)
