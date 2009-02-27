@@ -405,7 +405,6 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
     if (NULL == rpath) {
         child->retval = -errno;
         LOGD("realpath() failed for `%s': %s", path, strerror(errno));
-        errno = save_errno;
         return RS_DENY;
     }
 
