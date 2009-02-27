@@ -81,7 +81,7 @@ static const struct syscall_def syscalls[] = {
     {__NR_access,       CHECK_PATH | ACCESS_MODE},
     {__NR_rename,       CHECK_PATH | CHECK_PATH2 | CAN_CREAT2},
     {__NR_rmdir,        CHECK_PATH},
-    {__NR_symlink,      CHECK_PATH | CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV},
+    {__NR_symlink,      CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV},
     {__NR_truncate,     CHECK_PATH},
 #if defined(I386)
     {__NR_truncate64,   CHECK_PATH},
