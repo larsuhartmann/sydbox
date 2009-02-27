@@ -180,8 +180,12 @@ void lg(int level, const char *funcname, const char *fmt, ...)
 #define LOGD(...)   lg(LOG_DEBUG, __func__, __VA_ARGS__)
 #define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __VA_ARGS__)
 
-void *xmalloc(size_t size);
-char *xstrndup(const char *s, size_t n);
+void *__xmalloc(size_t size, const char *file, const char *func, size_t line);
+void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, size_t line);
+char *__xstrndup(const char *str, size_t size, const char *file, const char *func, size_t line);
+#define xmalloc(_size)          __xmalloc(_size, __FILE__, __func__, __LINE__)
+#define xrealloc(_ptr, _size)   __xrealloc(_ptr, _size, __FILE__, __func__, __LINE__)
+#define xstrndup(_str, _size)   __xstrndup(_str, _size, __FILE__, __func__, __LINE__)
 
 int remove_slash(const char *pathname, char *dest);
 void shell_expand(const char *pathname, char *dest);

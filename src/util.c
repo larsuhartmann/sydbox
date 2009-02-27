@@ -2,6 +2,9 @@
 
 /*
  * Copyright (c) 2009 Ali Polatel
+ * Based in part upon sandbox-1.3.7 which is:
+ *  Copyright 1999-2008 Gentoo Foundation
+ *  Copyright 2004-2007 Martin Schlemmer <azarah@nosferatu.za.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -132,28 +135,44 @@ void access_error(pid_t pid, const char *fmt, ...) {
         fputc('\n', stderr);
 }
 
-void *xmalloc (size_t size) {
+void *__xmalloc(size_t size, const char *file, const char *func, size_t line) {
     void *t;
 
     if (0 == size)
         return NULL;
 
     t = malloc(size);
-    if (NULL == t)
-        DIEOS("not enough memory");
+    if (NULL == t) {
+        LOGE("%s:%s():%zu: malloc(%zu) failed: %s", file, func, line, size, strerror(errno));
+        DIEOS("malloc failed: %s", strerror(errno));
+    }
 
     return t;
 }
 
-char *xstrndup (const char *s, size_t n) {
+void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, size_t line) {
+    void *t;
+
+    t = realloc(ptr, size);
+    if (NULL == t) {
+        LOGE("%s:%s():%zu: realloc(%p, %zu) failed: %s", file, func, line, ptr, size, strerror(errno));
+        DIEOS("realloc failed: %s", strerror(errno));
+    }
+
+    return t;
+}
+
+char *__xstrndup(const char *str, size_t size, const char *file, const char *func, size_t line) {
     char *t;
 
-    if (NULL == s)
+    if (NULL == str) {
+        LOGE("%s:%s():%zu: bug in xstrndup call");
         DIESOFT("bug in xstrndup call");
+    }
 
-    t = xmalloc(n + 1);
-    strncpy(t, s, n);
-    t[n] = '\0';
+    t = __xmalloc(size + 1, file, func, line);
+    strncpy(t, str, size);
+    t[size] = '\0';
 
     return t;
 }
