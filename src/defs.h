@@ -170,7 +170,7 @@ void _die(int err, const char *fmt, ...)
 void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 2, 3)));
 
-void lg(int level, const char *funcname, const char *fmt, ...)
+void lg(int level, const char *func, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)));
 #define LOGE(...)   lg(LOG_ERROR, __func__, __VA_ARGS__)
 #define LOGW(...)   lg(LOG_WARNING, __func__, __VA_ARGS__)

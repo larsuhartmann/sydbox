@@ -60,7 +60,7 @@ void _die(int err, const char *fmt, ...) {
     _exit(err);
 }
 
-void lg(int level, const char *funcname, const char *fmt, ...) {
+void lg(int level, const char *func, const char *fmt, ...) {
     static int log_file_opened = 0;
     va_list args;
 
@@ -99,7 +99,7 @@ void lg(int level, const char *funcname, const char *fmt, ...) {
                 fprintf(flog, "CRAZY ");
                 break;
         }
-        fprintf(flog, "%s] ", funcname);
+        fprintf(flog, "%s] ", func);
 
         va_start(args, fmt);
         vfprintf(flog, fmt, args);
