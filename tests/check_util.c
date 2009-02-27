@@ -15,7 +15,7 @@ START_TEST(check_util_remove_slash_begin) {
     int nslashes;
     char dest[PATH_MAX];
 
-    nslashes = remove_slash("////dev/null", dest);
+    nslashes = remove_slash(dest, "////dev/null");
     fail_unless(3 == nslashes, "Returned wrong number of removed slashes: %d", nslashes);
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
 }
@@ -25,7 +25,7 @@ START_TEST(check_util_remove_slash_middle) {
     int nslashes;
     char dest[PATH_MAX];
 
-    nslashes = remove_slash("/dev////null", dest);
+    nslashes = remove_slash(dest, "/dev////null");
     fail_unless(3 == nslashes, "Returned wrong number of removed slashes: %d", nslashes);
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
 }
@@ -35,7 +35,7 @@ START_TEST(check_util_remove_slash_end) {
     int nslashes;
     char dest[PATH_MAX];
 
-    nslashes = remove_slash("/dev/null////", dest);
+    nslashes = remove_slash(dest, "/dev/null////");
     fprintf(stderr, "'%s'\n", dest);
     fail_unless(4 == nslashes, "Returned wrong number of removed slashes: %d", nslashes);
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);

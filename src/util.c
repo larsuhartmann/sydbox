@@ -177,11 +177,11 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
     return t;
 }
 
-int remove_slash(const char *pathname, char *dest) {
+int remove_slash(char *dest, const char *src) {
     int gotslash = 0, nslashes = 0;
 
     for (int i = 0, j = 0; i < PATH_MAX; i++) {
-        if ('/' == pathname[i]) {
+        if ('/' == src[i]) {
             if (gotslash) {
                 ++nslashes;
                 continue;
@@ -191,9 +191,9 @@ int remove_slash(const char *pathname, char *dest) {
         }
         else
             gotslash = 0;
-        dest[j++] = pathname[i];
+        dest[j++] = src[i];
         /* Remove trailing slash */
-        if ('\0' == pathname[i]) {
+        if ('\0' == src[i]) {
             if ('/' == dest[j - 2]) {
                 ++nslashes;
                 dest[j - 2] = '\0';
@@ -202,7 +202,7 @@ int remove_slash(const char *pathname, char *dest) {
         }
     }
     if (nslashes)
-        LOGD("Simplified pathname \"%s\" to \"%s\"", pathname, dest);
+        LOGD("Simplified pathname \"%s\" to \"%s\"", src, dest);
     return nslashes;
 }
 

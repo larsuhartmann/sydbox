@@ -71,7 +71,7 @@ int pathnode_new(struct pathnode **head, const char *pathname) {
         return -1;
     }
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
-    remove_slash(pathname, path_simple);
+    remove_slash(path_simple, pathname);
     newnode->pathname = xmalloc(PATH_MAX * sizeof(char));
     shell_expand(path_simple, newnode->pathname);
     newnode->next = *head; // link next
@@ -129,7 +129,7 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
     struct pathnode *node;
 
     LOGD("Checking \"%s\"", pathname);
-    remove_slash(pathname, path_simple);
+    remove_slash(path_simple, pathname);
 
     ret = 0;
     node = *pathlist;
