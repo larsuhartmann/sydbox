@@ -166,7 +166,7 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
     char *t;
 
     if (NULL == str) {
-        LOGE("%s:%s():%zu: bug in xstrndup call");
+        LOGE("%s:%s():%zu: bug in xstrndup call", file, func, line);
         DIESOFT("bug in xstrndup call");
     }
 
