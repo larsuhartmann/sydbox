@@ -4,7 +4,7 @@
  * Distributed under the terms of the GNU General Public License v2
  */
 
-#define _AT_FILE_SOURCE
+#define _ATFILE_SOURCE
 
 #include <errno.h>
 #include <limits.h>
