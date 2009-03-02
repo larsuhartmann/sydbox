@@ -67,7 +67,7 @@ int pathnode_new(struct pathnode **head, const char *pathname) {
     struct pathnode *newnode;
 
     if (NULL == pathname) {
-        LOGW("Pathname is NULL not adding to list");
+        LOGD("Pathname is NULL not adding to list");
         return -1;
     }
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
@@ -76,7 +76,7 @@ int pathnode_new(struct pathnode **head, const char *pathname) {
     shell_expand(newnode->pathname, path_simple);
     newnode->next = *head; // link next
     *head = newnode; // link head
-    LOGV("New path item `%s'", newnode->pathname);
+    LOGV("New path item \"%s\"", newnode->pathname);
     return 0;
 }
 
@@ -128,7 +128,7 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
     char path_simple[PATH_MAX];
     struct pathnode *node;
 
-    LOGD("Checking `%s'", pathname);
+    LOGD("Checking \"%s\"", pathname);
     remove_slash(path_simple, pathname);
 
     ret = 0;
@@ -143,26 +143,26 @@ int pathlist_check(struct pathnode **pathlist, const char *pathname) {
                  */
                 const char last = path_simple[strlen(node->pathname)];
                 if ('\0' == last || '/' == last) {
-                    LOGD("`%s' begins with `%s'", path_simple, node->pathname);
+                    LOGD("\"%s\" begins with \"%s\"", path_simple, node->pathname);
                     ret = 1;
                     break;
                 }
                 else
-                    LOGD("`%s' doesn't begin with `%s'", path_simple, node->pathname);
+                    LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->pathname);
             }
             else {
-                LOGD("`%s' begins with `%s'", path_simple, node->pathname);
+                LOGD("\"%s\" begins with \"%s\"", path_simple, node->pathname);
                 ret = 1;
                 break;
             }
         }
         else
-            LOGD("`%s' doesn't begin with `%s'", path_simple, node->pathname);
+            LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->pathname);
         node = node->next;
     }
     if (ret)
-        LOGD("Path list check succeeded for `%s'", path_simple);
+        LOGD("Path list check succeeded for \"%s\"", path_simple);
     else
-        LOGD("Path list check failed for `%s'", path_simple);
+        LOGD("Path list check failed for \"%s\"", path_simple);
     return ret;
 }
