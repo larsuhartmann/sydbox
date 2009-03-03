@@ -213,7 +213,7 @@ void shell_expand(char *dest, const char *src) {
     while (!feof(bash))
         dest[i++] = fgetc(bash);
     dest[i-1] = '\0';
-    fclose(bash);
+    pclose(bash);
     if (0 != strncmp(src, dest, PATH_MAX))
         LOGD("Expanded path \"%s\" to \"%s\" using /bin/sh", src, dest);
 }
