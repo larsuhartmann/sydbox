@@ -135,7 +135,7 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
     int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
 
     char reason[PATH_MAX + 128];
-    const char *sname = syscall_get_name(sdef->no);
+    const char *sname;
     if (!allow_write && !allow_predict) {
         child->retval = -EPERM;
         if (0 == arg)
@@ -148,6 +148,7 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
             strcat(reason, "O_WRONLY/O_RDWR)");
         else
             strcat(reason, "...)");
+        sname = syscall_get_name(sdef->no);
         access_error(child->pid, reason, sname, path);
         return RS_DENY;
     }
@@ -504,8 +505,11 @@ enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int syscall
     return RS_ALLOW;
 found:
     sdef = &(syscalls[i]);
-    sname = syscall_get_name(sdef->no);
     openpath = NULL;
+    if (LOG_DEBUG <= log_level)
+        sname = syscall_get_name(sdef->no);
+    else
+        sname = NULL;
 
     LOGD("Child %i called essential system call %s()", child->pid, sname);
 
@@ -580,7 +584,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         else
             DIESOFT("Failed to get syscall: %s", strerror(errno));
     }
-    sname = syscall_get_name(syscall);
+    if (LOG_DEBUG <= log_level)
+        sname = syscall_get_name(syscall);
+    else
+        sname = NULL;
+
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
 
@@ -612,16 +620,18 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             default:
                 if (ESRCH == errno)
                     return handle_esrch(ctx, child);
-                else
+                else {
+                    if (NULL == sname)
+                        sname = syscall_get_name(syscall);
                     DIESOFT("Error while checking system call %s() for access: %s", sname,
                             strerror(errno));
+                }
                 break;
         }
         child->flags ^= TCHILD_INSYSCALL;
     }
     else { // Exiting syscall
-        LOGC("Child %i is exiting system call %s()",
-                child->pid, sname);
+        LOGC("Child %i is exiting system call %s()", child->pid, sname);
         if (0xbadca11 == syscall) {
             LOGD("Restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
