@@ -50,9 +50,11 @@ void die(int err, const char *fmt, ...) {
 
     fputc('\n', stderr);
 
-    kill(ctx->eldest->pid, SIGTERM);
-    sleep(1);
-    kill(ctx->eldest->pid, SIGKILL);
+    if (NULL != ctx && NULL != ctx->eldest) {
+        kill(ctx->eldest->pid, SIGTERM);
+        sleep(1);
+        kill(ctx->eldest->pid, SIGKILL);
+    }
     exit(err);
 }
 
