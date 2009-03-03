@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    if (0 > rename("arnold.layne", "/tmp/sydbox.txt"))
+    if (0 > rename("see.emily.play/gnome", "jugband.blues"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;
