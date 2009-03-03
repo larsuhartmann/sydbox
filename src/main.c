@@ -37,7 +37,6 @@
 
 #include "defs.h"
 
-context_t *ctx = NULL;
 static char *config_file = NULL;
 static char *phase = NULL;
 

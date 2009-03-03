@@ -21,6 +21,8 @@
 
 #include "defs.h"
 
+context_t *ctx = NULL;
+
 context_t *context_new(void) {
     context_t *ctx;
     ctx = (context_t *) xmalloc(sizeof(context_t));
