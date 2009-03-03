@@ -111,6 +111,7 @@ enum {
 struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
+    int hasmagic; /* Whether the child is allowed to execute magic commands */
     char *cwd; /* child's current working directory */
     unsigned long syscall; /* original syscall when system call is faked */
     long retval; /* faked syscall will return this value */
@@ -136,7 +137,6 @@ typedef struct {
 
 context_t *context_new(void);
 void context_free(context_t *ctx);
-int context_cmd_allowed(context_t *ctx, struct tchild *child);
 
 /* canonicalize.c */
 char *erealpath(const char *name, char *resolved);

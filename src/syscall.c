@@ -421,7 +421,7 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     LOGD("Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
         rpath = pathname + CMD_WRITE_LEN - 1;
-        if (context_cmd_allowed(ctx, child)) {
+        if (child->hasmagic) {
             LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->write_prefixes), rpath);
             // Change argument to /dev/null
@@ -442,7 +442,7 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     }
     else if (path_magic_predict(pathname)) {
         rpath = pathname + CMD_PREDICT_LEN - 1;
-        if (context_cmd_allowed(ctx, child)) {
+        if (child->hasmagic) {
             LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
             pathnode_new(&(ctx->predict_prefixes), rpath);
             // Change argument to /dev/null
@@ -572,6 +572,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     int ret;
     long syscall;
     const char *sname;
+    static int before_initial_execv = 1;
 
     if (0 > trace_get_syscall(child->pid, &syscall)) {
         if (ESRCH == errno)
@@ -582,6 +583,16 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     sname = syscall_get_name(syscall);
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
+
+        if (__NR_execve == syscall) {
+            if(before_initial_execv)
+                before_initial_execv = 0;
+            else if (child->hasmagic) {
+                LOGV("Child %i called execve() disallowing magic commands", child->pid);
+                child->hasmagic = 0;
+            }
+        }
+
         ret = syscall_check(ctx, child, syscall);
         switch (ret) {
             case RS_DENY:
