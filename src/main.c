@@ -37,7 +37,7 @@
 
 #include "defs.h"
 
-static context_t *ctx = NULL;
+context_t *ctx = NULL;
 static char *config_file = NULL;
 static char *phase = NULL;
 
@@ -102,8 +102,8 @@ static void usage(void) {
 void cleanup(void) {
     if (NULL != ctx)
         context_free(ctx);
-    if (NULL != flog)
-        fclose(flog);
+    if (NULL != log_fp)
+        fclose(log_fp);
 }
 
 // Event handlers
@@ -531,16 +531,14 @@ static const char *get_groupname(void) {
 
     return 0 == errno ? grp->gr_name : NULL;
 }
+
 int main(int argc, char **argv) {
     int optc, dump;
     pid_t pid;
     char **argv_bash = NULL;
     ctx = context_new();
     colour = -1;
-    log_level = -1;
     dump = 0;
-    log_file[0] = '\0';
-    flog = NULL;
     atexit(cleanup);
 
     char *basec = xstrndup(argv[0], PATH_MAX);

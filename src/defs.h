@@ -138,12 +138,16 @@ typedef struct {
 context_t *context_new(void);
 void context_free(context_t *ctx);
 
+extern context_t *ctx;
+
 /* canonicalize.c */
 char *erealpath(const char *name, char *resolved);
 
 /* util.c */
-char log_file[PATH_MAX];
-FILE *flog;
+extern int log_level;
+extern char log_file[PATH_MAX];
+extern FILE *log_fp;
+extern int colour;
 
 #define LOG_ERROR       1
 #define LOG_WARNING     2
@@ -152,12 +156,9 @@ FILE *flog;
 #define LOG_DEBUG       5
 #define LOG_DEBUG_CRAZY 6
 
-int log_level;
-
 #define NORMAL  "[00;00m"
 #define MAGENTA "[00;35m"
 #define PINK    "[01;35m"
-int colour;
 
 void die(int err, const char *fmt, ...)
     __attribute__ ((noreturn))
@@ -198,6 +199,7 @@ char *getcwd_pid(char *dest, size_t size, pid_t pid);
 char *resolve_path(const char *path, int resolve);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
+
 /* trace.c */
 int trace_me(void);
 int trace_setup(pid_t pid);

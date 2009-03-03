@@ -26,10 +26,17 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/types.h>
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "defs.h"
+
+int colour = -1;
+int log_level = -1;
+char log_file[PATH_MAX] = { 0 };
+FILE *log_fp = NULL;
 
 /* Fatal error. Print message and exit. */
 void die(int err, const char *fmt, ...) {
@@ -43,6 +50,9 @@ void die(int err, const char *fmt, ...) {
 
     fputc('\n', stderr);
 
+    kill(ctx->eldest->pid, SIGTERM);
+    sleep(1);
+    kill(ctx->eldest->pid, SIGKILL);
     exit(err);
 }
 
@@ -68,44 +78,44 @@ void lg(int level, const char *func, const char *fmt, ...) {
         int isstderr = '\0' == log_file[0] ? 1 : 0;
 
         if (isstderr)
-            flog = stderr;
+            log_fp = stderr;
         else {
-            flog = fopen(log_file, "a");
-            if (NULL == flog)
+            log_fp = fopen(log_file, "a");
+            if (NULL == log_fp)
                 DIESOFT("Failed to open log file \"%s\": %s", log_file, strerror(errno));
         }
         log_file_opened = 1;
     }
 
     if (level <= log_level) {
-        fprintf(flog, "%ld: [", time(NULL));
+        fprintf(log_fp, "%ld: [", time(NULL));
         switch (level) {
             case LOG_ERROR:
-                fprintf(flog, "ERROR ");
+                fprintf(log_fp, "ERROR ");
                 break;
             case LOG_WARNING:
-                fprintf(flog, "WARNING ");
+                fprintf(log_fp, "WARNING ");
                 break;
             case LOG_NORMAL:
-                fprintf(flog, "NORMAL ");
+                fprintf(log_fp, "NORMAL ");
                 break;
             case LOG_VERBOSE:
-                fprintf(flog, "VERBOSE ");
+                fprintf(log_fp, "VERBOSE ");
                 break;
             case LOG_DEBUG:
-                fprintf(flog, "DEBUG ");
+                fprintf(log_fp, "DEBUG ");
                 break;
             case LOG_DEBUG_CRAZY:
-                fprintf(flog, "CRAZY ");
+                fprintf(log_fp, "CRAZY ");
                 break;
         }
-        fprintf(flog, "%s] ", func);
+        fprintf(log_fp, "%s] ", func);
 
         va_start(args, fmt);
-        vfprintf(flog, fmt, args);
+        vfprintf(log_fp, fmt, args);
         va_end(args);
 
-        fputc('\n', flog);
+        fputc('\n', log_fp);
     }
 }
 
