@@ -422,45 +422,31 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     LOGD("Checking if open(\"%s\", ...) is magic", pathname);
     if (path_magic_write(pathname)) {
         rpath = pathname + CMD_WRITE_LEN - 1;
-        if (child->hasmagic) {
-            LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
-            pathnode_new(&(ctx->write_prefixes), rpath);
-            // Change argument to /dev/null
-            LOGD("Changing pathname to /dev/null");
-            if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
-                save_errno = errno;
-                LOGE("Failed to set string to /dev/null: %s", strerror(errno));
-                errno = save_errno;
-                return RS_ERROR;
-            }
-            return RS_ALLOW;
+        LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
+        pathnode_new(&(ctx->write_prefixes), rpath);
+        // Change argument to /dev/null
+        LOGD("Changing pathname to /dev/null");
+        if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
+            save_errno = errno;
+            LOGE("Failed to set string to /dev/null: %s", strerror(errno));
+            errno = save_errno;
+            return RS_ERROR;
         }
-        else {
-            LOGW("Denied addwrite(\"%s\") for child %i", rpath, child->pid);
-            child->retval = -1;
-            return RS_DENY;
-        }
+        return RS_ALLOW;
     }
     else if (path_magic_predict(pathname)) {
         rpath = pathname + CMD_PREDICT_LEN - 1;
-        if (child->hasmagic) {
-            LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
-            pathnode_new(&(ctx->predict_prefixes), rpath);
-            // Change argument to /dev/null
-            LOGD("Changing pathname to /dev/null");
-            if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
-                save_errno = errno;
-                LOGE("Failed to set string to /dev/null: %s", strerror(errno));
-                errno = save_errno;
-                return RS_ERROR;
-            }
-            return RS_ALLOW;
+        LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
+        pathnode_new(&(ctx->predict_prefixes), rpath);
+        // Change argument to /dev/null
+        LOGD("Changing pathname to /dev/null");
+        if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
+            save_errno = errno;
+            LOGE("Failed to set string to /dev/null: %s", strerror(errno));
+            errno = save_errno;
+            return RS_ERROR;
         }
-        else {
-            LOGW("Denied addpredict(\"%s\") for child %i", rpath, child->pid);
-            child->retval = -1;
-            return RS_DENY;
-        }
+        return RS_ALLOW;
     }
     LOGD("open(\"%s\", ...) not magic", pathname);
     return RS_NONMAGIC;
@@ -514,26 +500,28 @@ found:
     LOGD("Child %i called essential system call %s()", child->pid, sname);
 
     // Handle magic calls
-    if (sdef->flags & MAGIC_OPEN) {
-        /* Special case, to avoid getting the pathname argument of open()
-         * twice, one for this one and one for CHECK_PATH, we get it here and
-         * pass it to syscall_check_path.
-         */
-        openpath = (char *) xmalloc(sizeof(char) * PATH_MAX);
-        if (0 > trace_get_string(child->pid, 0, openpath, PATH_MAX)) {
-            save_errno = errno;
-            LOGE("Failed to get string from argument 0: %s", strerror(errno));
-            errno = save_errno;
-            return RS_ERROR;
+    if (child->hasmagic) {
+        if (sdef->flags & MAGIC_OPEN) {
+            /* Special case, to avoid getting the pathname argument of open()
+             * twice, one for this one and one for CHECK_PATH, we get it here and
+             * pass it to syscall_check_path.
+             */
+            openpath = (char *) xmalloc(sizeof(char) * PATH_MAX);
+            if (0 > trace_get_string(child->pid, 0, openpath, PATH_MAX)) {
+                save_errno = errno;
+                LOGE("Failed to get string from argument 0: %s", strerror(errno));
+                errno = save_errno;
+                return RS_ERROR;
+            }
+            ret = syscall_check_magic_open(ctx, child, openpath);
+            if (RS_NONMAGIC != ret)
+                return ret;
         }
-        ret = syscall_check_magic_open(ctx, child, openpath);
-        if (RS_NONMAGIC != ret)
-            return ret;
-    }
-    else if (sdef->flags & MAGIC_STAT) {
-        ret = syscall_check_magic_stat(child);
-        if (RS_NONMAGIC != ret)
-            return ret;
+        else if (sdef->flags & MAGIC_STAT) {
+            ret = syscall_check_magic_stat(child);
+            if (RS_NONMAGIC != ret)
+                return ret;
+        }
     }
 
     if (sdef->flags & CHECK_PATH) {
