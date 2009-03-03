@@ -298,7 +298,7 @@ static enum res_mode syscall_checkmode_openat(pid_t pid) {
     }
 }
 
-static int syscall_can_creat(int arg, int flags) {
+static inline int syscall_can_creat(int arg, int flags) {
     if (0 == arg && flags & CAN_CREAT)
         return 1;
     else if (1 == arg && flags & CAN_CREAT2)
