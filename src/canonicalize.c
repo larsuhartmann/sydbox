@@ -50,7 +50,7 @@
 
 /* Modified 27 Feb 2009; Ali Polatel <polatel@gmail.com>
  *
- * Modified so that it fails when called without an absolute pathname.
+ * Modified so that it fails when called without an absolute path.
  */
 
 char *
@@ -90,7 +90,7 @@ erealpath(const char *name, char *resolved)
 	rpath_limit = rpath + path_max;
 
 	if (name[0] != '/') {
-		/* Fail if the argument isn't an absolute pathname */
+		/* Fail if the argument isn't an absolute path */
 		__set_errno(EINVAL);
 		goto error;
 	} else {

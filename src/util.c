@@ -209,7 +209,7 @@ int remove_slash(char *dest, const char *src) {
         }
     }
     if (nslashes)
-        LOGD("Simplified pathname \"%s\" to \"%s\"", src, dest);
+        LOGD("Simplified path \"%s\" to \"%s\"", src, dest);
     return nslashes;
 }
 

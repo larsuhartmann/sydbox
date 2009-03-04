@@ -20,7 +20,7 @@ START_TEST(check_pathnode_new) {
     struct pathnode *head = NULL;
 
     pathnode_new(&head, "/dev/null");
-    fail_unless(0 == strncmp(head->pathname, "/dev/null", 10), "Path not set correctly on creation");
+    fail_unless(0 == strncmp(head->path, "/dev/null", 10), "Path not set correctly on creation");
     fail_unless(NULL == head->next, "Next node not set correctly on creation");
 }
 END_TEST
@@ -49,14 +49,14 @@ START_TEST(check_pathlist_init) {
     fail_unless(3 == ret, "Number of paths not correct, expected: 3 got: %d", ret);
     curnode = plist;
     while (NULL != curnode) {
-        if (0 == strncmp("foo", curnode->pathname, 4))
+        if (0 == strncmp("foo", curnode->path, 4))
             seen_foo = 1;
-        else if (0 == strncmp("bar", curnode->pathname, 4))
+        else if (0 == strncmp("bar", curnode->path, 4))
             seen_bar = 1;
-        else if (0 == strncmp("baz", curnode->pathname, 4))
+        else if (0 == strncmp("baz", curnode->path, 4))
             seen_baz = 1;
         else
-            fail("Unknown pathname in pathlist: '%s'", curnode->pathname);
+            fail("Unknown path in pathlist: '%s'", curnode->path);
         curnode = curnode->next;
     }
     pathnode_free(&plist);
@@ -74,7 +74,7 @@ START_TEST(check_pathlist_init_ignore_empty) {
     const char env[] = "foo::bar::baz::::::";
     struct pathnode *plist = NULL;
 
-    fail_unless(3 == pathlist_init(&plist, env), "Didn't ignore empty pathnames in environment variable.");
+    fail_unless(3 == pathlist_init(&plist, env), "Didn't ignore empty paths in environment variable.");
     pathnode_free(&plist);
 }
 END_TEST
@@ -86,24 +86,24 @@ START_TEST(check_pathlist_check) {
     pathlist_init(&plist, env);
 
     fail_unless(0 != pathlist_check(&plist, "/dev/zero"),
-            "Failed for /dev/zero when /dev was an allowed pathname.");
+            "Failed for /dev/zero when /dev was an allowed path.");
     fail_unless(0 != pathlist_check(&plist, "/dev/mapper/control"),
-            "Failed for /dev/mapper/control when /dev was an allowed pathname.");
+            "Failed for /dev/mapper/control when /dev was an allowed path.");
     fail_unless(0 != pathlist_check(&plist, "/dev/input/mice"),
-            "Failed for /dev/input/mice when /dev was an allowed pathname");
+            "Failed for /dev/input/mice when /dev was an allowed path");
 
     fail_unless(0 == pathlist_check(&plist, "/"),
-            "Succeeded for / when /dev was the only allowed pathname.");
+            "Succeeded for / when /dev was the only allowed path.");
     fail_unless(0 == pathlist_check(&plist, "/d"),
-            "Succeeded for /d when /dev was the only allowed pathname.");
+            "Succeeded for /d when /dev was the only allowed path.");
     fail_unless(0 == pathlist_check(&plist, "/de"),
-            "Succeeded for /de when /dev was the only allowed pathname.");
+            "Succeeded for /de when /dev was the only allowed path.");
     fail_unless(0 == pathlist_check(&plist, "/devzero"),
-            "Succeded for /devzero when /dev was the only allowed pathname.");
+            "Succeded for /devzero when /dev was the only allowed path.");
     fail_unless(0 == pathlist_check(&plist, "/foo"),
-            "Succeeded for /foo when /dev was the only allowed pathname.");
+            "Succeeded for /foo when /dev was the only allowed path.");
     fail_unless(0 == pathlist_check(&plist, "/foo/dev"),
-            "Succeeded for /foo/dev when /dev was the only allowed pathname.");
+            "Succeeded for /foo/dev when /dev was the only allowed path.");
 }
 END_TEST
 

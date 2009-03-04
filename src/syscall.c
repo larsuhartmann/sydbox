@@ -167,10 +167,10 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
     }
 
     if (ctx->paranoid && !(sdef->flags & DONT_RESOLV)) {
-        /* Change the pathname argument with the resolved path to
+        /* Change the path argument with the resolved path to
         * prevent symlink races.
         */
-        LOGV("Paranoia! System call has DONT_RESOLV unset, substituting pathname with resolved path");
+        LOGV("Paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
         if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX)) {
             int save_errno = errno;
             LOGE("Failed to set string: %s", strerror(errno));
@@ -353,7 +353,7 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
 
     if (sdef->flags & CHECK_PATH) {
         if (sdef->flags & MAGIC_OPEN && NULL != openpath) {
-            /* Special case, we've already got the pathname argument while
+            /* Special case, we've already got the path argument while
              * checking magic open() so we use it here.
              */
             strncpy(path, openpath, PATH_MAX);
@@ -381,7 +381,7 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
     if ('/' != path[0]) {
         // Add current working directory
         char *pathc;
-        LOGD("`%s' is not an absolute pathname, adding cwd `%s'", path, child->cwd);
+        LOGD("`%s' is not an absolute path, adding cwd `%s'", path, child->cwd);
         pathc = xstrndup(path, PATH_MAX);
         snprintf(pathc, PATH_MAX, "%s/%s", child->cwd, path);
         strncpy(path, pathc, PATH_MAX);
@@ -414,18 +414,17 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
     return ret;
 }
 
-static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *child,
-        const char *pathname) {
+static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *child, const char *path) {
     int save_errno;
     const char *rpath;
 
-    LOGD("Checking if open(\"%s\", ...) is magic", pathname);
-    if (path_magic_write(pathname)) {
-        rpath = pathname + CMD_WRITE_LEN - 1;
+    LOGD("Checking if open(\"%s\", ...) is magic", path);
+    if (path_magic_write(path)) {
+        rpath = path + CMD_WRITE_LEN - 1;
         LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
         pathnode_new(&(ctx->write_prefixes), rpath);
         // Change argument to /dev/null
-        LOGD("Changing pathname to /dev/null");
+        LOGD("Changing path to /dev/null");
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
             LOGE("Failed to set string to /dev/null: %s", strerror(errno));
@@ -434,12 +433,12 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
         }
         return RS_ALLOW;
     }
-    else if (path_magic_predict(pathname)) {
-        rpath = pathname + CMD_PREDICT_LEN - 1;
+    else if (path_magic_predict(path)) {
+        rpath = path + CMD_PREDICT_LEN - 1;
         LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
         pathnode_new(&(ctx->predict_prefixes), rpath);
         // Change argument to /dev/null
-        LOGD("Changing pathname to /dev/null");
+        LOGD("Changing path to /dev/null");
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
             LOGE("Failed to set string to /dev/null: %s", strerror(errno));
@@ -448,23 +447,23 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
         }
         return RS_ALLOW;
     }
-    LOGD("open(\"%s\", ...) not magic", pathname);
+    LOGD("open(\"%s\", ...) not magic", path);
     return RS_NONMAGIC;
 }
 
 static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
     int save_errno;
-    char pathname[PATH_MAX];
+    char path[PATH_MAX];
 
-    if (0 > trace_get_string(child->pid, 0, pathname, PATH_MAX)) {
+    if (0 > trace_get_string(child->pid, 0, path, PATH_MAX)) {
         save_errno = errno;
         LOGE("Failed to get string from argument 0: %s", strerror(errno));
         errno = save_errno;
         return RS_ERROR;
     }
-    LOGD("Checking if stat(\"%s\") is magic", pathname);
-    if (path_magic_dir(pathname)) {
-        LOGD("stat(\"%s\") is magic", pathname);
+    LOGD("Checking if stat(\"%s\") is magic", path);
+    if (path_magic_dir(path)) {
+        LOGD("stat(\"%s\") is magic", path);
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
             LOGE("Failed to change path argument: %s", strerror(errno));
@@ -474,7 +473,7 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
         return RS_ALLOW;
     }
     else {
-        LOGD("stat(\"%s\") is not magic", pathname);
+        LOGD("stat(\"%s\") is not magic", path);
         return RS_NONMAGIC;
     }
 }
@@ -502,7 +501,7 @@ found:
     // Handle magic calls
     if (child->hasmagic) {
         if (sdef->flags & MAGIC_OPEN) {
-            /* Special case, to avoid getting the pathname argument of open()
+            /* Special case, to avoid getting the path argument of open()
              * twice, one for this one and one for CHECK_PATH, we get it here and
              * pass it to syscall_check_path.
              */

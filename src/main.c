@@ -345,7 +345,7 @@ static int legal_phase(const char *phase) {
     return 0;
 }
 
-static int parse_config(const char *pathname) {
+static int parse_config(const char *path) {
     cfg_opt_t default_opts[] = {
         CFG_INT("net", 1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
@@ -420,7 +420,7 @@ static int parse_config(const char *pathname) {
 
     cfg_t *cfg = cfg_init(sydbox_opts, CFGF_NONE);
 
-    if (CFG_PARSE_ERROR == cfg_parse(cfg, pathname)) {
+    if (CFG_PARSE_ERROR == cfg_parse(cfg, path)) {
         free(cfg);
         return 0;
     }
@@ -498,13 +498,13 @@ static void dump_config(void) {
     fprintf(stderr, "write allowed paths:\n");
     curnode = ctx->write_prefixes;
     while (NULL != curnode) {
-        fprintf(stderr, "> %s\n", curnode->pathname);
+        fprintf(stderr, "> %s\n", curnode->path);
         curnode = curnode->next;
     }
     fprintf(stderr, "write predicted paths:\n");
     curnode = ctx->predict_prefixes;
     while (NULL != curnode) {
-        fprintf(stderr, "> %s\n", curnode->pathname);
+        fprintf(stderr, "> %s\n", curnode->path);
         curnode = curnode->next;
     }
 }

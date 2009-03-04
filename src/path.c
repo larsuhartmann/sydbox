@@ -24,59 +24,59 @@
 
 #include "defs.h"
 
-int path_magic_dir(const char *pathname) {
+int path_magic_dir(const char *path) {
     char mdir[PATH_MAX];
 
     strncpy(mdir, CMD_PATH, CMD_PATH_LEN + 1);
     // Remove the trailing slash
     mdir[CMD_PATH_LEN - 1] = '\0';
-    if (0 == strncmp(pathname, mdir, CMD_PATH_LEN))
+    if (0 == strncmp(path, mdir, CMD_PATH_LEN))
         return 1;
 
     strncpy(mdir, CMD_WRITE, CMD_WRITE_LEN + 1);
     // Remove the trailing slash
     mdir[CMD_WRITE_LEN - 1] = '\0';
-    if (0 == strncmp(pathname, mdir, CMD_WRITE_LEN))
+    if (0 == strncmp(path, mdir, CMD_WRITE_LEN))
         return 1;
 
     strncpy(mdir, CMD_PREDICT, CMD_PREDICT_LEN + 1);
     // Remove the trailing slash
     mdir[CMD_PREDICT_LEN - 1] = '\0';
-    if (0 == strncmp(pathname, mdir, CMD_PREDICT_LEN))
+    if (0 == strncmp(path, mdir, CMD_PREDICT_LEN))
         return 1;
 
     return 0;
 }
 
-int path_magic_write(const char *pathname) {
-    if (0 == strncmp(pathname, CMD_WRITE, CMD_WRITE_LEN))
+int path_magic_write(const char *path) {
+    if (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN))
         return 1;
     else
         return 0;
 }
 
-int path_magic_predict(const char *pathname) {
-    if (0 == strncmp(pathname, CMD_PREDICT, CMD_PREDICT_LEN))
+int path_magic_predict(const char *path) {
+    if (0 == strncmp(path, CMD_PREDICT, CMD_PREDICT_LEN))
         return 1;
     else
         return 0;
 }
 
-int pathnode_new(struct pathnode **head, const char *pathname) {
+int pathnode_new(struct pathnode **head, const char *path) {
     char path_simple[PATH_MAX];
     struct pathnode *newnode;
 
-    if (NULL == pathname) {
-        LOGD("Pathname is NULL not adding to list");
+    if (NULL == path) {
+        LOGD("Path is NULL not adding to list");
         return -1;
     }
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
-    remove_slash(path_simple, pathname);
-    newnode->pathname = xmalloc(PATH_MAX * sizeof(char));
-    shell_expand(newnode->pathname, path_simple);
+    remove_slash(path_simple, path);
+    newnode->path = xmalloc(PATH_MAX * sizeof(char));
+    shell_expand(newnode->path, path_simple);
     newnode->next = *head; // link next
     *head = newnode; // link head
-    LOGV("New path item \"%s\"", newnode->pathname);
+    LOGV("New path item \"%s\"", newnode->path);
     return 0;
 }
 
@@ -88,7 +88,7 @@ void pathnode_free(struct pathnode **head) {
     while (NULL != current) {
         temp = current;
         current = current->next;
-        free(temp->pathname);
+        free(temp->path);
         free(temp);
     }
     *head = NULL;
@@ -119,45 +119,45 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         }
         pos += ++itemlen;
     }
-    LOGV("Initialized path list with %d pathnames", numpaths);
+    LOGV("Initialized path list with %d paths", numpaths);
     return numpaths;
 }
 
-int pathlist_check(struct pathnode **pathlist, const char *pathname) {
+int pathlist_check(struct pathnode **pathlist, const char *path) {
     int ret;
     char path_simple[PATH_MAX];
     struct pathnode *node;
 
-    LOGD("Checking \"%s\"", pathname);
-    remove_slash(path_simple, pathname);
+    LOGD("Checking \"%s\"", path);
+    remove_slash(path_simple, path);
 
     ret = 0;
     node = *pathlist;
     while (NULL != node) {
-        if (0 == strncmp(path_simple, node->pathname, strlen(node->pathname))) {
-            if (strlen(path_simple) > strlen(node->pathname)) {
-                /* Pathname begins with one of the allowed paths. Check for a
+        if (0 == strncmp(path_simple, node->path, strlen(node->path))) {
+            if (strlen(path_simple) > strlen(node->path)) {
+                /* Path begins with one of the allowed paths. Check for a
                  * zero byte or a / on the next character so that for example
                  * /devzero/foo doesn't pass the test when /dev is the only
                  * allowed path.
                  */
-                const char last = path_simple[strlen(node->pathname)];
+                const char last = path_simple[strlen(node->path)];
                 if ('\0' == last || '/' == last) {
-                    LOGD("\"%s\" begins with \"%s\"", path_simple, node->pathname);
+                    LOGD("\"%s\" begins with \"%s\"", path_simple, node->path);
                     ret = 1;
                     break;
                 }
                 else
-                    LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->pathname);
+                    LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->path);
             }
             else {
-                LOGD("\"%s\" begins with \"%s\"", path_simple, node->pathname);
+                LOGD("\"%s\" begins with \"%s\"", path_simple, node->path);
                 ret = 1;
                 break;
             }
         }
         else
-            LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->pathname);
+            LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->path);
         node = node->next;
     }
     if (ret)

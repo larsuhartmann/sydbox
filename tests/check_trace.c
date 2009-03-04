@@ -119,7 +119,7 @@ START_TEST(check_trace_get_string_first) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -132,9 +132,9 @@ START_TEST(check_trace_get_string_first) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_string(pid, 0, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 0, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "/dev/null", 10), "Expected '/dev/null' got '%s'", pathname);
+        fail_unless(0 == strncmp(path, "/dev/null", 10), "Expected '/dev/null' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -155,7 +155,7 @@ START_TEST(check_trace_get_string_second) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -168,9 +168,9 @@ START_TEST(check_trace_get_string_second) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_string(pid, 1, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 1, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "/dev/null", 10), "Expected '/dev/null' got '%s'", pathname);
+        fail_unless(0 == strncmp(path, "/dev/null", 10), "Expected '/dev/null' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -191,7 +191,7 @@ START_TEST(check_trace_get_string_third) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -204,10 +204,9 @@ START_TEST(check_trace_get_string_third) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_string(pid, 2, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 2, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'",
-                pathname);
+        fail_unless(0 == strncmp(path, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -228,7 +227,7 @@ START_TEST(check_trace_get_string_fourth) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -241,10 +240,9 @@ START_TEST(check_trace_get_string_fourth) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_string(pid, 3, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 3, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'",
-                pathname);
+        fail_unless(0 == strncmp(path, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -265,7 +263,7 @@ START_TEST(check_trace_set_string_first) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -280,9 +278,9 @@ START_TEST(check_trace_set_string_first) {
 
         fail_if(0 > trace_set_string(pid, 0, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        fail_if(0 > trace_get_string(pid, 0, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 0, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", pathname);
+        fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -303,7 +301,7 @@ START_TEST(check_trace_set_string_second) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -318,9 +316,9 @@ START_TEST(check_trace_set_string_second) {
 
         fail_if(0 > trace_set_string(pid, 1, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        fail_if(0 > trace_get_string(pid, 1, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 1, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", pathname);
+        fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -341,7 +339,7 @@ START_TEST(check_trace_set_string_third) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -356,10 +354,10 @@ START_TEST(check_trace_set_string_third) {
 
         fail_if(trace_set_string(pid, 2, "its_not_the_same", 17), "Failed to set string: %s",
                 strerror(errno));
-        fail_if(0 > trace_get_string(pid, 2, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 2, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
-                "Expected 'its_not_the_same' got '%s'", pathname);
+        fail_unless(0 == strncmp(path, "its_not_the_same", 17),
+                "Expected 'its_not_the_same' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
@@ -380,7 +378,7 @@ START_TEST(check_trace_set_string_fourth) {
     }
     else { /* parent */
         int status;
-        char pathname[PATH_MAX];
+        char path[PATH_MAX];
         struct tchild *tc = NULL;
 
         tchild_new(&tc, pid);
@@ -395,10 +393,10 @@ START_TEST(check_trace_set_string_fourth) {
 
         fail_if(trace_set_string(pid, 3, "its_not_the_same", 17), "Failed to set string: %s",
                 strerror(errno));
-        fail_if(0 > trace_get_string(pid, 3, pathname, PATH_MAX), "Failed to get string: %s",
+        fail_if(0 > trace_get_string(pid, 3, path, PATH_MAX), "Failed to get string: %s",
                 strerror(errno));
-        fail_unless(0 == strncmp(pathname, "its_not_the_same", 17),
-                "Expected 'its_not_the_same' got '%s'", pathname);
+        fail_unless(0 == strncmp(path, "its_not_the_same", 17),
+                "Expected 'its_not_the_same' got '%s'", path);
 
         tchild_free(&tc);
         kill(pid, SIGTERM);
