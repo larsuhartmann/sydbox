@@ -469,8 +469,6 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
     LOGD("Checking if stat(\"%s\") is magic", path);
     if (path_magic_dir(path)) {
         LOGD("stat(\"%s\") is magic", path);
-        /* Changing path to /dev/null here makes bash's malloc debugger fail */
-#if 0
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
             LOGE("Failed to change path argument: %s", strerror(errno));
@@ -478,9 +476,6 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
             return RS_ERROR;
         }
         return RS_ALLOW;
-#endif
-        child->retval = 0;
-        return RS_DENY;
     }
     else {
         LOGD("stat(\"%s\") is not magic", path);
