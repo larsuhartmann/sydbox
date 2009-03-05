@@ -65,14 +65,17 @@ static const struct syscall_name {
 static const struct syscall_def syscalls[] = {
     {__NR_chmod,        CHECK_PATH},
     {__NR_chown,        CHECK_PATH},
-#if defined(I386)
+#if defined(__NR_chown32)
     {__NR_chown32,      CHECK_PATH},
 #endif
     {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
     {__NR_creat,        CHECK_PATH | CAN_CREAT | RETURNS_FD},
     {__NR_stat,         MAGIC_STAT},
+#if defined(__NR_stat64)
+    {__NR_stat64,       MAGIC_STAT},
+#endif
     {__NR_lchown,       CHECK_PATH | DONT_RESOLV},
-#if defined(I386)
+#if defined(__NR_lchown32)
     {__NR_lchown32,     CHECK_PATH | DONT_RESOLV},
 #endif
     {__NR_link,         CHECK_PATH | CHECK_PATH2 | CAN_CREAT2},
@@ -83,11 +86,11 @@ static const struct syscall_def syscalls[] = {
     {__NR_rmdir,        CHECK_PATH},
     {__NR_symlink,      CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV},
     {__NR_truncate,     CHECK_PATH},
-#if defined(I386)
+#if defined(__NR_truncate64)
     {__NR_truncate64,   CHECK_PATH},
 #endif
     {__NR_mount,        CHECK_PATH2},
-#if defined(I386)
+#if defined(__NR_umount)
     {__NR_umount,       CHECK_PATH},
 #endif
     {__NR_umount2,      CHECK_PATH},
@@ -103,10 +106,12 @@ static const struct syscall_def syscalls[] = {
     {__NR_symlinkat,    CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV},
     {__NR_fchmodat,     CHECK_PATH_AT},
     {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
-#if defined(I386)
+#if defined(__NR_socketcall)
     {__NR_socketcall,   NET_CALL},
-#elif defined(X86_64)
+#elif defined(__NR_socket)
     {__NR_socket,       NET_CALL},
+#else
+#error unsupported architecture
 #endif
     {-1,                 0}
 };
@@ -553,9 +558,9 @@ found:
         return syscall_check_path(ctx, child, 3, sdef, NULL);
     }
     if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
-#if defined(I386)
+#if defined(__NR_socketcall)
         access_error(child->pid, "socketcall()");
-#elif defined(X86_64)
+#elif defined(__NR_socket)
         access_error(child->pid, "socket()");
 #endif
         child->retval = -EACCES;
