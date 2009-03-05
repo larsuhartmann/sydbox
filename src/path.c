@@ -25,27 +25,10 @@
 #include "defs.h"
 
 int path_magic_dir(const char *path) {
-    char mdir[PATH_MAX];
-
-    strncpy(mdir, CMD_PATH, CMD_PATH_LEN + 1);
-    // Remove the trailing slash
-    mdir[CMD_PATH_LEN - 1] = '\0';
-    if (0 == strncmp(path, mdir, CMD_PATH_LEN))
+    if (0 == strncmp(path, CMD_PATH, CMD_PATH_LEN - 1))
         return 1;
-
-    strncpy(mdir, CMD_WRITE, CMD_WRITE_LEN + 1);
-    // Remove the trailing slash
-    mdir[CMD_WRITE_LEN - 1] = '\0';
-    if (0 == strncmp(path, mdir, CMD_WRITE_LEN))
-        return 1;
-
-    strncpy(mdir, CMD_PREDICT, CMD_PREDICT_LEN + 1);
-    // Remove the trailing slash
-    mdir[CMD_PREDICT_LEN - 1] = '\0';
-    if (0 == strncmp(path, mdir, CMD_PREDICT_LEN))
-        return 1;
-
-    return 0;
+    else
+        return 0;
 }
 
 int path_magic_write(const char *path) {
