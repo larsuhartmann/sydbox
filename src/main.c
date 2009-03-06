@@ -99,10 +99,14 @@ static void usage(void) {
 }
 
 void cleanup(void) {
-    if (NULL != ctx)
-        context_free(ctx);
+    trace_kill(ctx->eldest->pid);
     if (NULL != log_fp)
         fclose(log_fp);
+}
+
+void sig_cleanup(int signum) {
+    LOGE("Received signal %d, cleaning up", signum);
+    cleanup();
 }
 
 // Event handlers
@@ -708,6 +712,9 @@ skip_commandline:
     }
     else { // Parent process
         int status, ret;
+
+        signal(SIGINT, sig_cleanup);
+        signal(SIGTERM, sig_cleanup);
 
         // Wait for the SIGSTOP
         wait(&status);
