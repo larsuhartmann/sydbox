@@ -34,6 +34,37 @@ START_TEST(check_pathnode_free) {
 }
 END_TEST
 
+START_TEST(check_pathnode_delete_first) {
+    struct pathnode *head = NULL;
+
+    pathnode_new(&head, "/dev/null");
+    pathnode_delete(&head, "/dev/null");
+
+    fail_unless(NULL == head);
+}
+END_TEST
+
+START_TEST(check_pathnode_delete) {
+    int i = 0;
+    struct pathnode *node = NULL;
+    struct pathnode *curnode = NULL;
+
+    pathnode_new(&node, "/dev/null");
+    pathnode_new(&node, "/dev/zero");
+    pathnode_new(&node, "/dev/random");
+
+    pathnode_delete(&node, "/dev/null");
+
+    curnode = node;
+    while (NULL != curnode) {
+        fail_if(0 == strncmp(curnode->path, "/dev/null", PATH_MAX), "Deleted path found at node %d", i++);
+        curnode = curnode->next;
+    }
+
+    pathnode_free(&node);
+}
+END_TEST
+
 START_TEST(check_pathlist_init_unset) {
     fail_unless(0 == pathlist_init(NULL, NULL), "Didn't return 0 when environment variable isn't set");
 }

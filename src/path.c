@@ -77,6 +77,37 @@ void pathnode_free(struct pathnode **head) {
     *head = NULL;
 }
 
+void pathnode_delete(struct pathnode **head, const char *path) {
+    struct pathnode *temp;
+    struct pathnode *previous, *current;
+
+    if (0 == strncmp(path, (*head)->path, PATH_MAX)) { // Deleting first node
+        temp = *head;
+        *head = (*head)->next;
+        if (NULL != temp->path)
+            free(temp->path);
+        free(temp);
+    }
+    else {
+        previous = *head;
+        current = (*head)->next;
+
+        // Find the correct location
+        while (NULL != current && 0 == strncmp(path, current->path, PATH_MAX)) {
+            previous = current;
+            current = current->next;
+        }
+
+        if (NULL != current) {
+            temp = current;
+            previous->next = current->next;
+            if (NULL != temp->path)
+                free(temp->path);
+            free(temp);
+        }
+    }
+}
+
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
     char item[PATH_MAX];
     int pos, itemlen, numpaths = 0;

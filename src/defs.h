@@ -86,6 +86,7 @@ int path_magic_write(const char *path);
 int path_magic_predict(const char *path);
 int pathnode_new(struct pathnode **head, const char *path);
 void pathnode_free(struct pathnode **head);
+void pathnode_delete(struct pathnode **head, const char *path);
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
 int pathlist_check(struct pathnode **pathlist, const char *path);
 
