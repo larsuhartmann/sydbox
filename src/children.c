@@ -41,6 +41,7 @@ void tchild_new(struct tchild **head, pid_t pid) {
     newchild->flags = TCHILD_NEEDSETUP;
     newchild->pid = pid;
     newchild->hasmagic = 1;
+    newchild->exec_count = 1;
     newchild->syscall = 0xbadca11;
     newchild->retval = -1;
     newchild->next = *head; // link next

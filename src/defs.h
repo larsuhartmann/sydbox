@@ -119,6 +119,7 @@ struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
     int hasmagic; /* Whether the child is allowed to execute magic commands */
+    int exec_count; /* Allow this number of execve calls to bypass magic call disallow check */
     char *cwd; /* child's current working directory */
     unsigned long syscall; /* original syscall when system call is faked */
     long retval; /* faked syscall will return this value */

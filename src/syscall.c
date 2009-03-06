@@ -579,7 +579,6 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     int ret;
     long syscall;
     const char *sname;
-    static int before_initial_execv = 1;
 
     if (0 > trace_get_syscall(child->pid, &syscall)) {
         if (ESRCH == errno)
@@ -595,9 +594,12 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
 
+// TODO Fix this or implement a different security check
+#if 0
         if (__NR_execve == syscall) {
-            if(before_initial_execv)
-                before_initial_execv = 0;
+            if(0 < child->exec_count)
+                LOGV("Allowed execve() to bypass magic call check, decreasing count to %d for child %i",
+                        --(child->exec_count), child->pid);
             else if (child->hasmagic) {
                 // Check whether the file exists and can be executed
                 char execfile[PATH_MAX];
@@ -614,6 +616,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 }
             }
         }
+#endif
 
         ret = syscall_check(ctx, child, syscall);
         switch (ret) {
