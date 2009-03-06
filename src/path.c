@@ -31,8 +31,15 @@ int path_magic_dir(const char *path) {
         return 0;
 }
 
-int path_magic_lock(const char *path) {
-    if (0 == strncmp(path, CMD_LOCK, CMD_LOCK_LEN))
+int path_magic_on(const char *path) {
+    if (0 == strncmp(path, CMD_ON, CMD_ON_LEN))
+        return 1;
+    else
+        return 0;
+}
+
+int path_magic_off(const char *path) {
+    if (0 == strncmp(path, CMD_OFF, CMD_OFF_LEN))
         return 1;
     else
         return 0;
@@ -40,6 +47,13 @@ int path_magic_lock(const char *path) {
 
 int path_magic_toggle(const char *path) {
     if (0 == strncmp(path, CMD_TOGGLE, CMD_TOGGLE_LEN))
+        return 1;
+    else
+        return 0;
+}
+
+int path_magic_lock(const char *path) {
+    if (0 == strncmp(path, CMD_LOCK, CMD_LOCK_LEN))
         return 1;
     else
         return 0;

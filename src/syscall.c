@@ -424,15 +424,25 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     const char *rpath;
 
     LOGD("Checking if open(\"%s\", ...) is magic", path);
-    if (path_magic_lock(path)) {
+    if (path_magic_on(path)) {
         ismagic = 1;
-        LOGN("Access to magical commands is now denied");
-        ctx->cmdlock = 1;
+        ctx->enabled = 1;
+        LOGN("Sandbox status is now on");
+    }
+    else if (path_magic_off(path)) {
+        ismagic = 1;
+        ctx->enabled = 0;
+        LOGN("Sandbox status is now off");
     }
     else if (path_magic_toggle(path)) {
         ismagic = 1;
         ctx->enabled = !(ctx->enabled);
         LOGN("Sandbox status is now %s", ctx->enabled ? "on" : "off");
+    }
+    else if (path_magic_lock(path)) {
+        ismagic = 1;
+        LOGN("Access to magical commands is now denied");
+        ctx->cmdlock = 1;
     }
     else if (path_magic_write(path)) {
         ismagic = 1;

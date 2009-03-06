@@ -76,10 +76,14 @@ struct pathnode {
 
 #define CMD_PATH                "/dev/sydbox/"
 #define CMD_PATH_LEN            12
-#define CMD_LOCK                CMD_PATH"lock"
-#define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
+#define CMD_ON                  CMD_PATH"on"
+#define CMD_ON_LEN              (CMD_PATH_LEN + 3)
+#define CMD_OFF                 CMD_PATH"off"
+#define CMD_OFF_LEN             (CMD_PATH_LEN + 4)
 #define CMD_TOGGLE              CMD_PATH"toggle"
 #define CMD_TOGGLE_LEN          (CMD_PATH_LEN + 7)
+#define CMD_LOCK                CMD_PATH"lock"
+#define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
 #define CMD_WRITE               CMD_PATH"write/"
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
@@ -90,8 +94,10 @@ struct pathnode {
 #define CMD_RMPREDICT_LEN       (CMD_PATH_LEN + 10)
 
 int path_magic_dir(const char *path);
-int path_magic_lock(const char *path);
+int path_magic_on(const char *path);
+int path_magic_off(const char *path);
 int path_magic_toggle(const char *path);
+int path_magic_lock(const char *path);
 int path_magic_write(const char *path);
 int path_magic_predict(const char *path);
 int path_magic_rmwrite(const char *path);
