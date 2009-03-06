@@ -102,8 +102,10 @@ static void usage(void) {
 void cleanup(void) {
     if (NULL != ctx && NULL != ctx->eldest)
         trace_kill(ctx->eldest->pid);
-    if (NULL != log_fp)
+    if (NULL != log_fp) {
         fclose(log_fp);
+        log_fp = NULL;
+    }
 }
 
 void sig_cleanup(int signum) {

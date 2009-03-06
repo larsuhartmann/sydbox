@@ -85,7 +85,7 @@ int trace_setup(pid_t pid) {
 }
 
 int trace_kill(pid_t pid) {
-    if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL)) {
+    if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL) && ESRCH != errno) {
         int save_errno = errno;
         LOGE("Failed to kill child %i: %s", pid, strerror(errno));
         errno = save_errno;
