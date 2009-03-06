@@ -206,6 +206,7 @@ char *getcwd_pid(char *dest, size_t size, pid_t pid);
 char *resolve_path(const char *path, int resolve);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
+int can_exec(const char *file);
 
 /* trace.c */
 int trace_me(void);

@@ -599,8 +599,19 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             if(before_initial_execv)
                 before_initial_execv = 0;
             else if (child->hasmagic) {
-                LOGV("Child %i called execve() disallowing magic commands", child->pid);
-                child->hasmagic = 0;
+                // Check whether the file exists and can be executed
+                char execfile[PATH_MAX];
+                if (0 > trace_get_string(child->pid, 0, execfile, PATH_MAX)) {
+                    if (ESRCH == errno)
+                        return handle_esrch(ctx, child);
+                    else
+                        DIESOFT("Failed to get string from argument 0: %s", strerror(errno));
+                }
+                if (can_exec(execfile)) {
+                    LOGV("Child %i called execve(\"%s\", ...) disallowing magic commands",
+                            child->pid, execfile);
+                    child->hasmagic = 0;
+                }
             }
         }
 

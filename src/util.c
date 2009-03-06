@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <time.h>
@@ -292,4 +293,23 @@ int handle_esrch(context_t *ctx, struct tchild *child) {
         ret = EX_SOFTWARE;
     tchild_delete(&(ctx->children), child->pid);
     return ret;
+}
+
+// Check whether a file can be executed
+int can_exec(const char *file) {
+    struct stat buf;
+
+    if (0 > stat(file, &buf))
+        return 0;
+
+    if (buf.st_mode & S_IXOTH)
+        return 1;
+    if (getuid() == 0 && buf.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))
+        return 1;
+    if (getgid() == buf.st_gid && buf.st_mode & S_IXGRP)
+        return 1;
+    if (getuid() == buf.st_uid && buf.st_mode & S_IXUSR)
+        return 1;
+
+    return 0;
 }
