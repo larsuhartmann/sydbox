@@ -429,7 +429,12 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
         LOGN("Access to magical commands is now denied");
         ctx->cmdlock = 1;
     }
-    if (path_magic_write(path)) {
+    else if (path_magic_toggle(path)) {
+        ismagic = 1;
+        ctx->enabled = !(ctx->enabled);
+        LOGN("Sandbox status is now %s", ctx->enabled ? "on" : "off");
+    }
+    else if (path_magic_write(path)) {
         ismagic = 1;
         rpath = path + CMD_WRITE_LEN - 1;
         LOGN("Approved addwrite(\"%s\")", rpath);
@@ -504,6 +509,7 @@ enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int syscall
     char *openpath;
     const char *sname;
     const struct syscall_def *sdef;
+
     for (i = 0; syscalls[i].no != -1; i++) {
         if (syscalls[i].no == syscall)
             goto found;
@@ -543,6 +549,10 @@ found:
                 return ret;
         }
     }
+
+    // If sandbox is disabled allow any system call
+    if (!ctx->enabled)
+        return RS_ALLOW;
 
     if (sdef->flags & CHECK_PATH) {
         LOGD("System call %s() has CHECK_PATH set, checking", sname);

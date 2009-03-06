@@ -78,6 +78,8 @@ struct pathnode {
 #define CMD_PATH_LEN            12
 #define CMD_LOCK                CMD_PATH"lock"
 #define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
+#define CMD_TOGGLE              CMD_PATH"toggle"
+#define CMD_TOGGLE_LEN          (CMD_PATH_LEN + 7)
 #define CMD_WRITE               CMD_PATH"write/"
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
@@ -89,6 +91,7 @@ struct pathnode {
 
 int path_magic_dir(const char *path);
 int path_magic_lock(const char *path);
+int path_magic_toggle(const char *path);
 int path_magic_write(const char *path);
 int path_magic_predict(const char *path);
 int path_magic_rmwrite(const char *path);
@@ -135,6 +138,7 @@ unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
+    int enabled;
     int paranoid;
     int net_allowed;
     int cmdlock; /* When this lock is on, no magic commands can be issued */

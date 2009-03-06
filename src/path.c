@@ -38,6 +38,13 @@ int path_magic_lock(const char *path) {
         return 0;
 }
 
+int path_magic_toggle(const char *path) {
+    if (0 == strncmp(path, CMD_TOGGLE, CMD_TOGGLE_LEN))
+        return 1;
+    else
+        return 0;
+}
+
 int path_magic_write(const char *path) {
     if (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN))
         return 1;
