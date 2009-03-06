@@ -76,6 +76,8 @@ void tchild_delete(struct tchild **head, pid_t pid) {
     if (pid == (*head)->pid) { // Deleting first node
         temp = *head;
         *head = (*head)->next;
+        if (NULL != temp->cwd)
+            free(temp->cwd);
         free(temp);
     }
     else {
