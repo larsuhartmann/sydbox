@@ -727,8 +727,18 @@ skip_commandline:
     else { // Parent process
         int status, ret;
 
-        signal(SIGINT, sig_cleanup);
-        signal(SIGTERM, sig_cleanup);
+        // Handle signals
+        struct sigaction new_action, old_action;
+        new_action.sa_handler = sig_cleanup;
+        sigemptyset(&new_action.sa_mask);
+        new_action.sa_flags = 0;
+
+        sigaction (SIGINT, NULL, &old_action);
+        if (SIG_IGN != old_action.sa_handler)
+            sigaction(SIGINT, &new_action, NULL);
+        sigaction (SIGTERM, NULL, &old_action);
+        if (SIG_IGN != old_action.sa_handler)
+            sigaction(SIGTERM, &new_action, NULL);
 
         // Wait for the SIGSTOP
         wait(&status);
