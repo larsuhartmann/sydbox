@@ -45,6 +45,20 @@ int path_magic_predict(const char *path) {
         return 0;
 }
 
+int path_magic_rmwrite(const char *path) {
+    if (0 == strncmp(path, CMD_RMWRITE, CMD_RMWRITE_LEN))
+        return 1;
+    else
+        return 0;
+}
+
+int path_magic_rmpredict(const char *path) {
+    if (0 == strncmp(path, CMD_RMPREDICT, CMD_RMPREDICT_LEN))
+        return 1;
+    else
+        return 0;
+}
+
 int pathnode_new(struct pathnode **head, const char *path) {
     char path_simple[PATH_MAX];
     struct pathnode *newnode;

@@ -420,28 +420,38 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
 }
 
 static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *child, const char *path) {
-    int save_errno;
+    int ismagic = 0, save_errno;
     const char *rpath;
 
     LOGD("Checking if open(\"%s\", ...) is magic", path);
     if (path_magic_write(path)) {
+        ismagic = 1;
         rpath = path + CMD_WRITE_LEN - 1;
         LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
         pathnode_new(&(ctx->write_prefixes), rpath);
-        // Change argument to /dev/null
-        LOGD("Changing path to /dev/null");
-        if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
-            save_errno = errno;
-            LOGE("Failed to set string to /dev/null: %s", strerror(errno));
-            errno = save_errno;
-            return RS_ERROR;
-        }
-        return RS_ALLOW;
     }
     else if (path_magic_predict(path)) {
+        ismagic = 1;
         rpath = path + CMD_PREDICT_LEN - 1;
         LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
         pathnode_new(&(ctx->predict_prefixes), rpath);
+    }
+    else if (path_magic_rmwrite(path)) {
+        ismagic = 1;
+        rpath = path + CMD_RMWRITE_LEN - 1;
+        LOGN("Approved rmwrite(\"%s\") for child %i", rpath, child->pid);
+        if (NULL != ctx->write_prefixes)
+            pathnode_delete(&(ctx->write_prefixes), rpath);
+    }
+    else if (path_magic_rmpredict(path)) {
+        ismagic = 1;
+        rpath = path + CMD_RMPREDICT_LEN - 1;
+        LOGN("Approved rmpredict(\"%s\") for child %i", rpath, child->pid);
+        if (NULL != ctx->predict_prefixes)
+            pathnode_delete(&(ctx->predict_prefixes), rpath);
+    }
+
+    if (ismagic) {
         // Change argument to /dev/null
         LOGD("Changing path to /dev/null");
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
@@ -452,6 +462,7 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
         }
         return RS_ALLOW;
     }
+
     LOGD("open(\"%s\", ...) not magic", path);
     return RS_NONMAGIC;
 }

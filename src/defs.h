@@ -80,10 +80,16 @@ struct pathnode {
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
 #define CMD_PREDICT_LEN         (CMD_PATH_LEN + 8)
+#define CMD_RMWRITE             CMD_PATH"unwrite/"
+#define CMD_RMWRITE_LEN         (CMD_PATH_LEN + 8)
+#define CMD_RMPREDICT           CMD_PATH"unpredict/"
+#define CMD_RMPREDICT_LEN       (CMD_PATH_LEN + 10)
 
 int path_magic_dir(const char *path);
 int path_magic_write(const char *path);
 int path_magic_predict(const char *path);
+int path_magic_rmwrite(const char *path);
+int path_magic_rmpredict(const char *path);
 int pathnode_new(struct pathnode **head, const char *path);
 void pathnode_free(struct pathnode **head);
 void pathnode_delete(struct pathnode **head, const char *path);
