@@ -65,6 +65,7 @@ static void usage(void) {
     fprintf(stderr, "\t-h, --help\t\tYou're looking at it :)\n");
     fprintf(stderr, "\t-V, --version\t\tShow version information\n");
     fprintf(stderr, "\t-p, --paranoid\t\tParanoid mode (EXPERIMENTAL)\n");
+    fprintf(stderr, "\t-L, --lock\t\tDisallow magic commands\n");
     fprintf(stderr, "\t-v, --verbose\t\tBe verbose\n");
     fprintf(stderr, "\t-d, --debug\t\tEnable debug messages\n");
     fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
@@ -409,6 +410,7 @@ static int parse_config(const char *path) {
         CFG_STR("log_file", NULL, CFGF_NONE),
         CFG_INT("log_level", -1, CFGF_NONE),
         CFG_BOOL("paranoid", 0, CFGF_NONE),
+        CFG_BOOL("lock", 0, CFGF_NONE),
         CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("loadenv", loadenv_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_SEC("saveenv", saveenv_opts, CFGF_TITLE | CFGF_MULTI),
@@ -445,8 +447,11 @@ static int parse_config(const char *path) {
             colour = cfg_getbool(cfg, "colour");
     }
 
-    if (0 == ctx->paranoid)
+    if (-1 == ctx->paranoid)
         ctx->paranoid = cfg_getbool(cfg, "paranoid");
+
+    if (-1 == ctx->cmdlock)
+        ctx->cmdlock = cfg_getbool(cfg, "lock");
 
     LOGV("Initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_phase;
@@ -540,6 +545,8 @@ int main(int argc, char **argv) {
     pid_t pid;
     char **argv_bash = NULL;
     ctx = context_new();
+    ctx->paranoid = -1;
+    ctx->cmdlock = -1;
     colour = -1;
     dump = 0;
     atexit(cleanup);
@@ -569,6 +576,7 @@ int main(int argc, char **argv) {
         {"version",  no_argument, NULL, 'V'},
         {"help",     no_argument, NULL, 'h'},
         {"paranoid", no_argument, NULL, 'p'},
+        {"lock",     no_argument, NULL, 'L'},
         {"verbose",  no_argument, NULL, 'v'},
         {"debug",    no_argument, NULL, 'd'},
         {"nocolour", no_argument, NULL, 'C'},
@@ -579,7 +587,7 @@ int main(int argc, char **argv) {
         {0, 0, NULL, 0}
     };
 
-    while (-1 != (optc = getopt_long(argc, argv, "hVpvdCP:l:c:D", long_options, NULL))) {
+    while (-1 != (optc = getopt_long(argc, argv, "hVpLvdCP:l:c:D", long_options, NULL))) {
         switch (optc) {
             case 'h':
                 usage();
@@ -589,6 +597,9 @@ int main(int argc, char **argv) {
                 return EXIT_SUCCESS;
             case 'p':
                 ctx->paranoid = 1;
+                break;
+            case 'L':
+                ctx->cmdlock = 1;
                 break;
             case 'v':
                 log_level = LOG_VERBOSE;
