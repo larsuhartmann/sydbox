@@ -76,6 +76,8 @@ struct pathnode {
 
 #define CMD_PATH                "/dev/sydbox/"
 #define CMD_PATH_LEN            12
+#define CMD_LOCK                CMD_PATH"lock"
+#define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
 #define CMD_WRITE               CMD_PATH"write/"
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
@@ -86,6 +88,7 @@ struct pathnode {
 #define CMD_RMPREDICT_LEN       (CMD_PATH_LEN + 10)
 
 int path_magic_dir(const char *path);
+int path_magic_lock(const char *path);
 int path_magic_write(const char *path);
 int path_magic_predict(const char *path);
 int path_magic_rmwrite(const char *path);
@@ -118,8 +121,6 @@ enum {
 struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
-    int hasmagic; /* Whether the child is allowed to execute magic commands */
-    int exec_count; /* Allow this number of execve calls to bypass magic call disallow check */
     char *cwd; /* child's current working directory */
     unsigned long syscall; /* original syscall when system call is faked */
     long retval; /* faked syscall will return this value */
@@ -136,6 +137,7 @@ unsigned int tchild_event(struct tchild *child, int status);
 typedef struct {
     int paranoid;
     int net_allowed;
+    int cmdlock; /* When this lock is on, no magic commands can be issued */
     struct pathnode *write_prefixes;
     struct pathnode *predict_prefixes;
     struct tchild *children;
@@ -207,7 +209,6 @@ char *getcwd_pid(char *dest, size_t size, pid_t pid);
 char *resolve_path(const char *path, int resolve);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
-int can_exec(const char *file);
 
 /* trace.c */
 int trace_me(void);

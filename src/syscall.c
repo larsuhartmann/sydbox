@@ -424,29 +424,34 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     const char *rpath;
 
     LOGD("Checking if open(\"%s\", ...) is magic", path);
+    if (path_magic_lock(path)) {
+        ismagic = 1;
+        LOGN("Access to magical commands is now denied");
+        ctx->cmdlock = 1;
+    }
     if (path_magic_write(path)) {
         ismagic = 1;
         rpath = path + CMD_WRITE_LEN - 1;
-        LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
+        LOGN("Approved addwrite(\"%s\")", rpath);
         pathnode_new(&(ctx->write_prefixes), rpath);
     }
     else if (path_magic_predict(path)) {
         ismagic = 1;
         rpath = path + CMD_PREDICT_LEN - 1;
-        LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
+        LOGN("Approved addpredict(\"%s\")", rpath);
         pathnode_new(&(ctx->predict_prefixes), rpath);
     }
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;
         rpath = path + CMD_RMWRITE_LEN - 1;
-        LOGN("Approved rmwrite(\"%s\") for child %i", rpath, child->pid);
+        LOGN("Approved rmwrite(\"%s\")", rpath);
         if (NULL != ctx->write_prefixes)
             pathnode_delete(&(ctx->write_prefixes), rpath);
     }
     else if (path_magic_rmpredict(path)) {
         ismagic = 1;
         rpath = path + CMD_RMPREDICT_LEN - 1;
-        LOGN("Approved rmpredict(\"%s\") for child %i", rpath, child->pid);
+        LOGN("Approved rmpredict(\"%s\")", rpath);
         if (NULL != ctx->predict_prefixes)
             pathnode_delete(&(ctx->predict_prefixes), rpath);
     }
@@ -515,7 +520,7 @@ found:
     LOGD("Child %i called essential system call %s()", child->pid, sname);
 
     // Handle magic calls
-    if (child->hasmagic) {
+    if (!ctx->cmdlock) {
         if (sdef->flags & MAGIC_OPEN) {
             /* Special case, to avoid getting the path argument of open()
              * twice, one for this one and one for CHECK_PATH, we get it here and
@@ -593,31 +598,6 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
-
-// TODO Fix this or implement a different security check
-#if 0
-        if (__NR_execve == syscall) {
-            if(0 < child->exec_count)
-                LOGV("Allowed execve() to bypass magic call check, decreasing count to %d for child %i",
-                        --(child->exec_count), child->pid);
-            else if (child->hasmagic) {
-                // Check whether the file exists and can be executed
-                char execfile[PATH_MAX];
-                if (0 > trace_get_string(child->pid, 0, execfile, PATH_MAX)) {
-                    if (ESRCH == errno)
-                        return handle_esrch(ctx, child);
-                    else
-                        DIESOFT("Failed to get string from argument 0: %s", strerror(errno));
-                }
-                if (can_exec(execfile)) {
-                    LOGV("Child %i called execve(\"%s\", ...) disallowing magic commands",
-                            child->pid, execfile);
-                    child->hasmagic = 0;
-                }
-            }
-        }
-#endif
-
         ret = syscall_check(ctx, child, syscall);
         switch (ret) {
             case RS_DENY:
