@@ -100,7 +100,8 @@ static void usage(void) {
 }
 
 void cleanup(void) {
-    trace_kill(ctx->eldest->pid);
+    if (NULL != ctx && NULL != ctx->eldest)
+        trace_kill(ctx->eldest->pid);
     if (NULL != log_fp)
         fclose(log_fp);
 }
