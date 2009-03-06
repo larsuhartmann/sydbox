@@ -86,7 +86,7 @@ void lg(int level, const char *func, const char *fmt, ...) {
     }
 
     if (level <= log_level) {
-        fprintf(log_fp, "%ld: [", time(NULL));
+        fprintf(log_fp, PACKAGE"@%ld: [", time(NULL));
         switch (level) {
             case LOG_ERROR:
                 fprintf(log_fp, "ERROR ");
