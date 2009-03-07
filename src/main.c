@@ -99,7 +99,7 @@ static void usage(void) {
     fprintf(stderr, "\twhat exactly is a dream, what exactly is a joke?\n");
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     if (NULL != ctx && NULL != ctx->eldest)
         trace_kill(ctx->eldest->pid);
     if (NULL != log_fp) {
@@ -108,7 +108,7 @@ void cleanup(void) {
     }
 }
 
-void sig_cleanup(int signum) {
+static void sig_cleanup(int signum) {
     LOGE("Received signal %d, cleaning up", signum);
     cleanup();
 }
