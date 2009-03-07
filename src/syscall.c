@@ -446,26 +446,26 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     }
     else if (path_magic_write(path)) {
         ismagic = 1;
-        rpath = path + CMD_WRITE_LEN - 1;
+        rpath = path + CMD_WRITE_LEN;
         LOGN("Approved addwrite(\"%s\")", rpath);
         pathnode_new(&(ctx->write_prefixes), rpath);
     }
     else if (path_magic_predict(path)) {
         ismagic = 1;
-        rpath = path + CMD_PREDICT_LEN - 1;
+        rpath = path + CMD_PREDICT_LEN;
         LOGN("Approved addpredict(\"%s\")", rpath);
         pathnode_new(&(ctx->predict_prefixes), rpath);
     }
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;
-        rpath = path + CMD_RMWRITE_LEN - 1;
+        rpath = path + CMD_RMWRITE_LEN;
         LOGN("Approved rmwrite(\"%s\")", rpath);
         if (NULL != ctx->write_prefixes)
             pathnode_delete(&(ctx->write_prefixes), rpath);
     }
     else if (path_magic_rmpredict(path)) {
         ismagic = 1;
-        rpath = path + CMD_RMPREDICT_LEN - 1;
+        rpath = path + CMD_RMPREDICT_LEN;
         LOGN("Approved rmpredict(\"%s\")", rpath);
         if (NULL != ctx->predict_prefixes)
             pathnode_delete(&(ctx->predict_prefixes), rpath);
