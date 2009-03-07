@@ -7,6 +7,9 @@
 Makefile.in
 Makefile
 
+gmon.out
+gprof*
+
 /INSTALL
 /aclocal.m4
 /autom4te.cache
