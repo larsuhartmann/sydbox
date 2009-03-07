@@ -131,7 +131,7 @@ struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
     char *cwd; /* child's current working directory */
-    unsigned long syscall; /* original syscall when system call is faked */
+    unsigned long sno; /* original syscall no when a system call is faked */
     long retval; /* faked syscall will return this value */
     struct tchild *next;
 };
@@ -157,8 +157,6 @@ typedef struct {
 
 context_t *context_new(void);
 void context_free(context_t *ctx);
-
-extern context_t *ctx;
 
 /* canonicalize.c */
 char *erealpath(const char *name, char *resolved);
@@ -248,7 +246,7 @@ enum res_syscall {
     RS_ERROR = EX_SOFTWARE // An error occured while checking access
 };
 
-enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int syscall);
+enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int sno);
 int syscall_handle(context_t *ctx, struct tchild *child);
 
 #endif /* SYDBOX_GUARD_DEFS_H */

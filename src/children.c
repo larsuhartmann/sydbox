@@ -40,7 +40,7 @@ void tchild_new(struct tchild **head, pid_t pid) {
     newchild = (struct tchild *) xmalloc(sizeof(struct tchild));
     newchild->flags = TCHILD_NEEDSETUP;
     newchild->pid = pid;
-    newchild->syscall = 0xbadca11;
+    newchild->sno = 0xbadca11;
     newchild->retval = -1;
     newchild->next = *head; // link next
     if (NULL != newchild->next && NULL != newchild->next->cwd) {

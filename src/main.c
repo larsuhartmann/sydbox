@@ -37,6 +37,7 @@
 
 #include "defs.h"
 
+static context_t *ctx = NULL;
 static char *config_file = NULL;
 static char *phase = NULL;
 
@@ -345,9 +346,9 @@ static int trace_loop(void) {
     return ret;
 }
 
-static int legal_phase(const char *phase) {
+static int legal_phase(const char *name) {
     for (int i = 0; i < MAX_PHASES; i++) {
-        if (0 == strncmp(phase, phases[i], strlen(phases[i]) + 1))
+        if (0 == strncmp(name, phases[i], strlen(phases[i]) + 1))
             return 1;
     }
     return 0;
@@ -460,19 +461,19 @@ static int parse_config(const char *path) {
     cfg_t *cfg_default, *cfg_phase;
     for (unsigned int i = 0; i < cfg_size(cfg, phase); i++) {
         cfg_phase = cfg_getnsec(cfg, phase, i);
-        for (unsigned int i = 0; i < cfg_size(cfg_phase, "write"); i++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
-        for (unsigned int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "predict", i));
+        for (unsigned int j = 0; j < cfg_size(cfg_phase, "write"); j++)
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", j));
+        for (unsigned int k = 0; k < cfg_size(cfg_phase, "predict"); k++)
+            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "predict", k));
         ctx->net_allowed = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
-        for (unsigned int i = 0; i < cfg_size(cfg, "default"); i++) {
-            cfg_default = cfg_getnsec(cfg, "default", i);
-            for (unsigned int i = 0; i < cfg_size(cfg_default, "write"); i++)
-                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
-            for (unsigned int i = 0; i < cfg_size(cfg_default, "predict"); i++)
-                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "predict", i));
+        for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
+            cfg_default = cfg_getnsec(cfg, "default", l);
+            for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
+                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", m));
+            for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
+                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "predict", n));
             if (-1 == ctx->net_allowed)
                 cfg_getint(cfg_default, "net");
         }

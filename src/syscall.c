@@ -514,14 +514,14 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
     }
 }
 
-enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int syscall) {
+enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int sno) {
     unsigned int i, ret, save_errno;
     char *openpath;
     const char *sname;
     const struct syscall_def *sdef;
 
     for (i = 0; syscalls[i].no != -1; i++) {
-        if (syscalls[i].no == syscall)
+        if (syscalls[i].no == sno)
             goto found;
     }
     return RS_ALLOW;
@@ -602,27 +602,27 @@ found:
 
 int syscall_handle(context_t *ctx, struct tchild *child) {
     int ret;
-    long syscall;
+    long sno;
     const char *sname;
 
-    if (0 > trace_get_syscall(child->pid, &syscall)) {
+    if (0 > trace_get_syscall(child->pid, &sno)) {
         if (ESRCH == errno)
             return handle_esrch(ctx, child);
         else
             DIESOFT("Failed to get syscall: %s", strerror(errno));
     }
     if (LOG_DEBUG <= log_level)
-        sname = syscall_get_name(syscall);
+        sname = syscall_get_name(sno);
     else
         sname = NULL;
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
-        ret = syscall_check(ctx, child, syscall);
+        ret = syscall_check(ctx, child, sno);
         switch (ret) {
             case RS_DENY:
                 LOGD("Denying access to system call %s()", sname);
-                child->syscall = syscall;
+                child->sno = sno;
                 if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
                     if (ESRCH == errno)
                         return handle_esrch(ctx, child);
@@ -639,7 +639,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     return handle_esrch(ctx, child);
                 else {
                     if (NULL == sname)
-                        sname = syscall_get_name(syscall);
+                        sname = syscall_get_name(sno);
                     DIESOFT("Error while checking system call %s() for access: %s", sname,
                             strerror(errno));
                 }
@@ -649,10 +649,10 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     }
     else { // Exiting syscall
         LOGC("Child %i is exiting system call %s()", child->pid, sname);
-        if (0xbadca11 == syscall) {
+        if (0xbadca11 == sno) {
             LOGD("Restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
-            if (0 > trace_set_syscall(child->pid, child->syscall)) {
+            if (0 > trace_set_syscall(child->pid, child->sno)) {
                 if (ESRCH == errno)
                     return handle_esrch(ctx, child);
                 else
@@ -665,7 +665,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     DIESOFT("Failed to set return code: %s", strerror(errno));
             }
         }
-        else if (__NR_chdir == syscall || __NR_fchdir == syscall) {
+        else if (__NR_chdir == sno || __NR_fchdir == sno) {
             long retval;
             if (0 > trace_get_return(child->pid, &retval)) {
                 if (ESRCH == errno)

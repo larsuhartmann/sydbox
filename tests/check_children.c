@@ -27,7 +27,7 @@ START_TEST(check_tchild_new) {
     fail_unless(666 == tc->pid);
     fail_unless(tc->flags & TCHILD_NEEDSETUP);
     fail_if(tc->flags & TCHILD_INSYSCALL);
-    fail_unless(0xbadca11 == tc->syscall);
+    fail_unless(0xbadca11 == tc->sno);
     fail_unless(-1 == tc->retval);
 
     tchild_free(&tc);
