@@ -156,7 +156,7 @@ void pathnode_delete(struct pathnode **head, const char *path) {
 
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
     char item[PATH_MAX];
-    int pos, itemlen, numpaths = 0;
+    unsigned int itemlen, numpaths = 0, pos = 0;
     char *delim;
 
     if (NULL == pathlist_env) {
@@ -165,10 +165,9 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
     }
 
     // Use a loop with strchr, because strtok sucks
-    pos = 0;
     while (pos < strlen(pathlist_env)) {
         delim = strchr(pathlist_env + pos, ':');
-        itemlen = delim ? delim - (pathlist_env + pos) : strlen(pathlist_env) - pos;
+        itemlen = delim ? delim - (pathlist_env + pos) : (unsigned int) (strlen(pathlist_env) - pos);
         if (0 == itemlen)
             LOGW("Ignoring empty path element in position %d", numpaths);
         else {

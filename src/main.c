@@ -458,20 +458,20 @@ static int parse_config(const char *path) {
 
     LOGV("Initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_phase;
-    for (int i = 0; i < cfg_size(cfg, phase); i++) {
+    for (unsigned int i = 0; i < cfg_size(cfg, phase); i++) {
         cfg_phase = cfg_getnsec(cfg, phase, i);
-        for (int i = 0; i < cfg_size(cfg_phase, "write"); i++)
+        for (unsigned int i = 0; i < cfg_size(cfg_phase, "write"); i++)
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", i));
-        for (int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
+        for (unsigned int i = 0; i < cfg_size(cfg_phase, "predict"); i ++)
             pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "predict", i));
         ctx->net_allowed = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
-        for (int i = 0; i < cfg_size(cfg, "default"); i++) {
+        for (unsigned int i = 0; i < cfg_size(cfg, "default"); i++) {
             cfg_default = cfg_getnsec(cfg, "default", i);
-            for (int i = 0; i < cfg_size(cfg_default, "write"); i++)
+            for (unsigned int i = 0; i < cfg_size(cfg_default, "write"); i++)
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", i));
-            for (int i = 0; i < cfg_size(cfg_default, "predict"); i++)
+            for (unsigned int i = 0; i < cfg_size(cfg_default, "predict"); i++)
                 pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "predict", i));
             if (-1 == ctx->net_allowed)
                 cfg_getint(cfg_default, "net");
