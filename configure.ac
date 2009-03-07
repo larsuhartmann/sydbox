@@ -311,6 +311,18 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 if test x"$ac_cv_glibc" = x"yes"; then
 	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -D_GNU_SOURCE"
 fi
+dnl }}}
+
+dnl {{{ Profiling
+AC_ARG_ENABLE([gprof],
+			  [AS_HELP_STRING([--enable-gprof],
+							  [add gprof symbols (-pg) (for debugging)])],
+			  SYDBOX_PROFILE="$enableval",
+			  SYDBOX_PROFILE="no")
+if test x"$SYDBOX_PROFILE" = x"yes" ; then
+	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -pg"
+	LDFLAGS="$LDFLAGS -pg"
+fi
 AC_SUBST([SYDBOX_CFLAGS])
 dnl }}}
 
