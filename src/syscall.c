@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,11 +117,11 @@ static const struct syscall_def syscalls[] = {
     {-1,                 0}
 };
 
-enum res_mode {
-    RM_ERROR, // Error occured while checking mode
-    RM_WRITE, // Write flags set in mode (O_WR, O_WRONLY or O_RDWR)
-    RM_NOWRITE, // No write flags in mode
-    RM_CREAT, // O_CREAT is in mode
+enum res_flag {
+    RF_ERROR, // Error occured while checking mode
+    RF_WRITE, // Write flags set in mode (O_WR, O_WRONLY or O_RDWR)
+    RF_NOWRITE, // No write flags in mode
+    RF_CREAT, // O_CREAT is in mode
 };
 
 static inline const char *syscall_get_name(int no) {
@@ -131,22 +132,159 @@ static inline const char *syscall_get_name(int no) {
     return NULL;
 }
 
-static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *child,
-        int arg, const struct syscall_def *sdef,
-        const char *path, const char *rpath) {
-    LOGD("Checking \"%s\" for write access", rpath);
-    int allow_write = pathlist_check(&(ctx->write_prefixes), rpath);
-    LOGD("Checking \"%s\" for predict access", rpath);
-    int allow_predict = pathlist_check(&(ctx->predict_prefixes), rpath);
+static inline bool syscall_can_creat(int arg, int flags) {
+    if (0 == arg && flags & CAN_CREAT)
+        return true;
+    else if (1 == arg && flags & CAN_CREAT2)
+        return true;
+    else if (2 == arg && flags & CAN_CREAT_AT)
+        return true;
+    else if (3 == arg && flags & CAN_CREAT_AT2)
+        return true;
+    else
+        return false;
+}
+
+static inline bool syscall_needs_flagcheck(int flags) {
+    if (flags & OPEN_MODE)
+        return true;
+    else if (flags & OPEN_MODE_AT)
+        return true;
+    else if (flags & ACCESS_MODE)
+        return true;
+    else if (flags & ACCESS_MODE_AT)
+        return true;
+    else
+        return false;
+}
+
+static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
+    int ret, save_errno;
+    long flags;
+    if (sflags & OPEN_MODE || sflags & ACCESS_MODE)
+        ret = trace_get_arg(pid, 1, &flags);
+    else if (sflags & OPEN_MODE_AT || sflags & ACCESS_MODE_AT)
+        ret = trace_get_arg(pid, 2, &flags);
+    else
+        DIESOFT("Bug in syscall_has_flagwrite() call");
+
+    if (0 > ret) {
+        save_errno = errno;
+        LOGE("Failed to get flags argument: %s", strerror(errno));
+        errno = save_errno;
+        return RF_ERROR;
+    }
+
+    if (sflags & OPEN_MODE || sflags & OPEN_MODE_AT) {
+        if (flags & O_CREAT)
+            return RF_CREAT;
+        else if (flags & O_WRONLY || flags & O_RDWR)
+            return RF_WRITE;
+        else
+            return RF_NOWRITE;
+    }
+    else if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
+        if (flags & W_OK)
+            return RF_WRITE;
+        else
+            return RF_NOWRITE;
+    }
+    else
+        DIESOFT("Bug in syscall_has_flagwrite() call");
+}
+
+static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
+        char *path, bool has_creat, unsigned int npath) {
+    char *pathc, *rpath;
+    bool free_pathc = false;
+
+    if ('/' != path[0]) {
+        // Add current working directory
+        LOGD("`%s' is not an absolute path, adding cwd `%s'", path, child->cwd);
+        pathc = xmalloc(PATH_MAX * sizeof(char));
+        snprintf(pathc, PATH_MAX, "%s/%s", child->cwd, path);
+        free_pathc = true;
+    }
+    else
+        pathc = path;
+
+    if (syscall_can_creat(npath, flags) && has_creat) {
+        LOGC("System call may create the file, using wrapper function");
+        if (flags & DONT_RESOLV)
+            rpath = resolve_path(pathc, 0);
+        else
+            rpath = resolve_path(pathc, 1);
+    }
+    else {
+        LOGC("System call can't create the file, using realpath()");
+        if (flags & DONT_RESOLV)
+            rpath = erealpath(pathc, NULL);
+        else
+            rpath = erealpath(pathc, NULL);
+    }
+
+    if (free_pathc)
+        free(pathc);
+    return rpath;
+}
+
+static int syscall_get_pathat(pid_t pid, char *dest, unsigned int npath) {
+    int save_errno;
+    long dirfd;
+
+    assert(1 == npath || 3 == npath);
+    if (0 > trace_get_arg(pid, npath - 1, &dirfd)) {
+        save_errno = errno;
+        LOGE("Failed to get dirfd: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    if (0 > trace_get_string(pid, npath, dest, PATH_MAX)) {
+        save_errno = errno;
+        LOGE("Failed to get string from argument %d: %s", npath, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    if (AT_FDCWD != dirfd && '/' != dest[0]) {
+        int n;
+        char dname[PATH_MAX], res_dname[PATH_MAX];
+
+        snprintf(dname, PATH_MAX, "/proc/%i/fd/%ld", pid, dirfd);
+        n = readlink(dname, res_dname, PATH_MAX - 1);
+        if (0 > n) {
+            save_errno = errno;
+            LOGE("readlink() failed for `%s': %s", dname, strerror(errno));
+            errno = save_errno;
+            return -1;
+        }
+        res_dname[n] = '\0';
+
+        char *destc = xstrndup(dest, PATH_MAX);
+        snprintf(dest, PATH_MAX, "%s/%s", res_dname, destc);
+        free(destc);
+    }
+    return 0;
+}
+
+static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
+        const struct syscall_def *sdef, const char *path, int npath) {
+    LOGD("Checking \"%s\" for write access", path);
+    int allow_write = pathlist_check(&(ctx->write_prefixes), path);
+    LOGD("Checking \"%s\" for predict access", path);
+    int allow_predict = pathlist_check(&(ctx->predict_prefixes), path);
 
     char reason[PATH_MAX + 128];
     const char *sname;
     if (!allow_write && !allow_predict) {
         child->retval = -EPERM;
-        if (0 == arg)
+        if (0 == npath)
             strcpy(reason, "%s(\"%s\", ");
-        else if (1 == arg)
+        else if (1 == npath)
             strcpy(reason, "%s(?, \"%s\", ");
+        else
+            strcpy(reason, "%s(DIRFD, \"%s\", ");
+
         if (sdef->flags & ACCESS_MODE)
             strcat(reason, "O_WR)");
         else if (sdef->flags & OPEN_MODE || sdef->flags & OPEN_MODE_AT)
@@ -161,7 +299,7 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
         if (sdef->flags & RETURNS_FD) {
             LOGD("System call returns fd and its argument is under a predict path");
             LOGD("Changing the path argument to /dev/null");
-            if (0 > trace_set_string(child->pid, arg, "/dev/null", 10))
+            if (0 > trace_set_string(child->pid, npath, "/dev/null", 10))
                 DIESOFT("Failed to set string: %s", strerror(errno));
             return RS_ALLOW;
         }
@@ -175,8 +313,8 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
         /* Change the path argument with the resolved path to
         * prevent symlink races.
         */
-        LOGV("Paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
-        if (0 > trace_set_string(child->pid, arg, rpath, PATH_MAX)) {
+        LOGD("Paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
+        if (0 > trace_set_string(child->pid, npath, path, PATH_MAX)) {
             int save_errno = errno;
             LOGE("Failed to set string: %s", strerror(errno));
             errno = save_errno;
@@ -184,239 +322,6 @@ static enum res_syscall syscall_check_prefix(context_t *ctx, struct tchild *chil
         }
     }
     return RS_ALLOW;
-}
-
-static int syscall_process_pathat(pid_t pid, int arg, char *dest) {
-    int save_errno;
-    long dirfd;
-
-    assert(1 == arg || 3 == arg);
-    if (0 > trace_get_arg(pid, arg - 1, &dirfd)) {
-        save_errno = errno;
-        LOGE("Failed to get dirfd: %s", strerror(errno));
-        errno = save_errno;
-        return -1;
-    }
-    if (0 > trace_get_string(pid, arg, dest, PATH_MAX)) {
-        save_errno = errno;
-        LOGE("Failed to get string from argument %d: %s", arg, strerror(errno));
-        errno = save_errno;
-        return -1;
-    }
-
-    if (AT_FDCWD != dirfd && '/' != dest[0]) {
-        int n;
-        char dname[PATH_MAX], res_dname[PATH_MAX];
-
-        snprintf(dname, PATH_MAX, "/proc/%i/fd/%ld", pid, dirfd);
-        n = readlink(dname, res_dname, PATH_MAX - 1);
-        if (0 > n)
-            DIESOFT("readlink() failed for %s: %s", dname, strerror(errno));
-        res_dname[n] = '\0';
-
-        char *destc = xstrndup(dest, PATH_MAX);
-        snprintf(dest, PATH_MAX, "%s/%s", res_dname, destc);
-        free(destc);
-    }
-    return 0;
-}
-
-static enum res_mode syscall_checkmode_access(pid_t pid) {
-    long mode;
-    LOGD("Checking mode argument of access() for child %i", pid);
-    if (0 > trace_get_arg(pid, 1, &mode)) {
-        LOGE("Failed to get mode: %s", strerror(errno));
-        return RM_ERROR;
-    }
-
-    if (mode & W_OK) {
-        LOGD("W_OK found in mode");
-        return RM_WRITE;
-    }
-    else {
-        LOGD("W_OK not found in mode");
-        return RM_NOWRITE;
-    }
-}
-
-static enum res_mode syscall_checkmode_accessat(pid_t pid) {
-    long mode;
-
-    LOGD("Checking mode argument of faccessat() for child %i", pid);
-    if (0 > trace_get_arg(pid, 2, &mode)) {
-        LOGE("Failed to get mode: %s", strerror(errno));
-        return RM_ERROR;
-    }
-
-    if (mode & W_OK) {
-        LOGD("W_OK set");
-        return RM_WRITE;
-    }
-    else {
-        LOGD("W_OK not set");
-        return RM_NOWRITE;
-    }
-}
-
-static enum res_mode syscall_checkmode_open(pid_t pid) {
-    long mode;
-
-    LOGD("Checking mode argument of open() for child %i", pid);
-    if (0 > trace_get_arg(pid, 1, &mode)) {
-        LOGE("Failed to get mode: %s", strerror(errno));
-        return RM_ERROR;
-    }
-
-    if (mode & O_CREAT) {
-        LOGD("O_CREAT set");
-        return RM_CREAT;
-    }
-    else if (mode & O_WRONLY || mode & O_RDWR) {
-        LOGD("O_WRONLY or O_RDWR set");
-        return RM_WRITE;
-    }
-    else {
-        LOGD("Neither O_CREAT nor O_WRONLY or O_RDWR set");
-        return RM_NOWRITE;
-    }
-}
-
-static enum res_mode syscall_checkmode_openat(pid_t pid) {
-    long mode;
-
-    LOGD("Checking mode argument of openat() for child %i", pid);
-    if (0 > trace_get_arg(pid, 2, &mode)) {
-        LOGE("Failed to get mode: %s", strerror(errno));
-        return RM_ERROR;
-    }
-
-    if (mode & O_CREAT) {
-        LOGD("O_CREAT set");
-        return RM_CREAT;
-    }
-    else if (mode & O_WRONLY || mode & O_RDWR) {
-        LOGD("O_WRONLY or O_RDWR set");
-        return RM_WRITE;
-    }
-    else {
-        LOGD("Neither O_CREAT nor O_WRONLY or O_RDWR set");
-        return RM_NOWRITE;
-    }
-}
-
-static inline int syscall_can_creat(int arg, int flags) {
-    if (0 == arg && flags & CAN_CREAT)
-        return 1;
-    else if (1 == arg && flags & CAN_CREAT2)
-        return 1;
-    else if (2 == arg && flags & CAN_CREAT_AT)
-        return 1;
-    else if (3 == arg && flags & CAN_CREAT_AT2)
-        return 1;
-    else
-        return 0;
-}
-
-static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child, int arg,
-        const struct syscall_def *sdef, const char *openpath) {
-    int save_errno;
-    char path[PATH_MAX];
-    char *rpath = NULL;
-
-    assert(0 <= arg || 3 >= arg);
-
-    int ret = 0, check_ret = 0;
-    if (sdef->flags & ACCESS_MODE) {
-        check_ret = 1;
-        ret = syscall_checkmode_access(child->pid);
-    }
-    else if (sdef->flags & ACCESS_MODE_AT) {
-        check_ret = 1;
-        ret = syscall_checkmode_accessat(child->pid);
-    }
-    else if (sdef->flags & OPEN_MODE) {
-        check_ret = 1;
-        ret = syscall_checkmode_open(child->pid);
-    }
-    else if (sdef->flags & OPEN_MODE_AT) {
-        check_ret = 1;
-        ret = syscall_checkmode_openat(child->pid);
-    }
-
-    if (check_ret) {
-        if (RM_ERROR == ret) {
-            save_errno = errno;
-            LOGE("Failed to check mode: %s", strerror(errno));
-            errno = save_errno;
-            return RS_ERROR;
-        }
-        else if (RM_NOWRITE == ret) {
-            LOGD("No write or create flags set, allowing access");
-            return RS_ALLOW;
-        }
-    }
-
-    if (sdef->flags & CHECK_PATH) {
-        if (sdef->flags & MAGIC_OPEN && NULL != openpath) {
-            /* Special case, we've already got the path argument while
-             * checking magic open() so we use it here.
-             */
-            strncpy(path, openpath, PATH_MAX);
-        }
-        else if (0 > trace_get_string(child->pid, arg, path, PATH_MAX)) {
-            save_errno = errno;
-            LOGE("Failed to get string from argument %d: %s", arg, strerror(errno));
-            errno = save_errno;
-            return RS_ERROR;
-        }
-    }
-    else if (sdef->flags & CHECK_PATH2) {
-        if (0 > trace_get_string(child->pid, arg, path, PATH_MAX)) {
-            save_errno = errno;
-            LOGE("Failed to get string from argument %d: %s", arg, strerror(errno));
-            errno = save_errno;
-            return RS_ERROR;
-        }
-    }
-    else if (sdef->flags & CHECK_PATH_AT || sdef->flags & CHECK_PATH_AT2) {
-        if (0 > syscall_process_pathat(child->pid, arg, path))
-            return RS_ERROR;
-    }
-
-    if ('/' != path[0]) {
-        // Add current working directory
-        char *pathc;
-        LOGD("`%s' is not an absolute path, adding cwd `%s'", path, child->cwd);
-        pathc = xstrndup(path, PATH_MAX);
-        snprintf(pathc, PATH_MAX, "%s/%s", child->cwd, path);
-        strncpy(path, pathc, PATH_MAX);
-        free(pathc);
-    }
-
-    if (syscall_can_creat(arg, sdef->flags) || (check_ret && RM_CREAT == ret)) {
-        LOGC("System call may create the file, using wrapper function");
-        if (sdef->flags & DONT_RESOLV)
-            rpath = resolve_path(path, 0);
-        else
-            rpath = resolve_path(path, 1);
-    }
-    else {
-        LOGC("System call can't create the file, using realpath()");
-        if (sdef->flags & DONT_RESOLV)
-            rpath = erealpath(path, NULL);
-        else
-            rpath = erealpath(path, NULL);
-    }
-
-    if (NULL == rpath) {
-        child->retval = -errno;
-        LOGD("realpath() failed for `%s': %s", path, strerror(errno));
-        return RS_DENY;
-    }
-
-    ret = syscall_check_prefix(ctx, child, arg, sdef, path, rpath);
-    free(rpath);
-    return ret;
 }
 
 static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *child, const char *path) {
@@ -516,7 +421,7 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
 
 enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int sno) {
     unsigned int i, ret, save_errno;
-    char *openpath;
+    char *path = NULL, *pathfirst = NULL, *rpath = NULL;
     const char *sname;
     const struct syscall_def *sdef;
 
@@ -527,7 +432,6 @@ enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int sno) {
     return RS_ALLOW;
 found:
     sdef = &(syscalls[i]);
-    openpath = NULL;
     if (LOG_DEBUG <= log_level)
         sname = syscall_get_name(sdef->no);
     else
@@ -535,23 +439,46 @@ found:
 
     LOGD("Child %i called essential system call %s()", child->pid, sname);
 
+    /* Check write flags like O_WRONLY / O_RDWR
+     * We do this before handling magic calls because all magic commands that
+     * opens a file must write to it anyway.
+     */
+    bool has_creat = false;
+    if (syscall_needs_flagcheck(sdef->flags)) {
+        switch (syscall_has_flagwrite(child->pid, sdef->flags)) {
+            case RF_ERROR:
+                return RS_ERROR;
+            case RF_NOWRITE:
+                return RS_ALLOW;
+            case RF_CREAT:
+                has_creat = true;
+                break;
+            case RF_WRITE:
+            default:
+                break;
+        }
+    }
+
     // Handle magic calls
     if (!ctx->cmdlock) {
         if (sdef->flags & MAGIC_OPEN) {
-            /* Special case, to avoid getting the path argument of open()
-             * twice, one for this one and one for CHECK_PATH, we get it here and
-             * pass it to syscall_check_path.
-             */
-            openpath = (char *) xmalloc(sizeof(char) * PATH_MAX);
-            if (0 > trace_get_string(child->pid, 0, openpath, PATH_MAX)) {
+            pathfirst = (char *) xmalloc(PATH_MAX * sizeof(char));
+            if (0 > trace_get_string(child->pid, 0, pathfirst, PATH_MAX)) {
                 save_errno = errno;
                 LOGE("Failed to get string from argument 0: %s", strerror(errno));
                 errno = save_errno;
                 return RS_ERROR;
             }
-            ret = syscall_check_magic_open(ctx, child, openpath);
-            if (RS_NONMAGIC != ret)
+            ret = syscall_check_magic_open(ctx, child, pathfirst);
+            if (RS_NONMAGIC != ret) {
+                free(pathfirst);
                 return ret;
+            }
+            /* Special case, to avoid getting the path argument of open()
+             * twice, one for this one and one for CHECK_PATH, we don't free it
+             * here.
+             * free(pathfirst);
+             */
         }
         else if (sdef->flags & MAGIC_STAT) {
             ret = syscall_check_magic_stat(child);
@@ -564,29 +491,96 @@ found:
     if (!ctx->enabled)
         return RS_ALLOW;
 
+    // Check paths
     if (sdef->flags & CHECK_PATH) {
         LOGD("System call %s() has CHECK_PATH set, checking", sname);
+        if (NULL == pathfirst) {
+            pathfirst = xmalloc(PATH_MAX * sizeof(char));
+            if (0 > trace_get_string(child->pid, 0, pathfirst, PATH_MAX)) {
+                save_errno = errno;
+                LOGE("Failed to get string from argument 0: %s", strerror(errno));
+                errno = save_errno;
+                return RS_ERROR;
+            }
+        }
+        rpath = syscall_get_rpath(child, sdef->flags, pathfirst, has_creat, 0);
+        if (NULL == rpath) {
+            child->retval = -errno;
+            LOGD("realpath() failed for `%s': %s", pathfirst, strerror(errno));
+            free(pathfirst);
+            return RS_ERROR;
+        }
+        free(pathfirst);
+        ret = syscall_check_path(ctx, child, sdef, rpath, 0);
+        free(rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH and CHECK_PATH2 set.
          */
-        ret = syscall_check_path(ctx, child, 0, sdef, openpath);
-        free(openpath);
         if (RS_ALLOW != ret)
             return ret;
     }
     if (sdef->flags & CHECK_PATH2) {
         LOGD("System call %s() has CHECK_PATH2 set, checking", sname);
-        return syscall_check_path(ctx, child, 1, sdef, NULL);
+        path = xmalloc(PATH_MAX * sizeof(char));
+        if (0 > trace_get_string(child->pid, 1, path, PATH_MAX)) {
+            save_errno = errno;
+            LOGE("Failed to get string from argument 1: %s", strerror(errno));
+            errno = save_errno;
+            return RS_ERROR;
+        }
+        rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
+        if (NULL == rpath) {
+            child->retval = -errno;
+            LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+            free(path);
+            return RS_ERROR;
+        }
+        free(path);
+        ret = syscall_check_path(ctx, child, sdef, rpath, 1);
+        free(rpath);
+        return ret;
     }
     if (sdef->flags & CHECK_PATH_AT) {
         LOGD("System call %s() has CHECK_PATH_AT set, checking", sname);
-        ret = syscall_check_path(ctx, child, 1, sdef, NULL);
+        path = xmalloc(PATH_MAX * sizeof(char));
+        if (0 > syscall_get_pathat(child->pid, path, 1)) {
+            free(path);
+            return RS_ERROR;
+        }
+        rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
+        if (NULL == rpath) {
+            child->retval = -errno;
+            LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+            free(path);
+            return RS_ERROR;
+        }
+        free(path);
+        ret = syscall_check_path(ctx, child, sdef, rpath, 1);
+        free(rpath);
+        /* Return here only if access is denied because some syscalls have
+         * both CHECK_PATH_AT and CHECK_PATH_AT2 set.
+         */
         if (RS_ALLOW != ret)
             return ret;
     }
     if (sdef->flags & CHECK_PATH_AT2) {
         LOGD("System call %s() has CHECK_PATH_AT2 set, checking", sname);
-        return syscall_check_path(ctx, child, 3, sdef, NULL);
+        path = xmalloc(PATH_MAX * sizeof(char));
+        if (0 > syscall_get_pathat(child->pid, path, 3)) {
+            free(path);
+            return RS_DENY;
+        }
+        rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 3);
+        if (NULL == rpath) {
+            child->retval = -errno;
+            LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+            free(path);
+            return RS_DENY;
+        }
+        free(path);
+        ret = syscall_check_path(ctx, child, sdef, rpath, 3);
+        free(rpath);
+        return ret;
     }
     if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
 #if defined(__NR_socketcall)

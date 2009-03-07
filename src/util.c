@@ -85,6 +85,9 @@ void lg(int level, const char *func, const char *fmt, ...) {
         log_file_opened = 1;
     }
 
+    if (NULL == log_fp)
+        return;
+
     if (level <= log_level) {
         fprintf(log_fp, PACKAGE"@%ld: [", time(NULL));
         switch (level) {
