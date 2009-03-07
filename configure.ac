@@ -287,12 +287,16 @@ if test x"$ac_cv_proc_fd_usable" = x"no"; then
 fi
 dnl }}}
 
+dnl {{{ Extra CFLAGS
+SYDBOX_CFLAGS=
+WANTED_CFLAGS="-Wall -Winline -pedantic"
+for flag in $WANTED_CFLAGS ; do
+	AX_CHECK_COMPILER_FLAGS([$flag], [SYDBOX_CFLAGS="$SYDBOX_CFLAGS $flag"],)
+done
+dnl }}}
+
 dnl {{{ Check for gcc and glibc
 AM_CONDITIONAL(GCC, test x"$GCC" = x"yes")
-SYDBOX_CFLAGS=
-if test x"$GCC" = x"yes"; then
-	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -Wall -Winline -pedantic"
-fi
 AC_MSG_CHECKING([whether libc is gnu])
 AC_CACHE_VAL([ac_cv_glibc])
 AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
