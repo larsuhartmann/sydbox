@@ -289,7 +289,7 @@ dnl }}}
 
 dnl {{{ Extra CFLAGS
 SYDBOX_CFLAGS=
-WANTED_CFLAGS="-Wall -W -Wextra -Wvla -Winline -pedantic"
+WANTED_CFLAGS="-Wall -W -Wextra -Wvla -Wformat=2 -Wformat-security -Wformat-nonliteral -Winline -pedantic"
 for flag in $WANTED_CFLAGS ; do
 	AX_CHECK_COMPILER_FLAGS([$flag], [SYDBOX_CFLAGS="$SYDBOX_CFLAGS $flag"],)
 done

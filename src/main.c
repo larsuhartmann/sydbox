@@ -722,7 +722,7 @@ skip_commandline:
         }
         else
             execvp(argv[0], argv);
-        _die(EX_DATAERR, strerror(errno));
+        _die(EX_DATAERR, "execve failed: %s", strerror(errno));
     }
     else { // Parent process
         int status, ret;
