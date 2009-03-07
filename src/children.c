@@ -164,7 +164,7 @@ unsigned int tchild_event(struct tchild *child, int status) {
         return E_EXIT;
     }
     else if (WIFSIGNALED(status)) {
-        LOGV("Child %i was terminated by signal: %d", NULL == child ? -1 : child->pid, WSTOPSIG(status));
+        LOGV("Child %i was terminated by signal: %d", NULL == child ? -1 : child->pid, WTERMSIG(status));
         return E_EXIT_SIGNAL;
     }
     return E_UNKNOWN;
