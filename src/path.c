@@ -92,7 +92,11 @@ int pathnode_new(struct pathnode **head, const char *path) {
     struct pathnode *newnode;
 
     if (NULL == path) {
-        LOGD("Path is NULL not adding to list");
+        LOGV("Path is NULL not adding to list");
+        return -1;
+    }
+    else if (0 == strlen(path)) {
+        LOGV("Path is empty not adding to list");
         return -1;
     }
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
