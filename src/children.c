@@ -77,6 +77,19 @@ void tchild_new(struct tchild **head, pid_t pid) {
     *head = newchild; // link head
 }
 
+static void tchild_free_one(struct tchild *child) {
+    if (NULL != child->sandbox) {
+        if (NULL != child->sandbox->write_prefixes)
+            pathnode_free(&(child->sandbox->write_prefixes));
+        if (NULL != child->sandbox->predict_prefixes)
+            pathnode_free(&(child->sandbox->predict_prefixes));
+        free(child->sandbox);
+    }
+    if (NULL != child->cwd)
+        free(child->cwd);
+    free(child);
+}
+
 void tchild_free(struct tchild **head) {
     struct tchild *current, *temp;
 
@@ -85,16 +98,7 @@ void tchild_free(struct tchild **head) {
     while (current != NULL) {
         temp = current;
         current = current->next;
-        if (NULL != temp->sandbox) {
-            if (NULL != temp->sandbox->write_prefixes)
-                pathnode_free(&(temp->sandbox->write_prefixes));
-            if (NULL != temp->sandbox->predict_prefixes)
-                pathnode_free(&(temp->sandbox->predict_prefixes));
-            free(temp->sandbox);
-        }
-        if (NULL != temp->cwd)
-            free(temp->cwd);
-        free(temp);
+        tchild_free_one(temp);
     }
     *head = NULL;
 }
@@ -106,16 +110,7 @@ void tchild_delete(struct tchild **head, pid_t pid) {
     if (pid == (*head)->pid) { // Deleting first node
         temp = *head;
         *head = (*head)->next;
-        if (NULL != temp->sandbox) {
-            if (NULL != temp->sandbox->write_prefixes)
-                pathnode_free(&(temp->sandbox->write_prefixes));
-            if (NULL != temp->sandbox->predict_prefixes)
-                pathnode_free(&(temp->sandbox->predict_prefixes));
-            free(temp->sandbox);
-        }
-        if (NULL != temp->cwd)
-            free(temp->cwd);
-        free(temp);
+        tchild_free_one(temp);
     }
     else {
         previous = *head;
@@ -130,16 +125,7 @@ void tchild_delete(struct tchild **head, pid_t pid) {
         if (NULL != current) {
             temp = current;
             previous->next = current->next;
-            if (NULL != temp->sandbox) {
-                if (NULL != temp->sandbox->write_prefixes)
-                    pathnode_free(&(temp->sandbox->write_prefixes));
-                if (NULL != temp->sandbox->predict_prefixes)
-                    pathnode_free(&(temp->sandbox->predict_prefixes));
-                free(temp->sandbox);
-            }
-            if (NULL != temp->cwd)
-                free(temp->cwd);
-            free(temp);
+            tchild_free_one(temp);
         }
     }
 }
