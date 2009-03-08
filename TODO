@@ -1,4 +1,5 @@
 * Emulate ptrace so sydbox tests work under sydbox.
 * Port it to different architectures.
 * Make it possible to filter out access violations.
+* Proper network support.
 * Make it faster.
