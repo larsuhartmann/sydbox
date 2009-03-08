@@ -130,12 +130,27 @@ enum {
 #define TCHILD_INSYSCALL (1 << 1) /* Child is in syscall */
 
 /* Per process tracking data */
+enum lock_status {
+    LOCK_SET, /* Magic commands are locked */
+    LOCK_UNSET, /* Magic commands are unlocked */
+    LOCK_PENDING /* Magic commands will be locked when an execve() is encountered */
+};
+
+struct tdata {
+    int on; /* Whether sandbox is on for the child */
+    int lock; /* Whether magic commands are locked for the child */
+    int net; /* Whether child is allowed to access network */
+    struct pathnode *write_prefixes;
+    struct pathnode *predict_prefixes;
+};
+
 struct tchild {
     int flags; /* TCHILD_ flags */
     pid_t pid;
     char *cwd; /* child's current working directory */
     unsigned long sno; /* original syscall no when a system call is faked */
     long retval; /* faked syscall will return this value */
+    struct tdata *sandbox;
     struct tchild *next;
 };
 
@@ -146,22 +161,10 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid);
 unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
-enum lock_status {
-    LOCK_SET, /* Magic commands are locked */
-    LOCK_UNSET, /* Magic commands are unlocked */
-    LOCK_PENDING /* Magic commands will be locked when an execve() is encountered */
-};
-
 typedef struct {
-    int enabled;
     int paranoid;
-    int net_allowed;
-    int cmdlock; /* When this lock is on, no magic commands can be issued */
-    struct pathnode *write_prefixes;
-    struct pathnode *predict_prefixes;
     struct tchild *children;
-    /* first child pointer is kept for determining return code */
-    struct tchild *eldest;
+    struct tchild *eldest;  // first child is kept to determine return code
 } context_t;
 
 context_t *context_new(void);

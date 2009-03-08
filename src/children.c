@@ -42,14 +42,38 @@ void tchild_new(struct tchild **head, pid_t pid) {
     newchild->pid = pid;
     newchild->sno = 0xbadca11;
     newchild->retval = -1;
+    newchild->cwd = NULL;
+    newchild->sandbox = (struct tdata *) xmalloc(sizeof(struct tdata));
+    newchild->sandbox->on = 1;
+    newchild->sandbox->lock = LOCK_UNSET;
+    newchild->sandbox->net = 1;
+    newchild->sandbox->write_prefixes = NULL;
+    newchild->sandbox->predict_prefixes = NULL;
     newchild->next = *head; // link next
-    if (NULL != newchild->next && NULL != newchild->next->cwd) {
-        LOGD("Child %i inherits parent %i's current working directory '%s'", pid,
-                newchild->next->pid, newchild->next->cwd);
-        newchild->cwd = xstrndup(newchild->next->cwd, PATH_MAX);
+    if (NULL != newchild->next) {
+        if (NULL != newchild->next->cwd) {
+            LOGD("Child %i inherits parent %i's current working directory '%s'", pid,
+                    newchild->next->pid, newchild->next->cwd);
+            newchild->cwd = xstrndup(newchild->next->cwd, PATH_MAX);
+        }
+        if (NULL != newchild->next->sandbox) {
+            struct pathnode *pnode;
+            newchild->sandbox->on = newchild->next->sandbox->on;
+            newchild->sandbox->lock = newchild->next->sandbox->lock;
+            newchild->sandbox->net = newchild->next->sandbox->net;
+            // Copy path lists
+            pnode = newchild->next->sandbox->write_prefixes;
+            while (NULL != pnode) {
+                pathnode_new(&(newchild->sandbox->write_prefixes), pnode->path);
+                pnode = pnode->next;
+            }
+            pnode = newchild->next->sandbox->predict_prefixes;
+            while (NULL != pnode) {
+                pathnode_new(&(newchild->sandbox->predict_prefixes), pnode->path);
+                pnode = pnode->next;
+            }
+        }
     }
-    else
-        newchild->cwd = NULL;
     *head = newchild; // link head
 }
 
@@ -61,6 +85,13 @@ void tchild_free(struct tchild **head) {
     while (current != NULL) {
         temp = current;
         current = current->next;
+        if (NULL != temp->sandbox) {
+            if (NULL != temp->sandbox->write_prefixes)
+                pathnode_free(&(temp->sandbox->write_prefixes));
+            if (NULL != temp->sandbox->predict_prefixes)
+                pathnode_free(&(temp->sandbox->predict_prefixes));
+            free(temp->sandbox);
+        }
         if (NULL != temp->cwd)
             free(temp->cwd);
         free(temp);

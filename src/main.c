@@ -40,6 +40,10 @@
 static context_t *ctx = NULL;
 static char *config_file = NULL;
 static char *phase = NULL;
+static int lock = -1;
+static int net = -1;
+static struct pathnode *write_prefixes = NULL;
+static struct pathnode *predict_prefixes = NULL;
 
 #define MAX_PHASES 7
 const char *phases[MAX_PHASES] = {
@@ -451,27 +455,27 @@ static int parse_config(const char *path) {
     if (-1 == ctx->paranoid)
         ctx->paranoid = cfg_getbool(cfg, "paranoid");
 
-    if (-1 == ctx->cmdlock)
-        ctx->cmdlock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
+    if (-1 == lock)
+        lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
     LOGV("Initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_phase;
     for (unsigned int i = 0; i < cfg_size(cfg, phase); i++) {
         cfg_phase = cfg_getnsec(cfg, phase, i);
         for (unsigned int j = 0; j < cfg_size(cfg_phase, "write"); j++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "write", j));
+            pathnode_new(&write_prefixes, cfg_getnstr(cfg_phase, "write", j));
         for (unsigned int k = 0; k < cfg_size(cfg_phase, "predict"); k++)
-            pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_phase, "predict", k));
-        ctx->net_allowed = cfg_getint(cfg_phase, "net");
+            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_phase, "predict", k));
+        net = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
         for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
             cfg_default = cfg_getnsec(cfg, "default", l);
             for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
-                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "write", m));
+                pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m));
             for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
-                pathnode_new(&(ctx->write_prefixes), cfg_getnstr(cfg_default, "predict", n));
-            if (-1 == ctx->net_allowed)
+                pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n));
+            if (-1 == net)
                 cfg_getint(cfg_default, "net");
         }
     }
@@ -503,16 +507,16 @@ static void dump_config(void) {
             fprintf(stderr, "LOG_DEBUG\n");
             break;
     }
-    fprintf(stderr, "network sandboxing = %s\n", ctx->net_allowed ? "off" : "on");
+    fprintf(stderr, "network sandboxing = %s\n", net ? "off" : "on");
     struct pathnode *curnode;
     fprintf(stderr, "write allowed paths:\n");
-    curnode = ctx->write_prefixes;
+    curnode = write_prefixes;
     while (NULL != curnode) {
         fprintf(stderr, "> %s\n", curnode->path);
         curnode = curnode->next;
     }
     fprintf(stderr, "write predicted paths:\n");
-    curnode = ctx->predict_prefixes;
+    curnode = predict_prefixes;
     while (NULL != curnode) {
         fprintf(stderr, "> %s\n", curnode->path);
         curnode = curnode->next;
@@ -547,7 +551,6 @@ int main(int argc, char **argv) {
     char **argv_bash = NULL;
     ctx = context_new();
     ctx->paranoid = -1;
-    ctx->cmdlock = -1;
     colour = -1;
     dump = 0;
     atexit(cleanup);
@@ -600,7 +603,7 @@ int main(int argc, char **argv) {
                 ctx->paranoid = 1;
                 break;
             case 'L':
-                ctx->cmdlock = LOCK_SET;
+                lock = LOCK_SET;
                 break;
             case 'v':
                 log_level = LOG_VERBOSE;
@@ -671,11 +674,11 @@ skip_commandline:
         strncpy(log_file, log_env, PATH_MAX);
 
     LOGV("Extending path list using environment variable "ENV_WRITE);
-    pathlist_init(&(ctx->write_prefixes), write_env);
+    pathlist_init(&write_prefixes, write_env);
     LOGV("Extending path list using environment variable "ENV_PREDICT);
-    pathlist_init(&(ctx->predict_prefixes), predict_env);
+    pathlist_init(&predict_prefixes, predict_env);
     if (NULL != net_env)
-        ctx->net_allowed = 0;
+        net = 0;
 
     if (dump) {
         dump_config();
@@ -748,6 +751,10 @@ skip_commandline:
         ctx->eldest = ctx->children;
         if (0 > trace_setup(pid))
             DIESOFT("Failed to setup tracing options: %s", strerror(errno));
+        ctx->eldest->sandbox->lock = lock;
+        ctx->eldest->sandbox->net = net;
+        ctx->eldest->sandbox->write_prefixes = write_prefixes;
+        ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
         ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
         if (NULL == ctx->eldest->cwd)
             DIESOFT("Failed to get current working directory: %s", strerror(errno));

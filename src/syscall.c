@@ -267,12 +267,12 @@ static int syscall_get_pathat(pid_t pid, char *dest, unsigned int npath) {
     return 0;
 }
 
-static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
-        const struct syscall_def *sdef, const char *path, int npath) {
+static enum res_syscall syscall_check_path(struct tchild *child, const struct syscall_def *sdef,
+        int paranoid, const char *path, int npath) {
     LOGD("Checking \"%s\" for write access", path);
-    int allow_write = pathlist_check(&(ctx->write_prefixes), path);
+    int allow_write = pathlist_check(&(child->sandbox->write_prefixes), path);
     LOGD("Checking \"%s\" for predict access", path);
-    int allow_predict = pathlist_check(&(ctx->predict_prefixes), path);
+    int allow_predict = pathlist_check(&(child->sandbox->predict_prefixes), path);
 
     char reason[PATH_MAX + 128];
     const char *sname;
@@ -309,7 +309,7 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
         }
     }
 
-    if (ctx->paranoid && !(sdef->flags & DONT_RESOLV)) {
+    if (paranoid && !(sdef->flags & DONT_RESOLV)) {
         /* Change the path argument with the resolved path to
         * prevent symlink races.
         */
@@ -324,61 +324,61 @@ static enum res_syscall syscall_check_path(context_t *ctx, struct tchild *child,
     return RS_ALLOW;
 }
 
-static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *child, const char *path) {
+static enum res_syscall syscall_check_magic_open(struct tchild *child, const char *path) {
     int ismagic = 0, save_errno;
     const char *rpath;
 
     LOGD("Checking if open(\"%s\", ...) is magic", path);
     if (path_magic_on(path)) {
         ismagic = 1;
-        ctx->enabled = 1;
-        LOGN("Sandbox status is now on");
+        child->sandbox->on = 1;
+        LOGN("Sandbox status of child %i is now on", child->pid);
     }
     else if (path_magic_off(path)) {
         ismagic = 1;
-        ctx->enabled = 0;
-        LOGN("Sandbox status is now off");
+        child->sandbox->on = 0;
+        LOGN("Sandbox status of child %i is now off", child->pid);
     }
     else if (path_magic_toggle(path)) {
         ismagic = 1;
-        ctx->enabled = !(ctx->enabled);
-        LOGN("Sandbox status is now %s", ctx->enabled ? "on" : "off");
+        child->sandbox->on = !(child->sandbox->on);
+        LOGN("Sandbox status of child %i is now %s", child->pid, child->sandbox->on ? "on" : "off");
     }
     else if (path_magic_lock(path)) {
         ismagic = 1;
-        LOGN("Access to magic commands is now denied");
-        ctx->cmdlock = LOCK_SET;
+        LOGN("Access to magic commands is now denied for child %i", child->pid);
+        child->sandbox->lock = LOCK_SET;
     }
     else if (path_magic_exec_lock(path)) {
         ismagic = 1;
-        LOGN("Access to magic commands will be denied on execve()");
-        ctx->cmdlock = LOCK_PENDING;
+        LOGN("Access to magic commands will be denied on execve() for child %i", child->pid);
+        child->sandbox->lock = LOCK_PENDING;
     }
     else if (path_magic_write(path)) {
         ismagic = 1;
         rpath = path + CMD_WRITE_LEN;
-        LOGN("Approved addwrite(\"%s\")", rpath);
-        pathnode_new(&(ctx->write_prefixes), rpath);
+        LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
+        pathnode_new(&(child->sandbox->write_prefixes), rpath);
     }
     else if (path_magic_predict(path)) {
         ismagic = 1;
         rpath = path + CMD_PREDICT_LEN;
-        LOGN("Approved addpredict(\"%s\")", rpath);
-        pathnode_new(&(ctx->predict_prefixes), rpath);
+        LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
+        pathnode_new(&(child->sandbox->predict_prefixes), rpath);
     }
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;
         rpath = path + CMD_RMWRITE_LEN;
-        LOGN("Approved rmwrite(\"%s\")", rpath);
-        if (NULL != ctx->write_prefixes)
-            pathnode_delete(&(ctx->write_prefixes), rpath);
+        LOGN("Approved rmwrite(\"%s\") for child %i", rpath, child->pid);
+        if (NULL != child->sandbox->write_prefixes)
+            pathnode_delete(&(child->sandbox->write_prefixes), rpath);
     }
     else if (path_magic_rmpredict(path)) {
         ismagic = 1;
         rpath = path + CMD_RMPREDICT_LEN;
-        LOGN("Approved rmpredict(\"%s\")", rpath);
-        if (NULL != ctx->predict_prefixes)
-            pathnode_delete(&(ctx->predict_prefixes), rpath);
+        LOGN("Approved rmpredict(\"%s\") for child %i", rpath, child->pid);
+        if (NULL != child->sandbox->predict_prefixes)
+            pathnode_delete(&(child->sandbox->predict_prefixes), rpath);
     }
 
     if (ismagic) {
@@ -465,7 +465,7 @@ found:
     }
 
     // Handle magic calls
-    if (LOCK_SET != ctx->cmdlock) {
+    if (LOCK_SET != child->sandbox->lock) {
         if (sdef->flags & MAGIC_OPEN) {
             pathfirst = (char *) xmalloc(PATH_MAX * sizeof(char));
             if (0 > trace_get_string(child->pid, 0, pathfirst, PATH_MAX)) {
@@ -474,7 +474,7 @@ found:
                 errno = save_errno;
                 return RS_ERROR;
             }
-            ret = syscall_check_magic_open(ctx, child, pathfirst);
+            ret = syscall_check_magic_open(child, pathfirst);
             if (RS_NONMAGIC != ret) {
                 free(pathfirst);
                 return ret;
@@ -493,7 +493,7 @@ found:
     }
 
     // If sandbox is disabled allow any system call
-    if (!ctx->enabled)
+    if (!child->sandbox->on)
         return RS_ALLOW;
 
     // Check paths
@@ -516,7 +516,7 @@ found:
             return RS_ERROR;
         }
         free(pathfirst);
-        ret = syscall_check_path(ctx, child, sdef, rpath, 0);
+        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 0);
         free(rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH and CHECK_PATH2 set.
@@ -541,7 +541,7 @@ found:
             return RS_ERROR;
         }
         free(path);
-        ret = syscall_check_path(ctx, child, sdef, rpath, 1);
+        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
         free(rpath);
         return ret;
     }
@@ -560,7 +560,7 @@ found:
             return RS_ERROR;
         }
         free(path);
-        ret = syscall_check_path(ctx, child, sdef, rpath, 1);
+        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
         free(rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH_AT and CHECK_PATH_AT2 set.
@@ -583,11 +583,11 @@ found:
             return RS_DENY;
         }
         free(path);
-        ret = syscall_check_path(ctx, child, sdef, rpath, 3);
+        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 3);
         free(rpath);
         return ret;
     }
-    if (sdef->flags & NET_CALL && !(ctx->net_allowed)) {
+    if (sdef->flags & NET_CALL && !(child->sandbox->net)) {
 #if defined(__NR_socketcall)
         access_error(child->pid, "socketcall()");
 #elif defined(__NR_socket)
@@ -617,9 +617,9 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
-        if (__NR_execve == sno && LOCK_PENDING == ctx->cmdlock) {
-            LOGN("Access to magic commands is now denied");
-            ctx->cmdlock = LOCK_SET;
+        if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
+            LOGN("Access to magic commands is now denied for child %i", child->pid);
+            child->sandbox->lock = LOCK_SET;
         }
         ret = syscall_check(ctx, child, sno);
         switch (ret) {

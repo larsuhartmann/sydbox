@@ -24,22 +24,13 @@
 context_t *context_new(void) {
     context_t *ctx;
     ctx = (context_t *) xmalloc(sizeof(context_t));
-    ctx->enabled = 1;
     ctx->paranoid = 0;
-    ctx->net_allowed = 1;
-    ctx->cmdlock = LOCK_UNSET;
-    ctx->write_prefixes = NULL;
-    ctx->predict_prefixes = NULL;
     ctx->children = NULL;
     ctx->eldest = NULL;
     return ctx;
 }
 
 void context_free(context_t *ctx) {
-    if (NULL != ctx->write_prefixes)
-        pathnode_free(&(ctx->write_prefixes));
-    if (NULL != ctx->predict_prefixes)
-        pathnode_free(&(ctx->predict_prefixes));
     if (NULL != ctx->children)
         tchild_free(&(ctx->children));
     free(ctx);
