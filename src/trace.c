@@ -288,6 +288,14 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
 
     m = len % sizeof(long);
     if (0 != m) {
+        errno = 0;
+        u.val = ptrace(PTRACE_PEEKDATA, pid, addr + n * ADDR_MUL, 0);
+        if (errno != 0) {
+            save_errno = errno;
+            LOGE("Failed to set argument %d to \"%s\": %s", arg, src, strerror(errno));
+            errno = save_errno;
+            return -1;
+        }
         memcpy(u.x, src, m);
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
