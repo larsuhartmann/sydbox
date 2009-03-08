@@ -41,10 +41,9 @@ static context_t *ctx = NULL;
 static char *config_file = NULL;
 static char *phase = NULL;
 
-#define MAX_PHASES 9
+#define MAX_PHASES 7
 const char *phases[MAX_PHASES] = {
-    "default", "loadenv", "saveenv", "unpack", "prepare",
-    "configure", "compile", "test", "install"
+    "default", "unpack", "prepare", "configure", "compile", "test", "install"
 };
 
 static void about(void) {
@@ -704,7 +703,7 @@ skip_commandline:
     if (NULL == groupname)
         DIESOFT("Failed to get group file entry: %s", strerror(errno));
 
-    LOGV("Forking to execute '%s' as %s:%s", cmd, username, groupname);
+    LOGV("Forking to execute '%s' as %s:%s phase: %s", cmd, username, groupname, phase);
     pid = fork();
     if (0 > pid)
         DIESOFT("Failed to fork: %s", strerror(errno));
