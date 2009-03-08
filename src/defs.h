@@ -191,14 +191,14 @@ void _die(int err, const char *fmt, ...)
 void access_error(pid_t pid, const char *fmt, ...)
     __attribute__ ((format (printf, 2, 3)));
 
-void lg(int level, const char *func, const char *fmt, ...)
-    __attribute__ ((format (printf, 3, 4)));
-#define LOGE(...)   lg(LOG_ERROR, __func__, __VA_ARGS__)
-#define LOGW(...)   lg(LOG_WARNING, __func__, __VA_ARGS__)
-#define LOGN(...)   lg(LOG_NORMAL, __func__, __VA_ARGS__)
-#define LOGV(...)   lg(LOG_VERBOSE, __func__, __VA_ARGS__)
-#define LOGD(...)   lg(LOG_DEBUG, __func__, __VA_ARGS__)
-#define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __VA_ARGS__)
+void lg(int level, const char *func, size_t line, const char *fmt, ...)
+    __attribute__ ((format (printf, 4, 5)));
+#define LOGE(...)   lg(LOG_ERROR, __func__, __LINE__,  __VA_ARGS__)
+#define LOGW(...)   lg(LOG_WARNING, __func__, __LINE__, __VA_ARGS__)
+#define LOGN(...)   lg(LOG_NORMAL, __func__, __LINE__, __VA_ARGS__)
+#define LOGV(...)   lg(LOG_VERBOSE, __func__, __LINE__, __VA_ARGS__)
+#define LOGD(...)   lg(LOG_DEBUG, __func__, __LINE__, __VA_ARGS__)
+#define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __LINE__, __VA_ARGS__)
 
 void *__xmalloc(size_t size, const char *file, const char *func, size_t line)
     __attribute__ ((alloc_size(1)));

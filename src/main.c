@@ -164,8 +164,6 @@ static int xsyscall(struct tchild *child) {
             DIESOFT("Failed to resume child %i: %s", child->pid, strerror(errno));
         }
     }
-    else
-        LOGC("Resumed child %i", child->pid);
     return 0;
 }
 
@@ -268,7 +266,6 @@ static int trace_loop(void) {
                 LOGD("Successfully handled event E_SETUP_PREMATURE for child %i", pid);
                 break;
             case E_SYSCALL:
-                LOGC("Latest event for child %i is E_SYSCALL, calling event handler", pid);
                 if (NULL != child) {
                     ret = syscall_handle(ctx, child);
                     if (0 != ret) {
@@ -285,7 +282,6 @@ static int trace_loop(void) {
                     LOGE("Failed to resume child %i before syscall: %s", pid, strerror(errno));
                     DIESOFT("Failed to resume child %i before syscall: %s", pid, strerror(errno));
                 }
-                LOGC("Successfully handled event E_SYSCALL for child %i", pid);
                 break;
             case E_FORK:
                 LOGD("Latest event for child %i is E_FORK, calling event handler", pid);
