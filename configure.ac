@@ -322,6 +322,7 @@ AC_ARG_ENABLE([gprof],
 			  SYDBOX_PROFILE="no")
 AC_MSG_RESULT([$SYDBOX_PROFILE])
 if test x"$SYDBOX_PROFILE" = x"yes" ; then
+	AX_CHECK_COMPILER_FLAGS([-pg],, AC_MSG_ERROR([your compiler doesn't support -pg flag]))
 	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -pg"
 	LDFLAGS="$LDFLAGS -pg"
 fi
