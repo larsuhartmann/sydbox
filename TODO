@@ -1,0 +1,4 @@
+* Emulate ptrace so sydbox tests work under sydbox.
+* Port it to different architectures.
+* Make it possible to filter out access violations.
+* Make it faster.
