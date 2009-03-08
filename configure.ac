@@ -314,11 +314,13 @@ fi
 dnl }}}
 
 dnl {{{ Profiling
+AC_MSG_CHECKING([whether gprof symbols are wanted])
 AC_ARG_ENABLE([gprof],
 			  [AS_HELP_STRING([--enable-gprof],
 							  [add gprof symbols (-pg) (for debugging)])],
 			  SYDBOX_PROFILE="$enableval",
 			  SYDBOX_PROFILE="no")
+AC_MSG_RESULT([$SYDBOX_PROFILE])
 if test x"$SYDBOX_PROFILE" = x"yes" ; then
 	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -pg"
 	LDFLAGS="$LDFLAGS -pg"
