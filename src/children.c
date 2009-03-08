@@ -106,6 +106,13 @@ void tchild_delete(struct tchild **head, pid_t pid) {
     if (pid == (*head)->pid) { // Deleting first node
         temp = *head;
         *head = (*head)->next;
+        if (NULL != temp->sandbox) {
+            if (NULL != temp->sandbox->write_prefixes)
+                pathnode_free(&(temp->sandbox->write_prefixes));
+            if (NULL != temp->sandbox->predict_prefixes)
+                pathnode_free(&(temp->sandbox->predict_prefixes));
+            free(temp->sandbox);
+        }
         if (NULL != temp->cwd)
             free(temp->cwd);
         free(temp);
@@ -123,6 +130,13 @@ void tchild_delete(struct tchild **head, pid_t pid) {
         if (NULL != current) {
             temp = current;
             previous->next = current->next;
+            if (NULL != temp->sandbox) {
+                if (NULL != temp->sandbox->write_prefixes)
+                    pathnode_free(&(temp->sandbox->write_prefixes));
+                if (NULL != temp->sandbox->predict_prefixes)
+                    pathnode_free(&(temp->sandbox->predict_prefixes));
+                free(temp->sandbox);
+            }
             if (NULL != temp->cwd)
                 free(temp->cwd);
             free(temp);
