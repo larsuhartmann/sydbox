@@ -111,7 +111,7 @@ void lg(int level, const char *func, size_t line, const char *fmt, ...) {
             fprintf(log_fp, "CRAZY ");
             break;
     }
-    fprintf(log_fp, "%s.%d] ", func, line);
+    fprintf(log_fp, "%s.%zu] ", func, line);
 
     va_start(args, fmt);
     vfprintf(log_fp, fmt, args);
