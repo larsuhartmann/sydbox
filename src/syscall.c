@@ -346,8 +346,13 @@ static enum res_syscall syscall_check_magic_open(context_t *ctx, struct tchild *
     }
     else if (path_magic_lock(path)) {
         ismagic = 1;
-        LOGN("Access to magical commands is now denied");
-        ctx->cmdlock = 1;
+        LOGN("Access to magic commands is now denied");
+        ctx->cmdlock = LOCK_SET;
+    }
+    else if (path_magic_exec_lock(path)) {
+        ismagic = 1;
+        LOGN("Access to magic commands will be denied on execve()");
+        ctx->cmdlock = LOCK_PENDING;
     }
     else if (path_magic_write(path)) {
         ismagic = 1;
@@ -460,7 +465,7 @@ found:
     }
 
     // Handle magic calls
-    if (!ctx->cmdlock) {
+    if (LOCK_SET != ctx->cmdlock) {
         if (sdef->flags & MAGIC_OPEN) {
             pathfirst = (char *) xmalloc(PATH_MAX * sizeof(char));
             if (0 > trace_get_string(child->pid, 0, pathfirst, PATH_MAX)) {
@@ -612,6 +617,10 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
+        if (__NR_execve == sno && LOCK_PENDING == ctx->cmdlock) {
+            LOGN("Access to magic commands is now denied");
+            ctx->cmdlock = LOCK_SET;
+        }
         ret = syscall_check(ctx, child, sno);
         switch (ret) {
             case RS_DENY:

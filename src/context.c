@@ -27,7 +27,7 @@ context_t *context_new(void) {
     ctx->enabled = 1;
     ctx->paranoid = 0;
     ctx->net_allowed = 1;
-    ctx->cmdlock = 0;
+    ctx->cmdlock = LOCK_UNSET;
     ctx->write_prefixes = NULL;
     ctx->predict_prefixes = NULL;
     ctx->children = NULL;

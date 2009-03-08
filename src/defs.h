@@ -84,6 +84,8 @@ struct pathnode {
 #define CMD_TOGGLE_LEN          (CMD_PATH_LEN + 7)
 #define CMD_LOCK                CMD_PATH"lock"
 #define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
+#define CMD_EXEC_LOCK           CMD_PATH"exec_lock"
+#define CMD_EXEC_LOCK_LEN       (CMD_PATH_LEN + 10)
 #define CMD_WRITE               CMD_PATH"write/"
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
@@ -98,6 +100,7 @@ int path_magic_on(const char *path);
 int path_magic_off(const char *path);
 int path_magic_toggle(const char *path);
 int path_magic_lock(const char *path);
+int path_magic_exec_lock(const char *path);
 int path_magic_write(const char *path);
 int path_magic_predict(const char *path);
 int path_magic_rmwrite(const char *path);
@@ -143,6 +146,12 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid);
 unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
+enum lock_status {
+    LOCK_SET, /* Magic commands are locked */
+    LOCK_UNSET, /* Magic commands are unlocked */
+    LOCK_PENDING /* Magic commands will be locked when an execve() is encountered */
+};
+
 typedef struct {
     int enabled;
     int paranoid;

@@ -452,7 +452,7 @@ static int parse_config(const char *path) {
         ctx->paranoid = cfg_getbool(cfg, "paranoid");
 
     if (-1 == ctx->cmdlock)
-        ctx->cmdlock = cfg_getbool(cfg, "lock");
+        ctx->cmdlock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
     LOGV("Initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_phase;
@@ -600,7 +600,7 @@ int main(int argc, char **argv) {
                 ctx->paranoid = 1;
                 break;
             case 'L':
-                ctx->cmdlock = 1;
+                ctx->cmdlock = LOCK_SET;
                 break;
             case 'v':
                 log_level = LOG_VERBOSE;
