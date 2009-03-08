@@ -669,9 +669,15 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             }
             if (0 == retval) {
                 // Child has successfully changed directory
-                if (NULL == getcwd_pid(child->cwd, PATH_MAX, child->pid))
-                    DIESOFT("Failed to get current working directory of child %i: %s",
-                            child->pid, strerror(errno));
+                if (NULL == getcwd_pid(child->cwd, PATH_MAX, child->pid)) {
+                    retval = -errno;
+                    if (0 > trace_set_return(child->pid, retval)) {
+                        if (ESRCH == errno)
+                            return handle_esrch(ctx, child);
+                        else
+                            DIESOFT("Failed to set return code: %s", strerror(errno));
+                    }
+                }
                 LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
             }
         }
