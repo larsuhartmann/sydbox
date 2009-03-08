@@ -358,13 +358,13 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         ismagic = 1;
         rpath = path + CMD_WRITE_LEN;
         LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
-        pathnode_new(&(child->sandbox->write_prefixes), rpath);
+        pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
     }
     else if (path_magic_predict(path)) {
         ismagic = 1;
         rpath = path + CMD_PREDICT_LEN;
         LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
-        pathnode_new(&(child->sandbox->predict_prefixes), rpath);
+        pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
     }
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;

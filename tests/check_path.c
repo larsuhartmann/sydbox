@@ -19,7 +19,7 @@
 START_TEST(check_pathnode_new) {
     struct pathnode *head = NULL;
 
-    pathnode_new(&head, "/dev/null");
+    pathnode_new(&head, "/dev/null", 1);
     fail_unless(0 == strncmp(head->path, "/dev/null", 10), "Path not set correctly on creation");
     fail_unless(NULL == head->next, "Next node not set correctly on creation");
 }
@@ -28,7 +28,7 @@ END_TEST
 START_TEST(check_pathnode_free) {
     struct pathnode *head = NULL;
 
-    pathnode_new(&head, "/dev/null");
+    pathnode_new(&head, "/dev/null", 1);
     pathnode_free(&head);
     fail_unless(NULL == head, "head node not NULL after free()");
 }
@@ -37,7 +37,7 @@ END_TEST
 START_TEST(check_pathnode_delete_first) {
     struct pathnode *head = NULL;
 
-    pathnode_new(&head, "/dev/null");
+    pathnode_new(&head, "/dev/null", 1);
     pathnode_delete(&head, "/dev/null");
 
     fail_unless(NULL == head);
@@ -49,9 +49,9 @@ START_TEST(check_pathnode_delete) {
     struct pathnode *node = NULL;
     struct pathnode *curnode = NULL;
 
-    pathnode_new(&node, "/dev/null");
-    pathnode_new(&node, "/dev/zero");
-    pathnode_new(&node, "/dev/random");
+    pathnode_new(&node, "/dev/null", 1);
+    pathnode_new(&node, "/dev/zero", 1);
+    pathnode_new(&node, "/dev/random", 1);
 
     pathnode_delete(&node, "/dev/null");
 

@@ -94,8 +94,7 @@ int path_magic_rmpredict(const char *path) {
         return 0;
 }
 
-int pathnode_new(struct pathnode **head, const char *path) {
-    char path_simple[PATH_MAX];
+int pathnode_new(struct pathnode **head, const char *path, int sanitize) {
     struct pathnode *newnode;
 
     if (NULL == path) {
@@ -106,13 +105,19 @@ int pathnode_new(struct pathnode **head, const char *path) {
         LOGV("Path is empty not adding to list");
         return -1;
     }
+
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
-    remove_slash(path_simple, path);
-    newnode->path = xmalloc(PATH_MAX * sizeof(char));
-    shell_expand(newnode->path, path_simple);
+    if (!sanitize)
+        newnode->path = xstrndup(path, PATH_MAX);
+    else {
+        char path_simple[PATH_MAX];
+        newnode->path = xmalloc(PATH_MAX * sizeof(char));
+        remove_slash(path_simple, path);
+        shell_expand(newnode->path, path_simple);
+        LOGV("New path item \"%s\"", newnode->path);
+    }
     newnode->next = *head; // link next
     *head = newnode; // link head
-    LOGV("New path item \"%s\"", newnode->path);
     return 0;
 }
 
@@ -180,7 +185,7 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         else {
             memcpy(item, pathlist_env + pos, itemlen);
             item[itemlen] = '\0';
-            pathnode_new(pathlist, item);
+            pathnode_new(pathlist, item, 1);
             ++numpaths;
         }
         pos += ++itemlen;

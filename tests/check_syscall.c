@@ -397,7 +397,7 @@ START_TEST(syscall_check_open_wronly_predict) {
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd);
+        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -558,7 +558,7 @@ START_TEST(syscall_check_open_rdwr_predict) {
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd);
+        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -805,7 +805,7 @@ START_TEST(syscall_check_creat_predict) {
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd);
+        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -1091,7 +1091,7 @@ START_TEST(syscall_check_lchown_predict) {
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd);
+        pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -1140,7 +1140,7 @@ START_TEST(syscall_check_lchown_allow) {
 
         tchild_new(&(ctx->children), pid);
         ctx->eldest = ctx->children;
-        pathnode_new(&(ctx->eldest->sandbox->write_prefixes), rcwd);
+        pathnode_new(&(ctx->eldest->sandbox->write_prefixes), rcwd, 1);
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);

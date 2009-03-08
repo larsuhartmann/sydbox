@@ -463,18 +463,18 @@ static int parse_config(const char *path) {
     for (unsigned int i = 0; i < cfg_size(cfg, phase); i++) {
         cfg_phase = cfg_getnsec(cfg, phase, i);
         for (unsigned int j = 0; j < cfg_size(cfg_phase, "write"); j++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_phase, "write", j));
+            pathnode_new(&write_prefixes, cfg_getnstr(cfg_phase, "write", j), 1);
         for (unsigned int k = 0; k < cfg_size(cfg_phase, "predict"); k++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_phase, "predict", k));
+            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_phase, "predict", k), 1);
         net = cfg_getint(cfg_phase, "net");
     }
     if (0 != strncmp(phase, "default", 8)) {
         for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
             cfg_default = cfg_getnsec(cfg, "default", l);
             for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
-                pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m));
+                pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m), 1);
             for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
-                pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n));
+                pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n), 1);
             if (-1 == net)
                 cfg_getint(cfg_default, "net");
         }

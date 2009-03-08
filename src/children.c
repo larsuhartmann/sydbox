@@ -64,12 +64,12 @@ void tchild_new(struct tchild **head, pid_t pid) {
             // Copy path lists
             pnode = newchild->next->sandbox->write_prefixes;
             while (NULL != pnode) {
-                pathnode_new(&(newchild->sandbox->write_prefixes), pnode->path);
+                pathnode_new(&(newchild->sandbox->write_prefixes), pnode->path, 0);
                 pnode = pnode->next;
             }
             pnode = newchild->next->sandbox->predict_prefixes;
             while (NULL != pnode) {
-                pathnode_new(&(newchild->sandbox->predict_prefixes), pnode->path);
+                pathnode_new(&(newchild->sandbox->predict_prefixes), pnode->path, 0);
                 pnode = pnode->next;
             }
         }
