@@ -519,11 +519,9 @@ int main(int argc, char **argv) {
     dump = 0;
     atexit(cleanup);
 
-    char *basec = xstrndup(argv[0], PATH_MAX);
-    char *bname = basename(basec);
+    char *bname = ebasename(argv[0]);
     if (0 == strncmp(bname, "sandbox", 8)) {
         // Aliased to sandbox
-        free(basec);
         if (2 > argc) {
             // Use /bin/bash as default program
             argv_bash = (char **) xmalloc(2 * sizeof(char *));
@@ -536,8 +534,6 @@ int main(int argc, char **argv) {
         }
         goto skip_commandline;
     }
-    else
-        free(basec);
 
     // Parse command line
     static struct option long_options[] = {
