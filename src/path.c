@@ -108,12 +108,11 @@ int pathnode_new(struct pathnode **head, const char *path, int sanitize) {
 
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
     if (!sanitize)
-        newnode->path = xstrndup(path, PATH_MAX);
+        newnode->path = xstrndup(path, strlen(path) + 1);
     else {
-        char path_simple[PATH_MAX];
-        newnode->path = xmalloc(PATH_MAX * sizeof(char));
-        remove_slash(path_simple, path);
-        shell_expand(newnode->path, path_simple);
+        char *spath = remove_slash(path);
+        newnode->path = shell_expand(spath);
+        free(spath);
         LOGV("New path item \"%s\"", newnode->path);
     }
     newnode->next = *head; // link next
@@ -136,10 +135,11 @@ void pathnode_free(struct pathnode **head) {
 }
 
 void pathnode_delete(struct pathnode **head, const char *path) {
+    int len = strlen(path) + 1;
     struct pathnode *temp;
     struct pathnode *previous, *current;
 
-    if (0 == strncmp(path, (*head)->path, PATH_MAX)) { // Deleting first node
+    if (0 == strncmp(path, (*head)->path, len)) { // Deleting first node
         temp = *head;
         *head = (*head)->next;
         if (NULL != temp->path)
@@ -151,7 +151,7 @@ void pathnode_delete(struct pathnode **head, const char *path) {
         current = (*head)->next;
 
         // Find the correct location
-        while (NULL != current && 0 == strncmp(path, current->path, PATH_MAX)) {
+        while (NULL != current && 0 == strncmp(path, current->path, len)) {
             previous = current;
             current = current->next;
         }
@@ -167,7 +167,7 @@ void pathnode_delete(struct pathnode **head, const char *path) {
 }
 
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
-    char item[PATH_MAX];
+    char *item;
     unsigned int itemlen, numpaths = 0, pos = 0;
     char *delim;
 
@@ -183,9 +183,11 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         if (0 == itemlen)
             LOGW("Ignoring empty path element in position %d", numpaths);
         else {
+            item = xmalloc(itemlen * sizeof(char));
             memcpy(item, pathlist_env + pos, itemlen);
             item[itemlen] = '\0';
             pathnode_new(pathlist, item, 1);
+            free(item);
             ++numpaths;
         }
         pos += ++itemlen;
@@ -196,44 +198,45 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
 
 int pathlist_check(struct pathnode **pathlist, const char *path) {
     int ret;
-    char path_simple[PATH_MAX];
+    char *spath;
     struct pathnode *node;
 
-    LOGD("Checking \"%s\"", path);
-    remove_slash(path_simple, path);
+    LOGD("Checking `%s'", path);
+    spath = remove_slash(path);
 
     ret = 0;
     node = *pathlist;
     while (NULL != node) {
-        if (0 == strncmp(path_simple, node->path, strlen(node->path))) {
-            if (strlen(path_simple) > strlen(node->path)) {
+        if (0 == strncmp(spath, node->path, strlen(node->path))) {
+            if (strlen(spath) > strlen(node->path)) {
                 /* Path begins with one of the allowed paths. Check for a
                  * zero byte or a / on the next character so that for example
                  * /devzero/foo doesn't pass the test when /dev is the only
                  * allowed path.
                  */
-                const char last = path_simple[strlen(node->path)];
+                const char last = spath[strlen(node->path)];
                 if ('\0' == last || '/' == last) {
-                    LOGD("\"%s\" begins with \"%s\"", path_simple, node->path);
+                    LOGD("`%s' begins with `%s'", spath, node->path);
                     ret = 1;
                     break;
                 }
                 else
-                    LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->path);
+                    LOGD("`%s' doesn't begin with `%s'", spath, node->path);
             }
             else {
-                LOGD("\"%s\" begins with \"%s\"", path_simple, node->path);
+                LOGD("`%s' begins with `%s'", spath, node->path);
                 ret = 1;
                 break;
             }
         }
         else
-            LOGD("\"%s\" doesn't begin with \"%s\"", path_simple, node->path);
+            LOGD("`%s' doesn't begin with `%s'", spath, node->path);
         node = node->next;
     }
     if (ret)
-        LOGD("Path list check succeeded for \"%s\"", path_simple);
+        LOGD("Path list check succeeded for `%s'", spath);
     else
-        LOGD("Path list check failed for \"%s\"", path_simple);
+        LOGD("Path list check failed for `%s'", spath);
+    free(spath);
     return ret;
 }

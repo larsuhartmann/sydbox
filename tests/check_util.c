@@ -5,6 +5,7 @@
  */
 
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <check.h>
@@ -12,33 +13,37 @@
 #include "../src/defs.h"
 
 START_TEST(check_util_remove_slash_begin) {
-    int nslashes;
-    char dest[PATH_MAX];
-
-    nslashes = remove_slash(dest, "////dev/null");
-    fail_unless(3 == nslashes, "Returned wrong number of removed slashes: %d", nslashes);
+    char *dest = remove_slash("////dev/null");
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
+    free(dest);
 }
 END_TEST
 
 START_TEST(check_util_remove_slash_middle) {
-    int nslashes;
-    char dest[PATH_MAX];
-
-    nslashes = remove_slash(dest, "/dev////null");
-    fail_unless(3 == nslashes, "Returned wrong number of removed slashes: %d", nslashes);
+    char *dest = remove_slash("/dev////null");
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
+    free(dest);
 }
 END_TEST
 
 START_TEST(check_util_remove_slash_end) {
-    int nslashes;
-    char dest[PATH_MAX];
-
-    nslashes = remove_slash(dest, "/dev/null////");
-    fprintf(stderr, "'%s'\n", dest);
-    fail_unless(4 == nslashes, "Returned wrong number of removed slashes: %d", nslashes);
+    char *dest = remove_slash("/dev/null////");
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
+    free(dest);
+}
+END_TEST
+
+START_TEST(check_util_remove_slash_only_slash) {
+    char *dest = remove_slash("////");
+    fail_unless(0 == strncmp(dest, "/", 2), "/ != '%s'", dest);
+    free(dest);
+}
+END_TEST
+
+START_TEST(check_util_remove_slash_empty) {
+    char *dest = remove_slash("");
+    fail_unless(0 == strncmp(dest, "", 1));
+    free(dest);
 }
 END_TEST
 
@@ -49,6 +54,8 @@ Suite *util_suite_create(void) {
     tcase_add_test(tc_util, check_util_remove_slash_begin);
     tcase_add_test(tc_util, check_util_remove_slash_middle);
     tcase_add_test(tc_util, check_util_remove_slash_end);
+    tcase_add_test(tc_util, check_util_remove_slash_only_slash);
+    tcase_add_test(tc_util, check_util_remove_slash_empty);
     suite_add_tcase(s, tc_util);
 
     return s;

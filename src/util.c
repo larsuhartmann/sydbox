@@ -183,10 +183,12 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
     return t;
 }
 
-int remove_slash(char *dest, const char *src) {
-    int gotslash = 0, nslashes = 0;
+char *remove_slash(const char *src) {
+    int gotslash = 0, hasnonslash = 0, nslashes = 0;
+    int len = strlen(src) + 1;
+    char *dest = NULL;
 
-    for (int i = 0, j = 0; i < PATH_MAX; i++) {
+    for (int i = 0, j = 0; i < len; i++) {
         if ('/' == src[i]) {
             if (gotslash) {
                 ++nslashes;
@@ -195,11 +197,15 @@ int remove_slash(char *dest, const char *src) {
             else
                 gotslash = 1;
         }
-        else
+        else {
             gotslash = 0;
-        dest[j++] = src[i];
+            if ('\0' != src[i])
+                hasnonslash = 1;
+        }
+        dest = xrealloc(dest, (++j + 1) * sizeof(char));
+        dest[j-1] = src[i];
         /* Remove trailing slash */
-        if ('\0' == src[i]) {
+        if (hasnonslash && '\0' == src[i]) {
             if ('/' == dest[j - 2]) {
                 ++nslashes;
                 dest[j - 2] = '\0';
@@ -208,25 +214,31 @@ int remove_slash(char *dest, const char *src) {
         }
     }
     if (nslashes)
-        LOGD("Simplified path \"%s\" to \"%s\"", src, dest);
-    return nslashes;
+        LOGD("Simplified path `%s' to `%s', removed %d slashes", src, dest, nslashes);
+    return dest;
 }
 
-void shell_expand(char *dest, const char *src) {
-    char command[32 + PATH_MAX] = "/bin/sh -c 'echo -n \"";
-    strncat(command, src, PATH_MAX);
-    strncat(command, "\"'", 2);
+char *shell_expand(const char *src) {
+    char *command = xmalloc((32 + strlen(src)) * sizeof(char));
+    strcpy(command, "/bin/sh -c 'echo -n \"");
+    strcat(command, src);
+    strcat(command, "\"'");
     FILE *bash = popen(command, "r");
+    free(command);
     if (NULL == bash)
         DIESOFT("bug in popen call: %s", strerror(errno));
 
+    char *dest = NULL;
     int i = 0;
-    while (!feof(bash))
-        dest[i++] = fgetc(bash);
+    while (!feof(bash)) {
+        dest = realloc(dest, (++i + 1) * sizeof(char));
+        dest[i-1] = fgetc(bash);
+    }
     dest[i-1] = '\0';
     pclose(bash);
-    if (0 != strncmp(src, dest, PATH_MAX))
-        LOGD("Expanded path \"%s\" to \"%s\" using /bin/sh", src, dest);
+    if (0 != strncmp(src, dest, strlen(src)))
+        LOGD("Expanded path `%s' to `%s' using /bin/sh", src, dest);
+    return dest;
 }
 
 char *getcwd_pid(char *dest, size_t size, pid_t pid) {
