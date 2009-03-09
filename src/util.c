@@ -36,7 +36,7 @@
 
 int colour = -1;
 int log_level = -1;
-char log_file[PATH_MAX] = { 0 };
+char *log_file = NULL;
 FILE *log_fp = NULL;
 
 /* Fatal error. Print message and exit. */
@@ -73,7 +73,7 @@ void lg(int level, const char *func, size_t line, const char *fmt, ...) {
     va_list args;
 
     if (!log_file_opened) {
-        int isstderr = '\0' == log_file[0] ? 1 : 0;
+        int isstderr = NULL == log_file ? 1 : 0;
 
         if (isstderr)
             log_fp = stderr;

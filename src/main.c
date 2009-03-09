@@ -400,8 +400,10 @@ static int parse_config(const char *path) {
         return 0;
     }
 
-    if ('\0' == log_file[0] && NULL != cfg_getstr(cfg, "log_file"))
-        strncpy(log_file, cfg_getstr(cfg, "log_file"), PATH_MAX);
+    if (NULL == log_file && NULL != cfg_getstr(cfg, "log_file")) {
+        char *lf = cfg_getstr(cfg, "log_file");
+        log_file = xstrndup(lf, strlen(lf) + 1);
+    }
 
     if (-1 == log_level) {
         log_level = cfg_getint(cfg, "log_level");
@@ -452,7 +454,7 @@ static void dump_config(void) {
     fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
     fprintf(stderr, "phase = %s\n", phase);
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
-    fprintf(stderr, "log_file = %s\n", '\0' == log_file[0] ? "stderr" : log_file);
+    fprintf(stderr, "log_file = %s\n", NULL == log_file ? "stderr" : log_file);
     fprintf(stderr, "log_level = ");
     switch (log_level) {
         case LOG_ERROR:
@@ -581,7 +583,7 @@ int main(int argc, char **argv) {
                 phase = optarg;
                 break;
             case 'l':
-                strncpy(log_file, optarg, PATH_MAX);
+                log_file = xstrndup(optarg, strlen(optarg) + 1);
                 break;
             case 'c':
                 config_file = optarg;
@@ -630,8 +632,8 @@ skip_commandline:
     predict_env = getenv(ENV_PREDICT);
     net_env = getenv(ENV_NET);
 
-    if ('\0' == log_file[0] && NULL != log_env)
-        strncpy(log_file, log_env, PATH_MAX);
+    if (NULL == log_file && NULL != log_env)
+        log_file = xstrndup(log_env, strlen(log_env) + 1);
 
     LOGV("Extending path list using environment variable "ENV_WRITE);
     pathlist_init(&write_prefixes, write_env);

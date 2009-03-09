@@ -168,7 +168,7 @@ char *pgetcwd(pid_t pid);
 
 /* util.c */
 extern int log_level;
-extern char log_file[PATH_MAX];
+extern char *log_file;
 extern FILE *log_fp;
 extern int colour;
 
