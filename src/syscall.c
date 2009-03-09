@@ -247,21 +247,21 @@ static int syscall_get_pathat(pid_t pid, char *dest, unsigned int npath) {
     }
 
     if (AT_FDCWD != dirfd && '/' != dest[0]) {
-        int n;
-        char dname[PATH_MAX], res_dname[PATH_MAX];
+        char procfd[128];
+        char *dname;
 
-        snprintf(dname, PATH_MAX, "/proc/%i/fd/%ld", pid, dirfd);
-        n = readlink(dname, res_dname, PATH_MAX - 1);
-        if (0 > n) {
+        snprintf(procfd, 128, "/proc/%i/fd/%ld", pid, dirfd);
+        dname = ereadlink(procfd);
+        if (NULL == dname) {
             save_errno = errno;
             LOGE("readlink() failed for `%s': %s", dname, strerror(errno));
             errno = save_errno;
             return -1;
         }
-        res_dname[n] = '\0';
 
-        char *destc = xstrndup(dest, PATH_MAX);
-        snprintf(dest, PATH_MAX, "%s/%s", res_dname, destc);
+        char *destc = xstrndup(dest, strlen(dest) + 1);
+        snprintf(dest, PATH_MAX, "%s/%s", dname, destc);
+        free(dname);
         free(destc);
     }
     return 0;
