@@ -159,6 +159,13 @@ void context_free(context_t *ctx);
 /* canonicalize.c */
 char *erealpath(const char *name, char *resolved);
 
+/* wrappers.c */
+char *edirname(const char *path);
+char *ebasename(const char *path);
+char *egetcwd(void);
+char *ereadlink(const char *path);
+char *pgetcwd(pid_t pid);
+
 /* util.c */
 extern int log_level;
 extern char log_file[PATH_MAX];
@@ -211,7 +218,6 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
 
 char *remove_slash(const char *src);
 char *shell_expand(const char *src);
-char *getcwd_pid(char *dest, size_t size, pid_t pid);
 char *resolve_path(const char *path, int resolve);
 
 int handle_esrch(context_t *ctx, struct tchild *child);

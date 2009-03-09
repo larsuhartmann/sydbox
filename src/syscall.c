@@ -679,7 +679,10 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             }
             if (0 == retval) {
                 // Child has successfully changed directory
-                if (NULL == getcwd_pid(child->cwd, PATH_MAX, child->pid)) {
+                if (NULL != child->cwd)
+                    free(child->cwd);
+                child->cwd = pgetcwd(child->pid);
+                if (NULL == child->cwd) {
                     retval = -errno;
                     if (0 > trace_set_return(child->pid, retval)) {
                         if (ESRCH == errno)

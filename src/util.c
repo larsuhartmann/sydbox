@@ -241,19 +241,6 @@ char *shell_expand(const char *src) {
     return dest;
 }
 
-char *getcwd_pid(char *dest, size_t size, pid_t pid) {
-    int n;
-    char cwd[PATH_MAX];
-
-    snprintf(cwd, PATH_MAX, "/proc/%i/cwd", pid);
-    n = readlink(cwd, dest, size - 1);
-    if (0 > n)
-        return NULL;
-    /* Readlink does NOT append a NULL byte to buf. */
-    dest[n] = '\0';
-    return dest;
-}
-
 char *resolve_path(const char *path, int resolve) {
     char *rpath;
 
