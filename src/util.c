@@ -21,7 +21,6 @@
  */
 
 #include <errno.h>
-#include <libgen.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -254,16 +253,14 @@ char *resolve_path(const char *path, int resolve) {
 
     if (NULL == rpath && ENOENT == errno) {
         // File doesn't exist, check the parent directory.
-        char *dirc, *dname;
-        dirc = xstrndup(path, PATH_MAX);
-        dname = dirname(dirc);
+        char *dname = edirname(path);
         LOGD("File `%s' doesn't exist, using directory `%s'", path, dname);
 
         if (!resolve)
             rpath = erealpath(dname, NULL);
         else
             rpath = realpath(dname, NULL);
-        free(dirc);
+        free(dname);
 
         if (NULL == rpath) {
             LOGD("Directory doesn't exist as well, setting errno to ENOENT");
@@ -271,13 +268,10 @@ char *resolve_path(const char *path, int resolve) {
             return NULL;
         }
         else {
-            char *basec, *bname;
             LOGD("File `%s' doesn't exist but directory `%s' exists, adding basename", path, rpath);
-            basec = xstrndup(path, PATH_MAX);
-            bname = basename(basec);
+            char *bname = ebasename(path);
             strncat(rpath, "/", 1);
             strncat(rpath, bname, strlen(bname));
-            free(basec);
         }
     }
     return rpath;
