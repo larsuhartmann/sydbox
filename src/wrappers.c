@@ -61,8 +61,10 @@ char *ereadlink(const char *path) {
     for (;;) {
         buf = xrealloc(buf, nrequested);
         nwritten = readlink(path, buf, nrequested);
-        if (0 > nwritten)
+        if (0 > nwritten) {
+            free(buf);
             return NULL;
+        }
         else if (nrequested > nwritten)
             break;
         else
