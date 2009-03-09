@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <linux/ptrace.h>
@@ -58,6 +59,61 @@ static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
 #define ACCUM           (8 * RAX)
 static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
+
+#define MIN(a,b)        (((a) < (b)) ? (a) : (b))
+static int umoven(pid_t pid, long addr, char *dest, size_t len) {
+    int n, m, save_errno;
+    int started = 0;
+    union {
+        long val;
+        char x[sizeof(long)];
+    } u;
+
+    if (addr & (sizeof(long) -1)) {
+        // addr not a multiple of sizeof(long)
+        n = addr - (addr & -sizeof(long)); // residue
+        addr &= -sizeof(long); // residue
+        errno = 0;
+        u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
+        if (0 != errno) {
+            if (started && (EPERM == errno || EIO == errno)) {
+                // Ran into end of memory - stupid "printpath"
+                return 0;
+            }
+            // But if not started, we had a bogus address
+            if (0 != addr && EIO != errno) {
+                save_errno = errno;
+                LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
+                errno = save_errno;
+            }
+            return -1;
+        }
+        started = 1;
+        memcpy(dest, &u.x[n], m = MIN(sizeof(long) - n, len));
+        addr += sizeof(long), dest += m, len -= m;
+    }
+    while (len > 0) {
+        errno = 0;
+        u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
+        if (0 != errno) {
+            if (started && (EPERM == errno || EIO == errno)) {
+                // Ran into end of memory - stupid "printpath"
+                return 0;
+            }
+            // But if not started, we had a bogus address
+            if (0 != addr && EIO != errno) {
+                save_errno = errno;
+                LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
+                errno = save_errno;
+            }
+            return -1;
+        }
+        started = 1;
+        memcpy(dest, u.x, m = MIN(sizeof(long), len));
+        addr += sizeof(long), dest += m, len -= m;
+    }
+    return 0;
+}
 
 unsigned int trace_event(int status) {
     if (WIFSTOPPED(status)) {
@@ -222,15 +278,9 @@ int trace_set_return(pid_t pid, long val) {
     return 0;
 }
 
-#define MIN(a,b)        (((a) < (b)) ? (a) : (b))
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
-    int n, m, save_errno;
-    int started = 0;
+    int save_errno;
     long addr = 0;
-    union {
-        long val;
-        char x[sizeof(long)];
-    } u;
 
     assert(arg >= 0 && arg < MAX_ARGS);
     if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
@@ -239,51 +289,7 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
         errno = save_errno;
         return -1;
     }
-
-    if (addr & (sizeof(long) -1)) {
-        // addr not a multiple of sizeof(long)
-        n = addr - (addr & -sizeof(long)); // residue
-        addr &= -sizeof(long); // residue
-        errno = 0;
-        u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (0 != errno) {
-            if (started && (EPERM == errno || EIO == errno)) {
-                // Ran into end of memory - stupid "printpath"
-                return 0;
-            }
-            // But if not started, we had a bogus address
-            if (0 != addr && EIO != errno) {
-                save_errno = errno;
-                LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
-                errno = save_errno;
-            }
-            return -1;
-        }
-        started = 1;
-        memcpy(dest, &u.x[n], m = MIN(sizeof(long) - n, len));
-        addr += sizeof(long), dest += m, len -= m;
-    }
-    while (len > 0) {
-        errno = 0;
-        u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (0 != errno) {
-            if (started && (EPERM == errno || EIO == errno)) {
-                // Ran into end of memory - stupid "printpath"
-                return 0;
-            }
-            // But if not started, we had a bogus address
-            if (0 != addr && EIO != errno) {
-                save_errno = errno;
-                LOGE("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, strerror(errno));
-                errno = save_errno;
-            }
-            return -1;
-        }
-        started = 1;
-        memcpy(dest, u.x, m = MIN(sizeof(long), len));
-        addr += sizeof(long), dest += m, len -= m;
-    }
-    return 0;
+    return umoven(pid, addr, dest, len);
 }
 
 int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
@@ -338,3 +344,53 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     return 0;
 }
 
+int trace_fake_stat(pid_t pid) {
+    int n, m, save_errno;
+    long addr = 0;
+    union {
+        long val;
+        char x[sizeof(long)];
+    } u;
+    struct stat fakebuf, *fakebuf_ptr;
+    fakebuf_ptr = &fakebuf;
+
+    if (0 > trace_peek(pid, syscall_args[1], &addr)) {
+        save_errno = errno;
+        LOGE("Failed to get address of argument 1: %s", strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    if (0 > umoven(pid, addr, fakebuf_ptr, sizeof(struct stat)))
+        return -1;
+
+    fakebuf_ptr->st_mode = S_IFDIR;
+    fakebuf_ptr->st_uid  = 0;
+    fakebuf_ptr->st_gid  = 0;
+
+    n = 0;
+    m = sizeof(struct stat) / sizeof(long);
+    while (n < m) {
+        memcpy(u.x, fakebuf_ptr, sizeof(long));
+        if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
+            save_errno = errno;
+            LOGE("Failed to set argument 1 to \"%p\": %s", (void *)fakebuf_ptr, strerror(errno));
+            errno = save_errno;
+            return -1;
+        }
+        ++n;
+        fakebuf_ptr += sizeof(long);
+    }
+
+    m = sizeof(struct stat) % sizeof(long);
+    if (0 != m) {
+        memcpy(u.x, fakebuf_ptr, m);
+        if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
+            save_errno = errno;
+            LOGE("Failed to set argument 1 to \"%p\": %s", (void *)fakebuf_ptr, strerror(errno));
+            errno = save_errno;
+            return -1;
+        }
+    }
+    return 0;
+}

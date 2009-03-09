@@ -245,6 +245,7 @@ int trace_get_return(pid_t pid, long *res);
 int trace_set_return(pid_t pid, long val);
 int trace_get_string(pid_t pid, int arg, char *dest, size_t len);
 int trace_set_string(pid_t pid, int arg, const char *src, size_t len);
+int trace_fake_stat(pid_t pid);
 
 /* syscall.c */
 struct syscall_def {

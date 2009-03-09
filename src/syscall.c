@@ -409,14 +409,15 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
     }
     LOGD("Checking if stat(\"%s\") is magic", path);
     if (path_magic_dir(path)) {
-        LOGD("stat(\"%s\") is magic", path);
-        if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
+        LOGD("stat(\"%s\") is magic, faking stat buffer", path);
+        if (0 > trace_fake_stat(child->pid)) {
             save_errno = errno;
-            LOGE("Failed to change path argument: %s", strerror(errno));
+            LOGE("Failed to fake stat: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
-        return RS_ALLOW;
+        child->retval = 0;
+        return RS_DENY;
     }
     else {
         LOGD("stat(\"%s\") is not magic", path);
