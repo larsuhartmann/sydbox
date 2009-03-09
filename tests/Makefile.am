@@ -15,5 +15,5 @@ check_sydbox_LDADD= @CHECK_LIBS@
 
 t01_util_shell_expand_SOURCES= t01_util_shell_expand.c \
 			      $(top_builddir)/src/path.c $(top_builddir)/src/children.c \
-			      $(top_builddir)/src/context.c \
+			      $(top_builddir)/src/context.c $(top_builddir)/src/wrappers.c \
 			      $(top_builddir)/src/canonicalize.c $(top_builddir)/src/util.c

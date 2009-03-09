@@ -46,7 +46,7 @@ void tchild_new(struct tchild **head, pid_t pid) {
         if (NULL != newchild->next->cwd) {
             LOGD("Child %i inherits parent %i's current working directory '%s'", pid,
                     newchild->next->pid, newchild->next->cwd);
-            newchild->cwd = xstrndup(newchild->next->cwd, PATH_MAX);
+            newchild->cwd = xstrndup(newchild->next->cwd, strlen(newchild->next->cwd) + 1);
         }
         if (NULL != newchild->next->sandbox) {
             struct pathnode *pnode;
