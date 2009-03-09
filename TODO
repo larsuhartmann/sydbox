@@ -3,3 +3,6 @@
 * Proper network support.
 * Port it to different architectures.
 * Make it faster.
+* Don't complain about unexpectedly dying children (debug is fine)
+* Fake the contents of stat buffer instead of calling stat with /dev/null
+* Change magic open call to some system call that doesn't take a string as argument like socket(?) maybe
