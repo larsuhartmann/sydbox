@@ -144,18 +144,8 @@ static int xsetup(struct tchild *child) {
 }
 
 static int xsetup_premature(pid_t pid) {
-    struct tchild *child;
-
     tchild_new(&(ctx->children), pid);
-    if (0 > trace_setup(pid)) {
-        if (ESRCH == errno) { // Child died
-            child = tchild_find(&(ctx->children), pid);
-            return handle_esrch(ctx, child);
-        }
-        else
-            DIESOFT("Failed to set tracing options: %s", strerror(errno));
-    }
-    return 0;
+    return xsetup(ctx->children);
 }
 
 static int xsyscall(struct tchild *child) {
@@ -245,73 +235,50 @@ static int trace_loop(void) {
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
         child = tchild_find(&(ctx->children), pid);
-        event = tchild_event(child, status);
-//        assert((NULL == child && E_SETUP_PREMATURE == event)
-//            || (NULL != child && E_SETUP_PREMATURE != event));
+        event = trace_event(status);
+        assert((NULL == child && E_STOP == event) || NULL != child);
 
         switch(event) {
-            case E_SETUP:
-                LOGD("Latest event for child %i is E_SETUP, calling event handler", pid);
-                ret = xsetup(child);
-                if (0 != ret) {
-                    LOGV("Event handler returned nonzero for event E_SETUP, exiting loop");
-                    return ret;
+            case E_STOP:
+                LOGD("Latest event for child %i is E_STOP, calling event handler", pid);
+                if (NULL == child) {
+                    ret = xsetup_premature(pid);
+                    if (0 != ret)
+                        return ret;
                 }
-                LOGD("Successfully handled event E_SETUP for child %i", pid);
-                break;
-            case E_SETUP_PREMATURE:
-                LOGD("Latest event for child %i is E_SETUP_PREMATURE, calling event handler", pid);
-                ret = xsetup_premature(pid);
-                if (0 != ret) {
-                    LOGV("Event handler returned nonzero for event E_SETUP_PREMATURE, exiting loop");
-                    return ret;
+                else {
+                    ret = xsetup(child);
+                    if (0 != ret)
+                        return ret;
                 }
-                LOGD("Successfully handled event E_SETUP_PREMATURE for child %i", pid);
                 break;
             case E_SYSCALL:
-                if (NULL != child) {
-                    ret = syscall_handle(ctx, child);
-                    if (0 != ret) {
-                        LOGD("Syscall handler returned nonzero, exiting loop");
-                        return ret;
-                    }
-                    ret = xsyscall(child);
-                    if (0 != ret) {
-                        LOGD("Event handler returned nonzero for event E_SYSCALL, exiting loop");
-                        return ret;
-                    }
-                }
-                else if (0 > trace_syscall(pid, 0) && ESRCH != errno) {
-                    LOGE("Failed to resume child %i before syscall: %s", pid, strerror(errno));
-                    DIESOFT("Failed to resume child %i before syscall: %s", pid, strerror(errno));
-                }
+                ret = syscall_handle(ctx, child);
+                if (0 != ret)
+                    return ret;
+                ret = xsyscall(child);
+                if (0 != ret)
+                    return ret;
                 break;
             case E_FORK:
+            case E_VFORK:
+            case E_CLONE:
                 LOGD("Latest event for child %i is E_FORK, calling event handler", pid);
                 ret = xfork(child);
-                if (0 != ret) {
-                    LOGD("Event handler returned non-zero for event E_EXECV, exiting loop");
+                if (0 != ret)
                     return ret;
-                }
-                LOGD("Successfully handled event E_FORK for child %i", pid);
                 break;
-            case E_EXECV:
-                LOGD("Latest event for child %i is E_EXECV, calling event handler", pid);
+            case E_EXEC:
+                LOGD("Latest event for child %i is E_EXEC, calling event handler", pid);
                 ret = xsyscall(child);
-                if (0 != ret) {
-                    LOGV("Event handler returned nonzero for event E_EXECV, exiting loop");
+                if (0 != ret)
                     return ret;
-                }
-                LOGD("Successfully handled event E_EXECV for child %i", pid);
                 break;
             case E_GENUINE:
                 LOGD("Latest event for child %i is E_GENUINE, calling event handler", pid);
                 ret = xgenuine(child, status);
-                if (0 != ret) {
-                    LOGV("Event handler returned nonzero for event E_GENUINE, exiting loop");
+                if (0 != ret)
                     return ret;
-                }
-                LOGD("Successfully handled event E_GENUINE for child %i", pid);
                 break;
             case E_EXIT:
                 if (ctx->eldest == child) {
@@ -336,11 +303,8 @@ static int trace_loop(void) {
             case E_UNKNOWN:
                 LOGV("Unknown signal %#x received from child %i", status, pid);
                 ret = xunknown(child, status);
-                if (0 != ret) {
-                    LOGV("Event handler returned nonzero for event E_UNKNOWN, exiting loop");
+                if (0 != ret)
                     return ret;
-                }
-                LOGD("Successfully handled event E_UNKNOWN for child %i", pid);
                 break;
         }
     }

@@ -40,6 +40,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <linux/ptrace.h>
 
@@ -56,6 +58,35 @@ static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
 #define ACCUM           (8 * RAX)
 static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
+
+unsigned int trace_event(int status) {
+    if (WIFSTOPPED(status)) {
+        int sig = WSTOPSIG(status);
+        if (SIGSTOP == sig)
+            return E_STOP;
+        else if ((SIGTRAP | 0x80) == sig)
+            return E_SYSCALL;
+
+        switch (status) {
+            case SIGTRAP | PTRACE_EVENT_FORK << 8:
+                return E_FORK;
+            case SIGTRAP | PTRACE_EVENT_VFORK << 8:
+                return E_VFORK;
+            case SIGTRAP | PTRACE_EVENT_CLONE << 8:
+                return E_CLONE;
+            case SIGTRAP | PTRACE_EVENT_EXEC << 8:
+                return E_EXEC;
+            default:
+                return E_GENUINE;
+        }
+    }
+    else if (WIFEXITED(status))
+        return E_EXIT;
+    else if (WIFSIGNALED(status))
+        return E_EXIT_SIGNAL;
+
+    return E_UNKNOWN;
+}
 
 int trace_me(void) {
     if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
@@ -306,3 +337,4 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     }
     return 0;
 }
+

@@ -8,6 +8,7 @@
 
 #include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -27,6 +28,161 @@ void trace_teardown(void) {
     unlink("arnold_layne");
     unlink("its_not_the_same");
 }
+
+START_TEST(check_trace_event_e_stop) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+    }
+    else { /* parent */
+        int ret, status;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        ret = trace_event(status);
+        fail_unless(E_STOP == ret, "Expected E_SETUP got %d", ret);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_trace_event_e_syscall) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        sleep(1);
+    }
+    else { /* parent */
+        int ret, status;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will stop at the next system call. */
+        fail_if(0 > trace_syscall(pid, 0), "trace_syscall() failed: %s", strerror(errno));
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
+
+        /* Check the event */
+        ret = trace_event(status);
+        fail_unless(E_SYSCALL == ret, "Expected E_SYSCALL got %d", ret);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+/* TODO
+ * START_TEST(check_trace_event_e_fork)
+ * START_TEST(check_trace_event_e_vfork)
+ * START_TEST(check_trace_event_e_clone)
+ * START_TEST(check_trace_event_e_execv)
+ */
+
+START_TEST(check_trace_event_e_genuine) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        kill(getpid(), SIGINT);
+    }
+    else { /* parent */
+        int ret, status;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will receive a SIGINT */
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
+        wait(&status);
+
+        /* Check the event */
+        ret = trace_event(status);
+        fail_unless(E_GENUINE == ret, "Expected E_GENUINE got %d", ret);
+
+        kill(pid, SIGTERM);
+    }
+}
+END_TEST
+
+START_TEST(check_trace_event_e_exit) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        exit(EXIT_SUCCESS);
+    }
+    else { /* parent */
+        int ret, status;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child, it will exit. */
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
+        wait(&status);
+
+        /* Check the event */
+        ret = trace_event(status);
+        fail_unless(E_EXIT == ret, "Expected E_EXIT got %d", ret);
+    }
+}
+END_TEST
+
+START_TEST(check_trace_event_e_exit_signal) {
+    pid_t pid;
+
+    pid = fork();
+    if (0 > pid)
+        fail("fork() failed: %s", strerror(errno));
+    else if (0 == pid) { /* child */
+        trace_me();
+        kill(getpid(), SIGSTOP);
+        for(;;)
+            sleep(1);
+    }
+    else { /* parent */
+        int ret, status;
+        struct tchild *tc = NULL;
+
+        wait(&status);
+        fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
+        fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
+
+        /* Resume the child. */
+        fail_if(0 > trace_cont(pid), "trace_cont() failed: %s", strerror(errno));
+        /* Kill it with a signal. */
+        kill(pid, SIGKILL);
+        wait(&status);
+
+        /* Check the event */
+        ret = trace_event(status);
+        fail_unless(E_EXIT_SIGNAL == ret, "Expected E_EXIT_SIGNAL got %d", ret);
+    }
+}
+END_TEST
 
 START_TEST(check_trace_get_syscall) {
     pid_t pid;
@@ -410,6 +566,11 @@ Suite *trace_suite_create(void) {
     /* ptrace_* test cases */
     TCase *tc_trace = tcase_create("trace");
     tcase_add_checked_fixture(tc_trace, NULL, trace_teardown);
+    tcase_add_test(tc_trace, check_trace_event_e_stop);
+    tcase_add_test(tc_trace, check_trace_event_e_syscall);
+    tcase_add_test(tc_trace, check_trace_event_e_genuine);
+    tcase_add_test(tc_trace, check_trace_event_e_exit);
+    tcase_add_test(tc_trace, check_trace_event_e_exit_signal);
     tcase_add_test(tc_trace, check_trace_get_syscall);
     tcase_add_test(tc_trace, check_trace_set_syscall);
     tcase_add_test(tc_trace, check_trace_get_string_first);

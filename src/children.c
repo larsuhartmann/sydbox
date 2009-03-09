@@ -20,16 +20,8 @@
  */
 
 #include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <sys/ptrace.h>
-#include <linux/ptrace.h>
 
 #include "defs.h"
 
@@ -140,63 +132,4 @@ struct tchild *tchild_find(struct tchild **head, pid_t pid) {
         current = current->next;
     }
     return NULL;
-}
-
-// Learn the cause of the signal received from child.
-unsigned int tchild_event(struct tchild *child, int status) {
-    unsigned int event;
-    int sig;
-
-    if (WIFSTOPPED(status)) {
-        // Execution of child stopped by a signal
-        sig = WSTOPSIG(status);
-        if (sig == SIGSTOP) {
-            if (NULL != child && child->flags & TCHILD_NEEDSETUP) {
-                LOGD("Child %i is born and she's ready for tracing", child->pid);
-                return E_SETUP;
-            }
-            if (NULL == child) {
-                LOGD("Child is born before fork event and she's ready for tracing");
-                return E_SETUP_PREMATURE;
-            }
-        }
-        else if (sig & SIGTRAP) {
-            // We got a signal from ptrace.
-            if (sig == (SIGTRAP | 0x80)) {
-                // Child made a system call
-                return E_SYSCALL;
-            }
-            event = (status >> 16) & 0xffff;
-            if (PTRACE_EVENT_FORK == event) {
-                LOGD("Child %i called fork()", child->pid);
-                return E_FORK;
-            }
-            else if (PTRACE_EVENT_VFORK == event) {
-                LOGD("Child %i called vfork()", child->pid);
-                return E_FORK;
-            }
-            else if (PTRACE_EVENT_CLONE == event) {
-                LOGD("Child %i called clone()", child->pid);
-                return E_FORK;
-            }
-            else if (PTRACE_EVENT_EXEC == event) {
-                LOGD("Child %i called execve()", child->pid);
-                return E_EXECV;
-            }
-        }
-        else {
-            // Genuine signal directed to child itself
-            LOGD("Child %i received a signal", child->pid);
-            return E_GENUINE;
-        }
-    }
-    else if (WIFEXITED(status)) {
-        LOGV("Child %i exited with return code: %d", NULL == child ? -1 : child->pid, WEXITSTATUS(status));
-        return E_EXIT;
-    }
-    else if (WIFSIGNALED(status)) {
-        LOGV("Child %i was terminated by signal: %d", NULL == child ? -1 : child->pid, WTERMSIG(status));
-        return E_EXIT_SIGNAL;
-    }
-    return E_UNKNOWN;
 }

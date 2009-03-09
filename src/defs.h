@@ -112,19 +112,6 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
 int pathlist_check(struct pathnode **pathlist, const char *path);
 
 /* children.c */
-/* Events */
-enum {
-    E_SETUP = 0,
-    E_SETUP_PREMATURE,
-    E_SYSCALL,
-    E_FORK,
-    E_EXECV,
-    E_GENUINE,
-    E_EXIT,
-    E_EXIT_SIGNAL,
-    E_UNKNOWN
-};
-
 /* TCHILD_ flags */
 #define TCHILD_NEEDSETUP (1 << 0) /* Child needs setup */
 #define TCHILD_INSYSCALL (1 << 1) /* Child is in syscall */
@@ -158,7 +145,6 @@ void tchild_new(struct tchild **head, pid_t pid);
 void tchild_free(struct tchild **head);
 void tchild_delete(struct tchild **head, pid_t pid);
 struct tchild *tchild_find(struct tchild **head, pid_t pid);
-unsigned int tchild_event(struct tchild *child, int status);
 
 /* context.c */
 typedef struct {
@@ -231,6 +217,21 @@ char *resolve_path(const char *path, int resolve);
 int handle_esrch(context_t *ctx, struct tchild *child);
 
 /* trace.c */
+/* Events */
+enum {
+    E_STOP = 0,
+    E_SYSCALL,
+    E_FORK,
+    E_VFORK,
+    E_CLONE,
+    E_EXEC,
+    E_GENUINE,
+    E_EXIT,
+    E_EXIT_SIGNAL,
+    E_UNKNOWN
+};
+unsigned int trace_event(int status);
+
 int trace_me(void);
 int trace_setup(pid_t pid);
 int trace_kill(pid_t pid);
