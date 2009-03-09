@@ -361,9 +361,7 @@ int trace_fake_stat(pid_t pid) {
         return -1;
     }
 
-    if (0 > umoven(pid, addr, fakebuf_ptr, sizeof(struct stat)))
-        return -1;
-
+    memset(fakebuf_ptr, 0, sizeof(struct stat));
     fakebuf_ptr->st_mode = S_IFDIR;
     fakebuf_ptr->st_uid  = 0;
     fakebuf_ptr->st_gid  = 0;
