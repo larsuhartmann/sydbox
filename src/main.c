@@ -717,7 +717,7 @@ skip_commandline:
         ctx->eldest->sandbox->net = net;
         ctx->eldest->sandbox->write_prefixes = write_prefixes;
         ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
-        ctx->eldest->cwd = getcwd(NULL, PATH_MAX);
+        ctx->eldest->cwd = egetcwd();
         if (NULL == ctx->eldest->cwd)
             DIESOFT("Failed to get current working directory: %s", strerror(errno));
 
