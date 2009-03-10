@@ -12,6 +12,7 @@ export LANG=C
 export LC_ALL=C
 export TZ=UTC
 
+unset PWD
 unset SANDBOX_PHASE
 unset SANDBOX_WRITE
 unset SANDBOX_PREDICT
