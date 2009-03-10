@@ -690,6 +690,9 @@ skip_commandline:
     else { // Parent process
         int status, ret;
 
+        // Clean environment
+        unsetenv("PWD");
+
         // Handle signals
         struct sigaction new_action, old_action;
         new_action.sa_handler = sig_cleanup;
