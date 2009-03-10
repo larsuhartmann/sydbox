@@ -54,7 +54,7 @@ char *egetcwd(void) {
 // readlink that allocates the string itself and appends a zero at the end
 char *ereadlink(const char *path) {
     char *buf;
-    int nrequested, nwritten;
+    long nrequested, nwritten;
 
     buf = NULL;
     nrequested = 32;
