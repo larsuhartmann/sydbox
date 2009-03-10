@@ -274,9 +274,9 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
     LOGD("Checking \"%s\" for predict access", path);
     int allow_predict = pathlist_check(&(child->sandbox->predict_prefixes), path);
 
-    char reason[PATH_MAX + 128];
-    const char *sname;
     if (!allow_write && !allow_predict) {
+        const char *sname;
+        char *reason = xmalloc((strlen(path) + 256) * sizeof(char));
         child->retval = -EPERM;
         if (0 == npath)
             strcpy(reason, "%s(\"%s\", ");
@@ -293,6 +293,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
             strcat(reason, "...)");
         sname = syscall_get_name(sdef->no);
         access_error(child->pid, reason, sname, path);
+        free(reason);
         return RS_DENY;
     }
     else if (!allow_write && allow_predict) {
