@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -278,7 +279,7 @@ int trace_set_return(pid_t pid, long val) {
     return 0;
 }
 
-int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
+char *trace_get_string(pid_t pid, int arg) {
     int save_errno;
     long addr = 0;
 
@@ -287,9 +288,24 @@ int trace_get_string(pid_t pid, int arg, char *dest, size_t len) {
         save_errno = errno;
         LOGE("Failed to get address of argument %d: %s", arg, strerror(errno));
         errno = save_errno;
-        return -1;
+        return NULL;
     }
-    return umoven(pid, addr, dest, len);
+
+    char *buf = NULL;
+    long len = PATH_MAX;
+    for (;;) {
+        buf = xrealloc(buf, len * sizeof(char));
+        memset(buf, 0, len * sizeof(char));
+        if (0 > umoven(pid, addr, buf, len)) {
+            free(buf);
+            return NULL;
+        }
+        else if ('\0' == buf[len - 1])
+            break;
+        else
+            len *= 2;
+    }
+    return buf;
 }
 
 int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {

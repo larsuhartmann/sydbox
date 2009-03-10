@@ -228,25 +228,27 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
     return rpath;
 }
 
-static int syscall_get_pathat(pid_t pid, char *dest, unsigned int npath) {
+static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
     int save_errno;
     long dirfd;
+    char *buf;
 
     assert(1 == npath || 3 == npath);
     if (0 > trace_get_arg(pid, npath - 1, &dirfd)) {
         save_errno = errno;
         LOGE("Failed to get dirfd: %s", strerror(errno));
         errno = save_errno;
-        return -1;
+        return NULL;
     }
-    if (0 > trace_get_string(pid, npath, dest, PATH_MAX)) {
+    buf = trace_get_string(pid, npath);
+    if (NULL == buf) {
         save_errno = errno;
         LOGE("Failed to get string from argument %d: %s", npath, strerror(errno));
         errno = save_errno;
-        return -1;
+        return NULL;
     }
 
-    if (AT_FDCWD != dirfd && '/' != dest[0]) {
+    if (AT_FDCWD != dirfd && '/' != buf[0]) {
         char procfd[128];
         char *dname;
 
@@ -256,15 +258,16 @@ static int syscall_get_pathat(pid_t pid, char *dest, unsigned int npath) {
             save_errno = errno;
             LOGE("readlink() failed for `%s': %s", dname, strerror(errno));
             errno = save_errno;
-            return -1;
+            return NULL;
         }
 
-        char *destc = xstrndup(dest, strlen(dest) + 1);
-        snprintf(dest, PATH_MAX, "%s/%s", dname, destc);
+        char *destc = xstrndup(buf, strlen(buf) + 1);
+        buf = xrealloc(buf, strlen(buf) + strlen(dname) + 2);
+        sprintf(buf, "%s/%s", dname, destc);
         free(dname);
         free(destc);
     }
-    return 0;
+    return buf;
 }
 
 static enum res_syscall syscall_check_path(struct tchild *child, const struct syscall_def *sdef,
@@ -400,9 +403,10 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
 
 static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
     int save_errno;
-    char path[PATH_MAX];
+    char *path;
 
-    if (0 > trace_get_string(child->pid, 0, path, PATH_MAX)) {
+    path = trace_get_string(child->pid, 0);
+    if (NULL == path) {
         save_errno = errno;
         LOGE("Failed to get string from argument 0: %s", strerror(errno));
         errno = save_errno;
@@ -417,11 +421,13 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
             errno = save_errno;
             return RS_ERROR;
         }
+        free(path);
         child->retval = 0;
         return RS_DENY;
     }
     else {
         LOGD("stat(\"%s\") is not magic", path);
+        free(path);
         return RS_NONMAGIC;
     }
 }
@@ -469,8 +475,8 @@ found:
     // Handle magic calls
     if (LOCK_SET != child->sandbox->lock) {
         if (sdef->flags & MAGIC_OPEN) {
-            pathfirst = (char *) xmalloc(PATH_MAX * sizeof(char));
-            if (0 > trace_get_string(child->pid, 0, pathfirst, PATH_MAX)) {
+            pathfirst = trace_get_string(child->pid, 0);
+            if (NULL == pathfirst) {
                 save_errno = errno;
                 LOGE("Failed to get string from argument 0: %s", strerror(errno));
                 errno = save_errno;
@@ -502,8 +508,8 @@ found:
     if (sdef->flags & CHECK_PATH) {
         LOGD("System call %s() has CHECK_PATH set, checking", sname);
         if (NULL == pathfirst) {
-            pathfirst = xmalloc(PATH_MAX * sizeof(char));
-            if (0 > trace_get_string(child->pid, 0, pathfirst, PATH_MAX)) {
+            pathfirst = trace_get_string(child->pid, 0);
+            if (NULL == pathfirst) {
                 save_errno = errno;
                 LOGE("Failed to get string from argument 0: %s", strerror(errno));
                 errno = save_errno;
@@ -528,8 +534,8 @@ found:
     }
     if (sdef->flags & CHECK_PATH2) {
         LOGD("System call %s() has CHECK_PATH2 set, checking", sname);
-        path = xmalloc(PATH_MAX * sizeof(char));
-        if (0 > trace_get_string(child->pid, 1, path, PATH_MAX)) {
+        path = trace_get_string(child->pid, 1);
+        if (NULL == path) {
             save_errno = errno;
             LOGE("Failed to get string from argument 1: %s", strerror(errno));
             errno = save_errno;
@@ -549,11 +555,9 @@ found:
     }
     if (sdef->flags & CHECK_PATH_AT) {
         LOGD("System call %s() has CHECK_PATH_AT set, checking", sname);
-        path = xmalloc(PATH_MAX * sizeof(char));
-        if (0 > syscall_get_pathat(child->pid, path, 1)) {
-            free(path);
+        path = syscall_get_pathat(child->pid, 1);
+        if (NULL == path)
             return RS_ERROR;
-        }
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
@@ -572,11 +576,9 @@ found:
     }
     if (sdef->flags & CHECK_PATH_AT2) {
         LOGD("System call %s() has CHECK_PATH_AT2 set, checking", sname);
-        path = xmalloc(PATH_MAX * sizeof(char));
-        if (0 > syscall_get_pathat(child->pid, path, 3)) {
-            free(path);
+        path = syscall_get_pathat(child->pid, 3);
+        if (NULL == path)
             return RS_DENY;
-        }
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 3);
         if (NULL == rpath) {
             child->retval = -errno;
