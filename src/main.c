@@ -106,8 +106,11 @@ static void usage(void) {
 // Cleanup functions
 static void cleanup(void) {
     LOGV("Cleaning up before exit");
-    if (NULL != ctx && NULL != ctx->eldest)
-        trace_kill(ctx->eldest->pid);
+    if (NULL != ctx && NULL != ctx->eldest) {
+        LOGN("Killing child %i", ctx->eldest->pid);
+        if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
+            LOGW("Failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
+    }
     if (NULL != log_fp) {
         fclose(log_fp);
         log_fp = NULL;
@@ -115,8 +118,13 @@ static void cleanup(void) {
 }
 
 static void sig_cleanup(int signum) {
+    struct sigaction action;
     LOGW("Received signal %d, calling cleanup()", signum);
     cleanup();
+    sigaction(signum, NULL, &action);
+    action.sa_handler = SIG_DFL;
+    sigaction(signum, &action, NULL);
+    raise(signum);
 }
 
 // Event handlers
@@ -281,14 +289,17 @@ static int trace_loop(void) {
                     return ret;
                 break;
             case E_EXIT:
+                ret = WEXITSTATUS(status);
                 if (ctx->eldest == child) {
                     // Eldest child, keep the return value
-                    ret = WEXITSTATUS(status);
-                    LOGN("Eldest child %i exited with return code %d", pid, ret);
+                    if (0 != ret)
+                        LOGN("Eldest child %i exited with return code %d", pid, ret);
+                    else
+                        LOGV("Eldest child %i exited with return code %d", pid, ret);
                     tchild_delete(&(ctx->children), pid);
                     return ret;
                 }
-                LOGV("Child %i exited with return code: %d", pid, WEXITSTATUS(status));
+                LOGD("Child %i exited with return code: %d", pid, ret);
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_EXIT_SIGNAL:
@@ -699,6 +710,9 @@ skip_commandline:
         sigemptyset(&new_action.sa_mask);
         new_action.sa_flags = 0;
 
+        sigaction (SIGSEGV, NULL, &old_action);
+        if (SIG_IGN != old_action.sa_handler)
+            sigaction(SIGSEGV, &new_action, NULL);
         sigaction (SIGINT, NULL, &old_action);
         if (SIG_IGN != old_action.sa_handler)
             sigaction(SIGINT, &new_action, NULL);
