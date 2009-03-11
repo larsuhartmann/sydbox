@@ -17,6 +17,7 @@
 #include "check_sydbox.h"
 
 START_TEST(check_pathnode_new) {
+    PRINT_TEST_HEADER;
     struct pathnode *head = NULL;
 
     pathnode_new(&head, "/dev/null", 1);
@@ -26,6 +27,7 @@ START_TEST(check_pathnode_new) {
 END_TEST
 
 START_TEST(check_pathnode_free) {
+    PRINT_TEST_HEADER;
     struct pathnode *head = NULL;
 
     pathnode_new(&head, "/dev/null", 1);
@@ -35,6 +37,7 @@ START_TEST(check_pathnode_free) {
 END_TEST
 
 START_TEST(check_pathnode_delete_first) {
+    PRINT_TEST_HEADER;
     struct pathnode *head = NULL;
 
     pathnode_new(&head, "/dev/null", 1);
@@ -45,6 +48,7 @@ START_TEST(check_pathnode_delete_first) {
 END_TEST
 
 START_TEST(check_pathnode_delete) {
+    PRINT_TEST_HEADER;
     int i = 0;
     struct pathnode *node = NULL;
     struct pathnode *curnode = NULL;
@@ -66,11 +70,13 @@ START_TEST(check_pathnode_delete) {
 END_TEST
 
 START_TEST(check_pathlist_init_unset) {
+    PRINT_TEST_HEADER;
     fail_unless(0 == pathlist_init(NULL, NULL), "Didn't return 0 when environment variable isn't set");
 }
 END_TEST
 
 START_TEST(check_pathlist_init) {
+    PRINT_TEST_HEADER;
     const char env[] = "foo:bar:baz";
     int seen_foo = 0, seen_bar = 0, seen_baz = 0;
     struct pathnode *plist = NULL;
@@ -102,6 +108,7 @@ START_TEST(check_pathlist_init) {
 END_TEST
 
 START_TEST(check_pathlist_init_ignore_empty) {
+    PRINT_TEST_HEADER;
     const char env[] = "foo::bar::baz::::::";
     struct pathnode *plist = NULL;
 
@@ -111,6 +118,7 @@ START_TEST(check_pathlist_init_ignore_empty) {
 END_TEST
 
 START_TEST(check_pathlist_check) {
+    PRINT_TEST_HEADER;
     const char env[] = "/dev";
     struct pathnode *plist = NULL;
 

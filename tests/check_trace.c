@@ -30,6 +30,7 @@ void trace_teardown(void) {
 }
 
 START_TEST(check_trace_event_e_stop) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -53,6 +54,7 @@ START_TEST(check_trace_event_e_stop) {
 END_TEST
 
 START_TEST(check_trace_event_e_syscall) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -92,6 +94,7 @@ END_TEST
  */
 
 START_TEST(check_trace_event_e_genuine) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -123,6 +126,7 @@ START_TEST(check_trace_event_e_genuine) {
 END_TEST
 
 START_TEST(check_trace_event_e_exit) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -152,6 +156,7 @@ START_TEST(check_trace_event_e_exit) {
 END_TEST
 
 START_TEST(check_trace_event_e_exit_signal) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -185,6 +190,7 @@ START_TEST(check_trace_event_e_exit_signal) {
 END_TEST
 
 START_TEST(check_trace_get_syscall) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -221,6 +227,7 @@ START_TEST(check_trace_get_syscall) {
 END_TEST
 
 START_TEST(check_trace_set_syscall) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -263,6 +270,7 @@ START_TEST(check_trace_set_syscall) {
 END_TEST
 
 START_TEST(check_trace_get_string_first) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -300,6 +308,7 @@ START_TEST(check_trace_get_string_first) {
 END_TEST
 
 START_TEST(check_trace_get_string_second) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -337,6 +346,7 @@ START_TEST(check_trace_get_string_second) {
 END_TEST
 
 START_TEST(check_trace_get_string_third) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -374,6 +384,7 @@ START_TEST(check_trace_get_string_third) {
 END_TEST
 
 START_TEST(check_trace_get_string_fourth) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -411,6 +422,7 @@ START_TEST(check_trace_get_string_fourth) {
 END_TEST
 
 START_TEST(check_trace_set_string_first) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -450,6 +462,7 @@ START_TEST(check_trace_set_string_first) {
 END_TEST
 
 START_TEST(check_trace_set_string_second) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -489,6 +502,7 @@ START_TEST(check_trace_set_string_second) {
 END_TEST
 
 START_TEST(check_trace_set_string_third) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -529,6 +543,7 @@ START_TEST(check_trace_set_string_third) {
 END_TEST
 
 START_TEST(check_trace_set_string_fourth) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();

@@ -19,6 +19,7 @@
 #include "check_sydbox.h"
 
 START_TEST(check_tchild_new) {
+    PRINT_TEST_HEADER;
     struct tchild *tc = NULL;
 
     tchild_new(&tc, 666);
@@ -35,6 +36,7 @@ START_TEST(check_tchild_new) {
 END_TEST
 
 START_TEST(check_tchild_free) {
+    PRINT_TEST_HEADER;
     struct tchild *tc = NULL;
 
     tchild_new(&tc, 666);
@@ -45,6 +47,7 @@ START_TEST(check_tchild_free) {
 END_TEST
 
 START_TEST(check_tchild_delete_first) {
+    PRINT_TEST_HEADER;
     struct tchild *tc = NULL;
 
     tchild_new(&tc, 666);
@@ -55,6 +58,7 @@ START_TEST(check_tchild_delete_first) {
 END_TEST
 
 START_TEST(check_tchild_delete) {
+    PRINT_TEST_HEADER;
     int i = 0;
     struct tchild *tc = NULL;
     struct tchild *curtc = NULL;
@@ -76,6 +80,7 @@ START_TEST(check_tchild_delete) {
 END_TEST
 
 START_TEST(check_tchild_find) {
+    PRINT_TEST_HEADER;
     struct tchild *tc = NULL;
 
     for(int i = 666; i < 670; i++)

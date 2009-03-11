@@ -33,6 +33,7 @@ void syscall_teardown(void) {
 }
 
 START_TEST(syscall_check_chmod_deny) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -73,6 +74,7 @@ START_TEST(syscall_check_chmod_deny) {
 END_TEST
 
 START_TEST(syscall_check_chmod_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -114,6 +116,7 @@ START_TEST(syscall_check_chmod_predict) {
 END_TEST
 
 START_TEST(syscall_check_chmod_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -155,6 +158,7 @@ START_TEST(syscall_check_chmod_allow) {
 END_TEST
 
 START_TEST(syscall_check_chown_deny) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -196,6 +200,7 @@ START_TEST(syscall_check_chown_deny) {
 END_TEST
 
 START_TEST(syscall_check_chown_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -237,6 +242,7 @@ START_TEST(syscall_check_chown_predict) {
 END_TEST
 
 START_TEST(syscall_check_chown_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -278,6 +284,7 @@ START_TEST(syscall_check_chown_allow) {
 END_TEST
 
 START_TEST(syscall_check_open_rdonly_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -318,6 +325,7 @@ START_TEST(syscall_check_open_rdonly_allow) {
 END_TEST
 
 START_TEST(syscall_check_open_wronly_deny) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -361,6 +369,7 @@ START_TEST(syscall_check_open_wronly_deny) {
 END_TEST
 
 START_TEST(syscall_check_open_wronly_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     int pfd[2];
     char cwd[PATH_MAX];
@@ -439,6 +448,7 @@ START_TEST(syscall_check_open_wronly_predict) {
 END_TEST
 
 START_TEST(syscall_check_open_wronly_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -480,6 +490,7 @@ START_TEST(syscall_check_open_wronly_allow) {
 END_TEST
 
 START_TEST(syscall_check_open_rdwr_deny) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -523,6 +534,7 @@ START_TEST(syscall_check_open_rdwr_deny) {
 END_TEST
 
 START_TEST(syscall_check_open_rdwr_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     int pfd[2];
     char cwd[PATH_MAX];
@@ -600,6 +612,7 @@ START_TEST(syscall_check_open_rdwr_predict) {
 END_TEST
 
 START_TEST(syscall_check_open_rdwr_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -641,6 +654,7 @@ START_TEST(syscall_check_open_rdwr_allow) {
 END_TEST
 
 START_TEST(syscall_check_open_magic_write) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -685,6 +699,7 @@ START_TEST(syscall_check_open_magic_write) {
 END_TEST
 
 START_TEST(syscall_check_open_magic_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -729,6 +744,7 @@ START_TEST(syscall_check_open_magic_predict) {
 END_TEST
 
 START_TEST(syscall_check_creat_deny) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -770,6 +786,7 @@ START_TEST(syscall_check_creat_deny) {
 END_TEST
 
 START_TEST(syscall_check_creat_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     int pfd[2];
     char cwd[PATH_MAX];
@@ -847,6 +864,7 @@ START_TEST(syscall_check_creat_predict) {
 END_TEST
 
 START_TEST(syscall_check_creat_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     char cwd[PATH_MAX];
     char *rcwd;
@@ -899,6 +917,7 @@ START_TEST(syscall_check_creat_allow) {
 END_TEST
 
 START_TEST(syscall_check_stat_magic) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     struct stat buf;
 
@@ -940,6 +959,7 @@ START_TEST(syscall_check_stat_magic) {
 END_TEST
 
 START_TEST(syscall_check_stat_magic_write) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     struct stat buf;
 
@@ -981,6 +1001,7 @@ START_TEST(syscall_check_stat_magic_write) {
 END_TEST
 
 START_TEST(syscall_check_stat_magic_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     struct stat buf;
 
@@ -1022,6 +1043,7 @@ START_TEST(syscall_check_stat_magic_predict) {
 END_TEST
 
 START_TEST(syscall_check_lchown_deny) {
+    PRINT_TEST_HEADER;
     pid_t pid;
 
     pid = fork();
@@ -1065,6 +1087,7 @@ START_TEST(syscall_check_lchown_deny) {
 END_TEST
 
 START_TEST(syscall_check_lchown_predict) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     char cwd[PATH_MAX];
     char *rcwd;
@@ -1114,6 +1137,7 @@ START_TEST(syscall_check_lchown_predict) {
 END_TEST
 
 START_TEST(syscall_check_lchown_allow) {
+    PRINT_TEST_HEADER;
     pid_t pid;
     char cwd[PATH_MAX];
     char *rcwd;

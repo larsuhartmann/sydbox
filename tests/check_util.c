@@ -11,8 +11,10 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "check_sydbox.h"
 
 START_TEST(check_util_remove_slash_begin) {
+    PRINT_TEST_HEADER;
     char *dest = remove_slash("////dev/null");
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
     free(dest);
@@ -20,6 +22,7 @@ START_TEST(check_util_remove_slash_begin) {
 END_TEST
 
 START_TEST(check_util_remove_slash_middle) {
+    PRINT_TEST_HEADER;
     char *dest = remove_slash("/dev////null");
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
     free(dest);
@@ -27,6 +30,7 @@ START_TEST(check_util_remove_slash_middle) {
 END_TEST
 
 START_TEST(check_util_remove_slash_end) {
+    PRINT_TEST_HEADER;
     char *dest = remove_slash("/dev/null////");
     fail_unless(0 == strncmp(dest, "/dev/null", 10), "/dev/null != '%s'", dest);
     free(dest);
@@ -34,6 +38,7 @@ START_TEST(check_util_remove_slash_end) {
 END_TEST
 
 START_TEST(check_util_remove_slash_only_slash) {
+    PRINT_TEST_HEADER;
     char *dest = remove_slash("////");
     fail_unless(0 == strncmp(dest, "/", 2), "/ != '%s'", dest);
     free(dest);
@@ -41,6 +46,7 @@ START_TEST(check_util_remove_slash_only_slash) {
 END_TEST
 
 START_TEST(check_util_remove_slash_empty) {
+    PRINT_TEST_HEADER;
     char *dest = remove_slash("");
     fail_unless(0 == strncmp(dest, "", 1));
     free(dest);
