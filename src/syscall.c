@@ -684,10 +684,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             }
             if (0 == retval) {
                 // Child has successfully changed directory
-                if (NULL != child->cwd)
-                    free(child->cwd);
-                child->cwd = pgetcwd(child->pid);
-                if (NULL == child->cwd) {
+                char *newcwd = pgetcwd(child->pid);
+                if (NULL == newcwd) {
                     retval = -errno;
                     if (0 > trace_set_return(child->pid, retval)) {
                         if (ESRCH == errno)
@@ -696,7 +694,12 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                             DIESOFT("Failed to set return code: %s", strerror(errno));
                     }
                 }
-                LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
+                else {
+                    if (NULL != child->cwd)
+                        free(child->cwd);
+                    child->cwd = newcwd;
+                    LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
+                }
             }
         }
         child->flags ^= TCHILD_INSYSCALL;
