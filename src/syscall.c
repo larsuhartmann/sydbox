@@ -523,7 +523,7 @@ found:
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", pathfirst, strerror(errno));
             free(pathfirst);
-            return RS_ERROR;
+            return RS_DENY;
         }
         free(pathfirst);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 0);
@@ -548,7 +548,7 @@ found:
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             free(path);
-            return RS_ERROR;
+            return RS_DENY;
         }
         free(path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
@@ -565,7 +565,7 @@ found:
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             free(path);
-            return RS_ERROR;
+            return RS_DENY;
         }
         free(path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
