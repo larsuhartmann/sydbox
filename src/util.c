@@ -240,43 +240,6 @@ char *shell_expand(const char *src) {
     return dest;
 }
 
-char *resolve_path(const char *path, int resolve) {
-    char *rpath;
-
-    if (NULL == path)
-        return NULL;
-
-    if (!resolve)
-        rpath = erealpath(path, NULL);
-    else
-        rpath = realpath(path, NULL);
-
-    if (NULL == rpath && ENOENT == errno) {
-        // File doesn't exist, check the parent directory.
-        char *dname = edirname(path);
-        LOGD("File `%s' doesn't exist, using directory `%s'", path, dname);
-
-        if (!resolve)
-            rpath = erealpath(dname, NULL);
-        else
-            rpath = realpath(dname, NULL);
-        free(dname);
-
-        if (NULL == rpath) {
-            LOGD("Directory doesn't exist as well, setting errno to ENOENT");
-            errno = ENOENT;
-            return NULL;
-        }
-        else {
-            LOGD("File `%s' doesn't exist but directory `%s' exists, adding basename", path, rpath);
-            char *bname = ebasename(path);
-            strncat(rpath, "/", 1);
-            strncat(rpath, bname, strlen(bname));
-        }
-    }
-    return rpath;
-}
-
 // Handle the ESRCH errno which means child is dead
 int handle_esrch(context_t *ctx, struct tchild *child) {
     int ret = 0;

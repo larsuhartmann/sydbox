@@ -23,6 +23,7 @@
 #include <limits.h>
 #include <sysexits.h>
 #include <sys/types.h>
+#include <stdbool.h>
 #include <stdio.h> /* FILE */
 
 #ifdef HAVE_CONFIG_H
@@ -166,6 +167,16 @@ char *egetcwd(void);
 char *ereadlink(const char *path);
 char *pgetcwd(pid_t pid);
 
+enum canonicalize_mode_t {
+    /* All components must exist.  */
+    CAN_EXISTING = 0,
+    /* All components excluding last one must exist.  */
+    CAN_ALL_BUT_LAST = 1,
+};
+typedef enum canonicalize_mode_t canonicalize_mode_t;
+
+char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode, bool resolve);
+
 /* util.c */
 extern int log_level;
 extern char *log_file;
@@ -218,7 +229,6 @@ char *__xstrndup(const char *str, size_t size, const char *file, const char *fun
 
 char *remove_slash(const char *src);
 char *shell_expand(const char *src);
-char *resolve_path(const char *path, int resolve);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
 

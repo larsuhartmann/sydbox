@@ -1,6 +1,6 @@
 SUBDIRS = .
 
-CLEANFILES= *.log
+CLEANFILES= *.log test-lib.bash
 
 TESTS= t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash t05-lchown.bash \
        t06-link.bash t07-mkdir.bash t08-mknod.bash t09-access.bash \

@@ -195,32 +195,34 @@ static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
 
 static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
         char *path, bool has_creat, unsigned int npath) {
+    long len;
     char *pathc, *rpath;
     bool free_pathc = false;
 
     if ('/' != path[0]) {
         // Add current working directory
         LOGD("`%s' is not an absolute path, adding cwd `%s'", path, child->cwd);
-        pathc = xmalloc(PATH_MAX * sizeof(char));
-        snprintf(pathc, PATH_MAX, "%s/%s", child->cwd, path);
+        len = strlen(child->cwd) + strlen(path) + 2;
+        pathc = xmalloc(len * sizeof(char));
+        snprintf(pathc, len, "%s/%s", child->cwd, path);
         free_pathc = true;
     }
     else
         pathc = path;
 
-    if (syscall_can_creat(npath, flags) && has_creat) {
-        LOGC("System call may create the file, using wrapper function");
+    if (has_creat || syscall_can_creat(npath, flags)) {
+        LOGC("System call may create the file, setting mode to CAN_ALL_BUT_LAST");
         if (flags & DONT_RESOLV)
-            rpath = resolve_path(pathc, 0);
+            rpath = canonicalize_filename_mode(pathc, CAN_ALL_BUT_LAST, false);
         else
-            rpath = resolve_path(pathc, 1);
+            rpath = canonicalize_filename_mode(pathc, CAN_ALL_BUT_LAST, true);
     }
     else {
-        LOGC("System call can't create the file, using realpath()");
+        LOGC("System call can't create the file, setting mode to CAN_EXISTING");
         if (flags & DONT_RESOLV)
-            rpath = erealpath(pathc, NULL);
+            rpath = canonicalize_filename_mode(pathc, CAN_EXISTING, false);
         else
-            rpath = erealpath(pathc, NULL);
+            rpath = canonicalize_filename_mode(pathc, CAN_EXISTING, true);
     }
 
     if (free_pathc)
@@ -318,7 +320,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
         * prevent symlink races.
         */
         LOGD("Paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
-        if (0 > trace_set_string(child->pid, npath, path, PATH_MAX)) {
+        if (0 > trace_set_string(child->pid, npath, path, strlen(path) + 1)) {
             int save_errno = errno;
             LOGE("Failed to set string: %s", strerror(errno));
             errno = save_errno;
@@ -519,7 +521,7 @@ found:
         rpath = syscall_get_rpath(child, sdef->flags, pathfirst, has_creat, 0);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("realpath() failed for `%s': %s", pathfirst, strerror(errno));
+            LOGD("canonicalize_filename_mode() failed for `%s': %s", pathfirst, strerror(errno));
             free(pathfirst);
             return RS_ERROR;
         }
@@ -544,7 +546,7 @@ found:
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+            LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             free(path);
             return RS_ERROR;
         }
@@ -561,7 +563,7 @@ found:
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+            LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             free(path);
             return RS_ERROR;
         }
@@ -582,7 +584,7 @@ found:
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 3);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("realpath() failed for `%s': %s", path, strerror(errno));
+            LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             free(path);
             return RS_DENY;
         }
