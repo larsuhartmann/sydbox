@@ -393,7 +393,7 @@ int trace_fake_stat(pid_t pid) {
             return -1;
         }
         ++n;
-        fakeptr += sizeof(long);
+        ++fakeptr;
     }
 
     m = sizeof(struct stat) % sizeof(long);
