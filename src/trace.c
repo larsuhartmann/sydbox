@@ -367,8 +367,7 @@ int trace_fake_stat(pid_t pid) {
         long val;
         char x[sizeof(long)];
     } u;
-    struct stat fakebuf, *fakebuf_ptr;
-    fakebuf_ptr = &fakebuf;
+    struct stat fakebuf;
 
     if (0 > trace_peek(pid, syscall_args[1], &addr)) {
         save_errno = errno;
@@ -377,31 +376,32 @@ int trace_fake_stat(pid_t pid) {
         return -1;
     }
 
-    memset(fakebuf_ptr, 0, sizeof(struct stat));
-    fakebuf_ptr->st_mode = S_IFDIR;
-    fakebuf_ptr->st_uid  = 0;
-    fakebuf_ptr->st_gid  = 0;
+    memset(&fakebuf, 0, sizeof(struct stat));
+    fakebuf.st_mode = S_IFDIR;
+    fakebuf.st_uid  = 0;
+    fakebuf.st_gid  = 0;
 
+    long *fakeptr = (long *) &fakebuf;
     n = 0;
     m = sizeof(struct stat) / sizeof(long);
     while (n < m) {
-        memcpy(u.x, fakebuf_ptr, sizeof(long));
+        memcpy(u.x, fakeptr, sizeof(long));
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            LOGE("Failed to set argument 1 to \"%p\": %s", (void *)fakebuf_ptr, strerror(errno));
+            LOGE("Failed to set argument 1 to \"%p\": %s", (void *)fakeptr, strerror(errno));
             errno = save_errno;
             return -1;
         }
         ++n;
-        fakebuf_ptr += sizeof(long);
+        fakeptr += sizeof(long);
     }
 
     m = sizeof(struct stat) % sizeof(long);
     if (0 != m) {
-        memcpy(u.x, fakebuf_ptr, m);
+        memcpy(u.x, fakeptr, m);
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            LOGE("Failed to set argument 1 to \"%p\": %s", (void *)fakebuf_ptr, strerror(errno));
+            LOGE("Failed to set argument 1 to \"%p\": %s", (void *)fakeptr, strerror(errno));
             errno = save_errno;
             return -1;
         }

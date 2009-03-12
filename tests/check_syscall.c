@@ -950,8 +950,7 @@ START_TEST(syscall_check_stat_magic) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &sno), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, sno),
-                "Denied access, expected allow");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, sno), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -992,8 +991,7 @@ START_TEST(syscall_check_stat_magic_write) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &sno), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, sno),
-                "Denied access, expected allow");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, sno), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
@@ -1034,8 +1032,7 @@ START_TEST(syscall_check_stat_magic_predict) {
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
         fail_if(0 > trace_get_syscall(pid, &sno), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, sno),
-                "Denied access, expected allow");
+        fail_unless(RS_DENY == syscall_check(ctx, ctx->eldest, sno), "Denied access, expected allow");
 
         kill(pid, SIGTERM);
     }
