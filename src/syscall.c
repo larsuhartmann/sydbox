@@ -334,26 +334,26 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
     if (path_magic_on(path)) {
         ismagic = 1;
         child->sandbox->on = 1;
-        LOGN("Sandbox status of child %i is now on", child->pid);
+        LOGV("Sandbox status of child %i is now on", child->pid);
     }
     else if (path_magic_off(path)) {
         ismagic = 1;
         child->sandbox->on = 0;
-        LOGN("Sandbox status of child %i is now off", child->pid);
+        LOGV("Sandbox status of child %i is now off", child->pid);
     }
     else if (path_magic_toggle(path)) {
         ismagic = 1;
         child->sandbox->on = !(child->sandbox->on);
-        LOGN("Sandbox status of child %i is now %s", child->pid, child->sandbox->on ? "on" : "off");
+        LOGV("Sandbox status of child %i is now %s", child->pid, child->sandbox->on ? "on" : "off");
     }
     else if (path_magic_lock(path)) {
         ismagic = 1;
-        LOGN("Access to magic commands is now denied for child %i", child->pid);
+        LOGV("Access to magic commands is now denied for child %i", child->pid);
         child->sandbox->lock = LOCK_SET;
     }
     else if (path_magic_exec_lock(path)) {
         ismagic = 1;
-        LOGN("Access to magic commands will be denied on execve() for child %i", child->pid);
+        LOGV("Access to magic commands will be denied on execve() for child %i", child->pid);
         child->sandbox->lock = LOCK_PENDING;
     }
     else if (path_magic_write(path)) {
