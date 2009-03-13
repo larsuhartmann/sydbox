@@ -196,8 +196,7 @@ static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
 static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
         char *path, bool has_creat, unsigned int npath) {
     long len;
-    char *pathc, *rpath;
-    bool free_pathc = false;
+    char *pathc, *path_sanitized, *rpath;
 
     if ('/' != path[0]) {
         // Add current working directory
@@ -205,28 +204,28 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
         len = strlen(child->cwd) + strlen(path) + 2;
         pathc = xmalloc(len * sizeof(char));
         snprintf(pathc, len, "%s/%s", child->cwd, path);
-        free_pathc = true;
+        path_sanitized = remove_slash(pathc);
+        free(pathc);
     }
     else
-        pathc = path;
+        path_sanitized = remove_slash(path);
 
     if (has_creat || syscall_can_creat(npath, flags)) {
-        LOGC("System call may create the file, setting mode to CAN_ALL_BUT_LAST");
+        LOGD("System call may create the file, setting mode to CAN_ALL_BUT_LAST");
         if (flags & DONT_RESOLV)
-            rpath = canonicalize_filename_mode(pathc, CAN_ALL_BUT_LAST, false);
+            rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, false);
         else
-            rpath = canonicalize_filename_mode(pathc, CAN_ALL_BUT_LAST, true);
+            rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, true);
     }
     else {
-        LOGC("System call can't create the file, setting mode to CAN_EXISTING");
+        LOGD("System call can't create the file, setting mode to CAN_EXISTING");
         if (flags & DONT_RESOLV)
-            rpath = canonicalize_filename_mode(pathc, CAN_EXISTING, false);
+            rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, false);
         else
-            rpath = canonicalize_filename_mode(pathc, CAN_EXISTING, true);
+            rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, true);
     }
 
-    if (free_pathc)
-        free(pathc);
+    free(path_sanitized);
     return rpath;
 }
 

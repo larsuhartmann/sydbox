@@ -110,7 +110,7 @@ int pathnode_new(struct pathnode **head, const char *path, int sanitize);
 void pathnode_free(struct pathnode **head);
 void pathnode_delete(struct pathnode **head, const char *path);
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
-int pathlist_check(struct pathnode **pathlist, const char *path);
+int pathlist_check(struct pathnode **pathlist, const char *path_sanitized);
 
 /* children.c */
 /* TCHILD_ flags */

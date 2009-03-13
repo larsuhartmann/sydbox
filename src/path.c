@@ -196,47 +196,44 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
     return numpaths;
 }
 
-int pathlist_check(struct pathnode **pathlist, const char *path) {
+int pathlist_check(struct pathnode **pathlist, const char *path_sanitized) {
     int ret;
-    char *spath;
     struct pathnode *node;
 
-    LOGD("Checking `%s'", path);
-    spath = remove_slash(path);
+    LOGD("Checking `%s'", path_sanitized);
 
     ret = 0;
     node = *pathlist;
     while (NULL != node) {
-        if (0 == strncmp(spath, node->path, strlen(node->path))) {
-            if (strlen(spath) > strlen(node->path)) {
+        if (0 == strncmp(path_sanitized, node->path, strlen(node->path))) {
+            if (strlen(path_sanitized) > strlen(node->path)) {
                 /* Path begins with one of the allowed paths. Check for a
                  * zero byte or a / on the next character so that for example
                  * /devzero/foo doesn't pass the test when /dev is the only
                  * allowed path.
                  */
-                const char last = spath[strlen(node->path)];
+                const char last = path_sanitized[strlen(node->path)];
                 if ('\0' == last || '/' == last) {
-                    LOGD("`%s' begins with `%s'", spath, node->path);
+                    LOGD("`%s' begins with `%s'", path_sanitized, node->path);
                     ret = 1;
                     break;
                 }
                 else
-                    LOGD("`%s' doesn't begin with `%s'", spath, node->path);
+                    LOGD("`%s' doesn't begin with `%s'", path_sanitized, node->path);
             }
             else {
-                LOGD("`%s' begins with `%s'", spath, node->path);
+                LOGD("`%s' begins with `%s'", path_sanitized, node->path);
                 ret = 1;
                 break;
             }
         }
         else
-            LOGD("`%s' doesn't begin with `%s'", spath, node->path);
+            LOGD("`%s' doesn't begin with `%s'", path_sanitized, node->path);
         node = node->next;
     }
     if (ret)
-        LOGD("Path list check succeeded for `%s'", spath);
+        LOGD("Path list check succeeded for `%s'", path_sanitized);
     else
-        LOGD("Path list check failed for `%s'", spath);
-    free(spath);
+        LOGD("Path list check failed for `%s'", path_sanitized);
     return ret;
 }
