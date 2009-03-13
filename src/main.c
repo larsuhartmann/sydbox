@@ -710,6 +710,9 @@ skip_commandline:
         sigemptyset(&new_action.sa_mask);
         new_action.sa_flags = 0;
 
+        sigaction (SIGABRT, NULL, &old_action);
+        if (SIG_IGN != old_action.sa_handler)
+            sigaction(SIGABRT, &new_action, NULL);
         sigaction (SIGSEGV, NULL, &old_action);
         if (SIG_IGN != old_action.sa_handler)
             sigaction(SIGSEGV, &new_action, NULL);
