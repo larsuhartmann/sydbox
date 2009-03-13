@@ -251,11 +251,7 @@ static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
     }
 
     if (AT_FDCWD != dirfd && '/' != buf[0]) {
-        char procfd[128];
-        char *dname;
-
-        snprintf(procfd, 128, "/proc/%i/fd/%ld", pid, dirfd);
-        dname = ereadlink(procfd);
+        char *dname = pgetdir(pid, dirfd);
         if (NULL == dname) {
             save_errno = errno;
             LOGE("readlink() failed for `%s': %s", dname, strerror(errno));

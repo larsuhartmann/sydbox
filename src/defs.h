@@ -165,7 +165,6 @@ char *edirname(const char *path);
 char *ebasename(const char *path);
 char *egetcwd(void);
 char *ereadlink(const char *path);
-char *pgetcwd(pid_t pid);
 
 enum canonicalize_mode_t {
     /* All components must exist.  */
@@ -176,6 +175,10 @@ enum canonicalize_mode_t {
 typedef enum canonicalize_mode_t canonicalize_mode_t;
 
 char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode, bool resolve);
+
+/* proc.c */
+char *pgetcwd(pid_t pid);
+char *pgetdir(pid_t pid, int dirfd);
 
 /* util.c */
 extern int log_level;

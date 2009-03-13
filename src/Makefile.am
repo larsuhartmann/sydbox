@@ -4,7 +4,7 @@ AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGITHEAD=\"$(GITHEAD)\" $(confuse_CFL
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = defs.h syscallent.h \
 		 children.c util.c context.c \
-		 path.c syscall.c trace.c wrappers.c main.c
+		 path.c syscall.c trace.c wrappers.c proc.c main.c
 sydbox_LDADD= $(confuse_LIBS)
 
 BUILT_SOURCES= syscallent.h

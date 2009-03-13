@@ -24,7 +24,6 @@
 #endif
 
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -233,10 +232,4 @@ error:
   free (extra_buf);
   free (rname);
   return NULL;
-}
-
-char *pgetcwd(pid_t pid) {
-    char procfd[64];
-    snprintf(procfd, 64, "/proc/%i/cwd", pid);
-    return ereadlink(procfd);
 }
