@@ -232,7 +232,7 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 
     if (0 > trace_peek(pid, syscall_args[arg], res)) {
         int save_errno = errno;
-        LOGV("Failed to get argument %d: %s", arg, strerror(errno));
+        LOGV("Failed to get argument %d for child %i: %s", arg, pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -242,7 +242,7 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 int trace_get_syscall(pid_t pid, long *syscall) {
     if (0 > trace_peek(pid, ORIG_ACCUM, syscall)) {
         int save_errno = errno;
-        LOGV("Failed to get syscall: %s", strerror(errno));
+        LOGV("Failed to get syscall number for child %i: %s", pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -262,7 +262,7 @@ int trace_set_syscall(pid_t pid, long syscall) {
 int trace_get_return(pid_t pid, long *res) {
     if (0 > trace_peek(pid, ACCUM, res)) {
         int save_errno = errno;
-        LOGV("Failed to get return value: %s", strerror(errno));
+        LOGV("Failed to get return value for child %i: %s", pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -319,7 +319,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     assert(arg >= 0 && arg < MAX_ARGS);
     if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
         save_errno = errno;
-        LOGV("Failed to get address of argument %d: %s", arg, strerror(errno));
+        LOGV("Failed to get address of argument %d for child %i: %s", arg, pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -331,7 +331,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
         memcpy(u.x, src, sizeof(long));
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            LOGV("Failed to set argument %d to \"%s\": %s", arg, src, strerror(errno));
+            LOGV("Failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, strerror(errno));
             errno = save_errno;
             return -1;
         }
@@ -345,14 +345,14 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
         u.val = ptrace(PTRACE_PEEKDATA, pid, addr + n * ADDR_MUL, 0);
         if (errno != 0) {
             save_errno = errno;
-            LOGV("Failed to set argument %d to \"%s\": %s", arg, src, strerror(errno));
+            LOGV("Failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, strerror(errno));
             errno = save_errno;
             return -1;
         }
         memcpy(u.x, src, m);
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            LOGV("Failed to set argument %d to \"%s\": %s", arg, src, strerror(errno));
+            LOGV("Failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, strerror(errno));
             errno = save_errno;
             return -1;
         }
@@ -371,7 +371,7 @@ int trace_fake_stat(pid_t pid) {
 
     if (0 > trace_peek(pid, syscall_args[1], &addr)) {
         save_errno = errno;
-        LOGV("Failed to get address of argument 1: %s", strerror(errno));
+        LOGV("Failed to get address of argument 1 for child %i: %s", pid, strerror(errno));
         errno = save_errno;
         return -1;
     }
@@ -388,7 +388,7 @@ int trace_fake_stat(pid_t pid) {
         memcpy(u.x, fakeptr, sizeof(long));
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            LOGV("Failed to set argument 1 to \"%p\": %s", (void *)fakeptr, strerror(errno));
+            LOGV("Failed to set argument 1 to %p for child %i: %s", (void *)fakeptr, pid, strerror(errno));
             errno = save_errno;
             return -1;
         }
@@ -401,7 +401,7 @@ int trace_fake_stat(pid_t pid) {
         memcpy(u.x, fakeptr, m);
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
             save_errno = errno;
-            LOGV("Failed to set argument 1 to \"%p\": %s", (void *)fakeptr, strerror(errno));
+            LOGV("Failed to set argument 1 to %p for child %i: %s", (void *)fakeptr, pid, strerror(errno));
             errno = save_errno;
             return -1;
         }
