@@ -237,16 +237,14 @@ static int trace_loop(void) {
 
     ret = EXIT_SUCCESS;
     while (NULL != ctx->children) {
-        pid = waitpid(-1, &status, WNOHANG | __WALL);
+        pid = waitpid(-1, &status, __WALL);
         if (0 > pid) {
             LOGE("waitpid failed: %s", strerror(errno));
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
-        else if (0 == pid)
-            continue;
         child = tchild_find(&(ctx->children), pid);
         event = trace_event(status);
-        assert((NULL == child && E_STOP == event) || NULL != child);
+        assert(NULL != child || E_STOP == event || E_EXIT == event || E_EXIT_SIGNAL == event);
 
         switch(event) {
             case E_STOP:
