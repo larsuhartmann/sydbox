@@ -619,7 +619,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
         if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
-            LOGN("Access to magic commands is now denied for child %i", child->pid);
+            LOGV("Access to magic commands is now denied for child %i", child->pid);
             child->sandbox->lock = LOCK_SET;
         }
         ret = syscall_check(ctx, child, sno);
