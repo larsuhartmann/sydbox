@@ -1,4 +1,4 @@
-CLEANFILES= syscallent.h
+CLEANFILES= syscallent.h gmon.out
 
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGITHEAD=\"$(GITHEAD)\" $(confuse_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
