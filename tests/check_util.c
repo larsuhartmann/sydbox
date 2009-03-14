@@ -39,6 +39,14 @@ END_TEST
 
 START_TEST(check_util_remove_slash_only_slash) {
     PRINT_TEST_HEADER;
+    char *dest = remove_slash("/");
+    fail_unless(0 == strncmp(dest, "/", 2), "/ != '%s'", dest);
+    free(dest);
+}
+END_TEST
+
+START_TEST(check_util_remove_slash_only_slashes) {
+    PRINT_TEST_HEADER;
     char *dest = remove_slash("////");
     fail_unless(0 == strncmp(dest, "/", 2), "/ != '%s'", dest);
     free(dest);
@@ -61,6 +69,7 @@ Suite *util_suite_create(void) {
     tcase_add_test(tc_util, check_util_remove_slash_middle);
     tcase_add_test(tc_util, check_util_remove_slash_end);
     tcase_add_test(tc_util, check_util_remove_slash_only_slash);
+    tcase_add_test(tc_util, check_util_remove_slash_only_slashes);
     tcase_add_test(tc_util, check_util_remove_slash_empty);
     suite_add_tcase(s, tc_util);
 
