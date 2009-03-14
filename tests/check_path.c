@@ -146,6 +146,18 @@ START_TEST(check_pathlist_check) {
 }
 END_TEST
 
+START_TEST(check_pathlist_check_slash_only) {
+    PRINT_TEST_HEADER;
+    const char env[] = "/";
+    struct pathnode *plist = NULL;
+
+    pathlist_init(&plist, env);
+
+    fail_unless(0 != pathlist_check(&plist, "/dev"),
+            "Failed for /dev when / was an allowed path");
+}
+END_TEST
+
 Suite *path_suite_create(void) {
     Suite *s = suite_create("path");
 
@@ -161,6 +173,7 @@ Suite *path_suite_create(void) {
     tcase_add_test(tc_pathlist, check_pathlist_init);
     tcase_add_test(tc_pathlist, check_pathlist_init_ignore_empty);
     tcase_add_test(tc_pathlist, check_pathlist_check);
+    tcase_add_test(tc_pathlist, check_pathlist_check_slash_only);
     suite_add_tcase(s, tc_pathlist);
 
     return s;

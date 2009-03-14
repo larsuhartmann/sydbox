@@ -207,7 +207,12 @@ int pathlist_check(struct pathnode **pathlist, const char *path_sanitized) {
     ret = 0;
     node = *pathlist;
     while (NULL != node) {
-        if (0 == strncmp(path_sanitized, node->path, strlen(node->path))) {
+        if ('/' == node->path[0] && '\0' == node->path[1]) {
+            LOGD("`%s' begins with `%s'", path_sanitized, node->path);
+            ret = 1;
+            break;
+        }
+        else if (0 == strncmp(path_sanitized, node->path, strlen(node->path))) {
             if (strlen(path_sanitized) > strlen(node->path)) {
                 /* Path begins with one of the allowed paths. Check for a
                  * zero byte or a / on the next character so that for example
