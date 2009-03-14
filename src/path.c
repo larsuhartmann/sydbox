@@ -134,14 +134,15 @@ void pathnode_free(struct pathnode **head) {
     *head = NULL;
 }
 
-void pathnode_delete(struct pathnode **head, const char *path) {
-    int len = strlen(path) + 1;
+void pathnode_delete(struct pathnode **head, const char *path_sanitized) {
+    int len = strlen(path_sanitized) + 1;
     struct pathnode *temp;
     struct pathnode *previous, *current;
 
-    if (0 == strncmp(path, (*head)->path, len)) { // Deleting first node
+    if (0 == strncmp(path_sanitized, (*head)->path, len)) { // Deleting first node
         temp = *head;
         *head = (*head)->next;
+        LOGD("Freeing pathnode %p", (void *) temp);
         if (NULL != temp->path)
             free(temp->path);
         free(temp);
@@ -151,7 +152,7 @@ void pathnode_delete(struct pathnode **head, const char *path) {
         current = (*head)->next;
 
         // Find the correct location
-        while (NULL != current && 0 == strncmp(path, current->path, len)) {
+        while (NULL != current && 0 == strncmp(path_sanitized, current->path, len)) {
             previous = current;
             current = current->next;
         }
@@ -159,6 +160,7 @@ void pathnode_delete(struct pathnode **head, const char *path) {
         if (NULL != current) {
             temp = current;
             previous->next = current->next;
+            LOGD("Freeing pathnode %p", (void *) temp);
             if (NULL != temp->path)
                 free(temp->path);
             free(temp);

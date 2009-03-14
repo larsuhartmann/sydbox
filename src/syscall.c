@@ -327,6 +327,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
 
 static enum res_syscall syscall_check_magic_open(struct tchild *child, const char *path) {
     int ismagic = 0, save_errno;
+    char *rpath_sanitized;
     const char *rpath;
 
     LOGD("Checking if open(\"%s\", ...) is magic", path);
@@ -370,16 +371,20 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;
         rpath = path + CMD_RMWRITE_LEN;
-        LOGN("Approved rmwrite(\"%s\") for child %i", rpath, child->pid);
+        rpath_sanitized = remove_slash(rpath);
+        LOGN("Approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         if (NULL != child->sandbox->write_prefixes)
-            pathnode_delete(&(child->sandbox->write_prefixes), rpath);
+            pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
+        free(rpath_sanitized);
     }
     else if (path_magic_rmpredict(path)) {
         ismagic = 1;
         rpath = path + CMD_RMPREDICT_LEN;
-        LOGN("Approved rmpredict(\"%s\") for child %i", rpath, child->pid);
+        rpath_sanitized = remove_slash(rpath);
+        LOGN("Approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         if (NULL != child->sandbox->predict_prefixes)
-            pathnode_delete(&(child->sandbox->predict_prefixes), rpath);
+            pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
+        free(rpath_sanitized);
     }
 
     if (ismagic) {
