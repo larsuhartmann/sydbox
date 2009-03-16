@@ -1,6 +1,6 @@
 SUBDIRS = . progtests
 
-TESTS= check_sydbox t01-util-shell-expand.sh
+TESTS= check_sydbox t01-util-shell-expand.bash
 check_PROGRAMS= check_sydbox t01_util_shell_expand
 
 check_sydbox_SOURCES= check_children.c check_path.c check_trace.c check_syscall.c \
