@@ -282,8 +282,10 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
             strcpy(reason, "%s(\"%s\", ");
         else if (1 == npath)
             strcpy(reason, "%s(?, \"%s\", ");
-        else
-            strcpy(reason, "%s(DIRFD, \"%s\", ");
+        else if (2 == path)
+            strcpy(reason, "%s(?, ?, \"%s\", ");
+        else if (3 == npath)
+            strcpy(reason, "%s(?, ?, ?, \"%s\", ");
 
         if (sdef->flags & ACCESS_MODE)
             strcat(reason, "O_WR)");
@@ -312,8 +314,8 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
 
     if (paranoid && !(sdef->flags & DONT_RESOLV)) {
         /* Change the path argument with the resolved path to
-        * prevent symlink races.
-        */
+         * prevent symlink races.
+         */
         LOGD("Paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
         if (0 > trace_set_string(child->pid, npath, path, strlen(path) + 1)) {
             int save_errno = errno;
