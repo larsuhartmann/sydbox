@@ -283,4 +283,7 @@ enum res_syscall {
 enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int sno);
 int syscall_handle(context_t *ctx, struct tchild *child);
 
+/* loop.c */
+int trace_loop(context_t *ctx);
+
 #endif /* SYDBOX_GUARD_DEFS_H */
