@@ -48,9 +48,9 @@
 
 // dirname wrapper which doesn't modify its argument
 char *edirname(const char *path) {
-    char *pathc = xstrndup(path, strlen(path) + 1);
+    char *pathc = xstrdup(path);
     char *dname = dirname(pathc);
-    char *dnamec = xstrndup(dname, strlen(dname) + 1);
+    char *dnamec = xstrdup(dname);
     free(pathc);
     return dnamec;
 }

@@ -258,7 +258,7 @@ static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
             return NULL;
         }
 
-        char *destc = xstrndup(buf, strlen(buf) + 1);
+        char *destc = xstrdup(buf);
         buf = xrealloc(buf, strlen(buf) + strlen(dname) + 2);
         sprintf(buf, "%s/%s", dname, destc);
         free(dname);

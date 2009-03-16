@@ -108,7 +108,7 @@ int pathnode_new(struct pathnode **head, const char *path, int sanitize) {
 
     newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
     if (!sanitize)
-        newnode->path = xstrndup(path, strlen(path) + 1);
+        newnode->path = xstrdup(path);
     else {
         char *spath = remove_slash(path);
         newnode->path = shell_expand(spath);

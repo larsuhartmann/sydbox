@@ -413,7 +413,7 @@ static int parse_config(const char *path) {
 
     if (NULL == log_file && NULL != cfg_getstr(cfg, "log_file")) {
         char *lf = cfg_getstr(cfg, "log_file");
-        log_file = xstrndup(lf, strlen(lf) + 1);
+        log_file = xstrdup(lf);
     }
 
     if (-1 == log_level) {
@@ -594,7 +594,7 @@ int main(int argc, char **argv) {
                 phase = optarg;
                 break;
             case 'l':
-                log_file = xstrndup(optarg, strlen(optarg) + 1);
+                log_file = xstrdup(optarg);
                 break;
             case 'c':
                 config_file = optarg;
@@ -644,7 +644,7 @@ skip_commandline:
     net_env = getenv(ENV_NET);
 
     if (NULL == log_file && NULL != log_env)
-        log_file = xstrndup(log_env, strlen(log_env) + 1);
+        log_file = xstrdup(log_env);
 
     LOGV("Extending path list using environment variable "ENV_WRITE);
     pathlist_init(&write_prefixes, write_env);
