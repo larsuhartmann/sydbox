@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <getopt.h>
 #include <grp.h>
 #include <pwd.h>
@@ -39,16 +40,11 @@
 
 static context_t *ctx = NULL;
 static char *config_file = NULL;
-static char *phase = NULL;
+static char *profile = NULL;
 static int lock = -1;
 static int net = -1;
 static struct pathnode *write_prefixes = NULL;
 static struct pathnode *predict_prefixes = NULL;
-
-#define MAX_PHASES 7
-const char *phases[MAX_PHASES] = {
-    "default", "unpack", "prepare", "configure", "compile", "test", "install"
-};
 
 static void about(void) {
     fprintf(stderr, PACKAGE"-"VERSION);
@@ -58,8 +54,6 @@ static void about(void) {
 }
 
 static void usage(void) {
-    int i;
-
     fprintf(stderr, PACKAGE"-"VERSION);
     if (0 != strlen(GITHEAD))
         fprintf(stderr, "-"GITHEAD);
@@ -73,28 +67,23 @@ static void usage(void) {
     fprintf(stderr, "\t-v, --verbose\t\tBe verbose\n");
     fprintf(stderr, "\t-d, --debug\t\tEnable debug messages\n");
     fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
-    fprintf(stderr, "\t-P PHASE, --phase=PHASE\tSpecify phase (required)\n");
+    fprintf(stderr, "\t-P PROFILE,\n\t  --profile=PROFILE\tSpecify profile\n");
     fprintf(stderr, "\t-c PATH, --config=PATH\tSpecify PATH to the configuration file\n");
     fprintf(stderr, "\t-l PATH, --log-file=PATH\n\t\t\t\tSpecify PATH to the log file\n");
     fprintf(stderr, "\t-D, --dump\t\tDump configuration and exit\n");
     fprintf(stderr, "\nEnvironment variables:\n");
-    fprintf(stderr, "\t"ENV_PHASE":\t\tSpecify phase, can be used instead of -p\n");
+    fprintf(stderr, "\t"ENV_PROFILE":\tSpecify profile, can be used instead of -P\n");
     fprintf(stderr, "\t"ENV_WRITE":\t\tColon seperated paths to allow write\n");
     fprintf(stderr, "\t"ENV_PREDICT":\tColon seperated paths to predict write\n");
     fprintf(stderr, "\t"ENV_NET":\t\tEnable sandboxing of network connections\n");
     fprintf(stderr, "\t"ENV_CONFIG":\t\tSpecify PATH to the configuration file\n");
     fprintf(stderr, "\t"ENV_NO_COLOUR":\tIf set messages won't be coloured\n");
     fprintf(stderr, "\t"ENV_LOG":\t\tSpecify PATH to the log file\n");
-    fprintf(stderr, "\nPhases:\n\t");
-    for (i = 0; i < MAX_PHASES - 2; i++)
-        fprintf(stderr, "%s, ", phases[i]);
-    fprintf(stderr, "%s\n", phases[++i]);
     fprintf(stderr, "\nParanoid Mode:\n");
     fprintf(stderr, "\tIn this mode, sydbox tries hard to ensure security of the sandbox.\n");
     fprintf(stderr, "\tFor example if a system call's path argument is a symlink, sydbox\n");
     fprintf(stderr, "\twill attempt to change it with the resolved path to prevent symlink races.\n");
-    fprintf(stderr, "\tWith this mode on many packages are known to fail. An example is bash with\n");
-    fprintf(stderr, "\tmalloc debugger enabled.\n");
+    fprintf(stderr, "\tWith this mode on many packages are known to fail.\n");
     fprintf(stderr, "\tWithout this mode on, sydbox is NOT considered to be a security tool.\n");
     fprintf(stderr, "\tIt just helps package managers like paludis to ensure nothing wrong\n");
     fprintf(stderr, "\thappens during package installs. It's NOT meant to be a protection against\n");
@@ -322,12 +311,19 @@ static int trace_loop(void) {
     return ret;
 }
 
-static int legal_phase(const char *name) {
-    for (int i = 0; i < MAX_PHASES; i++) {
-        if (0 == strncmp(name, phases[i], strlen(phases[i]) + 1))
-            return 1;
-    }
-    return 0;
+static bool legal_profile(const char *path) {
+    if (0 == strncmp(path, "colour", 4))
+        return false;
+    else if (0 == strncmp(path, "log_file", 9))
+        return false;
+    else if (0 == strncmp(path, "log_level", 10))
+        return false;
+    else if (0 == strncmp(path, "paranoid", 9))
+        return false;
+    else if (0 == strncmp(path, "lock", 5))
+        return false;
+    else
+        return true;
 }
 
 static int parse_config(const char *path) {
@@ -337,49 +333,7 @@ static int parse_config(const char *path) {
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
     };
-    cfg_opt_t loadenv_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t saveenv_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t unpack_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t prepare_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t configure_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t compile_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t test_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t install_opts[] = {
+    cfg_opt_t profile_opts[] = {
         CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
@@ -392,15 +346,7 @@ static int parse_config(const char *path) {
         CFG_BOOL("paranoid", 0, CFGF_NONE),
         CFG_BOOL("lock", 0, CFGF_NONE),
         CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("loadenv", loadenv_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("saveenv", saveenv_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("unpack", unpack_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("prepare", prepare_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("configure", configure_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("compile", compile_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("test", test_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC("install", install_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC(profile, profile_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()
     };
 
@@ -436,25 +382,23 @@ static int parse_config(const char *path) {
         lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
     LOGV("Initializing path list using configuration file");
-    cfg_t *cfg_default, *cfg_phase;
-    for (unsigned int i = 0; i < cfg_size(cfg, phase); i++) {
-        cfg_phase = cfg_getnsec(cfg, phase, i);
-        for (unsigned int j = 0; j < cfg_size(cfg_phase, "write"); j++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_phase, "write", j), 1);
-        for (unsigned int k = 0; k < cfg_size(cfg_phase, "predict"); k++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_phase, "predict", k), 1);
-        net = cfg_getint(cfg_phase, "net");
+    cfg_t *cfg_default, *cfg_profile;
+    for (unsigned int i = 0; i < cfg_size(cfg, profile); i++) {
+        cfg_profile = cfg_getnsec(cfg, profile, i);
+        for (unsigned int j = 0; j < cfg_size(cfg_profile, "write"); j++)
+            pathnode_new(&write_prefixes, cfg_getnstr(cfg_profile, "write", j), 1);
+        for (unsigned int k = 0; k < cfg_size(cfg_profile, "predict"); k++)
+            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_profile, "predict", k), 1);
+        net = cfg_getint(cfg_profile, "net");
     }
-    if (0 != strncmp(phase, "default", 8)) {
-        for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
-            cfg_default = cfg_getnsec(cfg, "default", l);
-            for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
-                pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m), 1);
-            for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
-                pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n), 1);
-            if (-1 == net)
-                cfg_getint(cfg_default, "net");
-        }
+    for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
+        cfg_default = cfg_getnsec(cfg, "default", l);
+        for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
+            pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m), 1);
+        for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
+            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n), 1);
+        if (-1 == net)
+            cfg_getint(cfg_default, "net");
     }
     cfg_free(cfg);
     return 1;
@@ -463,7 +407,7 @@ static int parse_config(const char *path) {
 static void dump_config(void) {
     fprintf(stderr, "config_file = %s\n", config_file);
     fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
-    fprintf(stderr, "phase = %s\n", phase);
+    fprintf(stderr, "profile = %s\n", profile);
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
     fprintf(stderr, "log_file = %s\n", NULL == log_file ? "stderr" : log_file);
     fprintf(stderr, "log_level = ");
@@ -557,7 +501,7 @@ int main(int argc, char **argv) {
         {"verbose",  no_argument, NULL, 'v'},
         {"debug",    no_argument, NULL, 'd'},
         {"nocolour", no_argument, NULL, 'C'},
-        {"phase",    required_argument, NULL, 'P'},
+        {"profile",  required_argument, NULL, 'P'},
         {"log-file", required_argument, NULL, 'l'},
         {"config",   required_argument, NULL, 'c'},
         {"dump",     no_argument, NULL, 'D'},
@@ -591,7 +535,7 @@ int main(int argc, char **argv) {
                 colour = 0;
                 break;
             case 'P':
-                phase = optarg;
+                profile = optarg;
                 break;
             case 'l':
                 log_file = xstrdup(optarg);
@@ -620,13 +564,13 @@ int main(int argc, char **argv) {
     }
 
 skip_commandline:
-    if (NULL == phase) {
-        phase = getenv(ENV_PHASE);
-        if (NULL == phase)
-            phase = "default";
+    if (NULL == profile) {
+        profile = getenv(ENV_PROFILE);
+        if (NULL == profile)
+            profile = "__no_such_profile";
     }
-    if (!legal_phase(phase))
-        DIEUSER("invalid phase '%s'", phase);
+    if (!legal_profile(profile))
+        DIEUSER("invalid profile '%s' (reserved name)", profile);
 
     // Parse configuration file
     if (NULL == config_file)
@@ -679,7 +623,7 @@ skip_commandline:
     if (NULL == groupname)
         DIESOFT("Failed to get group file entry: %s", strerror(errno));
 
-    LOGV("Forking to execute '%s' as %s:%s phase: %s", cmd, username, groupname, phase);
+    LOGV("Forking to execute '%s' as %s:%s profile: %s", cmd, username, groupname, profile);
     pid = fork();
     if (0 > pid)
         DIESOFT("Failed to fork: %s", strerror(errno));
