@@ -46,14 +46,15 @@
 #define CHECK_PATH_AT           (1 << 7) // CHECK_PATH for at suffixed functions
 #define CHECK_PATH_AT2          (1 << 8) // CHECK_PATH2 for at suffixed functions
 #define DONT_RESOLV             (1 << 9) // Don't resolve symlinks
-#define IF_AT_SYMLINK_FOLLOW    (1 << 10) // Check for AT_SYMLINK_FOLLOW for linkat
-#define CAN_CREAT               (1 << 11) // The system call can create the first path if it doesn't exist
-#define CAN_CREAT2              (1 << 12) // The system call can create the second path if it doesn't exist
-#define CAN_CREAT_AT            (1 << 13) // CAN_CREAT for at suffixed functions
-#define CAN_CREAT_AT2           (1 << 14) // CAN_CREAT_AT2 for at suffixed functions
-#define MAGIC_OPEN              (1 << 15) // Check if the open() call is magic
-#define MAGIC_STAT              (1 << 16) // Check if the stat() call is magic
-#define NET_CALL                (1 << 17) // Allowing the system call depends on the net flag
+#define IF_AT_SYMLINK_FOLLOW    (1 << 10) // Check for AT_SYMLINK_FOLLOW in flags (5th argument)
+#define IF_AT_SYMLINK_NOFOLLOW  (1 << 11) // Check for AT_SYMLINK_NO_FOLLOW in flags (5th argument)
+#define CAN_CREAT               (1 << 12) // The system call can create the first path if it doesn't exist
+#define CAN_CREAT2              (1 << 13) // The system call can create the second path if it doesn't exist
+#define CAN_CREAT_AT            (1 << 14) // CAN_CREAT for at suffixed functions
+#define CAN_CREAT_AT2           (1 << 15) // CAN_CREAT_AT2 for at suffixed functions
+#define MAGIC_OPEN              (1 << 16) // Check if the open() call is magic
+#define MAGIC_STAT              (1 << 17) // Check if the stat() call is magic
+#define NET_CALL                (1 << 18) // Allowing the system call depends on the net flag
 
 static const struct syscall_name {
     int no;
@@ -101,7 +102,7 @@ static const struct syscall_def syscalls[] = {
     {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
     {__NR_mkdirat,      CHECK_PATH_AT | CAN_CREAT_AT},
     {__NR_mknodat,      CHECK_PATH_AT | CAN_CREAT_AT},
-    {__NR_fchownat,     CHECK_PATH_AT},
+    {__NR_fchownat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW},
     {__NR_unlinkat,     CHECK_PATH_AT},
     {__NR_renameat,     CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2},
     {__NR_linkat,       CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW},
@@ -214,24 +215,27 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
 
     if (flags & DONT_RESOLV)
         resolve = false;
-    else if (flags & IF_AT_SYMLINK_FOLLOW) {
+    else if (flags & IF_AT_SYMLINK_FOLLOW || flags & IF_AT_SYMLINK_NOFOLLOW) {
         // Check the flags argument for AT_SYMLINK_FOLLOW
         long linkat_flags;
         if (0 > trace_get_arg(child->pid, 4, &linkat_flags)) {
             free(path_sanitized);
             return NULL;
         }
-        resolve = linkat_flags & AT_SYMLINK_FOLLOW ? true : false;
+        if (flags & IF_AT_SYMLINK_FOLLOW)
+            resolve = linkat_flags & AT_SYMLINK_FOLLOW ? true : false;
+        else
+            resolve = linkat_flags & AT_SYMLINK_NOFOLLOW ? false : true;
     }
     else
         resolve = true;
 
     if (has_creat || syscall_can_creat(npath, flags)) {
-        LOGD("System call may create the file, setting mode to CAN_ALL_BUT_LAST");
+        LOGD("Mode is CAN_ALL_BUT_LAST resolve is %s", resolve ? "true" : "false");
         rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, resolve);
     }
     else {
-        LOGD("System call can't create the file, setting mode to CAN_EXISTING");
+        LOGD("Mode is CAN_EXISTING resolve is %s", resolve ? "true" : "false");
         rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, resolve);
     }
 
