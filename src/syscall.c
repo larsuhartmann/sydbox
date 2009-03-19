@@ -36,23 +36,24 @@
 #include "defs.h"
 
 // System call dispatch flags
-#define RETURNS_FD      (1 << 0) // The function returns a file descriptor
-#define OPEN_MODE       (1 << 1) // Check the mode argument of open()
-#define OPEN_MODE_AT    (1 << 2) // Check the mode argument of openat()
-#define ACCESS_MODE     (1 << 3) // Check the mode argument of access()
-#define ACCESS_MODE_AT  (1 << 4) // Check the mode argument of faccessat()
-#define CHECK_PATH      (1 << 5) // First argument should be a valid path
-#define CHECK_PATH2     (1 << 6) // Second argument should be a valid path
-#define CHECK_PATH_AT   (1 << 7) // CHECK_PATH for at suffixed functions
-#define CHECK_PATH_AT2  (1 << 8) // CHECK_PATH2 for at suffixed functions
-#define DONT_RESOLV     (1 << 9) // Don't resolve symlinks
-#define CAN_CREAT       (1 << 10) // The system call can create the first path if it doesn't exist
-#define CAN_CREAT2      (1 << 11) // The system call can create the second path if it doesn't exist
-#define CAN_CREAT_AT    (1 << 12) // CAN_CREAT for at suffixed functions
-#define CAN_CREAT_AT2   (1 << 13) // CAN_CREAT_AT2 for at suffixed functions
-#define MAGIC_OPEN      (1 << 14) // Check if the open() call is magic
-#define MAGIC_STAT      (1 << 15) // Check if the stat() call is magic
-#define NET_CALL        (1 << 16) // Allowing the system call depends on the net flag
+#define RETURNS_FD              (1 << 0) // The function returns a file descriptor
+#define OPEN_MODE               (1 << 1) // Check the mode argument of open()
+#define OPEN_MODE_AT            (1 << 2) // Check the mode argument of openat()
+#define ACCESS_MODE             (1 << 3) // Check the mode argument of access()
+#define ACCESS_MODE_AT          (1 << 4) // Check the mode argument of faccessat()
+#define CHECK_PATH              (1 << 5) // First argument should be a valid path
+#define CHECK_PATH2             (1 << 6) // Second argument should be a valid path
+#define CHECK_PATH_AT           (1 << 7) // CHECK_PATH for at suffixed functions
+#define CHECK_PATH_AT2          (1 << 8) // CHECK_PATH2 for at suffixed functions
+#define DONT_RESOLV             (1 << 9) // Don't resolve symlinks
+#define IF_AT_SYMLINK_FOLLOW    (1 << 10) // Check for AT_SYMLINK_FOLLOW for linkat
+#define CAN_CREAT               (1 << 11) // The system call can create the first path if it doesn't exist
+#define CAN_CREAT2              (1 << 12) // The system call can create the second path if it doesn't exist
+#define CAN_CREAT_AT            (1 << 13) // CAN_CREAT for at suffixed functions
+#define CAN_CREAT_AT2           (1 << 14) // CAN_CREAT_AT2 for at suffixed functions
+#define MAGIC_OPEN              (1 << 15) // Check if the open() call is magic
+#define MAGIC_STAT              (1 << 16) // Check if the stat() call is magic
+#define NET_CALL                (1 << 17) // Allowing the system call depends on the net flag
 
 static const struct syscall_name {
     int no;
@@ -103,7 +104,7 @@ static const struct syscall_def syscalls[] = {
     {__NR_fchownat,     CHECK_PATH_AT},
     {__NR_unlinkat,     CHECK_PATH_AT},
     {__NR_renameat,     CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2},
-    {__NR_linkat,       CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2},
+    {__NR_linkat,       CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW},
     {__NR_symlinkat,    CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV},
     {__NR_fchmodat,     CHECK_PATH_AT},
     {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
@@ -197,6 +198,7 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
         char *path, bool has_creat, unsigned int npath) {
     long len;
     char *pathc, *path_sanitized, *rpath;
+    bool resolve;
 
     if ('/' != path[0]) {
         // Add current working directory
@@ -210,19 +212,27 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
     else
         path_sanitized = remove_slash(path);
 
+    if (flags & DONT_RESOLV)
+        resolve = false;
+    else if (flags & IF_AT_SYMLINK_FOLLOW) {
+        // Check the flags argument for AT_SYMLINK_FOLLOW
+        long linkat_flags;
+        if (0 > trace_get_arg(child->pid, 4, &linkat_flags)) {
+            free(path_sanitized);
+            return NULL;
+        }
+        resolve = linkat_flags & AT_SYMLINK_FOLLOW ? true : false;
+    }
+    else
+        resolve = true;
+
     if (has_creat || syscall_can_creat(npath, flags)) {
         LOGD("System call may create the file, setting mode to CAN_ALL_BUT_LAST");
-        if (flags & DONT_RESOLV)
-            rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, false);
-        else
-            rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, true);
+        rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, resolve);
     }
     else {
         LOGD("System call can't create the file, setting mode to CAN_EXISTING");
-        if (flags & DONT_RESOLV)
-            rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, false);
-        else
-            rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, true);
+        rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, resolve);
     }
 
     free(path_sanitized);
@@ -282,7 +292,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
             strcpy(reason, "%s(\"%s\", ");
         else if (1 == npath)
             strcpy(reason, "%s(?, \"%s\", ");
-        else if (2 == path)
+        else if (2 == npath)
             strcpy(reason, "%s(?, ?, \"%s\", ");
         else if (3 == npath)
             strcpy(reason, "%s(?, ?, ?, \"%s\", ");

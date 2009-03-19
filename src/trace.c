@@ -50,15 +50,15 @@
 #include "defs.h"
 
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
-#define MAX_ARGS        4
+#define MAX_ARGS        6
 #if defined(I386)
 #define ORIG_ACCUM      (4 * ORIG_EAX)
 #define ACCUM           (4 * EAX)
-static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI};
+static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 4 * EDI, 4 * EBP};
 #elif defined(X86_64)
 #define ORIG_ACCUM      (8 * ORIG_RAX)
 #define ACCUM           (8 * RAX)
-static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
+static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 8 * R8, 8 * R9};
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
