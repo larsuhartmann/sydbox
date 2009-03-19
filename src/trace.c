@@ -62,7 +62,7 @@ static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10};
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
-static int umoven(pid_t pid, long addr, char *dest, size_t len) {
+static int umovestr(pid_t pid, long addr, char *dest, size_t len) {
     int n, m, save_errno;
     int started = 0;
     union {
@@ -91,6 +91,9 @@ static int umoven(pid_t pid, long addr, char *dest, size_t len) {
         }
         started = 1;
         memcpy(dest, &u.x[n], m = MIN(sizeof(long) - n, len));
+        while (n & (sizeof(long) - 1))
+            if ('\0' == u.x[n++])
+                return 0;
         addr += sizeof(long), dest += m, len -= m;
     }
     while (len > 0) {
@@ -111,6 +114,9 @@ static int umoven(pid_t pid, long addr, char *dest, size_t len) {
         }
         started = 1;
         memcpy(dest, u.x, m = MIN(sizeof(long), len));
+        for (unsigned int i = 0; i < sizeof(long); i++)
+            if ('\0' == u.x[i])
+                return 0;
         addr += sizeof(long), dest += m, len -= m;
     }
     return 0;
@@ -296,7 +302,7 @@ char *trace_get_string(pid_t pid, int arg) {
     for (;;) {
         buf = xrealloc(buf, len * sizeof(char));
         memset(buf, 0, len * sizeof(char));
-        if (0 > umoven(pid, addr, buf, len)) {
+        if (0 > umovestr(pid, addr, buf, len)) {
             free(buf);
             return NULL;
         }
