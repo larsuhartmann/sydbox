@@ -139,7 +139,7 @@ int trace_loop(context_t *ctx) {
     ret = EXIT_SUCCESS;
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
-        if (0 > pid) {
+        if (unlikely(0 > pid)) {
             LOGE("waitpid failed: %s", strerror(errno));
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
@@ -163,10 +163,10 @@ int trace_loop(context_t *ctx) {
                 break;
             case E_SYSCALL:
                 ret = syscall_handle(ctx, child);
-                if (0 != ret)
+                if (unlikely(0 != ret))
                     return ret;
                 ret = xsyscall(ctx, child);
-                if (0 != ret)
+                if (unlikely(0 != ret))
                     return ret;
                 break;
             case E_FORK:
@@ -174,19 +174,19 @@ int trace_loop(context_t *ctx) {
             case E_CLONE:
                 LOGD("Latest event for child %i is E_FORK, calling event handler", pid);
                 ret = xfork(ctx, child);
-                if (0 != ret)
+                if (unlikely(0 != ret))
                     return ret;
                 break;
             case E_EXEC:
                 LOGD("Latest event for child %i is E_EXEC, calling event handler", pid);
                 ret = xsyscall(ctx, child);
-                if (0 != ret)
+                if (unlikely(0 != ret))
                     return ret;
                 break;
             case E_GENUINE:
                 LOGD("Latest event for child %i is E_GENUINE, calling event handler", pid);
                 ret = xgenuine(ctx, child, status);
-                if (0 != ret)
+                if (unlikely(0 != ret))
                     return ret;
                 break;
             case E_EXIT:
@@ -215,7 +215,7 @@ int trace_loop(context_t *ctx) {
             case E_UNKNOWN:
                 LOGV("Unknown signal %#x received from child %i", status, pid);
                 ret = xunknown(ctx, child, status);
-                if (0 != ret)
+                if (unlikely(0 != ret))
                     return ret;
                 break;
         }
