@@ -633,7 +633,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             DIESOFT("Failed to get syscall: %s", strerror(errno));
     }
     if (LOG_DEBUG <= log_level)
-        sname = syscall_get_name(sno);
+        sname = 0xbadca11 == sno ? syscall_get_name(child->sno) : syscall_get_name(sno);
     else
         sname = NULL;
 
