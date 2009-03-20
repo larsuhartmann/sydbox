@@ -138,8 +138,10 @@ int trace_loop(context_t *ctx) {
 
     ret = EXIT_SUCCESS;
     while (NULL != ctx->children) {
-        pid = waitpid(-1, &status, __WALL);
-        if (unlikely(0 > pid)) {
+        pid = waitpid(-1, &status, __WALL | WNOHANG);
+        if (likely(0 == pid))
+            continue;
+        else if (unlikely(0 > pid)) {
             LOGE("waitpid failed: %s", strerror(errno));
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
