@@ -25,6 +25,9 @@
 
 #include "defs.h"
 
+// We keep this for efficient lookups
+struct tchild *childtab[PID_MAX_LIMIT] = { NULL };
+
 void tchild_new(struct tchild **head, pid_t pid) {
     struct tchild *newchild;
 
@@ -67,6 +70,7 @@ void tchild_new(struct tchild **head, pid_t pid) {
         }
     }
     *head = newchild; // link head
+    childtab[pid] = newchild;
 }
 
 static void tchild_free_one(struct tchild *child) {
@@ -79,6 +83,7 @@ static void tchild_free_one(struct tchild *child) {
     }
     if (NULL != child->cwd)
         free(child->cwd);
+    childtab[child->pid] = NULL;
     free(child);
 }
 
@@ -120,16 +125,4 @@ void tchild_delete(struct tchild **head, pid_t pid) {
             tchild_free_one(temp);
         }
     }
-}
-
-struct tchild *tchild_find(struct tchild **head, pid_t pid) {
-    struct tchild *current;
-
-    current = *head;
-    while (NULL != current) {
-        if (pid == current->pid)
-            return current;
-        current = current->next;
-    }
-    return NULL;
 }

@@ -79,20 +79,6 @@ START_TEST(check_tchild_delete) {
 }
 END_TEST
 
-START_TEST(check_tchild_find) {
-    PRINT_TEST_HEADER;
-    struct tchild *tc = NULL;
-
-    for(int i = 666; i < 670; i++)
-        tchild_new(&tc, i);
-    for(int i = 666; i < 670; i++)
-        fail_unless(NULL != tchild_find(&tc, i), "Failed to find pid %d", i);
-    for(int i = 670; i < 680; i++)
-        fail_unless(NULL == tchild_find(&tc, i), "Found pid %d", i);
-    tchild_free(&tc);
-}
-END_TEST
-
 Suite *children_suite_create(void) {
     Suite *s = suite_create("children");
 
@@ -102,7 +88,6 @@ Suite *children_suite_create(void) {
     tcase_add_test(tc_tchild, check_tchild_free);
     tcase_add_test(tc_tchild, check_tchild_delete_first);
     tcase_add_test(tc_tchild, check_tchild_delete);
-    tcase_add_test(tc_tchild, check_tchild_find);
     suite_add_tcase(s, tc_tchild);
 
     return s;

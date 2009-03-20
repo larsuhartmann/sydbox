@@ -151,10 +151,20 @@ struct tchild {
     struct tchild *next;
 };
 
+#ifndef PID_MAX_LIMIT
+#if __WORDSIZE == 64
+#define PID_MAX_LIMIT   (1 << 22)
+#elif __WORDSIZE == 32
+#define PID_MAX_LIMIT   (1 << 15)
+#else
+#error unsupported wordsize
+#endif
+#endif /* PID_MAX_LIMIT */
+extern struct tchild *childtab[PID_MAX_LIMIT];
+
 void tchild_new(struct tchild **head, pid_t pid);
 void tchild_free(struct tchild **head);
 void tchild_delete(struct tchild **head, pid_t pid);
-struct tchild *tchild_find(struct tchild **head, pid_t pid);
 
 /* context.c */
 typedef struct {

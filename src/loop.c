@@ -83,7 +83,7 @@ static int xfork(context_t *ctx, struct tchild *child) {
     else
         LOGD("The newborn child's pid is %i", childpid);
 
-    newchild = tchild_find(&(ctx->children), childpid);
+    newchild = childtab[childpid];
     if (NULL != newchild) {
         LOGD("Child %i is prematurely born, letting it continue its life", newchild->pid);
         if (0 > trace_syscall(newchild->pid, 0)) {
@@ -143,7 +143,7 @@ int trace_loop(context_t *ctx) {
             LOGE("waitpid failed: %s", strerror(errno));
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
-        child = tchild_find(&(ctx->children), pid);
+        child = childtab[pid];
         event = trace_event(status);
         assert(NULL != child || E_STOP == event || E_EXIT == event || E_EXIT_SIGNAL == event);
 
