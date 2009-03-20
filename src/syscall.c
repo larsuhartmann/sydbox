@@ -46,15 +46,16 @@
 #define CHECK_PATH_AT           (1 << 7) // CHECK_PATH for at suffixed functions
 #define CHECK_PATH_AT2          (1 << 8) // CHECK_PATH2 for at suffixed functions
 #define DONT_RESOLV             (1 << 9) // Don't resolve symlinks
-#define IF_AT_SYMLINK_FOLLOW    (1 << 10) // Check for AT_SYMLINK_FOLLOW in flags (5th argument)
-#define IF_AT_SYMLINK_NOFOLLOW  (1 << 11) // Check for AT_SYMLINK_NO_FOLLOW in flags (5th argument)
-#define CAN_CREAT               (1 << 12) // The system call can create the first path if it doesn't exist
-#define CAN_CREAT2              (1 << 13) // The system call can create the second path if it doesn't exist
-#define CAN_CREAT_AT            (1 << 14) // CAN_CREAT for at suffixed functions
-#define CAN_CREAT_AT2           (1 << 15) // CAN_CREAT_AT2 for at suffixed functions
-#define MAGIC_OPEN              (1 << 16) // Check if the open() call is magic
-#define MAGIC_STAT              (1 << 17) // Check if the stat() call is magic
-#define NET_CALL                (1 << 18) // Allowing the system call depends on the net flag
+#define IF_AT_SYMLINK_FOLLOW    (1 << 10) // Resolving path depends on AT_SYMLINK_FOLLOW
+#define IF_AT_SYMLINK_NOFOLLOW  (1 << 11) // Resolving path depends on AT_SYMLINK_NOFOLLOW
+#define IF_AT_REMOVEDIR         (1 << 12) // Resolving path depends on AT_REMOVEDIR
+#define CAN_CREAT               (1 << 13) // The system call can create the first path if it doesn't exist
+#define CAN_CREAT2              (1 << 14) // The system call can create the second path if it doesn't exist
+#define CAN_CREAT_AT            (1 << 15) // CAN_CREAT for at suffixed functions
+#define CAN_CREAT_AT2           (1 << 16) // CAN_CREAT_AT2 for at suffixed functions
+#define MAGIC_OPEN              (1 << 17) // Check if the open() call is magic
+#define MAGIC_STAT              (1 << 18) // Check if the stat() call is magic
+#define NET_CALL                (1 << 19) // Allowing the system call depends on the net flag
 
 static const struct syscall_name {
     int no;
@@ -98,12 +99,12 @@ static const struct syscall_def syscalls[] = {
 #endif
     {__NR_umount2,      CHECK_PATH},
     {__NR_utime,        CHECK_PATH},
-    {__NR_unlink,       CHECK_PATH},
+    {__NR_unlink,       CHECK_PATH | DONT_RESOLV},
     {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
     {__NR_mkdirat,      CHECK_PATH_AT | CAN_CREAT_AT},
     {__NR_mknodat,      CHECK_PATH_AT | CAN_CREAT_AT},
     {__NR_fchownat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW},
-    {__NR_unlinkat,     CHECK_PATH_AT},
+    {__NR_unlinkat,     CHECK_PATH_AT | IF_AT_REMOVEDIR},
     {__NR_renameat,     CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2},
     {__NR_linkat,       CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW},
     {__NR_symlinkat,    CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV},
@@ -216,7 +217,7 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
     if (flags & DONT_RESOLV)
         resolve = false;
     else if (flags & IF_AT_SYMLINK_FOLLOW || flags & IF_AT_SYMLINK_NOFOLLOW) {
-        // Check the flags argument for AT_SYMLINK_FOLLOW
+        // Check the flags argument for AT_SYMLINK_{,NO}FOLLOW
         long linkat_flags;
         if (0 > trace_get_arg(child->pid, 4, &linkat_flags)) {
             free(path_sanitized);
@@ -226,6 +227,15 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
             resolve = linkat_flags & AT_SYMLINK_FOLLOW ? true : false;
         else
             resolve = linkat_flags & AT_SYMLINK_NOFOLLOW ? false : true;
+    }
+    else if (flags & IF_AT_REMOVEDIR) {
+        // Check the flags argument for AT_REMOVE_DIR
+        long unlinkat_flags;
+        if (0 > trace_get_arg(child->pid, 2, &unlinkat_flags)) {
+            free(path_sanitized);
+            return NULL;
+        }
+        resolve = unlinkat_flags & AT_REMOVEDIR ? true : false;
     }
     else
         resolve = true;
