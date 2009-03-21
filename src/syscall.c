@@ -589,8 +589,10 @@ found:
     if (sdef->flags & CHECK_PATH_AT) {
         LOGD("System call %s() has CHECK_PATH_AT set, checking", sname);
         path = syscall_get_pathat(child->pid, 1);
-        if (NULL == path)
-            return RS_ERROR;
+        if (NULL == path) {
+            child->retval = -errno;
+            return RS_DENY;
+        }
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
@@ -610,8 +612,10 @@ found:
     if (sdef->flags & CHECK_PATH_AT2) {
         LOGD("System call %s() has CHECK_PATH_AT2 set, checking", sname);
         path = syscall_get_pathat(child->pid, 3);
-        if (NULL == path)
+        if (NULL == path) {
+            child->retval = -errno;
             return RS_DENY;
+        }
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 3);
         if (NULL == rpath) {
             child->retval = -errno;
