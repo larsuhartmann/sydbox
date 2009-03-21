@@ -266,14 +266,14 @@ static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
     assert(1 == npath || 3 == npath);
     if (0 > trace_get_arg(pid, npath - 1, &dirfd)) {
         save_errno = errno;
-        LOGE("Failed to get dirfd: %s", strerror(errno));
+        LOGW("Failed to get dirfd: %s", strerror(errno));
         errno = save_errno;
         return NULL;
     }
     buf = trace_get_string(pid, npath);
     if (NULL == buf) {
         save_errno = errno;
-        LOGE("Failed to get string from argument %d: %s", npath, strerror(errno));
+        LOGW("Failed to get string from argument %d: %s", npath, strerror(errno));
         errno = save_errno;
         return NULL;
     }
@@ -282,7 +282,7 @@ static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
         char *dname = pgetdir(pid, dirfd);
         if (NULL == dname) {
             save_errno = errno;
-            LOGE("readlink() failed for /proc/%i/%ld: %s", pid, dirfd, strerror(errno));
+            LOGW("readlink() failed for /proc/%i/%ld: %s", pid, dirfd, strerror(errno));
             errno = save_errno;
             return NULL;
         }
