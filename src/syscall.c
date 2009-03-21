@@ -282,7 +282,7 @@ static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
         char *dname = pgetdir(pid, dirfd);
         if (NULL == dname) {
             save_errno = errno;
-            LOGE("readlink() failed for `%s': %s", dname, strerror(errno));
+            LOGE("readlink() failed for /proc/%i/%ld: %s", pid, dirfd, strerror(errno));
             errno = save_errno;
             return NULL;
         }
