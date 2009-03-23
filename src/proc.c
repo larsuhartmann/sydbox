@@ -17,14 +17,28 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <errno.h>
 #include <stdio.h>
 
 #include "defs.h"
 
 char *pgetcwd(pid_t pid) {
-    char procfd[64];
-    snprintf(procfd, 64, "/proc/%i/cwd", pid);
-    return ereadlink(procfd);
+    char *cwd;
+    char linkcwd[64];
+    snprintf(linkcwd, 64, "/proc/%i/cwd", pid);
+
+    // First try ereadlink()
+    cwd = ereadlink(linkcwd);
+    if (NULL != cwd)
+        return cwd;
+    else if (ENAMETOOLONG != errno)
+        return NULL;
+
+    // Now try egetcwd()
+    errno = 0;
+    if (0 > echdir(linkcwd))
+        return NULL;
+    return egetcwd();
 }
 
 char *pgetdir(pid_t pid, int dirfd) {

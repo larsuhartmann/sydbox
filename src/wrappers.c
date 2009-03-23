@@ -59,10 +59,6 @@ char *ebasename(const char *path) {
     return basename(path);
 }
 
-char *egetcwd(void) {
-    return get_current_dir_name();
-}
-
 // readlink that allocates the string itself and appends a zero at the end
 char *ereadlink(const char *path) {
     char *buf;

@@ -176,13 +176,13 @@ typedef struct {
 context_t *context_new(void);
 void context_free(context_t *ctx);
 
-/* canonicalize.c */
-char *erealpath(const char *name, char *resolved);
+/* getcwd.c */
+char *egetcwd(void);
+int echdir(char *dir);
 
 /* wrappers.c */
 char *edirname(const char *path);
 char *ebasename(const char *path);
-char *egetcwd(void);
 char *ereadlink(const char *path);
 
 enum canonicalize_mode_t {

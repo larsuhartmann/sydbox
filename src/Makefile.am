@@ -3,9 +3,9 @@ CLEANFILES= syscallent.h gmon.out
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGITHEAD=\"$(GITHEAD)\" $(confuse_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = defs.h syscallent.h \
-		 path.c proc.c children.c util.c context.c \
-		 syscall.c trace.c wrappers.c \
-		 loop.c main.c
+		 getcwd.c path.c proc.c children.c util.c \
+		 context.c syscall.c trace.c wrappers.c loop.c \
+		 main.c
 sydbox_LDADD= $(confuse_LIBS)
 
 BUILT_SOURCES= syscallent.h
