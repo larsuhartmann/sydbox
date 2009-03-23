@@ -203,9 +203,9 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
     char *pathc, *path_sanitized, *rpath;
     bool resolve;
 
-    if ('/' != path[0]) {
-        // Add current working directory
-        LOGD("`%s' is not an absolute path, adding cwd `%s'", path, child->cwd);
+    if ('/' != path[0] && 0 > echdir(child->cwd)) {
+        LOGD("Failed to change current working directory to `%s': %s", child->cwd, strerror(errno));
+        LOGD("Adding current working directory to `%s' instead", path);
         len = strlen(child->cwd) + strlen(path) + 2;
         pathc = xmalloc(len * sizeof(char));
         snprintf(pathc, len, "%s/%s", child->cwd, path);
@@ -247,11 +247,11 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
 
     if (has_creat || syscall_can_creat(npath, flags)) {
         LOGD("Mode is CAN_ALL_BUT_LAST resolve is %s", resolve ? "true" : "false");
-        rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, resolve);
+        rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, resolve, child->cwd);
     }
     else {
         LOGD("Mode is CAN_EXISTING resolve is %s", resolve ? "true" : "false");
-        rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, resolve);
+        rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, resolve, child->cwd);
     }
 
     free(path_sanitized);

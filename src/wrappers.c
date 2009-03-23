@@ -87,7 +87,8 @@ char *ereadlink(const char *path) {
    separators ('/') or symlinks.  Whether components must exist
    or not depends on canonicalize mode.  The result is malloc'd.  */
 
-char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode, bool resolve) {
+char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
+        bool resolve, const char *cwd) {
     int readlinks = 0;
     char *rname, *dest, *extra_buf = NULL;
     char const *start;
@@ -106,11 +107,16 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
     }
 
     if (name[0] != '/') {
-        /* Return NULL for non-absolute paths as the caller should call
-         * pgetcwd() himself.
-         */
-        __set_errno(EINVAL);
-        return NULL;
+        rname = xstrdup(cwd);
+        dest = strchr(rname, '\0');
+        if (dest - rname < PATH_MAX) {
+            char *p = xrealloc(rname, PATH_MAX);
+            dest = p + (dest - rname);
+            rname = p;
+            rname_limit = rname + PATH_MAX;
+        }
+        else
+            rname_limit = dest;
     }
     else {
         rname = xmalloc (PATH_MAX);

@@ -193,7 +193,8 @@ enum canonicalize_mode_t {
 };
 typedef enum canonicalize_mode_t canonicalize_mode_t;
 
-char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode, bool resolve);
+char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
+        bool resolve, const char *cwd);
 
 /* proc.c */
 char *pgetcwd(pid_t pid);
