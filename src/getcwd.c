@@ -45,8 +45,6 @@ int echdir(char *dir) {
 
     for (;;) {
         if (!*dir || chdir(dir) == 0) {
-            if (currdir >= 0)
-                close(currdir);
             return 0;
         }
         if ((errno != ENAMETOOLONG && errno != ENOMEM) ||
@@ -56,26 +54,15 @@ int echdir(char *dir) {
             ;
         if (s == dir)
             break;
-        if (currdir == -2)
-            currdir = open(".", O_RDONLY|O_NOCTTY);
         *s = '\0';
         if (chdir(dir) < 0) {
             *s = '/';
             break;
         }
-        currdir = -1;
         *s = '/';
         while (*++s == '/')
             ;
         dir = s;
-    }
-    if (currdir >= 0) {
-        if (fchdir(currdir) < 0) {
-            close(currdir);
-            return -2;
-        }
-        close(currdir);
-        return -1;
     }
     return currdir == -2 ? -1 : -2;
 }
@@ -92,14 +79,17 @@ char *egetcwd(void) {
     dev_t dev;
     ino_t ino;
     int len;
+    int save_errno;
 
     bufsiz = PATH_MAX;
-    buf = xmalloc(bufsiz);
+    buf = xcalloc(bufsiz, sizeof(char));
     pos = bufsiz - 1;
     buf[pos] = '\0';
     strcpy(nbuf, "../");
-    if (0 > stat(".", &sbuf))
+    if (0 > stat(".", &sbuf)) {
+        free(buf);
         return NULL;
+    }
 
     pino = sbuf.st_ino;
     pdev = sbuf.st_dev;
@@ -123,8 +113,12 @@ char *egetcwd(void) {
         }
 
         dir = opendir("..");
-        if (NULL == dir)
+        if (NULL == dir) {
+            save_errno = errno;
+            LOGD("opendir() failed: %s", strerror(errno));
+            errno = save_errno;
             break;
+        }
 
         while ((de = readdir(dir))) {
             char *fn = de->d_name;
@@ -147,7 +141,7 @@ char *egetcwd(void) {
         pos -= len;
         while (pos <= 1) {
             char *temp;
-            char *newbuf = xmalloc(2 * bufsiz);
+            char *newbuf = xcalloc(2 * bufsiz, sizeof(char));
             memcpy(newbuf + bufsiz, buf, bufsiz);
             temp = buf;
             buf = newbuf;
@@ -161,8 +155,10 @@ char *egetcwd(void) {
             break;
     }
 
-    if (*buf)
+    if (*buf) {
+        LOGD("Changing current working directory to `%s'", buf);
         echdir(buf + pos + 1);
+    }
     free(buf);
     return NULL;
 }

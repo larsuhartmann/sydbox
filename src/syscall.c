@@ -722,6 +722,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 char *newcwd = pgetcwd(child->pid);
                 if (NULL == newcwd) {
                     retval = -errno;
+                    LOGD("pgetcwd() failed: %s", strerror(errno));
                     if (0 > trace_set_return(child->pid, retval)) {
                         if (ESRCH == errno)
                             return handle_esrch(ctx, child);
@@ -736,6 +737,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
                 }
             }
+            else
+                LOGD("Child %i failed to change directory: %s", child->pid, strerror(-retval));
         }
         child->flags ^= TCHILD_INSYSCALL;
     }

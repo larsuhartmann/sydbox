@@ -167,7 +167,12 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
             dest += end - start;
             *dest = '\0';
 
-            if (lstat (rname, &st) != 0) {
+            int ret;
+            if (NULL != cwd && 0 == strncmp(rname, cwd, strlen(cwd)))
+                ret = lstat(rname + strlen(cwd) + 1, &st);
+            else
+                ret = lstat(rname, &st);
+            if (0 != ret) {
                 if (can_mode == CAN_EXISTING)
                     goto error;
                 if (can_mode == CAN_ALL_BUT_LAST && *end)
@@ -185,7 +190,10 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
                     goto error;
                 }
 
-                buf = ereadlink(rname);
+                if (NULL != cwd && 0 == strncmp(rname, cwd, strlen(cwd)))
+                    buf = ereadlink(rname + strlen(cwd) + 1);
+                else
+                    buf = ereadlink(rname);
                 if (!buf)
                     goto error;
 

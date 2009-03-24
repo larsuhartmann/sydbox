@@ -160,6 +160,21 @@ void *__xmalloc(size_t size, const char *file, const char *func, size_t line) {
     return t;
 }
 
+void *__xcalloc(size_t nmemb, size_t size, const char *file, const char *func, size_t line) {
+    void *t;
+
+    if (0 == size)
+        return NULL;
+
+    t = calloc(nmemb, size);
+    if (NULL == t) {
+        LOGE("%s:%s():%zu: calloc(%zu,%zu) failed: %s", file, func, line, nmemb, size, strerror(errno));
+        DIEOS("calloc failed: %s", strerror(errno));
+    }
+
+    return t;
+}
+
 void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, size_t line) {
     void *t;
 

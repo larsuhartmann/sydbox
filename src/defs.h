@@ -241,12 +241,15 @@ void lg(int level, const char *func, size_t line, const char *fmt, ...)
 
 void *__xmalloc(size_t size, const char *file, const char *func, size_t line)
     __attribute__ ((alloc_size(1)));
+void *__xcalloc(size_t nmemb, size_t size, const char *file, const char *func, size_t line)
+    __attribute__ ((alloc_size(1,2)));
 void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, size_t line)
     __attribute__ ((alloc_size(2)));
 char *__xstrndup(const char *str, size_t size, const char *file, const char *func, size_t line)
     __attribute__ ((alloc_size(2)))
     __attribute__ ((nonnull(1)));
 #define xmalloc(_size)          __xmalloc(_size, __FILE__, __func__, __LINE__)
+#define xcalloc(_nmemb, _size)  __xcalloc(_nmemb, _size, __FILE__, __func__, __LINE__)
 #define xrealloc(_ptr, _size)   __xrealloc(_ptr, _size, __FILE__, __func__, __LINE__)
 #define xstrndup(_str, _size)   __xstrndup(_str, _size, __FILE__, __func__, __LINE__)
 #define xstrdup(_str)           __xstrndup(_str, strlen(_str) + 1, __FILE__, __func__, __LINE__)
