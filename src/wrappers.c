@@ -119,6 +119,7 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
             rname_limit = dest;
     }
     else {
+        cwd = NULL;
         rname = xmalloc (PATH_MAX);
         rname_limit = rname + PATH_MAX;
         rname[0] = '/';
