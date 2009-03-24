@@ -449,6 +449,9 @@ skip_commandline:
 
         // Clean environment
         unsetenv("PWD");
+        ctx->cwd = egetcwd();
+        if (NULL == ctx->cwd)
+            DIESOFT("Failed to get current working directory: %s", strerror(errno));
 
         // Handle signals
         struct sigaction new_action, old_action;
@@ -483,9 +486,7 @@ skip_commandline:
         ctx->eldest->sandbox->net = net;
         ctx->eldest->sandbox->write_prefixes = write_prefixes;
         ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
-        ctx->eldest->cwd = egetcwd();
-        if (NULL == ctx->eldest->cwd)
-            DIESOFT("Failed to get current working directory: %s", strerror(errno));
+        ctx->eldest->cwd = xstrdup(ctx->cwd);
 
         LOGV("Child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {

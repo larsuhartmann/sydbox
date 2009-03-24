@@ -197,20 +197,38 @@ static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
         DIESOFT("Bug in syscall_has_flagwrite() call");
 }
 
-static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
+static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned int flags,
         char *path, bool has_creat, unsigned int npath) {
     long len;
     char *pathc, *path_sanitized, *rpath;
     bool resolve;
 
-    if ('/' != path[0] && 0 > echdir(child->cwd)) {
-        LOGD("Failed to change current working directory to `%s': %s", child->cwd, strerror(errno));
-        LOGD("Adding current working directory to `%s' instead", path);
-        len = strlen(child->cwd) + strlen(path) + 2;
-        pathc = xmalloc(len * sizeof(char));
-        snprintf(pathc, len, "%s/%s", child->cwd, path);
-        path_sanitized = remove_slash(pathc);
-        free(pathc);
+    if ('/' != path[0] && 0 != strncmp(ctx->cwd, child->cwd, strlen(ctx->cwd) + 1)) {
+        char *newcwd;
+        if (0 == strncmp(ctx->cwd, child->cwd, strlen(ctx->cwd))) {
+            /* child->cwd begins with ctx->cwd, call chdir using relative path
+             * instead of absolute path to make sure no errors regarding
+             * permissions happen.
+             */
+            newcwd = child->cwd + strlen(ctx->cwd) + 1;
+        }
+        else
+            newcwd = child->cwd;
+
+        if (0 > echdir(newcwd)) {
+            LOGD("Failed to change current working directory to `%s': %s", newcwd, strerror(errno));
+            LOGD("Adding current working directory to `%s' instead", path);
+            len = strlen(child->cwd) + strlen(path) + 2;
+            pathc = xmalloc(len * sizeof(char));
+            snprintf(pathc, len, "%s/%s", child->cwd, path);
+            path_sanitized = remove_slash(pathc);
+            free(pathc);
+        }
+        else {
+            free(ctx->cwd);
+            ctx->cwd = xstrdup(child->cwd);
+            path_sanitized = remove_slash(path);
+        }
     }
     else
         path_sanitized = remove_slash(path);
@@ -258,7 +276,7 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
     return rpath;
 }
 
-static char *syscall_get_dirname(struct tchild *child, unsigned int npath) {
+static char *syscall_get_dirname(context_t *ctx, struct tchild *child, unsigned int npath) {
     int save_errno;
     long dfd;
 
@@ -273,7 +291,7 @@ static char *syscall_get_dirname(struct tchild *child, unsigned int npath) {
     if (AT_FDCWD == dfd)
         return child->cwd;
     else
-        return pgetdir(child->pid, dfd);
+        return pgetdir(ctx, child->pid, dfd);
 }
 
 static enum res_syscall syscall_check_path(struct tchild *child, const struct syscall_def *sdef,
@@ -529,7 +547,7 @@ found:
                 return RS_ERROR;
             }
         }
-        rpath = syscall_get_rpath(child, sdef->flags, pathfirst, has_creat, 0);
+        rpath = syscall_get_rpath(ctx, child, sdef->flags, pathfirst, has_creat, 0);
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", pathfirst, strerror(errno));
@@ -554,7 +572,7 @@ found:
             errno = save_errno;
             return RS_ERROR;
         }
-        rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
+        rpath = syscall_get_rpath(ctx, child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
@@ -576,7 +594,7 @@ found:
             return RS_ERROR;
         }
         if ('/' != path[0]) {
-            char *dname = syscall_get_dirname(child, 0);
+            char *dname = syscall_get_dirname(ctx, child, 0);
             if (NULL == dname) {
                 child->retval = -errno;
                 LOGD("syscall_get_dirname() failed: %s", strerror(errno));
@@ -592,7 +610,7 @@ found:
                 child->cwd = dname;
             }
         }
-        rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
+        rpath = syscall_get_rpath(ctx, child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
@@ -626,7 +644,7 @@ found:
             return RS_ERROR;
         }
         if ('/' != path[0]) {
-            char *dname = syscall_get_dirname(child, 2);
+            char *dname = syscall_get_dirname(ctx, child, 2);
             if (NULL == dname) {
                 child->retval = -errno;
                 LOGD("syscall_get_dirname() failed: %s", strerror(errno));
@@ -642,7 +660,7 @@ found:
                 child->cwd = dname;
             }
         }
-        rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 3);
+        rpath = syscall_get_rpath(ctx, child, sdef->flags, path, has_creat, 3);
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
@@ -753,7 +771,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             }
             if (0 == retval) {
                 // Child has successfully changed directory
-                char *newcwd = pgetcwd(child->pid);
+                char *newcwd = pgetcwd(ctx, child->pid);
                 if (NULL == newcwd) {
                     retval = -errno;
                     LOGD("pgetcwd() failed: %s", strerror(errno));

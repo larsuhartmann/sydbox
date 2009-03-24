@@ -169,6 +169,7 @@ void tchild_delete(struct tchild **head, pid_t pid);
 /* context.c */
 typedef struct {
     int paranoid;
+    char *cwd; // current working directory
     struct tchild *children;
     struct tchild *eldest;  // first child is kept to determine return code
 } context_t;
@@ -197,8 +198,8 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
         bool resolve, const char *cwd);
 
 /* proc.c */
-char *pgetcwd(pid_t pid);
-char *pgetdir(pid_t pid, int dfd);
+char *pgetcwd(context_t *ctx, pid_t pid);
+char *pgetdir(context_t *ctx, pid_t pid, int dfd);
 
 /* util.c */
 extern int log_level;

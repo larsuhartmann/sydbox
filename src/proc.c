@@ -18,11 +18,13 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 #include "defs.h"
 
-char *pgetcwd(pid_t pid) {
+char *pgetcwd(context_t *ctx, pid_t pid) {
     char *cwd;
     char linkcwd[64];
     snprintf(linkcwd, 64, "/proc/%i/cwd", pid);
@@ -38,10 +40,12 @@ char *pgetcwd(pid_t pid) {
     errno = 0;
     if (0 > echdir(linkcwd))
         return NULL;
-    return egetcwd();
+    free(ctx->cwd);
+    ctx->cwd = egetcwd();
+    return xstrdup(ctx->cwd);
 }
 
-char *pgetdir(pid_t pid, int dfd) {
+char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
     char *dir;
     char linkdir[128];
     snprintf(linkdir, 128, "/proc/%i/fd/%d", pid, dfd);
@@ -57,5 +61,7 @@ char *pgetdir(pid_t pid, int dfd) {
     errno = 0;
     if (0 > echdir(linkdir))
         return NULL;
-    return egetcwd();
+    free(ctx->cwd);
+    ctx->cwd = egetcwd();
+    return xstrdup(ctx->cwd);
 }
