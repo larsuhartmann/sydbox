@@ -81,6 +81,14 @@ char *egetcwd(void) {
     int len;
     int save_errno;
 
+    /* First try getcwd() */
+    buf = getcwd(NULL, 0);
+    if (NULL != buf)
+        return buf;
+    else if (ENAMETOOLONG != errno)
+        return NULL;
+
+    /* Next try stat()'ing and chdir()'ing up */
     bufsiz = PATH_MAX;
     buf = xcalloc(bufsiz, sizeof(char));
     pos = bufsiz - 1;
