@@ -198,7 +198,7 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
 
 /* proc.c */
 char *pgetcwd(pid_t pid);
-char *pgetdir(pid_t pid, int dirfd);
+char *pgetdir(pid_t pid, int dfd);
 
 /* util.c */
 extern int log_level;

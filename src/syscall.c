@@ -258,42 +258,22 @@ static char *syscall_get_rpath(struct tchild *child, unsigned int flags,
     return rpath;
 }
 
-static char *syscall_get_pathat(pid_t pid, unsigned int npath) {
+static char *syscall_get_dirname(struct tchild *child, unsigned int npath) {
     int save_errno;
-    long dirfd;
-    char *buf;
+    long dfd;
 
-    assert(1 == npath || 3 == npath);
-    if (0 > trace_get_arg(pid, npath - 1, &dirfd)) {
+    assert(0 == npath || 2 == npath);
+    if (0 > trace_get_arg(child->pid, npath, &dfd)) {
         save_errno = errno;
         LOGW("Failed to get dirfd: %s", strerror(errno));
         errno = save_errno;
         return NULL;
     }
-    buf = trace_get_string(pid, npath);
-    if (NULL == buf) {
-        save_errno = errno;
-        LOGW("Failed to get string from argument %d: %s", npath, strerror(errno));
-        errno = save_errno;
-        return NULL;
-    }
 
-    if (AT_FDCWD != dirfd && '/' != buf[0]) {
-        char *dname = pgetdir(pid, dirfd);
-        if (NULL == dname) {
-            save_errno = errno;
-            LOGW("readlink() failed for /proc/%i/%ld: %s", pid, dirfd, strerror(errno));
-            errno = save_errno;
-            return NULL;
-        }
-
-        char *destc = xstrdup(buf);
-        buf = xrealloc(buf, strlen(buf) + strlen(dname) + 2);
-        sprintf(buf, "%s/%s", dname, destc);
-        free(dname);
-        free(destc);
-    }
-    return buf;
+    if (AT_FDCWD == dfd)
+        return child->cwd;
+    else
+        return pgetdir(child->pid, dfd);
 }
 
 static enum res_syscall syscall_check_path(struct tchild *child, const struct syscall_def *sdef,
@@ -467,7 +447,7 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
 
 enum res_syscall syscall_check(context_t *ctx, struct tchild *child, int sno) {
     unsigned int i, ret, save_errno;
-    char *path = NULL, *pathfirst = NULL, *rpath = NULL;
+    char *path = NULL, *pathfirst = NULL, *rpath = NULL, *oldcwd = NULL;
     const char *sname;
     const struct syscall_def *sdef;
 
@@ -588,17 +568,44 @@ found:
     }
     if (sdef->flags & CHECK_PATH_AT) {
         LOGD("System call %s() has CHECK_PATH_AT set, checking", sname);
-        path = syscall_get_pathat(child->pid, 1);
+        path = trace_get_string(child->pid, 1);
         if (NULL == path) {
-            child->retval = -errno;
-            return RS_DENY;
+            save_errno = errno;
+            LOGE("Failed to get string from argument 1: %s", strerror(errno));
+            errno = save_errno;
+            return RS_ERROR;
+        }
+        if ('/' != path[0]) {
+            char *dname = syscall_get_dirname(child, 0);
+            if (NULL == dname) {
+                child->retval = -errno;
+                LOGD("syscall_get_dirname() failed: %s", strerror(errno));
+                LOGD("Denying access to system call %s", sname);
+                return RS_DENY;
+            }
+            else if (child->cwd != dname) {
+                /* To make at suffixed functions work when called with long
+                 * paths as arguments, we change directory to dirfd here
+                 * temporarily.
+                 */
+                oldcwd = child->cwd;
+                child->cwd = dname;
+            }
         }
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
+            if (NULL != oldcwd) {
+                child->cwd = oldcwd;
+                oldcwd = NULL;
+            }
             free(path);
             return RS_DENY;
+        }
+        if (NULL != oldcwd) {
+            child->cwd = oldcwd;
+            oldcwd = NULL;
         }
         free(path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
@@ -611,17 +618,44 @@ found:
     }
     if (sdef->flags & CHECK_PATH_AT2) {
         LOGD("System call %s() has CHECK_PATH_AT2 set, checking", sname);
-        path = syscall_get_pathat(child->pid, 3);
+        path = trace_get_string(child->pid, 3);
         if (NULL == path) {
-            child->retval = -errno;
-            return RS_DENY;
+            save_errno = errno;
+            LOGE("Failed to get string from argument 3: %s", strerror(errno));
+            errno = save_errno;
+            return RS_ERROR;
+        }
+        if ('/' != path[0]) {
+            char *dname = syscall_get_dirname(child, 2);
+            if (NULL == dname) {
+                child->retval = -errno;
+                LOGD("syscall_get_dirname() failed: %s", strerror(errno));
+                LOGD("Denying access to system call %s", sname);
+                return RS_DENY;
+            }
+            else if (child->cwd != dname) {
+                /* To make at suffixed functions work when called with long
+                 * paths as arguments, we change directory to dirfd here
+                 * temporarily.
+                 */
+                oldcwd = child->cwd;
+                child->cwd = dname;
+            }
         }
         rpath = syscall_get_rpath(child, sdef->flags, path, has_creat, 3);
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
+            if (NULL != oldcwd) {
+                child->cwd = oldcwd;
+                oldcwd = NULL;
+            }
             free(path);
             return RS_DENY;
+        }
+        if (NULL != oldcwd) {
+            child->cwd = oldcwd;
+            oldcwd = NULL;
         }
         free(path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 3);

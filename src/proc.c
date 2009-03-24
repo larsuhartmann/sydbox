@@ -41,8 +41,21 @@ char *pgetcwd(pid_t pid) {
     return egetcwd();
 }
 
-char *pgetdir(pid_t pid, int dirfd) {
-    char procfd[128];
-    snprintf(procfd, 128, "/proc/%i/fd/%d", pid, dirfd);
-    return ereadlink(procfd);
+char *pgetdir(pid_t pid, int dfd) {
+    char *dir;
+    char linkdir[128];
+    snprintf(linkdir, 128, "/proc/%i/fd/%d", pid, dfd);
+
+    // First try ereadlink()
+    dir = ereadlink(linkdir);
+    if (NULL != dir)
+        return dir;
+    else if (ENAMETOOLONG != errno)
+        return NULL;
+
+    // Now try egetcwd()
+    errno = 0;
+    if (0 > echdir(linkdir))
+        return NULL;
+    return egetcwd();
 }
