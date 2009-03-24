@@ -181,9 +181,12 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
                 st.st_mode = 0;
             }
 
-            if (resolve && S_ISLNK (st.st_mode)) {
+            if (S_ISLNK (st.st_mode)) {
                 char *buf;
                 size_t n, len;
+
+                if (!resolve)
+                    continue;
 
                 /* Protect against infinite loops */
                 if (readlinks++ > MAXSYMLINKS) {
