@@ -17,7 +17,9 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "defs.h"
 
@@ -25,7 +27,9 @@ context_t *context_new(void) {
     context_t *ctx;
     ctx = (context_t *) xmalloc(sizeof(context_t));
     ctx->paranoid = 0;
-    ctx->cwd = NULL;
+    ctx->cwd = egetcwd();
+    if (NULL == ctx->cwd)
+        DIESOFT("Failed to get current working directory: %s", strerror(errno));
     ctx->children = NULL;
     ctx->eldest = NULL;
     return ctx;

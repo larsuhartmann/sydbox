@@ -447,12 +447,6 @@ skip_commandline:
     else { // Parent process
         int status, ret;
 
-        // Clean environment
-        unsetenv("PWD");
-        ctx->cwd = egetcwd();
-        if (NULL == ctx->cwd)
-            DIESOFT("Failed to get current working directory: %s", strerror(errno));
-
         // Handle signals
         struct sigaction new_action, old_action;
         new_action.sa_handler = sig_cleanup;
