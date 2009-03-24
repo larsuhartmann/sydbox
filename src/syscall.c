@@ -83,7 +83,7 @@ static const struct syscall_def syscalls[] = {
 #if defined(__NR_lchown32)
     {__NR_lchown32,     CHECK_PATH | DONT_RESOLV},
 #endif
-    {__NR_link,         CHECK_PATH | CHECK_PATH2 | CAN_CREAT2},
+    {__NR_link,         CHECK_PATH | CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV},
     {__NR_mkdir,        CHECK_PATH | CAN_CREAT},
     {__NR_mknod,        CHECK_PATH | CAN_CREAT},
     {__NR_access,       CHECK_PATH | ACCESS_MODE},
