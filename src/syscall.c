@@ -650,7 +650,7 @@ found:
                 LOGD("Denying access to system call %s", sname);
                 return RS_DENY;
             }
-            else if (child->cwd != dname) {
+            else if (child->cwd != dname) { // Not AT_FDCWD
                 /* To make at suffixed functions work when called with long
                  * paths as arguments, we change directory to dirfd here
                  * temporarily.
@@ -703,7 +703,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             DIESOFT("Failed to get syscall: %s", strerror(errno));
     }
     if (LOG_DEBUG <= log_level)
-        sname = 0xbadca11 == sno ? syscall_get_name(child->sno) : syscall_get_name(sno);
+        sname = (0xbadca11 == sno) ? syscall_get_name(child->sno) : syscall_get_name(sno);
     else
         sname = NULL;
 
