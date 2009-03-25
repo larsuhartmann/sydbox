@@ -25,11 +25,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 
 #include "defs.h"
 
-const struct timespec waitpid_interval = { .tv_sec = 0, .tv_nsec = 32 };
 
 // Event handlers
 static int xsetup(context_t *ctx, struct tchild *child) {
@@ -141,12 +139,8 @@ int trace_loop(context_t *ctx) {
 
     ret = EXIT_SUCCESS;
     while (NULL != ctx->children) {
-        pid = waitpid(-1, &status, __WALL | WNOHANG);
-        if (likely(0 == pid)) {
-            nanosleep(&waitpid_interval, NULL);
-            continue;
-        }
-        else if (unlikely(0 > pid)) {
+        pid = waitpid(-1, &status, __WALL);
+        if (unlikely(0 > pid)) {
             LOGE("waitpid failed: %s", strerror(errno));
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
