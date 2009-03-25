@@ -377,47 +377,46 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
     }
     else if (path_magic_lock(path)) {
         ismagic = 1;
-        LOGV("Access to magic commands is now denied for child %i", child->pid);
         child->sandbox->lock = LOCK_SET;
+        LOGV("Access to magic commands is now denied for child %i", child->pid);
     }
     else if (path_magic_exec_lock(path)) {
         ismagic = 1;
-        LOGV("Access to magic commands will be denied on execve() for child %i", child->pid);
         child->sandbox->lock = LOCK_PENDING;
+        LOGV("Access to magic commands will be denied on execve() for child %i", child->pid);
     }
     else if (path_magic_write(path)) {
         ismagic = 1;
         rpath = path + CMD_WRITE_LEN;
-        LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
+        LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
     else if (path_magic_predict(path)) {
         ismagic = 1;
         rpath = path + CMD_PREDICT_LEN;
-        LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
         pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
+        LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
     }
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;
         rpath = path + CMD_RMWRITE_LEN;
         rpath_sanitized = remove_slash(rpath);
-        LOGN("Approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
+        LOGN("Approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         free(rpath_sanitized);
     }
     else if (path_magic_rmpredict(path)) {
         ismagic = 1;
         rpath = path + CMD_RMPREDICT_LEN;
         rpath_sanitized = remove_slash(rpath);
-        LOGN("Approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
+        LOGN("Approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         free(rpath_sanitized);
     }
 
     if (ismagic) {
-        // Change argument to /dev/null
         LOGD("Changing path to /dev/null");
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
