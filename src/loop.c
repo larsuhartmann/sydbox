@@ -28,6 +28,7 @@
 
 #include <glib.h>
 
+#include "log.h"
 #include "loop.h"
 #include "util.h"
 #include "trace.h"

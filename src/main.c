@@ -33,6 +33,7 @@
 
 #include <confuse.h>
 
+#include "log.h"
 #include "defs.h"
 #include "loop.h"
 #include "path.h"

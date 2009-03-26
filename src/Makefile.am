@@ -6,7 +6,7 @@ bin_PROGRAMS = sydbox
 sydbox_SOURCES = defs.h syscallent.h \
 		 getcwd.c path.c proc.c children.c util.c \
 		 context.c syscall.c trace.c wrappers.c loop.c \
-		 main.c
+		 log.c main.c
 sydbox_LDADD= $(glib_LIBS) $(confuse_LIBS)
 
 BUILT_SOURCES= syscallent.h

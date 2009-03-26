@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "log.h"
 #include "path.h"
 #include "util.h"
 

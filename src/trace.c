@@ -47,6 +47,7 @@
 #include <sys/ptrace.h>
 #include <linux/ptrace.h>
 
+#include "log.h"
 #include "util.h"
 #include "trace.h"
 #include "syscall.h"

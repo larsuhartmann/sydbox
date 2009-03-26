@@ -34,6 +34,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "log.h"
 #include "defs.h"
 #include "util.h"
 

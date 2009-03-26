@@ -5,7 +5,8 @@
 #ifndef __CHILDREN_H__
 #define __CHILDREN_H__
 
-#include "defs.h"
+#include <sys/types.h>
+
 #include "path.h"
 
 /* TCHILD flags */

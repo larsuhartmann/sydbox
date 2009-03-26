@@ -5,28 +5,12 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-#include <stdio.h>
-
 #include "context.h"
 #include "children.h"
-
-#define LOG_ERROR       1
-#define LOG_WARNING     2
-#define LOG_NORMAL      3
-#define LOG_VERBOSE     4
-#define LOG_DEBUG       5
-#define LOG_DEBUG_CRAZY 6
 
 #define NORMAL  "[00;00m"
 #define MAGENTA "[00;35m"
 #define PINK    "[01;35m"
-
-#define LOGE(...)   lg(LOG_ERROR, __func__, __LINE__,  __VA_ARGS__)
-#define LOGW(...)   lg(LOG_WARNING, __func__, __LINE__, __VA_ARGS__)
-#define LOGN(...)   lg(LOG_NORMAL, __func__, __LINE__, __VA_ARGS__)
-#define LOGV(...)   lg(LOG_VERBOSE, __func__, __LINE__, __VA_ARGS__)
-#define LOGD(...)   lg(LOG_DEBUG, __func__, __LINE__, __VA_ARGS__)
-#define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __LINE__, __VA_ARGS__)
 
 #define DIESOFT(...)    die(EX_SOFTWARE, __VA_ARGS__)
 #define DIEDATA(...)    die(EX_DATAERR, __VA_ARGS__)
@@ -39,9 +23,6 @@
 #define xstrndup(_str, _size)   __xstrndup(_str, _size, __FILE__, __func__, __LINE__)
 #define xstrdup(_str)           __xstrndup(_str, strlen(_str) + 1, __FILE__, __func__, __LINE__)
 
-extern int log_level;
-extern char *log_file;
-extern FILE *log_fp;
 extern int colour;
 
 void
@@ -57,10 +38,6 @@ _die (int err, const char *fmt, ...)
 void
 access_error (pid_t pid, const char *fmt, ...)
     __attribute__ ((format (printf, 2, 3)));
-
-void
-lg (int level, const char *func, size_t line, const char *fmt, ...)
-    __attribute__ ((format (printf, 4, 5)));
 
 void *
 __xmalloc (size_t size, const char *file, const char *func, size_t line)
