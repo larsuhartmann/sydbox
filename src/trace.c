@@ -48,6 +48,7 @@
 #include <linux/ptrace.h>
 
 #include "defs.h"
+#include "util.h"
 #include "trace.h"
 
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)

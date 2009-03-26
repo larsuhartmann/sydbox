@@ -24,6 +24,7 @@
 
 #include "defs.h"
 #include "proc.h"
+#include "util.h"
 #include "wrappers.h"
 
 char *pgetcwd(context_t *ctx, pid_t pid) {

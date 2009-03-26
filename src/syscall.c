@@ -36,6 +36,7 @@
 #include "defs.h"
 #include "path.h"
 #include "proc.h"
+#include "util.h"
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"

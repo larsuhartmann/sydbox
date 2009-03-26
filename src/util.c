@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include "defs.h"
+#include "util.h"
 #include "children.h"
 
 int colour = -1;

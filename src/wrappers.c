@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 
 #include "defs.h"
+#include "util.h"
 #include "wrappers.h"
 
 #ifndef __set_errno

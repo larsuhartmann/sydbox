@@ -36,6 +36,7 @@
 #include "defs.h"
 #include "loop.h"
 #include "path.h"
+#include "util.h"
 #include "trace.h"
 #include "children.h"
 #include "wrappers.h"

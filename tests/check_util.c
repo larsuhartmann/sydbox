@@ -11,6 +11,7 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "../src/util.h"
 #include "check_sydbox.h"
 
 START_TEST(check_util_remove_slash_begin) {

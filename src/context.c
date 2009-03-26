@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "defs.h"
+#include "util.h"
 #include "children.h"
 
 context_t *context_new(void) {
