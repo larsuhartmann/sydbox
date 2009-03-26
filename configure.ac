@@ -331,9 +331,16 @@ AC_SUBST([SYDBOX_CFLAGS])
 dnl }}}
 
 dnl {{{ Check for libraries
-PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
-PKG_CHECK_MODULES([confuse], [libconfuse >= 2.6],,
-				  [AC_MSG_ERROR([sydbox requires libconfuse >=2.6])])
+GLIB_REQUIRED=2.18
+CONFUSE_REQUIRED=2.6
+CHECK_REQUIRED=0.9.4
+
+PKG_PROG_PKG_CONFIG([0.20.0])
+PKG_CHECK_MODULES([glib], [glib-2.0 >= $GLIB_REQUIRED],,
+				  AC_MSG_ERROR([sydbox requires glib-$GLIB_REQUIRED or newer]))
+PKG_CHECK_MODULES([confuse], [libconfuse >= $CONFUSE_REQUIRED],,
+				  [AC_MSG_ERROR([sydbox requires libconfuse-$CONFUSE_REQUIRED or newer])])
+PKG_CHECK_MODULES([check], [check >= $CHECK_REQUIRED])
 dnl }}}
 
 dnl {{{ output
