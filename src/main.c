@@ -37,6 +37,7 @@
 #include "path.h"
 #include "trace.h"
 #include "children.h"
+#include "wrappers.h"
 
 static context_t *ctx = NULL;
 static char *config_file = NULL;

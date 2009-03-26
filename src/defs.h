@@ -93,22 +93,6 @@ void context_free(context_t *ctx);
 char *egetcwd(void);
 int echdir(char *dir);
 
-/* wrappers.c */
-char *edirname(const char *path);
-char *ebasename(const char *path);
-char *ereadlink(const char *path);
-
-enum canonicalize_mode_t {
-    /* All components must exist.  */
-    CAN_EXISTING = 0,
-    /* All components excluding last one must exist.  */
-    CAN_ALL_BUT_LAST = 1,
-};
-typedef enum canonicalize_mode_t canonicalize_mode_t;
-
-char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
-        bool resolve, const char *cwd);
-
 /* util.c */
 extern int log_level;
 extern char *log_file;

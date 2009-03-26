@@ -39,6 +39,7 @@
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"
+#include "wrappers.h"
 
 // System call dispatch flags
 #define RETURNS_FD              (1 << 0) // The function returns a file descriptor
