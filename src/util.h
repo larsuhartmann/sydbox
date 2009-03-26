@@ -6,6 +6,7 @@
 #define __UTIL_H__
 
 #include "defs.h"
+#include "context.h"
 #include "children.h"
 
 #define LOG_ERROR       1

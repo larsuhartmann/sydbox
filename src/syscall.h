@@ -5,7 +5,7 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
-#include "defs.h"
+#include "context.h"
 #include "children.h"
 
 struct syscall_def

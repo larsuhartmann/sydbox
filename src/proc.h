@@ -5,7 +5,7 @@
 #ifndef __PROC_H__
 #define __PROC_H__
 
-#include "defs.h"
+#include "context.h"
 
 char *
 pgetcwd (context_t *ctx, pid_t pid);

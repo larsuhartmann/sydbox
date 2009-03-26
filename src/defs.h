@@ -78,17 +78,6 @@
 #define unlikely(x)     (x)
 #endif
 
-/* context.c */
-typedef struct {
-    int paranoid;
-    char *cwd; // current working directory
-    struct tchild *children;
-    struct tchild *eldest;  // first child is kept to determine return code
-} context_t;
-
-context_t *context_new(void);
-void context_free(context_t *ctx);
-
 /* getcwd.c */
 char *egetcwd(void);
 int echdir(char *dir);
