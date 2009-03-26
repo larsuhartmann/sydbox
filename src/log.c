@@ -1,8 +1,7 @@
+/* vim: set sw=4 sts=4 et foldmethod=syntax : */
+
 /*
  * Copyright (c) 2009 Ali Polatel
- * Based in part upon sandbox-1.3.7 which is:
- *  Copyright 1999-2008 Gentoo Foundation
- *  Copyright 2004-2007 Martin Schlemmer <azarah@nosferatu.za.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -84,6 +83,4 @@ lg(int level, const char *func, size_t line, const char *fmt, ...)
 
     fputc('\n', log_fp);
 }
-
-/* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
