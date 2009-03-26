@@ -99,6 +99,7 @@ char *egetcwd(void) {
         return NULL;
     }
 
+    /* Record the initial inode and device */
     pino = sbuf.st_ino;
     pdev = sbuf.st_dev;
 
@@ -106,11 +107,14 @@ char *egetcwd(void) {
         if (0 > stat("..", &sbuf))
             break;
 
+        /* Inode and device of current directory */
         ino = pino;
         dev = pdev;
+        /* Inode and device of current directory's parent */
         pino = sbuf.st_ino;
         pdev = sbuf.st_dev;
 
+        /* If they're the same, we've reached the root directory. */
         if (ino == pino && dev == pdev) {
             if (!buf[pos])
                 buf[--pos] = '/';
@@ -120,6 +124,7 @@ char *egetcwd(void) {
             return s;
         }
 
+        /* Search the parent for the current directory. */
         dir = opendir("..");
         if (NULL == dir) {
             save_errno = errno;
@@ -136,6 +141,7 @@ char *egetcwd(void) {
                  (fn[1] == '.' && fn[2] == '\0')))
                 continue;
             if (dev != pdev || (ino_t) de->d_ino == ino) {
+                /* Maybe found directory, need to check device & inode */
                 strncpy(nbuf + 3, fn, PATH_MAX);
                 lstat(nbuf, &sbuf);
                 if (sbuf.st_dev == dev && sbuf.st_ino == ino)
@@ -144,7 +150,7 @@ char *egetcwd(void) {
         }
         closedir(dir);
         if (!de)
-            break;
+            break; /* Not found */
         len = strlen(nbuf + 2);
         pos -= len;
         while (pos <= 1) {
