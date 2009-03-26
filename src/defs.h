@@ -69,15 +69,6 @@
 #define ENV_NET         "SANDBOX_NET"
 #define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
 
-/* likely/unlikely */
-#if defined(__GNUC__)
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
-#else
-#define likely(x)       (x)
-#define unlikely(x)     (x)
-#endif
-
 /* getcwd.c */
 char *egetcwd(void);
 int echdir(char *dir);
