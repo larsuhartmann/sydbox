@@ -19,6 +19,7 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "../src/path.h"
 #include "../src/children.h"
 #include "check_sydbox.h"
 

@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 
 #include "defs.h"
+#include "path.h"
 #include "children.h"
 
 // System call dispatch flags

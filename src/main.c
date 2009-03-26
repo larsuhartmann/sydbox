@@ -35,6 +35,7 @@
 
 #include "defs.h"
 #include "children.h"
+#include "path.h"
 
 static context_t *ctx = NULL;
 static char *config_file = NULL;

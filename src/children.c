@@ -25,6 +25,7 @@
 
 #include "defs.h"
 #include "children.h"
+#include "path.h"
 
 // We keep this for efficient lookups
 struct tchild *childtab[PID_MAX_LIMIT] = { NULL };

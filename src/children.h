@@ -6,6 +6,7 @@
 #define __CHILDREN_H__
 
 #include "defs.h"
+#include "path.h"
 
 /* TCHILD flags */
 #define TCHILD_NEEDSETUP   (1 << 0)    /* child needs setup */

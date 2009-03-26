@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "defs.h"
+#include "path.h"
 
 bool path_magic_dir(const char *path) {
     return (0 == strncmp(path, CMD_PATH, CMD_PATH_LEN - 1)) ? true : false;

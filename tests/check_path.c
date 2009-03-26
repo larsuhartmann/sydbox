@@ -14,6 +14,7 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "../src/path.h"
 #include "check_sydbox.h"
 
 START_TEST(check_pathnode_new) {
