@@ -1,3 +1,5 @@
+/* vim: set sw=4 sts=4 fdm=syntax et : */
+
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  **/
@@ -67,6 +69,4 @@ int
 trace_fake_stat (pid_t pid);
 
 #endif
-
-/* vim: set sw=4 sts=4 fdm=syntax et : */
 

@@ -1,3 +1,5 @@
+/* vim: set sw=4 sts=4 fdm=syntax et : */
+
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  **/
@@ -80,6 +82,4 @@ int
 pathlist_check (struct pathnode **pathlist, const char *path_sanitized);
 
 #endif
-
-/* vim: set sw=4 sts=4 fdm=syntax et : */
 

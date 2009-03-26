@@ -1,3 +1,5 @@
+/* vim: set sw=4 sts=4 fdm=syntax et : */
+
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  **/
@@ -22,6 +24,4 @@ void
 context_free (context_t *ctx);
 
 #endif
-
-/* vim: set sw=4 sts=4 fdm=syntax et : */
 

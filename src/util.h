@@ -1,3 +1,5 @@
+/* vim: set sw=4 sts=4 fdm=syntax et : */
+
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  **/
@@ -66,6 +68,4 @@ int
 handle_esrch (context_t *ctx, struct tchild *child);
 
 #endif
-
-/* vim: set sw=4 sts=4 fdm=syntax et : */
 

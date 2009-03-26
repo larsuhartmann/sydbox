@@ -1,3 +1,5 @@
+/* vim: set sw=4 sts=4 fdm=syntax et : */
+
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  **/
@@ -30,6 +32,4 @@ lg (int level, const char *func, size_t line, const char *fmt, ...)
     __attribute__ ((format (printf, 4, 5)));
 
 #endif
-
-/* vim: set sw=4 sts=4 fdm=syntax et : */
 
