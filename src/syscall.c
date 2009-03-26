@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 
 #include "defs.h"
+#include "children.h"
 
 // System call dispatch flags
 #define RETURNS_FD              (1 << 0) // The function returns a file descriptor

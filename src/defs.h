@@ -121,51 +121,6 @@ void pathnode_delete(struct pathnode **head, const char *path_sanitized);
 int pathlist_init(struct pathnode **pathlist, const char *pathlist_env);
 int pathlist_check(struct pathnode **pathlist, const char *path_sanitized);
 
-/* children.c */
-/* TCHILD_ flags */
-#define TCHILD_NEEDSETUP (1 << 0) /* Child needs setup */
-#define TCHILD_INSYSCALL (1 << 1) /* Child is in syscall */
-
-/* Per process tracking data */
-enum lock_status {
-    LOCK_SET, /* Magic commands are locked */
-    LOCK_UNSET, /* Magic commands are unlocked */
-    LOCK_PENDING /* Magic commands will be locked when an execve() is encountered */
-};
-
-struct tdata {
-    int on; /* Whether sandbox is on for the child */
-    int lock; /* Whether magic commands are locked for the child */
-    int net; /* Whether child is allowed to access network */
-    struct pathnode *write_prefixes;
-    struct pathnode *predict_prefixes;
-};
-
-struct tchild {
-    int flags; /* TCHILD_ flags */
-    pid_t pid;
-    char *cwd; /* child's current working directory */
-    unsigned long sno; /* original syscall no when a system call is faked */
-    long retval; /* faked syscall will return this value */
-    struct tdata *sandbox;
-    struct tchild *next;
-};
-
-#ifndef PID_MAX_LIMIT
-#if __WORDSIZE == 64
-#define PID_MAX_LIMIT   (1 << 22)
-#elif __WORDSIZE == 32
-#define PID_MAX_LIMIT   (1 << 15)
-#else
-#error unsupported wordsize
-#endif
-#endif /* PID_MAX_LIMIT */
-extern struct tchild *childtab[PID_MAX_LIMIT];
-
-void tchild_new(struct tchild **head, pid_t pid);
-void tchild_free(struct tchild **head);
-void tchild_delete(struct tchild **head, pid_t pid);
-
 /* context.c */
 typedef struct {
     int paranoid;

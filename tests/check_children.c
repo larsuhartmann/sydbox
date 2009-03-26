@@ -16,6 +16,7 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "../src/children.h"
 #include "check_sydbox.h"
 
 START_TEST(check_tchild_new) {

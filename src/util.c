@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include "defs.h"
+#include "children.h"
 
 int colour = -1;
 int log_level = -1;

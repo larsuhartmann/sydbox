@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "defs.h"
+#include "children.h"
 
 // We keep this for efficient lookups
 struct tchild *childtab[PID_MAX_LIMIT] = { NULL };
