@@ -183,7 +183,7 @@ char *remove_slash(const char *src) {
 }
 
 char *shell_expand(const char *src) {
-    char *command, *quoted;
+    char *command, *quoted, *ret;
     FILE *sh;
     GString *dest;
 
@@ -200,10 +200,12 @@ char *shell_expand(const char *src) {
         dest = g_string_append_c(dest, fgetc(sh));
     pclose(sh);
     /* Remove trailing newline */
-    dest = g_string_erase(dest, dest->len - 2, 2);
-    if (0 != strncmp(dest->str, src, strlen(src) + 1))
-        LOGD("Expanded path `%s' to `%s' using /bin/sh", src, dest->str);
-    return (char *) dest->str;
+    dest = g_string_truncate(dest, dest->len - 2);
+    ret = dest->str;
+    g_string_free(dest, FALSE);
+    if (0 != strncmp(ret, src, strlen(src) + 1))
+        LOGD("Expanded path `%s' to `%s' using /bin/sh", src, ret);
+    return ret;
 }
 
 // Handle the ESRCH errno which means child is dead
