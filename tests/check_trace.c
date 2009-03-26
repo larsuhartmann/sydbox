@@ -22,6 +22,7 @@
 #include <check.h>
 
 #include "../src/defs.h"
+#include "../src/trace.h"
 #include "../src/children.h"
 #include "check_sydbox.h"
 

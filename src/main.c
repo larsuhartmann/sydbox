@@ -34,8 +34,9 @@
 #include <confuse.h>
 
 #include "defs.h"
-#include "children.h"
 #include "path.h"
+#include "trace.h"
+#include "children.h"
 
 static context_t *ctx = NULL;
 static char *config_file = NULL;
