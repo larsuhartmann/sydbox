@@ -28,6 +28,7 @@
 
 #include "defs.h"
 #include "trace.h"
+#include "syscall.h"
 #include "children.h"
 
 

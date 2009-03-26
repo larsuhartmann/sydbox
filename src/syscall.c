@@ -37,6 +37,7 @@
 #include "path.h"
 #include "proc.h"
 #include "trace.h"
+#include "syscall.h"
 #include "children.h"
 
 // System call dispatch flags

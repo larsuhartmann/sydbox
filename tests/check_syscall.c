@@ -21,6 +21,7 @@
 #include "../src/defs.h"
 #include "../src/path.h"
 #include "../src/trace.h"
+#include "../src/syscall.h"
 #include "../src/children.h"
 #include "check_sydbox.h"
 
