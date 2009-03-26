@@ -26,7 +26,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "defs.h"
 #include "loop.h"
 #include "util.h"
 #include "trace.h"

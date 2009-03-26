@@ -47,9 +47,9 @@
 #include <sys/ptrace.h>
 #include <linux/ptrace.h>
 
-#include "defs.h"
 #include "util.h"
 #include "trace.h"
+#include "syscall.h"
 
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
 #define MAX_ARGS        6

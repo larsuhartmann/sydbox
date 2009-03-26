@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "defs.h"
 #include "path.h"
 #include "util.h"
 #include "children.h"

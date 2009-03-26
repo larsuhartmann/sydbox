@@ -5,7 +5,8 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
-#include "defs.h"
+#include <stdio.h>
+
 #include "context.h"
 #include "children.h"
 

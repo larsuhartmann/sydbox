@@ -33,7 +33,6 @@
 #include <asm/unistd.h>
 #include <sys/stat.h>
 
-#include "defs.h"
 #include "path.h"
 #include "proc.h"
 #include "util.h"

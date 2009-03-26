@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 
 #include "defs.h"
+#include "path.h"
 #include "util.h"
 #include "wrappers.h"
 

@@ -5,6 +5,8 @@
 #ifndef __WRAPPERS_H__
 #define __WRAPPERS_H__
 
+#include <stdbool.h>
+
 typedef enum canonicalize_mode_t
 {
     /* All components must exist.  */
