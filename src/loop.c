@@ -27,6 +27,7 @@
 #include <sys/wait.h>
 
 #include "defs.h"
+#include "loop.h"
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"

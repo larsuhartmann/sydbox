@@ -34,6 +34,7 @@
 #include <confuse.h>
 
 #include "defs.h"
+#include "loop.h"
 #include "path.h"
 #include "trace.h"
 #include "children.h"

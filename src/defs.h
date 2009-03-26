@@ -152,7 +152,4 @@ char *shell_expand(const char *src);
 
 int handle_esrch(context_t *ctx, struct tchild *child);
 
-/* loop.c */
-int trace_loop(context_t *ctx);
-
 #endif /* SYDBOX_GUARD_DEFS_H */
