@@ -19,4 +19,5 @@ t01_util_shell_expand_SOURCES= t01_util_shell_expand.c \
 			      $(top_builddir)/src/context.c $(top_builddir)/src/wrappers.c \
 			      $(top_builddir)/src/util.c $(top_builddir)/src/getcwd.c \
 			      $(top_builddir)/src/log.c
+t01_util_shell_expand_CFLAGS= $(glib_CFLAGS)
 t01_util_shell_expand_LDADD= $(glib_LIBS)

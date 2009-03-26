@@ -31,6 +31,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <glib.h>
+
 #include "log.h"
 #include "defs.h"
 #include "util.h"
@@ -181,26 +183,27 @@ char *remove_slash(const char *src) {
 }
 
 char *shell_expand(const char *src) {
-    char *command = xmalloc((32 + strlen(src)) * sizeof(char));
-    strcpy(command, "/bin/sh -c 'echo -n \"");
-    strcat(command, src);
-    strcat(command, "\"'");
-    FILE *bash = popen(command, "r");
-    free(command);
-    if (NULL == bash)
+    char *command, *quoted;
+    FILE *sh;
+    GString *dest;
+
+    quoted = g_shell_quote(src);
+    command = g_strconcat("/bin/sh -c 'echo '", quoted, NULL);
+    sh = popen(command, "r");
+    g_free(quoted);
+    g_free(command);
+    if (NULL == sh)
         DIESOFT("bug in popen call: %s", strerror(errno));
 
-    char *dest = NULL;
-    int i = 0;
-    while (!feof(bash)) {
-        dest = realloc(dest, (++i + 1) * sizeof(char));
-        dest[i-1] = fgetc(bash);
-    }
-    dest[i-1] = '\0';
-    pclose(bash);
-    if (0 != strncmp(src, dest, strlen(src)))
-        LOGD("Expanded path `%s' to `%s' using /bin/sh", src, dest);
-    return dest;
+    dest = g_string_new("");
+    while (!feof(sh))
+        dest = g_string_append_c(dest, fgetc(sh));
+    pclose(sh);
+    /* Remove trailing newline */
+    dest = g_string_erase(dest, dest->len - 2, 2);
+    if (0 != strncmp(dest->str, src, strlen(src) + 1))
+        LOGD("Expanded path `%s' to `%s' using /bin/sh", src, dest->str);
+    return (char *) dest->str;
 }
 
 // Handle the ESRCH errno which means child is dead
