@@ -35,6 +35,7 @@
 
 #include "defs.h"
 #include "path.h"
+#include "proc.h"
 #include "children.h"
 
 // System call dispatch flags

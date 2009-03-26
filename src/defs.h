@@ -109,10 +109,6 @@ typedef enum canonicalize_mode_t canonicalize_mode_t;
 char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
         bool resolve, const char *cwd);
 
-/* proc.c */
-char *pgetcwd(context_t *ctx, pid_t pid);
-char *pgetdir(context_t *ctx, pid_t pid, int dfd);
-
 /* util.c */
 extern int log_level;
 extern char *log_file;

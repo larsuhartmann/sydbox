@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "defs.h"
+#include "proc.h"
 
 char *pgetcwd(context_t *ctx, pid_t pid) {
     char *cwd;
