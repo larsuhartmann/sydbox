@@ -3,6 +3,8 @@
 *~
 *.[oa]
 
+tags
+
 .deps
 Makefile.in
 Makefile
