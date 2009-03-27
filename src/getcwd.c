@@ -34,9 +34,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <glib.h>
+
 #include "log.h"
 #include "defs.h"
-#include "util.h"
 
 /* chdir with arbitrary long pathname.  Returns 0 on success, -1 on normal *
  * failure and -2 when chdir failed and the current directory is lost.  */
@@ -92,12 +93,12 @@ char *egetcwd(void) {
 
     /* Next try stat()'ing and chdir()'ing up */
     bufsiz = PATH_MAX;
-    buf = xcalloc(bufsiz, sizeof(char));
+    buf = g_malloc0 (bufsiz);
     pos = bufsiz - 1;
     buf[pos] = '\0';
     strcpy(nbuf, "../");
     if (0 > stat(".", &sbuf)) {
-        free(buf);
+        g_free (buf);
         return NULL;
     }
 
@@ -120,8 +121,8 @@ char *egetcwd(void) {
         if (ino == pino && dev == pdev) {
             if (!buf[pos])
                 buf[--pos] = '/';
-            char *s = xstrdup(buf + pos);
-            free(buf);
+            char *s = g_strdup (buf + pos);
+            g_free (buf);
             echdir(s);
             return s;
         }
@@ -157,11 +158,11 @@ char *egetcwd(void) {
         pos -= len;
         while (pos <= 1) {
             char *temp;
-            char *newbuf = xcalloc(2 * bufsiz, sizeof(char));
+            char *newbuf = g_malloc0 (2 * bufsiz);
             memcpy(newbuf + bufsiz, buf, bufsiz);
             temp = buf;
             buf = newbuf;
-            free(temp);
+            g_free (temp);
             pos += bufsiz;
             bufsiz *= 2;
         }
@@ -175,6 +176,6 @@ char *egetcwd(void) {
         LOGD("Changing current working directory to `%s'", buf);
         echdir(buf + pos + 1);
     }
-    free(buf);
+    g_free (buf);
     return NULL;
 }

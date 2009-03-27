@@ -33,10 +33,12 @@
 #include <asm/unistd.h>
 #include <sys/stat.h>
 
+#include <glib.h>
+
 #include "log.h"
 #include "path.h"
-#include "proc.h"
 #include "util.h"
+#include "proc.h"
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"
@@ -226,14 +228,14 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
             LOGD("Failed to change current working directory to `%s': %s", newcwd, strerror(errno));
             LOGD("Adding current working directory to `%s' instead", path);
             len = strlen(child->cwd) + strlen(path) + 2;
-            pathc = xmalloc(len * sizeof(char));
+            pathc = g_malloc (len * sizeof(char));
             snprintf(pathc, len, "%s/%s", child->cwd, path);
             path_sanitized = remove_slash(pathc);
-            free(pathc);
+            g_free (pathc);
         }
         else {
-            free(ctx->cwd);
-            ctx->cwd = xstrdup(child->cwd);
+            g_free (ctx->cwd);
+            ctx->cwd = g_strdup (child->cwd);
             path_sanitized = remove_slash(path);
         }
     }
@@ -245,7 +247,7 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
     else if (flags & IF_AT_SYMLINK_FOLLOW4) {
         long symflags;
         if (0 > trace_get_arg(child->pid, 4, &symflags)) {
-            free(path_sanitized);
+            g_free (path_sanitized);
             return NULL;
         }
         resolve = symflags & AT_SYMLINK_FOLLOW ? true : false;
@@ -254,7 +256,7 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
         long symflags;
         int arg = flags & IF_AT_SYMLINK_NOFOLLOW3 ? 3 : 4;
         if (0 > trace_get_arg(child->pid, arg, &symflags)) {
-            free(path_sanitized);
+            g_free (path_sanitized);
             return NULL;
         }
         resolve = symflags & AT_SYMLINK_NOFOLLOW ? false : true;
@@ -262,7 +264,7 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
     else if (flags & IF_AT_REMOVEDIR2) {
         long rmflags;
         if (0 > trace_get_arg(child->pid, 2, &rmflags)) {
-            free(path_sanitized);
+            g_free (path_sanitized);
             return NULL;
         }
         resolve = rmflags & AT_REMOVEDIR ? true : false;
@@ -279,7 +281,7 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
         rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, resolve, child->cwd);
     }
 
-    free(path_sanitized);
+    g_free (path_sanitized);
     return rpath;
 }
 
@@ -310,7 +312,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
 
     if (!allow_write && !allow_predict) {
         const char *sname;
-        char *reason = xmalloc((strlen(path) + 256) * sizeof(char));
+        char *reason = g_malloc ((strlen(path) + 256) * sizeof(char));
         child->retval = -EPERM;
         if (0 == npath)
             strcpy(reason, "%s(\"%s\", ");
@@ -329,7 +331,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
             strcat(reason, "...)");
         sname = syscall_get_name(sdef->no);
         access_error(child->pid, reason, sname, path);
-        free(reason);
+        g_free (reason);
         return RS_DENY;
     }
     else if (!allow_write && allow_predict) {
@@ -411,7 +413,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
         LOGN("Approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
-        free(rpath_sanitized);
+        g_free (rpath_sanitized);
     }
     else if (path_magic_rmpredict(path)) {
         ismagic = 1;
@@ -420,7 +422,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
         LOGN("Approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
-        free(rpath_sanitized);
+        g_free (rpath_sanitized);
     }
 
     if (ismagic) {
@@ -458,13 +460,13 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
             errno = save_errno;
             return RS_ERROR;
         }
-        free(path);
+        g_free (path);
         child->retval = 0;
         return RS_DENY;
     }
     else {
         LOGD("stat(\"%s\") is not magic", path);
-        free(path);
+        g_free (path);
         return RS_NONMAGIC;
     }
 }
@@ -521,13 +523,13 @@ found:
             }
             ret = syscall_check_magic_open(child, pathfirst);
             if (RS_NONMAGIC != ret) {
-                free(pathfirst);
+                g_free (pathfirst);
                 return ret;
             }
             /* Special case, to avoid getting the path argument of open()
              * twice, one for this one and one for CHECK_PATH, we don't free it
              * here.
-             * free(pathfirst);
+             * g_free(pathfirst);
              */
         }
         else if (sdef->flags & MAGIC_STAT) {
@@ -557,12 +559,12 @@ found:
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", pathfirst, strerror(errno));
-            free(pathfirst);
+            g_free (pathfirst);
             return RS_DENY;
         }
-        free(pathfirst);
+        g_free (pathfirst);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 0);
-        free(rpath);
+        g_free (rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH and CHECK_PATH2 set.
          */
@@ -582,12 +584,12 @@ found:
         if (NULL == rpath) {
             child->retval = -errno;
             LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
-            free(path);
+            g_free (path);
             return RS_DENY;
         }
-        free(path);
+        g_free (path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
-        free(rpath);
+        g_free (rpath);
         return ret;
     }
     if (sdef->flags & CHECK_PATH_AT) {
@@ -624,16 +626,16 @@ found:
                 child->cwd = oldcwd;
                 oldcwd = NULL;
             }
-            free(path);
+            g_free (path);
             return RS_DENY;
         }
         if (NULL != oldcwd) {
             child->cwd = oldcwd;
             oldcwd = NULL;
         }
-        free(path);
+        g_free (path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
-        free(rpath);
+        g_free (rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH_AT and CHECK_PATH_AT2 set.
          */
@@ -674,16 +676,16 @@ found:
                 child->cwd = oldcwd;
                 oldcwd = NULL;
             }
-            free(path);
+            g_free (path);
             return RS_DENY;
         }
         if (NULL != oldcwd) {
             child->cwd = oldcwd;
             oldcwd = NULL;
         }
-        free(path);
+        g_free (path);
         ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 3);
-        free(rpath);
+        g_free (rpath);
         return ret;
     }
     if (sdef->flags & NET_CALL && !(child->sandbox->net)) {
@@ -790,7 +792,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 }
                 else {
                     if (NULL != child->cwd)
-                        free(child->cwd);
+                        g_free (child->cwd);
                     child->cwd = newcwd;
                     LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
                 }

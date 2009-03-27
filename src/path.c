@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include "log.h"
 #include "path.h"
 #include "util.h"
@@ -78,13 +80,13 @@ int pathnode_new(struct pathnode **head, const char *path, int sanitize) {
         return -1;
     }
 
-    newnode = (struct pathnode *) xmalloc(sizeof(struct pathnode));
+    newnode = (struct pathnode *) g_malloc (sizeof(struct pathnode));
     if (!sanitize)
-        newnode->path = xstrdup(path);
+        newnode->path = g_strdup (path);
     else {
         char *spath = remove_slash(path);
         newnode->path = shell_expand(spath);
-        free(spath);
+        g_free (spath);
         LOGV("New path item \"%s\"", newnode->path);
     }
     newnode->next = *head; // link next
@@ -100,8 +102,8 @@ void pathnode_free(struct pathnode **head) {
     while (NULL != current) {
         temp = current;
         current = current->next;
-        free(temp->path);
-        free(temp);
+        g_free (temp->path);
+        g_free (temp);
     }
     *head = NULL;
 }
@@ -116,8 +118,8 @@ void pathnode_delete(struct pathnode **head, const char *path_sanitized) {
         *head = (*head)->next;
         LOGD("Freeing pathnode %p", (void *) temp);
         if (NULL != temp->path)
-            free(temp->path);
-        free(temp);
+            g_free (temp->path);
+        g_free (temp);
     }
     else {
         previous = *head;
@@ -134,8 +136,8 @@ void pathnode_delete(struct pathnode **head, const char *path_sanitized) {
             previous->next = current->next;
             LOGD("Freeing pathnode %p", (void *) temp);
             if (NULL != temp->path)
-                free(temp->path);
-            free(temp);
+                g_free (temp->path);
+            g_free (temp);
         }
     }
 }
@@ -157,11 +159,11 @@ int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
         if (0 == itemlen)
             LOGW("Ignoring empty path element in position %d", numpaths);
         else {
-            item = xmalloc(itemlen * sizeof(char));
+            item = g_malloc (itemlen * sizeof(char));
             memcpy(item, pathlist_env + pos, itemlen);
             item[itemlen] = '\0';
             pathnode_new(pathlist, item, 1);
-            free(item);
+            g_free (item);
             ++numpaths;
         }
         pos += ++itemlen;

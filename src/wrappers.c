@@ -36,9 +36,10 @@
 #include <stddef.h>
 #include <sys/stat.h>
 
+#include <glib.h>
+
 #include "defs.h"
 #include "path.h"
-#include "util.h"
 #include "wrappers.h"
 
 #ifndef __set_errno
@@ -51,10 +52,10 @@
 
 // dirname wrapper which doesn't modify its argument
 char *edirname(const char *path) {
-    char *pathc = xstrdup(path);
+    char *pathc = g_strdup (path);
     char *dname = dirname(pathc);
-    char *dnamec = xstrdup(dname);
-    free(pathc);
+    char *dnamec = g_strdup (dname);
+    g_free (pathc);
     return dnamec;
 }
 
@@ -70,10 +71,10 @@ char *ereadlink(const char *path) {
     buf = NULL;
     nrequested = 32;
     for (;;) {
-        buf = xrealloc(buf, nrequested);
+        buf = g_realloc (buf, nrequested);
         nwritten = readlink(path, buf, nrequested);
         if (0 > nwritten) {
-            free(buf);
+            g_free (buf);
             return NULL;
         }
         else if (nrequested > nwritten)
@@ -110,10 +111,10 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
     }
 
     if (name[0] != '/') {
-        rname = xstrdup(cwd);
+        rname = g_strdup (cwd);
         dest = strchr(rname, '\0');
         if (dest - rname < PATH_MAX) {
-            char *p = xrealloc(rname, PATH_MAX);
+            char *p = g_realloc (rname, PATH_MAX);
             dest = p + (dest - rname);
             rname = p;
             rname_limit = rname + PATH_MAX;
@@ -123,7 +124,7 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
     }
     else {
         cwd = NULL;
-        rname = xmalloc (PATH_MAX);
+        rname = g_malloc (PATH_MAX);
         rname_limit = rname + PATH_MAX;
         rname[0] = '/';
         dest = rname + 1;
@@ -161,7 +162,7 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
                     new_size += end - start + 1;
                 else
                     new_size += PATH_MAX;
-                rname = xrealloc (rname, new_size);
+                rname = g_realloc (rname, new_size);
                 rname_limit = rname + new_size;
 
                 dest = rname + dest_offset;
@@ -210,11 +211,11 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
                 if (!extra_len) {
                     extra_len =
                         ((n + len + 1) > PATH_MAX) ? (n + len + 1) : PATH_MAX;
-                    extra_buf = xmalloc (extra_len);
+                    extra_buf = g_malloc (extra_len);
                 }
                 else if ((n + len + 1) > extra_len) {
                     extra_len = n + len + 1;
-                    extra_buf = xrealloc (extra_buf, extra_len);
+                    extra_buf = g_realloc (extra_buf, extra_len);
                 }
 
                 /* Careful here, end may be a pointer into extra_buf... */
@@ -228,7 +229,7 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
                     if (dest > rname + 1)
                         while ((--dest)[-1] != '/');
 
-                free (buf);
+                g_free (buf);
             }
             else {
                 if (!S_ISDIR (st.st_mode) && *end) {
@@ -242,11 +243,11 @@ char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
         --dest;
     *dest = '\0';
 
-    free (extra_buf);
+    g_free (extra_buf);
     return rname;
 
 error:
-  free (extra_buf);
-  free (rname);
+  g_free (extra_buf);
+  g_free (rname);
   return NULL;
 }

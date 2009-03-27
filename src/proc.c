@@ -22,9 +22,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <glib.h>
+
 #include "defs.h"
 #include "proc.h"
-#include "util.h"
 #include "wrappers.h"
 
 char *pgetcwd(context_t *ctx, pid_t pid) {
@@ -43,9 +44,9 @@ char *pgetcwd(context_t *ctx, pid_t pid) {
     errno = 0;
     if (0 > echdir(linkcwd))
         return NULL;
-    free(ctx->cwd);
+    g_free (ctx->cwd);
     ctx->cwd = egetcwd();
-    return xstrdup(ctx->cwd);
+    return g_strdup (ctx->cwd);
 }
 
 char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
@@ -64,7 +65,7 @@ char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
     errno = 0;
     if (0 > echdir(linkdir))
         return NULL;
-    free(ctx->cwd);
+    g_free (ctx->cwd);
     ctx->cwd = egetcwd();
-    return xstrdup(ctx->cwd);
+    return g_strdup (ctx->cwd);
 }

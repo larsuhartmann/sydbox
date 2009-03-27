@@ -21,13 +21,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include "defs.h"
 #include "util.h"
+#include "context.h"
 #include "children.h"
 
 context_t *context_new(void) {
     context_t *ctx;
-    ctx = (context_t *) xmalloc(sizeof(context_t));
+    ctx = (context_t *) g_malloc (sizeof(context_t));
     ctx->paranoid = 0;
     ctx->cwd = egetcwd();
     if (NULL == ctx->cwd)
@@ -39,8 +42,8 @@ context_t *context_new(void) {
 
 void context_free(context_t *ctx) {
     if (NULL != ctx->cwd)
-        free(ctx->cwd);
+        g_free (ctx->cwd);
     if (NULL != ctx->children)
         tchild_free(&(ctx->children));
-    free(ctx);
+    g_free (ctx);
 }

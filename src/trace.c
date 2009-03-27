@@ -47,8 +47,9 @@
 #include <sys/ptrace.h>
 #include <linux/ptrace.h>
 
+#include <glib.h>
+
 #include "log.h"
-#include "util.h"
 #include "trace.h"
 #include "syscall.h"
 
@@ -303,10 +304,10 @@ char *trace_get_string(pid_t pid, int arg) {
     char *buf = NULL;
     long len = PATH_MAX;
     for (;;) {
-        buf = xrealloc(buf, len * sizeof(char));
+        buf = g_realloc (buf, len * sizeof(char));
         memset(buf, 0, len * sizeof(char));
         if (0 > umovestr(pid, addr, buf, len)) {
-            free(buf);
+            g_free (buf);
             return NULL;
         }
         else if ('\0' == buf[len - 1])

@@ -95,58 +95,6 @@ void access_error(pid_t pid, const char *fmt, ...) {
         fputc('\n', stderr);
 }
 
-void *__xmalloc(size_t size, const char *file, const char *func, size_t line) {
-    void *t;
-
-    if (0 == size)
-        return NULL;
-
-    t = malloc(size);
-    if (NULL == t) {
-        LOGE("%s:%s():%zu: malloc(%zu) failed: %s", file, func, line, size, strerror(errno));
-        DIEOS("malloc failed: %s", strerror(errno));
-    }
-
-    return t;
-}
-
-void *__xcalloc(size_t nmemb, size_t size, const char *file, const char *func, size_t line) {
-    void *t;
-
-    if (0 == size)
-        return NULL;
-
-    t = calloc(nmemb, size);
-    if (NULL == t) {
-        LOGE("%s:%s():%zu: calloc(%zu,%zu) failed: %s", file, func, line, nmemb, size, strerror(errno));
-        DIEOS("calloc failed: %s", strerror(errno));
-    }
-
-    return t;
-}
-
-void *__xrealloc(void *ptr, size_t size, const char *file, const char *func, size_t line) {
-    void *t;
-
-    t = realloc(ptr, size);
-    if (NULL == t) {
-        LOGE("%s:%s():%zu: realloc(%p, %zu) failed: %s", file, func, line, ptr, size, strerror(errno));
-        DIEOS("realloc failed: %s", strerror(errno));
-    }
-
-    return t;
-}
-
-char *__xstrndup(const char *str, size_t size, const char *file, const char *func, size_t line) {
-    char *t;
-
-    t = __xmalloc(size + 1, file, func, line);
-    strncpy(t, str, size);
-    t[size] = '\0';
-
-    return t;
-}
-
 char *remove_slash(const char *src) {
     int gotslash = 0, hasnonslash = 0, nslashes = 0;
     int len = strlen(src) + 1;
@@ -166,7 +114,7 @@ char *remove_slash(const char *src) {
             if ('\0' != src[i])
                 hasnonslash = 1;
         }
-        dest = xrealloc(dest, (++j + 1) * sizeof(char));
+        dest = g_realloc (dest, (++j + 1) * sizeof(char));
         dest[j-1] = src[i];
         /* Remove trailing slash */
         if (hasnonslash && '\0' == src[i]) {
@@ -190,8 +138,8 @@ char *shell_expand(const char *src) {
     quoted = g_shell_quote(src);
     command = g_strconcat("/bin/sh -c 'echo '", quoted, NULL);
     sh = popen(command, "r");
-    g_free(quoted);
-    g_free(command);
+    g_free (quoted);
+    g_free (command);
     if (NULL == sh)
         DIESOFT("bug in popen call: %s", strerror(errno));
 
@@ -202,7 +150,7 @@ char *shell_expand(const char *src) {
     /* Remove trailing newline */
     dest = g_string_truncate(dest, dest->len - 2);
     ret = dest->str;
-    g_string_free(dest, FALSE);
+    g_string_free (dest, FALSE);
     if (0 != strncmp(ret, src, strlen(src) + 1))
         LOGD("Expanded path `%s' to `%s' using /bin/sh", src, ret);
     return ret;

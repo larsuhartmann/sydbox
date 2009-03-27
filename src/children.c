@@ -23,9 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include "log.h"
 #include "path.h"
-#include "util.h"
 #include "children.h"
 
 // We keep this for efficient lookups
@@ -35,13 +36,13 @@ void tchild_new(struct tchild **head, pid_t pid) {
     struct tchild *newchild;
 
     LOGD("New child %i", pid);
-    newchild = (struct tchild *) xmalloc(sizeof(struct tchild));
+    newchild = (struct tchild *) g_malloc (sizeof(struct tchild));
     newchild->flags = TCHILD_NEEDSETUP;
     newchild->pid = pid;
     newchild->sno = 0xbadca11;
     newchild->retval = -1;
     newchild->cwd = NULL;
-    newchild->sandbox = (struct tdata *) xmalloc(sizeof(struct tdata));
+    newchild->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
     newchild->sandbox->on = 1;
     newchild->sandbox->lock = LOCK_UNSET;
     newchild->sandbox->net = 1;
@@ -52,7 +53,7 @@ void tchild_new(struct tchild **head, pid_t pid) {
         if (NULL != newchild->next->cwd) {
             LOGD("Child %i inherits parent %i's current working directory '%s'", pid,
                     newchild->next->pid, newchild->next->cwd);
-            newchild->cwd = xstrdup(newchild->next->cwd);
+            newchild->cwd = g_strdup (newchild->next->cwd);
         }
         if (NULL != newchild->next->sandbox) {
             struct pathnode *pnode;
@@ -82,12 +83,12 @@ static void tchild_free_one(struct tchild *child) {
             pathnode_free(&(child->sandbox->write_prefixes));
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_free(&(child->sandbox->predict_prefixes));
-        free(child->sandbox);
+        g_free (child->sandbox);
     }
     if (NULL != child->cwd)
-        free(child->cwd);
+        g_free (child->cwd);
     childtab[child->pid] = NULL;
-    free(child);
+    g_free (child);
 }
 
 void tchild_free(struct tchild **head) {

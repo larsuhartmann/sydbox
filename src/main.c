@@ -31,6 +31,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <glib.h>
+
 #include <confuse.h>
 
 #include "log.h"
@@ -162,13 +164,13 @@ static int parse_config(const char *path) {
     cfg_t *cfg = cfg_init(sydbox_opts, CFGF_NONE);
 
     if (CFG_PARSE_ERROR == cfg_parse(cfg, path)) {
-        free(cfg);
+        g_free (cfg);
         return 0;
     }
 
     if (NULL == log_file && NULL != cfg_getstr(cfg, "log_file")) {
         char *lf = cfg_getstr(cfg, "log_file");
-        log_file = xstrdup(lf);
+        log_file = g_strdup (lf);
     }
 
     if (-1 == log_level) {
@@ -209,7 +211,7 @@ static int parse_config(const char *path) {
         if (-1 == net)
             cfg_getint(cfg_default, "net");
     }
-    cfg_free(cfg);
+    cfg_free (cfg);
     return 1;
 }
 
@@ -290,8 +292,8 @@ int main(int argc, char **argv) {
         // Aliased to sandbox
         if (2 > argc) {
             // Use /bin/bash as default program
-            argv_bash = (char **) xmalloc(2 * sizeof(char *));
-            argv_bash[0] = (char *) xstrndup("/bin/bash", 10);
+            argv_bash = (char **) g_malloc (2 * sizeof(char *));
+            argv_bash[0] = (char *) g_strndup ("/bin/bash", 10);
             argv_bash[1] = NULL;
         }
         else {
@@ -347,7 +349,7 @@ int main(int argc, char **argv) {
                 profile = optarg;
                 break;
             case 'l':
-                log_file = xstrdup(optarg);
+                log_file = g_strdup (optarg);
                 break;
             case 'c':
                 config_file = optarg;
@@ -397,7 +399,7 @@ skip_commandline:
     net_env = getenv(ENV_NET);
 
     if (NULL == log_file && NULL != log_env)
-        log_file = xstrdup(log_env);
+        log_file = g_strdup (log_env);
 
     LOGV("Extending path list using environment variable "ENV_WRITE);
     pathlist_init(&write_prefixes, write_env);
@@ -487,7 +489,7 @@ skip_commandline:
         ctx->eldest->sandbox->net = net;
         ctx->eldest->sandbox->write_prefixes = write_prefixes;
         ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
-        ctx->eldest->cwd = xstrdup(ctx->cwd);
+        ctx->eldest->cwd = g_strdup (ctx->cwd);
 
         LOGV("Child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {
