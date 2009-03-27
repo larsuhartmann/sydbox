@@ -17,34 +17,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef SYDBOX_GUARD_GETCWD_H
+#define SYDBOX_GUARD_GETCWD_H 1
 
-#include <glib.h>
+char *egetcwd(void);
+int echdir(char *dir);
 
-#include "defs.h"
-#include "getcwd.h"
-#include "util.h"
-#include "context.h"
-#include "children.h"
-
-context_t *context_new(void) {
-    context_t *ctx;
-    ctx = (context_t *) g_malloc (sizeof(context_t));
-    ctx->paranoid = 0;
-    ctx->cwd = egetcwd();
-    if (NULL == ctx->cwd)
-        DIESOFT("Failed to get current working directory: %s", strerror(errno));
-    ctx->children = NULL;
-    ctx->eldest = NULL;
-    return ctx;
-}
-
-void context_free(context_t *ctx) {
-    if (NULL != ctx->cwd)
-        g_free (ctx->cwd);
-    if (NULL != ctx->children)
-        tchild_free(&(ctx->children));
-    g_free (ctx);
-}
+#endif /* SYDBOX_GUARD_GETCWD_H */

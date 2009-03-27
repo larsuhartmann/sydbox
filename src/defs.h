@@ -69,8 +69,4 @@
 #define ENV_NET         "SANDBOX_NET"
 #define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
 
-/* getcwd.c */
-char *egetcwd(void);
-int echdir(char *dir);
-
 #endif /* SYDBOX_GUARD_DEFS_H */

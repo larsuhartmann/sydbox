@@ -37,7 +37,7 @@
 #include <glib.h>
 
 #include "log.h"
-#include "defs.h"
+#include "getcwd.h"
 
 /* chdir with arbitrary long pathname.  Returns 0 on success, -1 on normal *
  * failure and -2 when chdir failed and the current directory is lost.  */

@@ -35,6 +35,7 @@
 
 #include <glib.h>
 
+#include "getcwd.h"
 #include "log.h"
 #include "path.h"
 #include "util.h"
