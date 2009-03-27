@@ -56,20 +56,20 @@ void tchild_new(struct tchild **head, pid_t pid) {
             newchild->cwd = g_strdup (newchild->next->cwd);
         }
         if (NULL != newchild->next->sandbox) {
-            struct pathnode *pnode;
+            GSList *walk;
             newchild->sandbox->on = newchild->next->sandbox->on;
             newchild->sandbox->lock = newchild->next->sandbox->lock;
             newchild->sandbox->net = newchild->next->sandbox->net;
             // Copy path lists
-            pnode = newchild->next->sandbox->write_prefixes;
-            while (NULL != pnode) {
-                pathnode_new(&(newchild->sandbox->write_prefixes), pnode->path, 0);
-                pnode = pnode->next;
+            walk = newchild->next->sandbox->write_prefixes;
+            while (NULL != walk) {
+                pathnode_new(&(newchild->sandbox->write_prefixes), walk->data, 0);
+                walk = g_slist_next(walk);
             }
-            pnode = newchild->next->sandbox->predict_prefixes;
-            while (NULL != pnode) {
-                pathnode_new(&(newchild->sandbox->predict_prefixes), pnode->path, 0);
-                pnode = pnode->next;
+            walk = newchild->next->sandbox->predict_prefixes;
+            while (NULL != walk) {
+                pathnode_new(&(newchild->sandbox->predict_prefixes), walk->data, 0);
+                walk = g_slist_next(walk);
             }
         }
     }

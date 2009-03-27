@@ -9,7 +9,7 @@
 
 #include <sys/types.h>
 
-#include "path.h"
+#include <glib.h>
 
 /* TCHILD flags */
 #define TCHILD_NEEDSETUP   (1 << 0)    /* child needs setup */
@@ -38,8 +38,8 @@ struct tdata
    int on;                             /* whether sydbox is on for the child */
    int lock;                           /* whether magic commands are locked for the child */
    int net;                            /* whether child is allowed to access network */
-   struct pathnode *write_prefixes;
-   struct pathnode *predict_prefixes;
+   GSList *write_prefixes;
+   GSList *predict_prefixes;
 };
 
 struct tchild

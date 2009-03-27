@@ -694,7 +694,7 @@ START_TEST(syscall_check_open_magic_write) {
         fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, sno),
                 "Denied access, expected allow");
 
-        fail_if(0 == pathlist_check(&(ctx->eldest->sandbox->write_prefixes), "/var/empty"),
+        fail_if(0 == pathlist_check(ctx->eldest->sandbox->write_prefixes, "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
 
         kill(pid, SIGTERM);
@@ -739,7 +739,7 @@ START_TEST(syscall_check_open_magic_predict) {
         fail_unless(RS_ALLOW == syscall_check(ctx, ctx->eldest, sno),
                 "Denied access, expected allow");
 
-        fail_if(0 == pathlist_check(&(ctx->eldest->sandbox->predict_prefixes), "/var/empty"),
+        fail_if(0 == pathlist_check(ctx->eldest->sandbox->predict_prefixes, "/var/empty"),
                 "Pathlist check failed for /var/empty, expected success");
 
         kill(pid, SIGTERM);

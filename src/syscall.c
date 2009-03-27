@@ -306,9 +306,9 @@ static char *syscall_get_dirname(context_t *ctx, struct tchild *child, unsigned 
 static enum res_syscall syscall_check_path(struct tchild *child, const struct syscall_def *sdef,
         int paranoid, const char *path, int npath) {
     LOGD("Checking \"%s\" for write access", path);
-    int allow_write = pathlist_check(&(child->sandbox->write_prefixes), path);
+    int allow_write = pathlist_check(child->sandbox->write_prefixes, path);
     LOGD("Checking \"%s\" for predict access", path);
-    int allow_predict = pathlist_check(&(child->sandbox->predict_prefixes), path);
+    int allow_predict = pathlist_check(child->sandbox->predict_prefixes, path);
 
     if (!allow_write && !allow_predict) {
         const char *sname;

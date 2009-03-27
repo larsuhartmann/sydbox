@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <glib.h>
 #include <check.h>
 
 #include "../src/defs.h"
@@ -19,27 +20,27 @@
 
 START_TEST(check_pathnode_new) {
     PRINT_TEST_HEADER;
-    struct pathnode *head = NULL;
+    GSList *head = NULL;
 
     pathnode_new(&head, "/dev/null", 1);
-    fail_unless(0 == strncmp(head->path, "/dev/null", 10), "Path not set correctly on creation");
+    fail_unless(0 == strncmp(head->data, "/dev/null", 10), "Path not set correctly on creation");
     fail_unless(NULL == head->next, "Next node not set correctly on creation");
 }
 END_TEST
 
 START_TEST(check_pathnode_free) {
     PRINT_TEST_HEADER;
-    struct pathnode *head = NULL;
+    GSList *head = NULL;
 
     pathnode_new(&head, "/dev/null", 1);
     pathnode_free(&head);
-    fail_unless(NULL == head, "head node not NULL after free()");
+    fail_unless(NULL == head, "head node not NULL after pathnode_free()");
 }
 END_TEST
 
 START_TEST(check_pathnode_delete_first) {
     PRINT_TEST_HEADER;
-    struct pathnode *head = NULL;
+    GSList *head = NULL;
 
     pathnode_new(&head, "/dev/null", 1);
     pathnode_delete(&head, "/dev/null");
@@ -51,22 +52,22 @@ END_TEST
 START_TEST(check_pathnode_delete) {
     PRINT_TEST_HEADER;
     int i = 0;
-    struct pathnode *node = NULL;
-    struct pathnode *curnode = NULL;
+    GSList *plist = NULL;
+    GSList *walk = NULL;
 
-    pathnode_new(&node, "/dev/null", 1);
-    pathnode_new(&node, "/dev/zero", 1);
-    pathnode_new(&node, "/dev/random", 1);
+    pathnode_new(&plist, "/dev/null", 1);
+    pathnode_new(&plist, "/dev/zero", 1);
+    pathnode_new(&plist, "/dev/random", 1);
 
-    pathnode_delete(&node, "/dev/null");
+    pathnode_delete(&plist, "/dev/null");
 
-    curnode = node;
-    while (NULL != curnode) {
-        fail_if(0 == strncmp(curnode->path, "/dev/null", PATH_MAX), "Deleted path found at node %d", i++);
-        curnode = curnode->next;
+    walk = plist;
+    while (NULL != walk) {
+        fail_if(0 == strncmp(walk->data, "/dev/null", 10), "Deleted path found at node %d", i++);
+        walk = g_slist_next(walk);
     }
 
-    pathnode_free(&node);
+    pathnode_free(&plist);
 }
 END_TEST
 
@@ -80,22 +81,22 @@ START_TEST(check_pathlist_init) {
     PRINT_TEST_HEADER;
     const char env[] = "foo:bar:baz";
     int seen_foo = 0, seen_bar = 0, seen_baz = 0;
-    struct pathnode *plist = NULL;
-    struct pathnode *curnode = NULL;
+    GSList *plist = NULL;
+    GSList *walk = NULL;
 
     int ret = pathlist_init(&plist, env);
     fail_unless(3 == ret, "Number of paths not correct, expected: 3 got: %d", ret);
-    curnode = plist;
-    while (NULL != curnode) {
-        if (0 == strncmp("foo", curnode->path, 4))
+    walk = plist;
+    while (NULL != walk) {
+        if (0 == strncmp(walk->data, "foo", 4))
             seen_foo = 1;
-        else if (0 == strncmp("bar", curnode->path, 4))
+        else if (0 == strncmp(walk->data, "bar", 4))
             seen_bar = 1;
-        else if (0 == strncmp("baz", curnode->path, 4))
+        else if (0 == strncmp(walk->data, "baz", 4))
             seen_baz = 1;
         else
-            fail("Unknown path in pathlist: '%s'", curnode->path);
-        curnode = curnode->next;
+            fail("Unknown path in pathlist: `%s'", walk->data);
+        walk = g_slist_next(walk);
     }
     pathnode_free(&plist);
 
@@ -111,7 +112,7 @@ END_TEST
 START_TEST(check_pathlist_init_ignore_empty) {
     PRINT_TEST_HEADER;
     const char env[] = "foo::bar::baz::::::";
-    struct pathnode *plist = NULL;
+    GSList *plist = NULL;
 
     fail_unless(3 == pathlist_init(&plist, env), "Didn't ignore empty paths in environment variable.");
     pathnode_free(&plist);
@@ -121,28 +122,28 @@ END_TEST
 START_TEST(check_pathlist_check) {
     PRINT_TEST_HEADER;
     const char env[] = "/dev";
-    struct pathnode *plist = NULL;
+    GSList *plist = NULL;
 
     pathlist_init(&plist, env);
 
-    fail_unless(0 != pathlist_check(&plist, "/dev/zero"),
+    fail_unless(0 != pathlist_check(plist, "/dev/zero"),
             "Failed for /dev/zero when /dev was an allowed path.");
-    fail_unless(0 != pathlist_check(&plist, "/dev/mapper/control"),
+    fail_unless(0 != pathlist_check(plist, "/dev/mapper/control"),
             "Failed for /dev/mapper/control when /dev was an allowed path.");
-    fail_unless(0 != pathlist_check(&plist, "/dev/input/mice"),
+    fail_unless(0 != pathlist_check(plist, "/dev/input/mice"),
             "Failed for /dev/input/mice when /dev was an allowed path");
 
-    fail_unless(0 == pathlist_check(&plist, "/"),
+    fail_unless(0 == pathlist_check(plist, "/"),
             "Succeeded for / when /dev was the only allowed path.");
-    fail_unless(0 == pathlist_check(&plist, "/d"),
+    fail_unless(0 == pathlist_check(plist, "/d"),
             "Succeeded for /d when /dev was the only allowed path.");
-    fail_unless(0 == pathlist_check(&plist, "/de"),
+    fail_unless(0 == pathlist_check(plist, "/de"),
             "Succeeded for /de when /dev was the only allowed path.");
-    fail_unless(0 == pathlist_check(&plist, "/devzero"),
+    fail_unless(0 == pathlist_check(plist, "/devzero"),
             "Succeded for /devzero when /dev was the only allowed path.");
-    fail_unless(0 == pathlist_check(&plist, "/foo"),
+    fail_unless(0 == pathlist_check(plist, "/foo"),
             "Succeeded for /foo when /dev was the only allowed path.");
-    fail_unless(0 == pathlist_check(&plist, "/foo/dev"),
+    fail_unless(0 == pathlist_check(plist, "/foo/dev"),
             "Succeeded for /foo/dev when /dev was the only allowed path.");
 }
 END_TEST
@@ -150,11 +151,11 @@ END_TEST
 START_TEST(check_pathlist_check_slash_only) {
     PRINT_TEST_HEADER;
     const char env[] = "/";
-    struct pathnode *plist = NULL;
+    GSList *plist = NULL;
 
     pathlist_init(&plist, env);
 
-    fail_unless(0 != pathlist_check(&plist, "/dev"),
+    fail_unless(0 != pathlist_check(plist, "/dev"),
             "Failed for /dev when / was an allowed path");
 }
 END_TEST

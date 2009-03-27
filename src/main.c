@@ -49,8 +49,8 @@ static char *config_file = NULL;
 static char *profile = NULL;
 static int lock = -1;
 static int net = -1;
-static struct pathnode *write_prefixes = NULL;
-static struct pathnode *predict_prefixes = NULL;
+static GSList *write_prefixes = NULL;
+static GSList *predict_prefixes = NULL;
 
 static void about(void) {
     fprintf(stderr, PACKAGE"-"VERSION);
@@ -240,18 +240,18 @@ static void dump_config(void) {
             break;
     }
     fprintf(stderr, "network sandboxing = %s\n", net ? "off" : "on");
-    struct pathnode *curnode;
+    GSList *walk;
     fprintf(stderr, "write allowed paths:\n");
-    curnode = write_prefixes;
-    while (NULL != curnode) {
-        fprintf(stderr, "> %s\n", curnode->path);
-        curnode = curnode->next;
+    walk = write_prefixes;
+    while (NULL != walk) {
+        fprintf(stderr, "> %s\n", (char *) walk->data);
+        walk = g_slist_next(walk);
     }
     fprintf(stderr, "write predicted paths:\n");
-    curnode = predict_prefixes;
-    while (NULL != curnode) {
-        fprintf(stderr, "> %s\n", curnode->path);
-        curnode = curnode->next;
+    walk = predict_prefixes;
+    while (NULL != walk) {
+        fprintf(stderr, "> %s\n", (char *) walk->data);
+        walk = g_slist_next(walk);
     }
 }
 

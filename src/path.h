@@ -9,11 +9,7 @@
 
 #include <stdbool.h>
 
-struct pathnode
-{
-   char *path;
-   struct pathnode *next;
-};
+#include <glib.h>
 
 #define CMD_PATH                "/dev/sydbox/"
 #define CMD_PATH_LEN            12
@@ -67,19 +63,19 @@ bool
 path_magic_rmpredict (const char *path);
 
 int
-pathnode_new (struct pathnode **head, const char *path, int sanitize);
+pathnode_new (GSList **pathlist, const char *path, int sanitize);
 
 void
-pathnode_free (struct pathnode **head);
+pathnode_free (GSList **pathlist);
 
 void
-pathnode_delete (struct pathnode **head, const char *path_sanitized);
+pathnode_delete (GSList **pathlist, const char *path_sanitized);
 
 int
-pathlist_init (struct pathnode **pathlist, const char *pathlist_env);
+pathlist_init (GSList **pathlist, const char *pathlist_env);
 
 int
-pathlist_check (struct pathnode **pathlist, const char *path_sanitized);
+pathlist_check (GSList *pathlist, const char *path_sanitized);
 
 #endif
 

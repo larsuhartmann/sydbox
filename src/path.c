@@ -68,8 +68,8 @@ bool path_magic_rmpredict(const char *path) {
     return (0 == strncmp(path, CMD_RMPREDICT, CMD_RMPREDICT_LEN)) ? true : false;
 }
 
-int pathnode_new(struct pathnode **head, const char *path, int sanitize) {
-    struct pathnode *newnode;
+int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
+    char *data;
 
     if (NULL == path) {
         LOGV("Path is NULL not adding to list");
@@ -80,137 +80,103 @@ int pathnode_new(struct pathnode **head, const char *path, int sanitize) {
         return -1;
     }
 
-    newnode = (struct pathnode *) g_malloc (sizeof(struct pathnode));
     if (!sanitize)
-        newnode->path = g_strdup (path);
+        data = g_strdup (path);
     else {
         char *spath = remove_slash(path);
-        newnode->path = shell_expand(spath);
+        data = shell_expand(spath);
         g_free (spath);
-        LOGV("New path item \"%s\"", newnode->path);
+        LOGV("New path item `%s'", data);
     }
-    newnode->next = *head; // link next
-    *head = newnode; // link head
+    *pathlist = g_slist_prepend(*pathlist, data);
     return 0;
 }
 
-void pathnode_free(struct pathnode **head) {
-    struct pathnode *current, *temp;
-
-    LOGD("Freeing pathlist %p", (void *) head);
-    current = *head;
-    while (NULL != current) {
-        temp = current;
-        current = current->next;
-        g_free (temp->path);
-        g_free (temp);
-    }
-    *head = NULL;
+void pathnode_free(GSList **pathlist) {
+    g_slist_foreach(*pathlist, (GFunc) g_free, NULL);
+    g_slist_free(*pathlist);
+    *pathlist = NULL;
 }
 
-void pathnode_delete(struct pathnode **head, const char *path_sanitized) {
-    int len = strlen(path_sanitized) + 1;
-    struct pathnode *temp;
-    struct pathnode *previous, *current;
+void pathnode_delete(GSList **pathlist, const char *path_sanitized) {
+    GSList *walk;
 
-    if (0 == strncmp(path_sanitized, (*head)->path, len)) { // Deleting first node
-        temp = *head;
-        *head = (*head)->next;
-        LOGD("Freeing pathnode %p", (void *) temp);
-        if (NULL != temp->path)
-            g_free (temp->path);
-        g_free (temp);
-    }
-    else {
-        previous = *head;
-        current = (*head)->next;
-
-        // Find the correct location
-        while (NULL != current && 0 == strncmp(path_sanitized, current->path, len)) {
-            previous = current;
-            current = current->next;
+    walk = *pathlist;
+    while (NULL != walk) {
+        if (0 == strncmp(walk->data, path_sanitized, strlen(path_sanitized) + 1)) {
+            LOGD("Freeing pathnode %p", (void *) walk);
+            *pathlist = g_slist_remove_link(*pathlist, walk);
+            g_slist_free(walk);
+            break;
         }
-
-        if (NULL != current) {
-            temp = current;
-            previous->next = current->next;
-            LOGD("Freeing pathnode %p", (void *) temp);
-            if (NULL != temp->path)
-                g_free (temp->path);
-            g_free (temp);
-        }
+        walk = g_slist_next(walk);
     }
 }
 
-int pathlist_init(struct pathnode **pathlist, const char *pathlist_env) {
-    char *item;
-    unsigned int itemlen, numpaths = 0, pos = 0;
-    char *delim;
+int pathlist_init(GSList **pathlist, const char *pathlist_env) {
+    char **split;
+    int nempty, npaths;
 
     if (NULL == pathlist_env) {
         LOGV("The given environment variable isn't set");
         return 0;
     }
 
-    // Use a loop with strchr, because strtok sucks
-    while (pos < strlen(pathlist_env)) {
-        delim = strchr(pathlist_env + pos, ':');
-        itemlen = delim ? delim - (pathlist_env + pos) : (unsigned int) (strlen(pathlist_env) - pos);
-        if (0 == itemlen)
-            LOGW("Ignoring empty path element in position %d", numpaths);
+    nempty = 0;
+    split = g_strsplit(pathlist_env, ":", -1);
+    for (unsigned int i = 0; i < g_strv_length(split); i++) {
+        if (0 != strncmp(split[i], "", 2))
+            *pathlist = g_slist_prepend(*pathlist, g_strdup(split[i]));
         else {
-            item = g_malloc (itemlen * sizeof(char));
-            memcpy(item, pathlist_env + pos, itemlen);
-            item[itemlen] = '\0';
-            pathnode_new(pathlist, item, 1);
-            g_free (item);
-            ++numpaths;
+            LOGD("Ignoring empty path element in position %d", nempty);
+            ++nempty;
         }
-        pos += ++itemlen;
     }
-    LOGV("Initialized path list with %d paths", numpaths);
-    return numpaths;
+    npaths = g_strv_length(split) - nempty;
+    g_strfreev(split);
+    LOGV("Initialized path list with %d paths", npaths);
+    return npaths;
 }
 
-int pathlist_check(struct pathnode **pathlist, const char *path_sanitized) {
+int pathlist_check(GSList *pathlist, const char *path_sanitized) {
     int ret;
-    struct pathnode *node;
+    GSList *walk;
 
     LOGD("Checking `%s'", path_sanitized);
 
     ret = 0;
-    node = *pathlist;
-    while (NULL != node) {
-        if ('/' == node->path[0] && '\0' == node->path[1]) {
-            LOGD("`%s' begins with `%s'", path_sanitized, node->path);
+    walk = pathlist;
+    while (NULL != walk) {
+        if (0 == strncmp(walk->data, "/", 2)) {
+            LOGD("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
             ret = 1;
             break;
         }
-        else if (0 == strncmp(path_sanitized, node->path, strlen(node->path))) {
-            if (strlen(path_sanitized) > strlen(node->path)) {
+        else if (0 == strncmp(path_sanitized, walk->data, strlen(walk->data))) {
+            if (strlen(path_sanitized) > strlen(walk->data)) {
                 /* Path begins with one of the allowed paths. Check for a
                  * zero byte or a / on the next character so that for example
                  * /devzero/foo doesn't pass the test when /dev is the only
                  * allowed path.
                  */
-                const char last = path_sanitized[strlen(node->path)];
+                const char last = path_sanitized[strlen(walk->data)];
                 if ('\0' == last || '/' == last) {
-                    LOGD("`%s' begins with `%s'", path_sanitized, node->path);
+                    LOGD("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
                     ret = 1;
                     break;
                 }
                 else
-                    LOGD("`%s' doesn't begin with `%s'", path_sanitized, node->path);
+                    LOGD("`%s' doesn't begin with `%s'", path_sanitized, (char *) walk->data);
             }
             else {
-                LOGD("`%s' begins with `%s'", path_sanitized, node->path);
+                LOGD("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
                 ret = 1;
                 break;
             }
         }
         else
-            LOGD("`%s' doesn't begin with `%s'", path_sanitized, node->path);
-        node = node->next;
+            LOGD("`%s' doesn't begin with `%s'", path_sanitized, (char *) walk->data);
+        walk = g_slist_next(walk);
     }
     if (ret)
         LOGD("Path list check succeeded for `%s'", path_sanitized);
