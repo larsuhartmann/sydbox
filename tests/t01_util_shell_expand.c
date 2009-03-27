@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../src/defs.h"
+#include "../src/util.h"
 
 int main(int argc, char **argv) {
     if (1 == argc)
