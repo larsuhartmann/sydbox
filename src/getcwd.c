@@ -173,7 +173,7 @@ char *egetcwd(void) {
     }
 
     if (*buf) {
-        LOGD("Changing current working directory to `%s'", buf);
+        LOGD("Changing current working directory to `%s'", buf + pos + 1);
         echdir(buf + pos + 1);
     }
     g_free (buf);
