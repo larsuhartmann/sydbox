@@ -130,30 +130,27 @@ char *remove_slash(const char *src) {
     return dest;
 }
 
-char *shell_expand(const char *src) {
-    char *command, *quoted, *ret;
-    FILE *sh;
-    GString *dest;
+char *
+shell_expand (const char * const str)
+{
+    gchar *argv[4] = { "/bin/sh", "-c", NULL, NULL };
+    gchar *quoted, *output = NULL;
+    GError *error = NULL;
+    gint retval;
 
-    quoted = g_shell_quote(src);
-    command = g_strconcat("/bin/sh -c 'echo '", quoted, NULL);
-    sh = popen(command, "r");
+    quoted = g_shell_quote (str);
+    argv[2] = g_strdup_printf ("echo -n '%s'", quoted);
     g_free (quoted);
-    g_free (command);
-    if (NULL == sh)
-        DIESOFT("bug in popen call: %s", strerror(errno));
 
-    dest = g_string_new("");
-    while (!feof(sh))
-        dest = g_string_append_c(dest, fgetc(sh));
-    pclose(sh);
-    /* Remove trailing newline */
-    dest = g_string_truncate(dest, dest->len - 2);
-    ret = dest->str;
-    g_string_free (dest, FALSE);
-    if (0 != strncmp(ret, src, strlen(src) + 1))
-        LOGD("Expanded path `%s' to `%s' using /bin/sh", src, ret);
-    return ret;
+    if (! g_spawn_sync (NULL, argv, NULL, G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL,
+                        &output, NULL, &retval, &error)) {
+        g_printerr ("failed to expand `%s': %s", str, error->message);
+        g_error_free (error);
+    }
+
+    g_free (argv[2]);
+
+    return output;
 }
 
 // Handle the ESRCH errno which means child is dead
