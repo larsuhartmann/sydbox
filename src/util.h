@@ -38,9 +38,6 @@ access_error (pid_t pid, const char *fmt, ...)
 char *
 remove_slash (const char *src);
 
-char *
-shell_expand (const char *src);
-
 int
 handle_esrch (context_t *ctx, struct tchild *child);
 

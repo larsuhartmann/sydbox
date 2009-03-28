@@ -28,6 +28,31 @@
 #include "path.h"
 #include "util.h"
 
+
+static char *
+shell_expand (const char * const str)
+{
+    gchar *argv[4] = { "/bin/sh", "-c", NULL, NULL };
+    gchar *quoted, *output = NULL;
+    GError *error = NULL;
+    gint retval;
+
+    quoted = g_shell_quote (str);
+    argv[2] = g_strdup_printf ("echo -n '%s'", quoted);
+    g_free (quoted);
+
+    if (! g_spawn_sync (NULL, argv, NULL, G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL,
+                        &output, NULL, &retval, &error)) {
+        g_printerr ("failed to expand `%s': %s", str, error->message);
+        g_error_free (error);
+    }
+
+    g_free (argv[2]);
+
+    return output;
+}
+
+
 bool path_magic_dir(const char *path) {
     return (0 == strncmp(path, CMD_PATH, CMD_PATH_LEN - 1)) ? true : false;
 }
@@ -84,7 +109,7 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
         data = g_strdup (path);
     else {
         char *spath = remove_slash(path);
-        data = shell_expand(spath);
+        data = shell_expand (spath);
         g_free (spath);
         LOGV("New path item `%s'", data);
     }

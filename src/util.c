@@ -130,29 +130,6 @@ char *remove_slash(const char *src) {
     return dest;
 }
 
-char *
-shell_expand (const char * const str)
-{
-    gchar *argv[4] = { "/bin/sh", "-c", NULL, NULL };
-    gchar *quoted, *output = NULL;
-    GError *error = NULL;
-    gint retval;
-
-    quoted = g_shell_quote (str);
-    argv[2] = g_strdup_printf ("echo -n '%s'", quoted);
-    g_free (quoted);
-
-    if (! g_spawn_sync (NULL, argv, NULL, G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL,
-                        &output, NULL, &retval, &error)) {
-        g_printerr ("failed to expand `%s': %s", str, error->message);
-        g_error_free (error);
-    }
-
-    g_free (argv[2]);
-
-    return output;
-}
-
 // Handle the ESRCH errno which means child is dead
 int handle_esrch(context_t *ctx, struct tchild *child) {
     int ret = 0;

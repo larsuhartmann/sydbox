@@ -28,6 +28,32 @@ START_TEST(check_pathnode_new) {
 }
 END_TEST
 
+START_TEST(check_pathnode_shell_env_expand) {
+    PRINT_TEST_HEADER;
+
+    GSList *head = NULL;
+    gchar *old_home;
+
+    old_home = g_strdup (g_getenv ("HOME"));
+    if (g_setenv ("HOME", "/home/sydbox", TRUE)) {
+        pathnode_new (&head, "${HOME}/.sydbox", 1);
+        fail_unless (0 == strcmp (head->data, "/home/sydbox/.sydbox"), "path expansion failed");
+    }
+    g_setenv ("HOME", old_home, TRUE);
+    g_free (old_home);
+}
+END_TEST
+
+START_TEST(check_pathnode_shell_subshell_expand) {
+    PRINT_TEST_HEADER;
+
+    GSList *head = NULL;
+
+    pathnode_new (&head, "$(echo -n /home/sydbox)/.sydbox", 1);
+    fail_unless (0 == strcmp (head->data, "/home/sydbox/.sydbox"), "path expansion failed");
+}
+END_TEST
+
 START_TEST(check_pathnode_free) {
     PRINT_TEST_HEADER;
     GSList *head = NULL;
@@ -167,6 +193,8 @@ Suite *path_suite_create(void) {
     TCase *tc_pathnode = tcase_create("pathnode");
     tcase_add_test(tc_pathnode, check_pathnode_new);
     tcase_add_test(tc_pathnode, check_pathnode_free);
+    tcase_add_test(tc_pathnode, check_pathnode_shell_env_expand);
+    tcase_add_test(tc_pathnode, check_pathnode_shell_subshell_expand);
     suite_add_tcase(s, tc_pathnode);
 
     /* pathlist_* test cases */
