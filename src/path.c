@@ -153,7 +153,7 @@ int pathlist_init(GSList **pathlist, const char *pathlist_env) {
         if (0 != strncmp(split[i], "", 2))
             *pathlist = g_slist_prepend(*pathlist, g_strdup(split[i]));
         else {
-            LOGD("Ignoring empty path element in position %d", nempty);
+            LOGD("Ignoring empty path element in position %d", i);
             ++nempty;
         }
     }
