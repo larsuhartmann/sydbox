@@ -17,13 +17,15 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <time.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <sysexits.h>
+#include <time.h>
 
-#include "log.h"
 #include "defs.h"
+#include "log.h"
 #include "util.h"
 
 int log_level = -1;

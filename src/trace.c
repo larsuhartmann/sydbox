@@ -49,6 +49,7 @@
 
 #include <glib.h>
 
+#include "defs.h"
 #include "log.h"
 #include "trace.h"
 #include "syscall.h"

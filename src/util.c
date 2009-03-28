@@ -20,14 +20,11 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <signal.h>
+#include <sysexits.h>
 #include <time.h>
 #include <unistd.h>
 

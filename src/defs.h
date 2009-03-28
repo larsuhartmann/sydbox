@@ -20,12 +20,6 @@
 #ifndef SYDBOX_GUARD_DEFS_H
 #define SYDBOX_GUARD_DEFS_H 1
 
-#include <limits.h>
-#include <sysexits.h>
-#include <sys/types.h>
-#include <stdbool.h>
-#include <stdio.h> /* FILE */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
