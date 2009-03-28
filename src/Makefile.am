@@ -1,6 +1,6 @@
 CLEANFILES= syscallent.h gmon.out
 
-AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGITHEAD=\"$(GIT_HEAD)\" \
+AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
 	   $(glib_CFLAGS) $(confuse_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = children.h context.h defs.h getcwd.h log.h loop.h \

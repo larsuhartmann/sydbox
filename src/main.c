@@ -45,58 +45,33 @@
 #include "wrappers.h"
 
 static context_t *ctx = NULL;
-static char *config_file = NULL;
-static char *profile = NULL;
 static int lock = -1;
 static int net = -1;
 static GSList *write_prefixes = NULL;
 static GSList *predict_prefixes = NULL;
 
-static void about(void) {
-    fprintf(stderr, PACKAGE"-"VERSION);
-    if (0 != strlen(GITHEAD))
-        fprintf(stderr, "-"GITHEAD);
-    fputc('\n', stderr);
-}
 
-static void usage(void) {
-    fprintf(stderr, PACKAGE"-"VERSION);
-    if (0 != strlen(GITHEAD))
-        fprintf(stderr, "-"GITHEAD);
-    fprintf(stderr, " ptrace based sandbox\n");
-    fprintf(stderr, "Usage: "PACKAGE" [options] -- command [args]\n\n");
-    fprintf(stderr, "Options:\n");
-    fprintf(stderr, "\t-h, --help\t\tYou're looking at it :)\n");
-    fprintf(stderr, "\t-V, --version\t\tShow version information\n");
-    fprintf(stderr, "\t-p, --paranoid\t\tParanoid mode (EXPERIMENTAL)\n");
-    fprintf(stderr, "\t-L, --lock\t\tDisallow magic commands\n");
-    fprintf(stderr, "\t-v, --verbose\t\tBe verbose\n");
-    fprintf(stderr, "\t-d, --debug\t\tEnable debug messages\n");
-    fprintf(stderr, "\t-C, --nocolour\t\tDisable colouring of messages\n");
-    fprintf(stderr, "\t-P PROFILE,\n\t  --profile=PROFILE\tSpecify profile\n");
-    fprintf(stderr, "\t-c PATH, --config=PATH\tSpecify PATH to the configuration file\n");
-    fprintf(stderr, "\t-l PATH, --log-file=PATH\n\t\t\t\tSpecify PATH to the log file\n");
-    fprintf(stderr, "\t-D, --dump\t\tDump configuration and exit\n");
-    fprintf(stderr, "\nEnvironment variables:\n");
-    fprintf(stderr, "\t"ENV_PROFILE":\tSpecify profile, can be used instead of -P\n");
-    fprintf(stderr, "\t"ENV_WRITE":\t\tColon seperated paths to allow write\n");
-    fprintf(stderr, "\t"ENV_PREDICT":\tColon seperated paths to predict write\n");
-    fprintf(stderr, "\t"ENV_NET":\t\tEnable sandboxing of network connections\n");
-    fprintf(stderr, "\t"ENV_CONFIG":\t\tSpecify PATH to the configuration file\n");
-    fprintf(stderr, "\t"ENV_NO_COLOUR":\tIf set messages won't be coloured\n");
-    fprintf(stderr, "\t"ENV_LOG":\t\tSpecify PATH to the log file\n");
-    fprintf(stderr, "\nParanoid Mode:\n");
-    fprintf(stderr, "\tIn this mode, sydbox tries hard to ensure security of the sandbox.\n");
-    fprintf(stderr, "\tFor example if a system call's path argument is a symlink, sydbox\n");
-    fprintf(stderr, "\twill attempt to change it with the resolved path to prevent symlink races.\n");
-    fprintf(stderr, "\tWith this mode on many packages are known to fail.\n");
-    fprintf(stderr, "\tWithout this mode on, sydbox is NOT considered to be a security tool.\n");
-    fprintf(stderr, "\tIt just helps package managers like paludis to ensure nothing wrong\n");
-    fprintf(stderr, "\thappens during package installs. It's NOT meant to be a protection against\n");
-    fprintf(stderr, "\tevil upstream or evil packagers.\n");
-    fprintf(stderr, "\tAnd the sea isn't green, and i love the queen, and\n");
-    fprintf(stderr, "\twhat exactly is a dream, what exactly is a joke?\n");
-}
+static gboolean dump;
+static gboolean version;
+static gboolean paranoid;
+
+static gchar *profile;
+static gchar *config_file;
+
+static gboolean set_lock = FALSE;
+
+static GOptionEntry entries[] =
+{
+    { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file",  NULL },
+    { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
+    { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &set_lock,    "Disallow magic commands",         NULL },
+    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &log_file,    "Path to the log file",            NULL },
+    { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
+    { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
+    { "profile",   'P', 0, G_OPTION_ARG_STRING,                       &profile,     "Specify profile",                 NULL },
+    { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",        NULL },
+    { NULL },
+};
 
 // Cleanup functions
 static void cleanup(void) {
@@ -277,14 +252,19 @@ static const char *get_groupname(void) {
     return 0 == errno ? grp->gr_name : NULL;
 }
 
-int main(int argc, char **argv) {
-    int optc, dump;
-    pid_t pid;
+int
+main (int argc, char **argv)
+{
     char **argv_bash = NULL;
+
+    GError *error = NULL;
+    GOptionContext *context;
+    gboolean parse_arguments = TRUE;
+    pid_t pid;
+
     ctx = context_new();
     ctx->paranoid = -1;
-    colour = -1;
-    dump = 0;
+
     atexit(cleanup);
 
     char *bname = ebasename(argv[0]);
@@ -300,81 +280,46 @@ int main(int argc, char **argv) {
             argv++;
             argc--;
         }
-        goto skip_commandline;
+        parse_arguments = TRUE;
     }
 
-    // Parse command line
-    static struct option long_options[] = {
-        {"version",  no_argument, NULL, 'V'},
-        {"help",     no_argument, NULL, 'h'},
-        {"paranoid", no_argument, NULL, 'p'},
-        {"lock",     no_argument, NULL, 'L'},
-        {"verbose",  no_argument, NULL, 'v'},
-        {"debug",    no_argument, NULL, 'd'},
-        {"nocolour", no_argument, NULL, 'C'},
-        {"profile",  required_argument, NULL, 'P'},
-        {"log-file", required_argument, NULL, 'l'},
-        {"config",   required_argument, NULL, 'c'},
-        {"dump",     no_argument, NULL, 'D'},
-        {0, 0, NULL, 0}
-    };
+    if (parse_arguments) {
+        context = g_option_context_new ("-- command [args]");
+        g_option_context_add_main_entries (context, entries, PACKAGE);
+        g_option_context_set_summary (context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
 
-    while (-1 != (optc = getopt_long(argc, argv, "hVpLvdCP:l:c:D", long_options, NULL))) {
-        switch (optc) {
-            case 'h':
-                usage();
-                return EXIT_SUCCESS;
-            case 'V':
-                about();
-                return EXIT_SUCCESS;
-            case 'p':
-                ctx->paranoid = 1;
-                break;
-            case 'L':
-                lock = LOCK_SET;
-                break;
-            case 'v':
-                log_level = LOG_VERBOSE;
-                break;
-            case 'd':
-                if (LOG_DEBUG == log_level)
-                    log_level = LOG_DEBUG_CRAZY;
-                else if (LOG_DEBUG_CRAZY != log_level)
-                    log_level = LOG_DEBUG;
-                break;
-            case 'C':
-                colour = 0;
-                break;
-            case 'P':
-                profile = optarg;
-                break;
-            case 'l':
-                log_file = g_strdup (optarg);
-                break;
-            case 'c':
-                config_file = optarg;
-                break;
-            case 'D':
-                dump = 1;
-                break;
-            case '?':
-            default:
-                DIEUSER("try %s --help for more information", PACKAGE);
+        if (! g_option_context_parse (context, &argc, &argv, &error)) {
+            g_printerr ("option parsing failed: %s\n", error->message);
+            g_option_context_free (context);
+            g_error_free (error);
+            return EXIT_FAILURE;
+        }
+        g_option_context_free (context);
+
+        if (paranoid) {
+            ctx->paranoid = 1;
+        }
+
+        if (set_lock) {
+            lock = LOCK_SET;
+        }
+
+        if (version) {
+            g_printerr (PACKAGE "-" VERSION GIT_HEAD "\n");
+            return EXIT_SUCCESS;
+        }
+
+        if (! dump) {
+            if (! argv[1]) {
+                g_printerr ("no command given");
+                return EXIT_FAILURE;
+            }
+
+            argc--;
+            argv++;
         }
     }
 
-    if (!dump) {
-        if (argc < optind + 1)
-            DIEUSER("no command given");
-        else if (0 != strncmp("--", argv[optind - 1], 3))
-            DIEUSER("expected '--' instead of '%s'", argv[optind]);
-        else {
-            argc -= optind;
-            argv += optind;
-        }
-    }
-
-skip_commandline:
     if (NULL == profile) {
         profile = getenv(ENV_PROFILE);
         if (NULL == profile)
@@ -502,3 +447,4 @@ skip_commandline:
         return ret;
     }
 }
+
