@@ -20,16 +20,19 @@ AM_INIT_AUTOMAKE(sydbox, [$VERSION_FULL])
 dnl {{{ git revision
 AC_MSG_CHECKING([for git head])
 if test -d "${GIT_DIR:-${ac_top_srcdir:-./}/.git}" ; then
-	GITHEAD=`git describe 2>/dev/null`
-	if test -z ${GITHEAD} ; then
-		GITHEAD=`git rev-parse --short HEAD`
+	GIT_HEAD=`git describe 2>/dev/null`
+	if test -z ${GIT_HEAD} ; then
+		GIT_HEAD=`git rev-parse --short HEAD`
 	fi
 	if test -n "`git diff-index -m --name-only HEAD`" ; then
-		GITHEAD=${GITHEAD}-dirty
+		GIT_HEAD=${GIT_HEAD}-dirty
+	fi
+	if test -n "${GIT_HEAD}" ; then
+		GIT_HEAD="-${GIT_HEAD}"
 	fi
 fi
-AC_MSG_RESULT([$GITHEAD])
-AC_SUBST([GITHEAD])
+AC_MSG_RESULT([$GIT_HEAD])
+AC_SUBST([GIT_HEAD])
 dnl }}}
 dnl }}}
 
