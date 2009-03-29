@@ -62,7 +62,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
 
 static int xsetup_premature(context_t *ctx, pid_t pid) {
     tchild_new(&(ctx->children), pid);
-    return xsetup(ctx, ctx->children);
+    return xsetup(ctx, ctx->children->data);
 }
 
 static int xsyscall(context_t *ctx, struct tchild *child) {
