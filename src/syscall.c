@@ -293,7 +293,7 @@ static char *syscall_get_dirname(context_t *ctx, struct tchild *child, unsigned 
     assert(0 == npath || 2 == npath);
     if (0 > trace_get_arg(child->pid, npath, &dfd)) {
         save_errno = errno;
-        LOGW("Failed to get dirfd: %s", strerror(errno));
+        g_warning ("failed to get dirfd: %s", strerror(errno));
         errno = save_errno;
         return NULL;
     }

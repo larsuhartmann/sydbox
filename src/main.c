@@ -80,7 +80,7 @@ static void cleanup(void) {
     if (NULL != ctx && NULL != ctx->eldest) {
         g_message ("killing child %i", ctx->eldest->pid);
         if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
-            LOGW("Failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
+            g_warning ("failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
     }
     if (NULL != log_fp) {
         fclose(log_fp);
@@ -90,7 +90,7 @@ static void cleanup(void) {
 
 static void sig_cleanup(int signum) {
     struct sigaction action;
-    LOGW("Received signal %d, calling cleanup()", signum);
+    g_warning ("received signal %d, calling cleanup()", signum);
     cleanup();
     sigaction(signum, NULL, &action);
     action.sa_handler = SIG_DFL;
