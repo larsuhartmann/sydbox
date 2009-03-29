@@ -94,10 +94,6 @@ sydbox_log_init (const gchar * const filename,
         return TRUE;
 
     if (filename) {
-        if (g_unlink (filename))
-            if (errno != ENOENT)
-                return FALSE;
-
         fd = g_fopen (filename, "a");
         if (! fd) {
             const gchar *error_string = g_strerror (errno);
