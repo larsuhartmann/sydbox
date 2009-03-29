@@ -226,8 +226,8 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
             newcwd = child->cwd;
 
         if (0 > echdir(newcwd)) {
-            LOGD("Failed to change current working directory to `%s': %s", newcwd, strerror(errno));
-            LOGD("Adding current working directory to `%s' instead", path);
+            g_debug ("failed to change current working directory to `%s': %s", newcwd, strerror(errno));
+            g_debug ("adding current working directory to `%s' instead", path);
             len = strlen(child->cwd) + strlen(path) + 2;
             pathc = g_malloc (len * sizeof(char));
             snprintf(pathc, len, "%s/%s", child->cwd, path);
@@ -274,11 +274,11 @@ static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned in
         resolve = true;
 
     if (has_creat || syscall_can_creat(npath, flags)) {
-        LOGD("Mode is CAN_ALL_BUT_LAST resolve is %s", resolve ? "true" : "false");
+        g_debug ("mode is CAN_ALL_BUT_LAST resolve is %s", resolve ? "true" : "false");
         rpath = canonicalize_filename_mode(path_sanitized, CAN_ALL_BUT_LAST, resolve, child->cwd);
     }
     else {
-        LOGD("Mode is CAN_EXISTING resolve is %s", resolve ? "true" : "false");
+        g_debug ("mode is CAN_EXISTING resolve is %s", resolve ? "true" : "false");
         rpath = canonicalize_filename_mode(path_sanitized, CAN_EXISTING, resolve, child->cwd);
     }
 
@@ -306,9 +306,9 @@ static char *syscall_get_dirname(context_t *ctx, struct tchild *child, unsigned 
 
 static enum res_syscall syscall_check_path(struct tchild *child, const struct syscall_def *sdef,
         int paranoid, const char *path, int npath) {
-    LOGD("Checking \"%s\" for write access", path);
+    g_debug ("checking \"%s\" for write access", path);
     int allow_write = pathlist_check(child->sandbox->write_prefixes, path);
-    LOGD("Checking \"%s\" for predict access", path);
+    g_debug ("checking \"%s\" for predict access", path);
     int allow_predict = pathlist_check(child->sandbox->predict_prefixes, path);
 
     if (!allow_write && !allow_predict) {
@@ -337,8 +337,8 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
     }
     else if (!allow_write && allow_predict) {
         if (sdef->flags & RETURNS_FD) {
-            LOGD("System call returns fd and its argument is under a predict path");
-            LOGD("Changing the path argument to /dev/null");
+            g_debug ("system call returns fd and its argument is under a predict path");
+            g_debug ("changing the path argument to /dev/null");
             if (0 > trace_set_string(child->pid, npath, "/dev/null", 10))
                 DIESOFT("Failed to set string: %s", strerror(errno));
             return RS_ALLOW;
@@ -353,7 +353,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
         /* Change the path argument with the resolved path to
          * prevent symlink races.
          */
-        LOGD("Paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
+        g_debug ("paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
         if (0 > trace_set_string(child->pid, npath, path, strlen(path) + 1)) {
             int save_errno = errno;
             LOGE("Failed to set string: %s", strerror(errno));
@@ -369,7 +369,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
     char *rpath_sanitized;
     const char *rpath;
 
-    LOGD("Checking if open(\"%s\", ...) is magic", path);
+    g_debug ("checking if open(\"%s\", ...) is magic", path);
     if (path_magic_on(path)) {
         ismagic = 1;
         child->sandbox->on = 1;
@@ -427,7 +427,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
     }
 
     if (ismagic) {
-        LOGD("Changing path to /dev/null");
+        g_debug ("changing path to /dev/null");
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
             LOGE("Failed to set string to /dev/null: %s", strerror(errno));
@@ -437,7 +437,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         return RS_ALLOW;
     }
 
-    LOGD("open(\"%s\", ...) not magic", path);
+    g_debug ("open(\"%s\", ...) not magic", path);
     return RS_NONMAGIC;
 }
 
@@ -452,9 +452,9 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
         errno = save_errno;
         return RS_ERROR;
     }
-    LOGD("Checking if stat(\"%s\") is magic", path);
+    g_debug ("checking if stat(\"%s\") is magic", path);
     if (path_magic_dir(path)) {
-        LOGD("stat(\"%s\") is magic, faking stat buffer", path);
+        g_debug ("stat(\"%s\") is magic, faking stat buffer", path);
         if (0 > trace_fake_stat(child->pid)) {
             save_errno = errno;
             LOGE("Failed to fake stat: %s", strerror(errno));
@@ -466,7 +466,7 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
         return RS_DENY;
     }
     else {
-        LOGD("stat(\"%s\") is not magic", path);
+        g_debug ("stat(\"%s\") is not magic", path);
         g_free (path);
         return RS_NONMAGIC;
     }
@@ -490,7 +490,7 @@ found:
     else
         sname = NULL;
 
-    LOGD("Child %i called essential system call %s()", child->pid, sname);
+    g_debug ("child %i called essential system call %s()", child->pid, sname);
 
     /* Check write flags like O_WRONLY / O_RDWR
      * We do this before handling magic calls because all magic commands that
@@ -546,7 +546,7 @@ found:
 
     // Check paths
     if (sdef->flags & CHECK_PATH) {
-        LOGD("System call %s() has CHECK_PATH set, checking", sname);
+        g_debug ("system call %s() has CHECK_PATH set, checking", sname);
         if (NULL == pathfirst) {
             pathfirst = trace_get_string(child->pid, 0);
             if (NULL == pathfirst) {
@@ -559,7 +559,7 @@ found:
         rpath = syscall_get_rpath(ctx, child, sdef->flags, pathfirst, has_creat, 0);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("canonicalize_filename_mode() failed for `%s': %s", pathfirst, strerror(errno));
+            g_debug ("canonicalize_filename_mode() failed for `%s': %s", pathfirst, strerror(errno));
             g_free (pathfirst);
             return RS_DENY;
         }
@@ -573,7 +573,7 @@ found:
             return ret;
     }
     if (sdef->flags & CHECK_PATH2) {
-        LOGD("System call %s() has CHECK_PATH2 set, checking", sname);
+        g_debug ("system call %s() has CHECK_PATH2 set, checking", sname);
         path = trace_get_string(child->pid, 1);
         if (NULL == path) {
             save_errno = errno;
@@ -584,7 +584,7 @@ found:
         rpath = syscall_get_rpath(ctx, child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
+            g_debug ("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             g_free (path);
             return RS_DENY;
         }
@@ -594,7 +594,7 @@ found:
         return ret;
     }
     if (sdef->flags & CHECK_PATH_AT) {
-        LOGD("System call %s() has CHECK_PATH_AT set, checking", sname);
+        g_debug ("system call %s() has CHECK_PATH_AT set, checking", sname);
         path = trace_get_string(child->pid, 1);
         if (NULL == path) {
             save_errno = errno;
@@ -606,8 +606,8 @@ found:
             char *dname = syscall_get_dirname(ctx, child, 0);
             if (NULL == dname) {
                 child->retval = -errno;
-                LOGD("syscall_get_dirname() failed: %s", strerror(errno));
-                LOGD("Denying access to system call %s", sname);
+                g_debug ("syscall_get_dirname() failed: %s", strerror(errno));
+                g_debug ("denying access to system call %s", sname);
                 return RS_DENY;
             }
             else if (child->cwd != dname) {
@@ -622,7 +622,7 @@ found:
         rpath = syscall_get_rpath(ctx, child, sdef->flags, path, has_creat, 1);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
+            g_debug ("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             if (NULL != oldcwd) {
                 child->cwd = oldcwd;
                 oldcwd = NULL;
@@ -644,7 +644,7 @@ found:
             return ret;
     }
     if (sdef->flags & CHECK_PATH_AT2) {
-        LOGD("System call %s() has CHECK_PATH_AT2 set, checking", sname);
+        g_debug ("system call %s() has CHECK_PATH_AT2 set, checking", sname);
         path = trace_get_string(child->pid, 3);
         if (NULL == path) {
             save_errno = errno;
@@ -656,8 +656,8 @@ found:
             char *dname = syscall_get_dirname(ctx, child, 2);
             if (NULL == dname) {
                 child->retval = -errno;
-                LOGD("syscall_get_dirname() failed: %s", strerror(errno));
-                LOGD("Denying access to system call %s", sname);
+                g_debug ("syscall_get_dirname() failed: %s", strerror(errno));
+                g_debug ("denying access to system call %s", sname);
                 return RS_DENY;
             }
             else if (child->cwd != dname) { // Not AT_FDCWD
@@ -672,7 +672,7 @@ found:
         rpath = syscall_get_rpath(ctx, child, sdef->flags, path, has_creat, 3);
         if (NULL == rpath) {
             child->retval = -errno;
-            LOGD("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
+            g_debug ("canonicalize_filename_mode() failed for `%s': %s", path, strerror(errno));
             if (NULL != oldcwd) {
                 child->cwd = oldcwd;
                 oldcwd = NULL;
@@ -726,7 +726,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         ret = syscall_check(ctx, child, sno);
         switch (ret) {
             case RS_DENY:
-                LOGD("Denying access to system call %s()", sname);
+                g_debug ("denying access to system call %s()", sname);
                 child->sno = sno;
                 if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
                     if (ESRCH == errno)
@@ -755,7 +755,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     else { // Exiting syscall
         LOGC("Child %i is exiting system call %s()", child->pid, sname);
         if (0xbadca11 == sno) {
-            LOGD("Restoring real call number for denied system call %s()", sname);
+            g_debug ("restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->sno)) {
                 if (ESRCH == errno)
@@ -783,7 +783,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 char *newcwd = pgetcwd(ctx, child->pid);
                 if (NULL == newcwd) {
                     retval = -errno;
-                    LOGD("pgetcwd() failed: %s", strerror(errno));
+                    g_debug ("pgetcwd() failed: %s", strerror(errno));
                     if (0 > trace_set_return(child->pid, retval)) {
                         if (ESRCH == errno)
                             return handle_esrch(ctx, child);
@@ -799,7 +799,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 }
             }
             else
-                LOGD("Child %i failed to change directory: %s", child->pid, strerror(-retval));
+                g_debug ("child %i failed to change directory: %s", child->pid, strerror(-retval));
         }
         child->flags ^= TCHILD_INSYSCALL;
     }

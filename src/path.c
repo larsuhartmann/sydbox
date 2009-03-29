@@ -129,7 +129,7 @@ void pathnode_delete(GSList **pathlist, const char *path_sanitized) {
     walk = *pathlist;
     while (NULL != walk) {
         if (0 == strncmp(walk->data, path_sanitized, strlen(path_sanitized) + 1)) {
-            LOGD("Freeing pathnode %p", (void *) walk);
+            g_debug ("freeing pathnode %p", (void *) walk);
             *pathlist = g_slist_remove_link(*pathlist, walk);
             g_free(walk->data);
             g_slist_free(walk);
@@ -154,7 +154,7 @@ int pathlist_init(GSList **pathlist, const char *pathlist_env) {
         if (0 != strncmp(split[i], "", 2))
             *pathlist = g_slist_prepend(*pathlist, g_strdup(split[i]));
         else {
-            LOGD("Ignoring empty path element in position %d", i);
+            g_debug ("ignoring empty path element in position %d", i);
             ++nempty;
         }
     }
@@ -168,13 +168,13 @@ int pathlist_check(GSList *pathlist, const char *path_sanitized) {
     int ret;
     GSList *walk;
 
-    LOGD("Checking `%s'", path_sanitized);
+    g_debug ("checking `%s'", path_sanitized);
 
     ret = 0;
     walk = pathlist;
     while (NULL != walk) {
         if (0 == strncmp(walk->data, "/", 2)) {
-            LOGD("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
+            g_debug ("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
             ret = 1;
             break;
         }
@@ -187,26 +187,26 @@ int pathlist_check(GSList *pathlist, const char *path_sanitized) {
                  */
                 const char last = path_sanitized[strlen(walk->data)];
                 if ('\0' == last || '/' == last) {
-                    LOGD("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
+                    g_debug ("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
                     ret = 1;
                     break;
                 }
                 else
-                    LOGD("`%s' doesn't begin with `%s'", path_sanitized, (char *) walk->data);
+                    g_debug ("`%s' doesn't begin with `%s'", path_sanitized, (char *) walk->data);
             }
             else {
-                LOGD("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
+                g_debug ("`%s' begins with `%s'", path_sanitized, (char *) walk->data);
                 ret = 1;
                 break;
             }
         }
         else
-            LOGD("`%s' doesn't begin with `%s'", path_sanitized, (char *) walk->data);
+            g_debug ("`%s' doesn't begin with `%s'", path_sanitized, (char *) walk->data);
         walk = g_slist_next(walk);
     }
     if (ret)
-        LOGD("Path list check succeeded for `%s'", path_sanitized);
+        g_debug ("path list check succeeded for `%s'", path_sanitized);
     else
-        LOGD("Path list check failed for `%s'", path_sanitized);
+        g_debug ("path list check failed for `%s'", path_sanitized);
     return ret;
 }

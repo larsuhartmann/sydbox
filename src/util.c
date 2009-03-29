@@ -123,7 +123,7 @@ char *remove_slash(const char *src) {
         }
     }
     if (nslashes)
-        LOGD("Simplified path `%s' to `%s', removed %d slashes", src, dest, nslashes);
+        g_debug ("simplified path `%s' to `%s', removed %d slashes", src, dest, nslashes);
     return dest;
 }
 

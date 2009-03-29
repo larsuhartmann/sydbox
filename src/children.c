@@ -35,7 +35,7 @@ struct tchild *childtab[PID_MAX_LIMIT] = { NULL };
 void tchild_new(GSList **children, pid_t pid) {
     struct tchild *child, *parent;
 
-    LOGD("New child %i", pid);
+    g_debug ("new child %i", pid);
     child = (struct tchild *) g_malloc (sizeof(struct tchild));
     child->flags = TCHILD_NEEDSETUP;
     child->pid = pid;
@@ -54,7 +54,7 @@ void tchild_new(GSList **children, pid_t pid) {
         parent = (*children)->data;
 
         if (NULL != parent->cwd) {
-            LOGD("Child %i inherits parent %i's current working directory '%s'", pid, parent->pid, parent->cwd);
+            g_debug ("child %i inherits parent %i's current working directory '%s'", pid, parent->pid, parent->cwd);
             child->cwd = g_strdup (parent->cwd);
         }
 
@@ -95,7 +95,7 @@ static void tchild_free_one(struct tchild *child, void *user_data) {
 }
 
 void tchild_free(GSList **children) {
-    LOGD("Freeing children %p", (void *) *children);
+    g_debug ("freeing children %p", (void *) *children);
     g_slist_foreach(*children, (GFunc) tchild_free_one, NULL);
     g_slist_free(*children);
     *children = NULL;

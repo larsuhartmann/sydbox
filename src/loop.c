@@ -89,11 +89,11 @@ static int xfork(context_t *ctx, struct tchild *child) {
             DIESOFT("Failed to get the pid of the newborn child: %s", strerror(errno));
     }
     else
-        LOGD("The newborn child's pid is %i", childpid);
+        g_debug ("the newborn child's pid is %i", childpid);
 
     newchild = childtab[childpid];
     if (NULL != newchild) {
-        LOGD("Child %i is prematurely born, letting it continue its life", newchild->pid);
+        g_debug ("child %i is prematurely born, letting it continue its life", newchild->pid);
         if (0 > trace_syscall(newchild->pid, 0)) {
             if (ESRCH == errno)
                 return handle_esrch(ctx, newchild);
@@ -157,7 +157,7 @@ int trace_loop(context_t *ctx) {
 
         switch(event) {
             case E_STOP:
-                LOGD("Latest event for child %i is E_STOP, calling event handler", pid);
+                g_debug ("latest event for child %i is E_STOP, calling event handler", pid);
                 if (NULL == child) {
                     ret = xsetup_premature(ctx, pid);
                     if (0 != ret)
@@ -180,19 +180,19 @@ int trace_loop(context_t *ctx) {
             case E_FORK:
             case E_VFORK:
             case E_CLONE:
-                LOGD("Latest event for child %i is E_FORK, calling event handler", pid);
+                g_debug ("latest event for child %i is E_FORK, calling event handler", pid);
                 ret = xfork(ctx, child);
                 if (G_UNLIKELY(0 != ret))
                     return ret;
                 break;
             case E_EXEC:
-                LOGD("Latest event for child %i is E_EXEC, calling event handler", pid);
+                g_debug ("latest event for child %i is E_EXEC, calling event handler", pid);
                 ret = xsyscall(ctx, child);
                 if (G_UNLIKELY(0 != ret))
                     return ret;
                 break;
             case E_GENUINE:
-                LOGD("Latest event for child %i is E_GENUINE, calling event handler", pid);
+                g_debug ("latest event for child %i is E_GENUINE, calling event handler", pid);
                 ret = xgenuine(ctx, child, status);
                 if (G_UNLIKELY(0 != ret))
                     return ret;
@@ -209,7 +209,7 @@ int trace_loop(context_t *ctx) {
                     tchild_delete(&(ctx->children), pid);
                     return ret;
                 }
-                LOGD("Child %i exited with return code: %d", pid, ret);
+                g_debug ("child %i exited with return code: %d", pid, ret);
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_EXIT_SIGNAL:

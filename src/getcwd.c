@@ -131,7 +131,7 @@ char *egetcwd(void) {
         dir = opendir("..");
         if (NULL == dir) {
             save_errno = errno;
-            LOGD("opendir() failed: %s", strerror(errno));
+            g_debug ("opendir() failed: %s", strerror(errno));
             errno = save_errno;
             break;
         }
@@ -173,7 +173,7 @@ char *egetcwd(void) {
     }
 
     if (*buf) {
-        LOGD("Changing current working directory to `%s'", buf + pos + 1);
+        g_debug ("changing current working directory to `%s'", buf + pos + 1);
         echdir(buf + pos + 1);
     }
     g_free (buf);

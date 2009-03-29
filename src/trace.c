@@ -168,7 +168,7 @@ int trace_me(void) {
 
 int trace_setup(pid_t pid) {
     // Setup ptrace options
-    LOGD("Setting tracing options for child %i", pid);
+    g_debug ("setting tracing options for child %i", pid);
     if (0 > ptrace(PTRACE_SETOPTIONS, pid, NULL,
                     PTRACE_O_TRACESYSGOOD
                     | PTRACE_O_TRACECLONE
