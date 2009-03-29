@@ -77,9 +77,10 @@ sydbox_log_handler (const gchar *log_domain,
                     const gchar *message,
                     gpointer user_data)
 {
-    if ( ((log_level & G_LOG_LEVEL_MESSAGE) && verbosity < 1) ||
-         ((log_level & G_LOG_LEVEL_INFO)    && verbosity < 2) ||
-         ((log_level & G_LOG_LEVEL_DEBUG)   && verbosity < 3) )
+    if ( ((log_level & G_LOG_LEVEL_MESSAGE)   && verbosity < 1) ||
+         ((log_level & G_LOG_LEVEL_INFO)      && verbosity < 2) ||
+         ((log_level & G_LOG_LEVEL_DEBUG)     && verbosity < 3) ||
+         ((log_level & LOG_LEVEL_DEBUG_TRACE) && verbosity < 4) )
         return;
 
     sydbox_log_output (log_domain, log_level, message);
@@ -89,20 +90,20 @@ gboolean
 sydbox_log_init (const gchar * const filename,
                  const gint log_verbosity)
 {
-    g_return_val_if_fail (filename != NULL, FALSE);
-
     if (initialized)
         return TRUE;
 
-    if (g_unlink (filename))
-        if (errno != ENOENT)
-            return FALSE;
+    if (filename) {
+        if (g_unlink (filename))
+            if (errno != ENOENT)
+                return FALSE;
 
-    fd = g_fopen (filename, "a");
-    if (! fd) {
-        const gchar *error_string = g_strerror (errno);
-        g_printerr ("could not open log '%s': %s\n", filename, error_string);
-        g_printerr ("all logging will go to stderr\n");
+        fd = g_fopen (filename, "a");
+        if (! fd) {
+            const gchar *error_string = g_strerror (errno);
+            g_printerr ("could not open log '%s': %s\n", filename, error_string);
+            g_printerr ("all logging will go to stderr\n");
+        }
     }
 
     verbosity = log_verbosity;
