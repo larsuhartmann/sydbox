@@ -1,7 +1,7 @@
 /* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
 /*
- * Copyright (c) 2009 Ali Polatel
+ * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -17,72 +17,111 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <sysexits.h>
-#include <time.h>
-
-#include "defs.h"
 #include "log.h"
-#include "util.h"
 
-int log_level = -1;
-char *log_file = NULL;
-FILE *log_fp = NULL;
+#include <glib/gstdio.h>
+
+#include <errno.h>
+#include <unistd.h>
+
+static FILE *fd;
+static gint verbosity;
+static gboolean initialized;
+
+static inline void
+sydbox_log_output (const gchar *log_domain,
+                   GLogLevelFlags log_level,
+                   const gchar *message)
+{
+    gchar *prefix, *output;
+
+    g_return_if_fail (initialized);
+    g_return_if_fail (message != NULL && message[0] != '\0');
+
+    switch (log_level)
+    {
+        case G_LOG_LEVEL_CRITICAL:
+            prefix = g_strdup ("CRITICAL");
+            break;
+        case G_LOG_LEVEL_WARNING:
+            prefix = g_strdup ("WARNING");
+            break;
+        case G_LOG_LEVEL_MESSAGE:
+            prefix = g_strdup ("Message");
+            break;
+        case G_LOG_LEVEL_INFO:
+            prefix = g_strdup ("INFO");
+            break;
+        case G_LOG_LEVEL_DEBUG:
+            prefix = g_strdup_printf ("(%s:%lu): DEBUG", g_get_prgname(), (gulong) getpid());
+            break;
+        default:
+            prefix = g_strdup ("");
+            break;
+    }
+
+
+    output = g_strdup_printf ("%s %s: %s\n",
+                              log_domain ? log_domain : "**", prefix, message);
+    g_free (prefix);
+
+    g_fprintf (fd ? fd : stderr, "%s", output);
+    fflush (fd ? fd : stderr);
+
+    g_free (output);
+}
+
+static void
+sydbox_log_handler (const gchar *log_domain,
+                    GLogLevelFlags log_level,
+                    const gchar *message,
+                    gpointer user_data)
+{
+    if ( ((log_level & G_LOG_LEVEL_MESSAGE) && verbosity < 1) ||
+         ((log_level & G_LOG_LEVEL_INFO)    && verbosity < 2) ||
+         ((log_level & G_LOG_LEVEL_DEBUG)   && verbosity < 3) )
+        return;
+
+    sydbox_log_output (log_domain, log_level, message);
+}
+
+gboolean
+sydbox_log_init (const gchar * const filename,
+                 const gint log_verbosity)
+{
+    g_return_val_if_fail (filename != NULL, FALSE);
+
+    if (initialized)
+        return TRUE;
+
+    if (g_unlink (filename))
+        if (errno != ENOENT)
+            return FALSE;
+
+    fd = g_fopen (filename, "a");
+    if (! fd) {
+        const gchar *error_string = g_strerror (errno);
+        g_printerr ("could not open log '%s': %s\n", filename, error_string);
+        g_printerr ("all logging will go to stderr\n");
+    }
+
+    verbosity = log_verbosity;
+
+    g_log_set_default_handler (sydbox_log_handler, NULL);
+
+    initialized = TRUE;
+    return TRUE;
+}
 
 void
-lg(int level, const char *func, size_t line, const char *fmt, ...)
+sydbox_log_fini (void)
 {
-    static int log_file_opened = 0;
-    va_list args;
-
-    if (!log_file_opened) {
-        int isstderr = NULL == log_file ? 1 : 0;
-
-        if (isstderr)
-            log_fp = stderr;
-        else {
-            log_fp = fopen(log_file, "a");
-            if (NULL == log_fp)
-                DIESOFT("Failed to open log file \"%s\": %s", log_file, strerror(errno));
-        }
-        log_file_opened = 1;
-    }
-
-    if (NULL == log_fp)
-        return;
-    else if (level > log_level)
+    if (! initialized)
         return;
 
-    fprintf(log_fp, PACKAGE"@%ld: [", time(NULL));
-    switch (level) {
-        case LOG_ERROR:
-            fprintf(log_fp, "ERROR ");
-            break;
-        case LOG_WARNING:
-            fprintf(log_fp, "WARNING ");
-            break;
-        case LOG_NORMAL:
-            fprintf(log_fp, "NORMAL ");
-            break;
-        case LOG_VERBOSE:
-            fprintf(log_fp, "VERBOSE ");
-            break;
-        case LOG_DEBUG:
-            fprintf(log_fp, "DEBUG ");
-            break;
-        case LOG_DEBUG_CRAZY:
-            fprintf(log_fp, "CRAZY ");
-            break;
-    }
-    fprintf(log_fp, "%s.%zu] ", func, line);
+    if (fd)
+        fclose (fd);
 
-    va_start(args, fmt);
-    vfprintf(log_fp, fmt, args);
-    va_end(args);
-
-    fputc('\n', log_fp);
+    initialized = FALSE;
 }
 

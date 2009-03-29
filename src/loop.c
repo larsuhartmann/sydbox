@@ -55,8 +55,10 @@ static int xsetup(context_t *ctx, struct tchild *child) {
             DIESOFT("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
         }
     }
+#if 0
     else
         LOGC("Resumed child %i after setup", child->pid);
+#endif
     return 0;
 }
 
@@ -100,8 +102,10 @@ static int xfork(context_t *ctx, struct tchild *child) {
             else
                 DIESOFT("Failed to resume prematurely born child %i: %s", newchild->pid, strerror(errno));
         }
+#if 0
         else
             LOGC("Resumed prematurely born child %i", newchild->pid);
+#endif
     }
     else {
         // Add the child, setup will be done later
@@ -117,8 +121,10 @@ static int xgenuine(context_t * ctx, struct tchild *child, int status) {
         else
             DIESOFT("Failed to resume child %i after genuine signal: %s", child->pid, strerror(errno));
     }
+#if 0
     else
         LOGC("Resumed child %i after genuine signal", child->pid);
+#endif
     return 0;
 }
 
@@ -132,8 +138,10 @@ static int xunknown(context_t *ctx, struct tchild *child, int status) {
                     strerror(errno));
         }
     }
+#if 0
     else
         LOGC("Resumed child %i after unknown signal %#x", child->pid, status);
+#endif
     return 0;
 }
 

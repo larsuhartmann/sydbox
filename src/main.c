@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2009 Ali Polatel
+ * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -52,11 +53,14 @@ static GSList *write_prefixes = NULL;
 static GSList *predict_prefixes = NULL;
 
 
+static gint verbosity = -1;
+
 static gboolean dump;
 static gboolean version;
 static gboolean paranoid;
 
 static gchar *profile;
+static gchar *log_file;
 static gchar *config_file;
 
 static gboolean set_lock = FALSE;
@@ -66,6 +70,7 @@ static GOptionEntry entries[] =
     { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file",  NULL },
     { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
     { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &set_lock,    "Disallow magic commands",         NULL },
+    { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
     { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &log_file,    "Path to the log file",            NULL },
     { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
     { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
@@ -82,10 +87,7 @@ static void cleanup(void) {
         if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
             g_warning ("failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
     }
-    if (NULL != log_fp) {
-        fclose(log_fp);
-        log_fp = NULL;
-    }
+    sydbox_log_fini ();
 }
 
 static void sig_cleanup(int signum) {
@@ -149,10 +151,10 @@ static int parse_config(const char *path) {
         log_file = g_strdup (lf);
     }
 
-    if (-1 == log_level) {
-        log_level = cfg_getint(cfg, "log_level");
-        if (-1 == log_level)
-            log_level = LOG_NORMAL;
+    if (verbosity == -1) {
+        verbosity = cfg_getint (cfg, "log_level");
+        if (verbosity == -1)
+            verbosity = 0;
     }
 
     if (-1 == colour) {
@@ -197,24 +199,7 @@ static void dump_config(void) {
     fprintf(stderr, "profile = %s\n", profile);
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
     fprintf(stderr, "log_file = %s\n", NULL == log_file ? "stderr" : log_file);
-    fprintf(stderr, "log_level = ");
-    switch (log_level) {
-        case LOG_ERROR:
-            fprintf(stderr, "LOG_ERROR\n");
-            break;
-        case LOG_WARNING:
-            fprintf(stderr, "LOG_WARNING\n");
-            break;
-        case LOG_NORMAL:
-            fprintf(stderr, "LOG_NORMAL\n");
-            break;
-        case LOG_VERBOSE:
-            fprintf(stderr, "LOG_VERBOSE\n");
-            break;
-        case LOG_DEBUG:
-            fprintf(stderr, "LOG_DEBUG\n");
-            break;
-    }
+    fprintf (stderr, "log_level = %d\n", verbosity);
     fprintf(stderr, "network sandboxing = %s\n", net ? "off" : "on");
     GSList *walk;
     fprintf(stderr, "write allowed paths:\n");
@@ -346,6 +331,8 @@ main (int argc, char **argv)
 
     if (NULL == log_file && NULL != log_env)
         log_file = g_strdup (log_env);
+
+    sydbox_log_init (log_file, verbosity);
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "extending path list using environment variable " ENV_WRITE);
     pathlist_init(&write_prefixes, write_env);

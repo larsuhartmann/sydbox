@@ -1,35 +1,33 @@
 /* vim: set sw=4 sts=4 fdm=syntax et : */
 
-/**
+/*
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
- **/
+ *
+ * This file is part of the sydbox sandbox tool. sydbox is free software;
+ * you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License version 2, as published by the Free Software Foundation.
+ *
+ * sydbox is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #ifndef __LOG_H__
 #define __LOG_H__
 
-#include <stdio.h>
+#include <glib.h>
 
-#define LOG_ERROR       1
-#define LOG_WARNING     2
-#define LOG_NORMAL      3
-#define LOG_VERBOSE     4
-#define LOG_DEBUG       5
-#define LOG_DEBUG_CRAZY 6
-
-#define LOGE(...)   lg(LOG_ERROR, __func__, __LINE__,  __VA_ARGS__)
-#define LOGW(...)   lg(LOG_WARNING, __func__, __LINE__, __VA_ARGS__)
-#define LOGN(...)   lg(LOG_NORMAL, __func__, __LINE__, __VA_ARGS__)
-#define LOGV(...)   lg(LOG_VERBOSE, __func__, __LINE__, __VA_ARGS__)
-#define LOGD(...)   lg(LOG_DEBUG, __func__, __LINE__, __VA_ARGS__)
-#define LOGC(...)   lg(LOG_DEBUG_CRAZY, __func__, __LINE__, __VA_ARGS__)
-
-extern int log_level;
-extern char *log_file;
-extern FILE *log_fp;
+gboolean
+sydbox_log_init (const char * const filename,
+                 const gint verbosity);
 
 void
-lg (int level, const char *func, size_t line, const char *fmt, ...)
-    __attribute__ ((format (printf, 4, 5)));
+sydbox_log_fini (void);
 
 #endif
 
