@@ -78,7 +78,7 @@ static GOptionEntry entries[] =
 static void cleanup(void) {
     LOGV("Cleaning up before exit");
     if (NULL != ctx && NULL != ctx->eldest) {
-        LOGN("Killing child %i", ctx->eldest->pid);
+        g_message ("killing child %i", ctx->eldest->pid);
         if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
             LOGW("Failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
     }

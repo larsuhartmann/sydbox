@@ -202,7 +202,7 @@ int trace_loop(context_t *ctx) {
                 if (ctx->eldest == child) {
                     // Eldest child, keep the return value
                     if (0 != ret)
-                        LOGN("Eldest child %i exited with return code %d", pid, ret);
+                        g_message ("eldest child %i exited with return code %d", pid, ret);
                     else
                         LOGV("Eldest child %i exited with return code %d", pid, ret);
                     tchild_delete(&(ctx->children), pid);
@@ -213,7 +213,7 @@ int trace_loop(context_t *ctx) {
                 break;
             case E_EXIT_SIGNAL:
                 if (ctx->eldest == child) {
-                    LOGN("Eldest child %i exited with signal %d", pid, WTERMSIG(status));
+                    g_message ("eldest child %i exited with signal %d", pid, WTERMSIG(status));
                     tchild_delete(&(ctx->children), pid);
                     return EXIT_FAILURE;
                 }

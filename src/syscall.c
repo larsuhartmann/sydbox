@@ -399,13 +399,13 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         ismagic = 1;
         rpath = path + CMD_WRITE_LEN;
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
-        LOGN("Approved addwrite(\"%s\") for child %i", rpath, child->pid);
+        g_message ("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
     else if (path_magic_predict(path)) {
         ismagic = 1;
         rpath = path + CMD_PREDICT_LEN;
         pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
-        LOGN("Approved addpredict(\"%s\") for child %i", rpath, child->pid);
+        g_message ("approved addpredict(\"%s\") for child %i", rpath, child->pid);
     }
     else if (path_magic_rmwrite(path)) {
         ismagic = 1;
@@ -413,7 +413,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         rpath_sanitized = remove_slash(rpath);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
-        LOGN("Approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_message ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free (rpath_sanitized);
     }
     else if (path_magic_rmpredict(path)) {
@@ -422,7 +422,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         rpath_sanitized = remove_slash(rpath);
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
-        LOGN("Approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_message ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free (rpath_sanitized);
     }
 
