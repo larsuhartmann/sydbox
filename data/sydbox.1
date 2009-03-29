@@ -1,0 +1,97 @@
+.\" Process this file with
+.\" groff -man -Tascii sydbox.1
+.\"
+.TH sydbox 1 1 "User Manuals"
+.SH NAME
+`sydbox' - ptrace based sandbox
+.Nm sydbox
+.Nd ptrace based sandbox
+.SH SYOPSIS
+.B sydbox [OPTION] -- command [args]
+.SH DESCRIPTION
+`sydbox' is a ptrace based sandboxing utility.
+.SH OPTIONS
+.TP
+.B \-? --help
+Show help options
+.TP
+.B \-c --config
+Path to the configuration file
+.TP
+.B \-D --dump
+Dump configuration and exit
+.TP
+.B \-L --lock
+Disallow magic commands
+.TP
+.B \-l --log-file
+Path to the log file
+.TP
+.B \-C --no-colour
+Disable colouring of messages
+.TP
+.B \-p --paranoid
+Enable paranoid mode (EXPERIMENTAL)
+.TP
+.B \-P --profile
+Specify profile
+.TP
+.B \-V --version
+Print version info and exit.
+.SH "ENVIRONMENT VARIABLES"
+The behaviour of
+.B sydbox
+is affected by the following environment variables.
+.TP
+.B ENV_PROFILE
+This variable specifies the profile to be used by sydbox.  This is equivalent to
+the -P option.
+.TP
+.B ENV_WRITE
+This variable specifies the paths that are allowed to be written to.  It is
+expected to be a colon delimited list of paths.
+.TP
+.B ENV_PREDICT
+This variable specifies the paths that are predicted to be written to.  It is
+expected to be a scolor delimited list of paths.
+.TP
+.B ENV_NET
+This variable controls the behaviour of sydbox with regards to network access.
+If it is set, sydbox will sandbox network connections.
+.TP
+.B ENV_CONFIG
+This variable specifies the configuration file to be used by sydbox.  This is
+equivalent to the -c option.
+.TP
+.B ENV_NO_COLOUR
+This variable controls the behaviour of sydbox with regards to colourized
+output.  If it is et, sydbox's output will not be coloured.
+.TP
+.B ENV_LOG
+This variable specifies the log file to be used by sydbox.  This is equivalent
+to the -l option.
+.SH PARANOID MODE
+.P
+When sydbox is run in paranoid mode, it attempts to ensure security of the
+sandbox.  Fox example, if a system call's path argument is a symlink, sydbox
+will attempt to change it with the resolved path to prevent symlink races.
+.P
+Many packages are known to fail when run under sydbox with paranoid mode
+enabled.
+.P
+sydbox is not considered to be a security tool without this mode enabled.  It
+can still be used by package managers, such as paludis, to ensure that arbitrary
+files are not written to.  It is
+.BI NOT
+meant to be used for protection against malicious upstreams or packagers.
+.SH AUTHOR
+Ali Polatel <polatel at gmail dot com>
+.br
+Saleem Abdulrasool <compnerd at compnerd dot org>
+.SH REPORTING BUGS
+Report bugs to /dev/null
+.SH COPYRIGHT
+Copyright (c) 2009 Ali Polatel <polatel at gmail dot com>
+.br
+Copyright (c) 2009 Saleem Abdulrasool <compnerd at compnerd dot org>
+
