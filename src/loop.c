@@ -51,7 +51,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
         if (ESRCH == errno) // Child died
             return handle_esrch(ctx, child);
         else {
-            LOGE("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
+            g_critical ("failed to resume child %i after setup: %s", child->pid, strerror(errno));
             DIESOFT("Failed to resume child %i after setup: %s", child->pid, strerror(errno));
         }
     }
@@ -70,7 +70,7 @@ static int xsyscall(context_t *ctx, struct tchild *child) {
         if (ESRCH == errno)
             return handle_esrch(ctx, child);
         else {
-            LOGE("Failed to resume child %i: %s", child->pid, strerror(errno));
+            g_critical ("Failed to resume child %i: %s", child->pid, strerror(errno));
             DIESOFT("Failed to resume child %i: %s", child->pid, strerror(errno));
         }
     }
@@ -127,8 +127,7 @@ static int xunknown(context_t *ctx, struct tchild *child, int status) {
         if (ESRCH == errno)
             return handle_esrch(ctx, child);
         else {
-            LOGE("Failed to resume child %i after unknown signal %#x: %s", child->pid, status,
-                    strerror(errno));
+            g_critical ("failed to resume child %i after unknown signal %#x: %s", child->pid, status, strerror(errno));
             DIESOFT("Failed to resume child %i after unknown signal %#x: %s", child->pid, status,
                     strerror(errno));
         }
@@ -148,7 +147,7 @@ int trace_loop(context_t *ctx) {
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
         if (G_UNLIKELY(0 > pid)) {
-            LOGE("waitpid failed: %s", strerror(errno));
+            g_critical ("waitpid failed: %s", strerror(errno));
             DIESOFT("waitpid failed: %s", strerror(errno));
         }
         child = childtab[pid];

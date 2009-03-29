@@ -184,7 +184,7 @@ static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
 
     if (0 > ret) {
         save_errno = errno;
-        LOGE("Failed to get flags argument: %s", strerror(errno));
+        g_critical ("failed to get flags argument: %s", strerror(errno));
         errno = save_errno;
         return RF_ERROR;
     }
@@ -356,7 +356,7 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
         g_debug ("paranoia! System call has DONT_RESOLV unset, substituting path with resolved path");
         if (0 > trace_set_string(child->pid, npath, path, strlen(path) + 1)) {
             int save_errno = errno;
-            LOGE("Failed to set string: %s", strerror(errno));
+            g_critical ("failed to set string: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
@@ -430,7 +430,7 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
         g_debug ("changing path to /dev/null");
         if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
             save_errno = errno;
-            LOGE("Failed to set string to /dev/null: %s", strerror(errno));
+            g_critical ("failed to set string to /dev/null: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
@@ -448,7 +448,7 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
     path = trace_get_string(child->pid, 0);
     if (NULL == path) {
         save_errno = errno;
-        LOGE("Failed to get string from argument 0: %s", strerror(errno));
+        g_critical ("failed to get string from argument 0: %s", strerror(errno));
         errno = save_errno;
         return RS_ERROR;
     }
@@ -457,7 +457,7 @@ static enum res_syscall syscall_check_magic_stat(struct tchild *child) {
         g_debug ("stat(\"%s\") is magic, faking stat buffer", path);
         if (0 > trace_fake_stat(child->pid)) {
             save_errno = errno;
-            LOGE("Failed to fake stat: %s", strerror(errno));
+            g_critical ("failed to fake stat: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
@@ -518,7 +518,7 @@ found:
             pathfirst = trace_get_string(child->pid, 0);
             if (NULL == pathfirst) {
                 save_errno = errno;
-                LOGE("Failed to get string from argument 0: %s", strerror(errno));
+                g_critical ("failed to get string from argument 0: %s", strerror(errno));
                 errno = save_errno;
                 return RS_ERROR;
             }
@@ -551,7 +551,7 @@ found:
             pathfirst = trace_get_string(child->pid, 0);
             if (NULL == pathfirst) {
                 save_errno = errno;
-                LOGE("Failed to get string from argument 0: %s", strerror(errno));
+                g_critical ("failed to get string from argument 0: %s", strerror(errno));
                 errno = save_errno;
                 return RS_ERROR;
             }
@@ -577,7 +577,7 @@ found:
         path = trace_get_string(child->pid, 1);
         if (NULL == path) {
             save_errno = errno;
-            LOGE("Failed to get string from argument 1: %s", strerror(errno));
+            g_critical ("Failed to get string from argument 1: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
@@ -598,7 +598,7 @@ found:
         path = trace_get_string(child->pid, 1);
         if (NULL == path) {
             save_errno = errno;
-            LOGE("Failed to get string from argument 1: %s", strerror(errno));
+            g_critical ("Failed to get string from argument 1: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
@@ -648,7 +648,7 @@ found:
         path = trace_get_string(child->pid, 3);
         if (NULL == path) {
             save_errno = errno;
-            LOGE("Failed to get string from argument 3: %s", strerror(errno));
+            g_critical ("failed to get string from argument 3: %s", strerror(errno));
             errno = save_errno;
             return RS_ERROR;
         }
