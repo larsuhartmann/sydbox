@@ -130,7 +130,7 @@ char *remove_slash(const char *src) {
 // Handle the ESRCH errno which means child is dead
 int handle_esrch(context_t *ctx, struct tchild *child) {
     int ret = 0;
-    LOGV("Handling ESRCH for child %i", child->pid);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "handling ESRCH for child %i", child->pid);
     if (ctx->eldest == child)
         ret = EX_SOFTWARE;
     tchild_delete(&(ctx->children), child->pid);

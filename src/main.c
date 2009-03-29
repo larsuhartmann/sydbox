@@ -76,7 +76,7 @@ static GOptionEntry entries[] =
 
 // Cleanup functions
 static void cleanup(void) {
-    LOGV("Cleaning up before exit");
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "cleaning up before exit");
     if (NULL != ctx && NULL != ctx->eldest) {
         g_message ("killing child %i", ctx->eldest->pid);
         if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
@@ -168,7 +168,7 @@ static int parse_config(const char *path) {
     if (-1 == lock)
         lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
-    LOGV("Initializing path list using configuration file");
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_profile;
     for (unsigned int i = 0; i < cfg_size(cfg, profile); i++) {
         cfg_profile = cfg_getnsec(cfg, profile, i);
@@ -347,9 +347,9 @@ main (int argc, char **argv)
     if (NULL == log_file && NULL != log_env)
         log_file = g_strdup (log_env);
 
-    LOGV("Extending path list using environment variable "ENV_WRITE);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "extending path list using environment variable " ENV_WRITE);
     pathlist_init(&write_prefixes, write_env);
-    LOGV("Extending path list using environment variable "ENV_PREDICT);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "extending path list using environment variable " ENV_PREDICT);
     pathlist_init(&predict_prefixes, predict_env);
     if (NULL != net_env)
         net = 0;
@@ -380,7 +380,7 @@ main (int argc, char **argv)
     if (NULL == groupname)
         DIESOFT("Failed to get group file entry: %s", strerror(errno));
 
-    LOGV("Forking to execute '%s' as %s:%s profile: %s", cmd, username, groupname, profile);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "forking to execute '%s' as %s:%s profile: %s", cmd, username, groupname, profile);
     pid = fork();
     if (0 > pid)
         DIESOFT("Failed to fork: %s", strerror(errno));
@@ -437,14 +437,14 @@ main (int argc, char **argv)
         ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
         ctx->eldest->cwd = g_strdup (ctx->cwd);
 
-        LOGV("Child %i is ready to go, resuming", pid);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %i is ready to go, resuming", pid);
         if (0 > trace_syscall(pid, 0)) {
             trace_kill(pid);
             DIESOFT("Failed to resume eldest child %i: %s", pid, strerror(errno));
         }
-        LOGV("Entering loop");
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "entering loop");
         ret = trace_loop(ctx);
-        LOGV("Exit loop with return %d", ret);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "exit loop with return %d", ret);
         return ret;
     }
 }

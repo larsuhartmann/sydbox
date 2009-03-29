@@ -373,27 +373,27 @@ static enum res_syscall syscall_check_magic_open(struct tchild *child, const cha
     if (path_magic_on(path)) {
         ismagic = 1;
         child->sandbox->on = 1;
-        LOGV("Sandbox status of child %i is now on", child->pid);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now on", child->pid);
     }
     else if (path_magic_off(path)) {
         ismagic = 1;
         child->sandbox->on = 0;
-        LOGV("Sandbox status of child %i is now off", child->pid);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now off", child->pid);
     }
     else if (path_magic_toggle(path)) {
         ismagic = 1;
         child->sandbox->on = !(child->sandbox->on);
-        LOGV("Sandbox status of child %i is now %s", child->pid, child->sandbox->on ? "on" : "off");
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now %s", child->pid, child->sandbox->on ? "on" : "off");
     }
     else if (path_magic_lock(path)) {
         ismagic = 1;
         child->sandbox->lock = LOCK_SET;
-        LOGV("Access to magic commands is now denied for child %i", child->pid);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
     }
     else if (path_magic_exec_lock(path)) {
         ismagic = 1;
         child->sandbox->lock = LOCK_PENDING;
-        LOGV("Access to magic commands will be denied on execve() for child %i", child->pid);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands will be denied on execve() for child %i", child->pid);
     }
     else if (path_magic_write(path)) {
         ismagic = 1;
@@ -720,7 +720,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         LOGC("Child %i is entering system call %s()", child->pid, sname);
         if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
-            LOGV("Access to magic commands is now denied for child %i", child->pid);
+            g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
             child->sandbox->lock = LOCK_SET;
         }
         ret = syscall_check(ctx, child, sno);
@@ -795,7 +795,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     if (NULL != child->cwd)
                         g_free (child->cwd);
                     child->cwd = newcwd;
-                    LOGV("Child %i has changed directory to '%s'", child->pid, child->cwd);
+                    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %i has changed directory to '%s'", child->pid, child->cwd);
                 }
             }
             else

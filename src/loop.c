@@ -204,7 +204,8 @@ int trace_loop(context_t *ctx) {
                     if (0 != ret)
                         g_message ("eldest child %i exited with return code %d", pid, ret);
                     else
-                        LOGV("Eldest child %i exited with return code %d", pid, ret);
+                        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+                               "eldest child %i exited with return code %d", pid, ret);
                     tchild_delete(&(ctx->children), pid);
                     return ret;
                 }
@@ -217,11 +218,13 @@ int trace_loop(context_t *ctx) {
                     tchild_delete(&(ctx->children), pid);
                     return EXIT_FAILURE;
                 }
-                LOGV("Child %i exited with signal %d", pid, WTERMSIG(status));
+                g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+                       "child %i exited with signal %d", pid, WTERMSIG(status));
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
-                LOGV("Unknown signal %#x received from child %i", status, pid);
+                g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+                       "unknown signal %#x received from child %i", status, pid);
                 ret = xunknown(ctx, child, status);
                 if (G_UNLIKELY(0 != ret))
                     return ret;
