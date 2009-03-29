@@ -22,6 +22,8 @@
 
 #include <glib.h>
 
+#define LOG_LEVEL_DEBUG_TRACE       (1 << (G_LOG_LEVEL_USER_SHIFT + 0))
+
 gboolean
 sydbox_log_init (const char * const filename,
                  const gint verbosity);

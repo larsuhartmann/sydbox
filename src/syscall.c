@@ -724,9 +724,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         sname = NULL;
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
-#if 0
-        LOGC("Child %i is entering system call %s()", child->pid, sname);
-#endif
+        g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()", child->pid, sname);
         if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
             g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
             child->sandbox->lock = LOCK_SET;
@@ -744,9 +742,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 }
                 break;
             case RS_ALLOW:
-#if 0
-                LOGC("Allowing access to system call %s()", sname);
-#endif
+                g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "allowing access to system call %s()", sname);
                 break;
             case RS_ERROR:
             default:
@@ -763,9 +759,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         child->flags ^= TCHILD_INSYSCALL;
     }
     else { // Exiting syscall
-#if 0
-        LOGC("Child %i is exiting system call %s()", child->pid, sname);
-#endif
+        g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is exiting system call %s()", child->pid, sname);
         if (0xbadca11 == sno) {
             g_debug ("restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
