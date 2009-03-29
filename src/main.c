@@ -71,7 +71,7 @@ static GOptionEntry entries[] =
     { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
     { "profile",   'P', 0, G_OPTION_ARG_STRING,                       &profile,     "Specify profile",                 NULL },
     { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",        NULL },
-    { NULL },
+    { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
 
 // Cleanup functions
@@ -281,7 +281,7 @@ main (int argc, char **argv)
             argv++;
             argc--;
         }
-        parse_arguments = TRUE;
+        parse_arguments = FALSE;
     }
 
     if (parse_arguments) {
