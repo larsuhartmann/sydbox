@@ -45,24 +45,23 @@ struct tdata
 struct tchild
 {
    int flags;                          /* TCHILD_ flags */
-   pid_t pid;
+   pid_t pid;                          /* pid of child */
    char *cwd;                          /* child's current working directory */
    unsigned long sno;                  /* original syscall no when a system call is faked */
    long retval;                        /* faked syscall will return this value */
-   struct tdata *sandbox;
-   struct tchild *next;
+   struct tdata *sandbox;              /* sandbox data */
 };
 
 extern struct tchild *childtab[PID_MAX_LIMIT];
 
 void
-tchild_new (struct tchild **head, pid_t pid);
+tchild_new (GSList **children, pid_t pid);
 
 void
-tchild_free (struct tchild **head);
+tchild_free (GSList **children);
 
 void
-tchild_delete (struct tchild **head, pid_t pid);
+tchild_delete (GSList **children, pid_t pid);
 
 #endif
 

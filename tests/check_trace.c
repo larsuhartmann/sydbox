@@ -173,7 +173,6 @@ START_TEST(check_trace_event_e_exit_signal) {
     }
     else { /* parent */
         int ret, status;
-        struct tchild *tc = NULL;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -207,10 +206,8 @@ START_TEST(check_trace_get_syscall) {
     }
     else { /* parent */
         int status;
-        long syscall;
-        struct tchild *tc = NULL;
+        long sno;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -220,10 +217,9 @@ START_TEST(check_trace_get_syscall) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(__NR_open == syscall, "Expected __NR_open, got %d", syscall);
+        fail_if(0 > trace_get_syscall(pid, &sno), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(__NR_open == sno, "Expected __NR_open, got %d", sno);
 
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -243,10 +239,8 @@ START_TEST(check_trace_set_syscall) {
     }
     else { /* parent */
         int status;
-        long syscall;
-        struct tchild *tc = NULL;
+        long sno;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -263,10 +257,9 @@ START_TEST(check_trace_set_syscall) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_unless(0 == trace_get_syscall(pid, &syscall), "Failed to get syscall: %s", strerror(errno));
-        fail_unless(0xbadca11 == syscall, "Expected 0xbadca11, got %d", syscall);
+        fail_unless(0 == trace_get_syscall(pid, &sno), "Failed to get syscall: %s", strerror(errno));
+        fail_unless(0xbadca11 == sno, "Expected 0xbadca11, got %d", sno);
 
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -287,9 +280,7 @@ START_TEST(check_trace_get_string_first) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -304,7 +295,6 @@ START_TEST(check_trace_get_string_first) {
         fail_unless(0 == strncmp(path, "/dev/null", 10), "Expected '/dev/null' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -325,9 +315,7 @@ START_TEST(check_trace_get_string_second) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -342,7 +330,6 @@ START_TEST(check_trace_get_string_second) {
         fail_unless(0 == strncmp(path, "/dev/null", 10), "Expected '/dev/null' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -363,9 +350,7 @@ START_TEST(check_trace_get_string_third) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -380,7 +365,6 @@ START_TEST(check_trace_get_string_third) {
         fail_unless(0 == strncmp(path, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -401,9 +385,7 @@ START_TEST(check_trace_get_string_fourth) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -418,7 +400,6 @@ START_TEST(check_trace_get_string_fourth) {
         fail_unless(0 == strncmp(path, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -439,9 +420,7 @@ START_TEST(check_trace_set_string_first_lensame) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -458,7 +437,6 @@ START_TEST(check_trace_set_string_first_lensame) {
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -479,9 +457,7 @@ START_TEST(check_trace_set_string_first_lenshort) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -498,7 +474,6 @@ START_TEST(check_trace_set_string_first_lenshort) {
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -519,9 +494,7 @@ START_TEST(check_trace_set_string_first_lenlong) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -538,7 +511,6 @@ START_TEST(check_trace_set_string_first_lenlong) {
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -559,9 +531,7 @@ START_TEST(check_trace_set_string_second_lensame) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -578,7 +548,6 @@ START_TEST(check_trace_set_string_second_lensame) {
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -599,9 +568,7 @@ START_TEST(check_trace_set_string_second_lenshort) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -618,7 +585,6 @@ START_TEST(check_trace_set_string_second_lenshort) {
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -639,9 +605,7 @@ START_TEST(check_trace_set_string_second_lenlong) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -658,7 +622,6 @@ START_TEST(check_trace_set_string_second_lenlong) {
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -679,9 +642,7 @@ START_TEST(check_trace_set_string_third_lensame) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -697,7 +658,6 @@ START_TEST(check_trace_set_string_third_lensame) {
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -718,9 +678,7 @@ START_TEST(check_trace_set_string_third_lenshort) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -736,7 +694,6 @@ START_TEST(check_trace_set_string_third_lenshort) {
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -757,9 +714,7 @@ START_TEST(check_trace_set_string_third_lenlong) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -775,7 +730,6 @@ START_TEST(check_trace_set_string_third_lenlong) {
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -796,9 +750,7 @@ START_TEST(check_trace_set_string_fourth_lensame) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -814,7 +766,6 @@ START_TEST(check_trace_set_string_fourth_lensame) {
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -835,9 +786,7 @@ START_TEST(check_trace_set_string_fourth_lenshort) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -853,7 +802,6 @@ START_TEST(check_trace_set_string_fourth_lenshort) {
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }
@@ -874,9 +822,7 @@ START_TEST(check_trace_set_string_fourth_lenlong) {
     else { /* parent */
         int status;
         char *path;
-        struct tchild *tc = NULL;
 
-        tchild_new(&tc, pid);
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -892,7 +838,6 @@ START_TEST(check_trace_set_string_fourth_lenlong) {
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
         free(path);
-        tchild_free(&tc);
         kill(pid, SIGTERM);
     }
 }

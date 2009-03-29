@@ -32,52 +32,55 @@
 // We keep this for efficient lookups
 struct tchild *childtab[PID_MAX_LIMIT] = { NULL };
 
-void tchild_new(struct tchild **head, pid_t pid) {
-    struct tchild *newchild;
+void tchild_new(GSList **children, pid_t pid) {
+    struct tchild *child, *parent;
 
     LOGD("New child %i", pid);
-    newchild = (struct tchild *) g_malloc (sizeof(struct tchild));
-    newchild->flags = TCHILD_NEEDSETUP;
-    newchild->pid = pid;
-    newchild->sno = 0xbadca11;
-    newchild->retval = -1;
-    newchild->cwd = NULL;
-    newchild->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
-    newchild->sandbox->on = 1;
-    newchild->sandbox->lock = LOCK_UNSET;
-    newchild->sandbox->net = 1;
-    newchild->sandbox->write_prefixes = NULL;
-    newchild->sandbox->predict_prefixes = NULL;
-    newchild->next = *head; // link next
-    if (NULL != newchild->next) {
-        if (NULL != newchild->next->cwd) {
-            LOGD("Child %i inherits parent %i's current working directory '%s'", pid,
-                    newchild->next->pid, newchild->next->cwd);
-            newchild->cwd = g_strdup (newchild->next->cwd);
+    child = (struct tchild *) g_malloc (sizeof(struct tchild));
+    child->flags = TCHILD_NEEDSETUP;
+    child->pid = pid;
+    child->sno = 0xbadca11;
+    child->retval = -1;
+    child->cwd = NULL;
+    child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
+    child->sandbox->on = 1;
+    child->sandbox->lock = LOCK_UNSET;
+    child->sandbox->net = 1;
+    child->sandbox->write_prefixes = NULL;
+    child->sandbox->predict_prefixes = NULL;
+
+    // Inheritance
+    if (NULL != *children && NULL != (*children)->data) {
+        parent = (*children)->data;
+
+        if (NULL != parent->cwd) {
+            LOGD("Child %i inherits parent %i's current working directory '%s'", pid, parent->pid, parent->cwd);
+            child->cwd = g_strdup (parent->cwd);
         }
-        if (NULL != newchild->next->sandbox) {
+
+        if (NULL != parent->sandbox) {
             GSList *walk;
-            newchild->sandbox->on = newchild->next->sandbox->on;
-            newchild->sandbox->lock = newchild->next->sandbox->lock;
-            newchild->sandbox->net = newchild->next->sandbox->net;
+            child->sandbox->on = parent->sandbox->on;
+            child->sandbox->lock = parent->sandbox->lock;
+            child->sandbox->net = parent->sandbox->net;
             // Copy path lists
-            walk = newchild->next->sandbox->write_prefixes;
+            walk = parent->sandbox->write_prefixes;
             while (NULL != walk) {
-                pathnode_new(&(newchild->sandbox->write_prefixes), walk->data, 0);
+                pathnode_new(&(child->sandbox->write_prefixes), walk->data, 0);
                 walk = g_slist_next(walk);
             }
-            walk = newchild->next->sandbox->predict_prefixes;
+            walk = parent->sandbox->predict_prefixes;
             while (NULL != walk) {
-                pathnode_new(&(newchild->sandbox->predict_prefixes), walk->data, 0);
+                pathnode_new(&(child->sandbox->predict_prefixes), walk->data, 0);
                 walk = g_slist_next(walk);
             }
         }
     }
-    *head = newchild; // link head
-    childtab[pid] = newchild;
+    childtab[pid] = child;
+    *children = g_slist_prepend(*children, child);
 }
 
-static void tchild_free_one(struct tchild *child) {
+static void tchild_free_one(struct tchild *child, void *user_data) {
     if (NULL != child->sandbox) {
         if (NULL != child->sandbox->write_prefixes)
             pathnode_free(&(child->sandbox->write_prefixes));
@@ -91,42 +94,26 @@ static void tchild_free_one(struct tchild *child) {
     g_free (child);
 }
 
-void tchild_free(struct tchild **head) {
-    struct tchild *current, *temp;
-
-    LOGD("Freeing children %p", (void *) head);
-    current = *head;
-    while (current != NULL) {
-        temp = current;
-        current = current->next;
-        tchild_free_one(temp);
-    }
-    *head = NULL;
+void tchild_free(GSList **children) {
+    LOGD("Freeing children %p", (void *) *children);
+    g_slist_foreach(*children, (GFunc) tchild_free_one, NULL);
+    g_slist_free(*children);
+    *children = NULL;
 }
 
-void tchild_delete(struct tchild **head, pid_t pid) {
-    struct tchild *temp;
-    struct tchild *previous, *current;
+void tchild_delete(GSList **children, pid_t pid) {
+    GSList *walk;
+    struct tchild *child;
 
-    if (pid == (*head)->pid) { // Deleting first node
-        temp = *head;
-        *head = (*head)->next;
-        tchild_free_one(temp);
-    }
-    else {
-        previous = *head;
-        current = (*head)->next;
-
-        // Find the correct location
-        while (NULL != current && pid != current->pid) {
-            previous = current;
-            current = current->next;
+    walk = *children;
+    while (NULL != walk) {
+        child = (struct tchild *) walk->data;
+        if (child->pid == pid) {
+            *children = g_slist_remove_link(*children, walk);
+            tchild_free_one(walk->data, NULL);
+            g_slist_free(walk);
+            break;
         }
-
-        if (NULL != current) {
-            temp = current;
-            previous->next = current->next;
-            tchild_free_one(temp);
-        }
+        walk = g_slist_next(walk);
     }
 }

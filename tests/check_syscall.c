@@ -55,7 +55,7 @@ START_TEST(syscall_check_chmod_deny) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -96,7 +96,7 @@ START_TEST(syscall_check_chmod_predict) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->predict_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -138,7 +138,7 @@ START_TEST(syscall_check_chmod_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -180,7 +180,7 @@ START_TEST(syscall_check_chown_deny) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -222,7 +222,7 @@ START_TEST(syscall_check_chown_predict) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->predict_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -264,7 +264,7 @@ START_TEST(syscall_check_chown_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -306,7 +306,7 @@ START_TEST(syscall_check_open_rdonly_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -347,7 +347,7 @@ START_TEST(syscall_check_open_wronly_deny) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -409,7 +409,7 @@ START_TEST(syscall_check_open_wronly_predict) {
         close(pfd[1]);
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
@@ -470,7 +470,7 @@ START_TEST(syscall_check_open_wronly_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -512,7 +512,7 @@ START_TEST(syscall_check_open_rdwr_deny) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -573,7 +573,7 @@ START_TEST(syscall_check_open_rdwr_predict) {
         close(pfd[1]);
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
@@ -634,7 +634,7 @@ START_TEST(syscall_check_open_rdwr_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -676,7 +676,7 @@ START_TEST(syscall_check_open_magic_write) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -721,7 +721,7 @@ START_TEST(syscall_check_open_magic_predict) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->predict_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -766,7 +766,7 @@ START_TEST(syscall_check_creat_deny) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
         fail_unless(0 == trace_setup(pid), "Failed to set tracing options: %s", strerror(errno));
@@ -825,7 +825,7 @@ START_TEST(syscall_check_creat_predict) {
         close(pfd[1]);
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
@@ -896,7 +896,7 @@ START_TEST(syscall_check_creat_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), rcwd);
 
         wait(&status);
@@ -940,7 +940,7 @@ START_TEST(syscall_check_stat_magic) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -981,7 +981,7 @@ START_TEST(syscall_check_stat_magic_write) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -1022,7 +1022,7 @@ START_TEST(syscall_check_stat_magic_predict) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
 
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGSTOP", pid);
@@ -1062,7 +1062,7 @@ START_TEST(syscall_check_lchown_deny) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathlist_init(&(ctx->eldest->sandbox->write_prefixes), "/dev:/tmp");
 
         wait(&status);
@@ -1114,7 +1114,7 @@ START_TEST(syscall_check_lchown_predict) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathnode_new(&(ctx->eldest->sandbox->predict_prefixes), rcwd, 1);
 
         wait(&status);
@@ -1164,7 +1164,7 @@ START_TEST(syscall_check_lchown_allow) {
         context_t *ctx = context_new();
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = (struct tchild *) ctx->children->data;
         pathnode_new(&(ctx->eldest->sandbox->write_prefixes), rcwd, 1);
 
         wait(&status);

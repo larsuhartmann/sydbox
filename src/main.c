@@ -428,7 +428,7 @@ main (int argc, char **argv)
         assert(WIFSTOPPED(status) && SIGSTOP == WSTOPSIG(status));
 
         tchild_new(&(ctx->children), pid);
-        ctx->eldest = ctx->children;
+        ctx->eldest = childtab[pid];
         if (0 > trace_setup(pid))
             DIESOFT("Failed to setup tracing options: %s", strerror(errno));
         ctx->eldest->sandbox->lock = lock;

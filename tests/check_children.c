@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <glib.h>
 #include <check.h>
 
 #include "../src/defs.h"
@@ -21,16 +22,19 @@
 
 START_TEST(check_tchild_new) {
     PRINT_TEST_HEADER;
-    struct tchild *tc = NULL;
+    GSList *tc = NULL;
+    struct tchild *child;
 
     tchild_new(&tc, 666);
 
     fail_unless(NULL != tc);
-    fail_unless(666 == tc->pid);
-    fail_unless(tc->flags & TCHILD_NEEDSETUP);
-    fail_if(tc->flags & TCHILD_INSYSCALL);
-    fail_unless(0xbadca11 == tc->sno);
-    fail_unless(-1 == tc->retval);
+    child = (struct tchild *) tc->data;
+    fail_unless(NULL != child);
+    fail_unless(666 == child->pid);
+    fail_unless(child->flags & TCHILD_NEEDSETUP);
+    fail_if(child->flags & TCHILD_INSYSCALL);
+    fail_unless(0xbadca11 == child->sno);
+    fail_unless(-1 == child->retval);
 
     tchild_free(&tc);
 }
@@ -38,7 +42,7 @@ END_TEST
 
 START_TEST(check_tchild_free) {
     PRINT_TEST_HEADER;
-    struct tchild *tc = NULL;
+    GSList *tc = NULL;
 
     tchild_new(&tc, 666);
     tchild_free(&tc);
@@ -49,7 +53,7 @@ END_TEST
 
 START_TEST(check_tchild_delete_first) {
     PRINT_TEST_HEADER;
-    struct tchild *tc = NULL;
+    GSList *tc = NULL;
 
     tchild_new(&tc, 666);
     tchild_delete(&tc, 666);
@@ -61,8 +65,8 @@ END_TEST
 START_TEST(check_tchild_delete) {
     PRINT_TEST_HEADER;
     int i = 0;
-    struct tchild *tc = NULL;
-    struct tchild *curtc = NULL;
+    GSList *tc = NULL;
+    GSList *walk = NULL;
 
     tchild_new(&tc, 666);
     tchild_new(&tc, 667);
@@ -70,10 +74,11 @@ START_TEST(check_tchild_delete) {
 
     tchild_delete(&tc, 666);
 
-    curtc = tc;
-    while (NULL != curtc) {
-        fail_unless(666 != curtc->pid, "Deleted pid found at node %d", i++);
-        curtc = curtc->next;
+    walk = tc;
+    while (NULL != walk) {
+        struct tchild *child = (struct tchild *) walk->data;
+        fail_unless(666 != child->pid, "Deleted pid found at node %d", i++);
+        walk = g_slist_next(walk);
     }
 
     tchild_free(&tc);
