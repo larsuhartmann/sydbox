@@ -238,73 +238,16 @@ static const char *get_groupname(void) {
     return 0 == errno ? grp->gr_name : NULL;
 }
 
-int
-main (int argc, char **argv)
-{
-    char **argv_bash = NULL;
 
-    GError *error = NULL;
-    GOptionContext *context;
-    gboolean parse_arguments = TRUE;
+static int
+sydbox_internal_main (int argc, char *argv[])
+{
     pid_t pid;
 
     ctx = context_new();
     ctx->paranoid = -1;
 
     atexit(cleanup);
-
-    char *bname = ebasename(argv[0]);
-    if (0 == strncmp(bname, "sandbox", 8)) {
-        // Aliased to sandbox
-        if (2 > argc) {
-            // Use /bin/bash as default program
-            argv_bash = (char **) g_malloc (2 * sizeof(char *));
-            argv_bash[0] = (char *) g_strndup ("/bin/bash", 10);
-            argv_bash[1] = NULL;
-        }
-        else {
-            argv++;
-            argc--;
-        }
-        parse_arguments = FALSE;
-    }
-
-    if (parse_arguments) {
-        context = g_option_context_new ("-- command [args]");
-        g_option_context_add_main_entries (context, entries, PACKAGE);
-        g_option_context_set_summary (context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
-
-        if (! g_option_context_parse (context, &argc, &argv, &error)) {
-            g_printerr ("option parsing failed: %s\n", error->message);
-            g_option_context_free (context);
-            g_error_free (error);
-            return EXIT_FAILURE;
-        }
-        g_option_context_free (context);
-
-        if (paranoid) {
-            ctx->paranoid = 1;
-        }
-
-        if (set_lock) {
-            lock = LOCK_SET;
-        }
-
-        if (version) {
-            g_printerr (PACKAGE "-" VERSION GIT_HEAD "\n");
-            return EXIT_SUCCESS;
-        }
-
-        if (! dump) {
-            if (! argv[1]) {
-                g_printerr ("no command given");
-                return EXIT_FAILURE;
-            }
-
-            argc--;
-            argv++;
-        }
-    }
 
     if (NULL == profile) {
         profile = getenv(ENV_PROFILE);
@@ -348,16 +291,12 @@ main (int argc, char **argv)
 
     int cmdsize = 1024;
     char cmd[1024] = { 0 };
-    if (NULL == argv_bash) {
-        for (int i = 0; i < argc; i++) {
-            strncat(cmd, argv[i], cmdsize);
-            if (argc - 1 != i)
-                strncat(cmd, " ", 1);
-            cmdsize -= (strlen(argv[i]) + 1);
-        }
+    for (int i = 0; i < argc; i++) {
+        strncat(cmd, argv[i], cmdsize);
+        if (argc - 1 != i)
+            strncat(cmd, " ", 1);
+        cmdsize -= (strlen(argv[i]) + 1);
     }
-    else
-        strncpy(cmd, argv_bash[0], strlen(argv_bash[0]));
 
     // Get user name and group name
     const char *username = get_username();
@@ -378,9 +317,9 @@ main (int argc, char **argv)
         if (0 > kill(getpid(), SIGSTOP))
             _die(EX_SOFTWARE, "Failed to send SIGSTOP: %s", strerror(errno));
         // Start the fun!
-        if (NULL != argv_bash) {
+        if (strncmp (argv[0], "/bin/bash", 9) == 0) {
             fprintf(stderr, PINK PINK_FLOYD NORMAL);
-            execvp(argv_bash[0], argv_bash);
+            execvp(argv[0], argv);
         }
         else
             execvp(argv[0], argv);
@@ -434,5 +373,80 @@ main (int argc, char **argv)
         g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "exit loop with return %d", ret);
         return ret;
     }
+}
+
+static int
+sandbox_main (int argc, char **argv)
+{
+    int retval;
+    char **sandbox_argv;
+
+    if (argc < 2) {
+        sandbox_argv = g_malloc (2 * sizeof (char *));
+        sandbox_argv[0] = g_strdup ("/bin/bash");
+    } else {
+        sandbox_argv = g_malloc0 (argc * sizeof (char *));
+        for (gint i = 0; i < argc - 1; i++)
+            sandbox_argv[i] = g_strdup (argv[i + 1]);
+    }
+
+    retval = sydbox_internal_main (argc, sandbox_argv);
+
+    for (gint i = argc; i; i--)
+        g_free (sandbox_argv[argc - i]);
+    g_free (sandbox_argv);
+
+    return retval;
+}
+
+static int
+sydbox_main (int argc, char **argv)
+{
+    GError *error = NULL;
+    GOptionContext *context;
+
+    context = g_option_context_new ("-- command [args]");
+    g_option_context_add_main_entries (context, entries, PACKAGE);
+    g_option_context_set_summary (context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
+
+    if (! g_option_context_parse (context, &argc, &argv, &error)) {
+        g_printerr ("option parsing failed: %s\n", error->message);
+        g_option_context_free (context);
+        g_error_free (error);
+        return EXIT_FAILURE;
+    }
+    g_option_context_free (context);
+
+    if (version) {
+        g_printerr (PACKAGE "-" VERSION GIT_HEAD "\n");
+        return EXIT_SUCCESS;
+    }
+
+    if (! dump) {
+        if (! argv[1]) {
+            g_printerr ("no command given\n");
+            return EXIT_FAILURE;
+        }
+
+        argc--;
+        argv++;
+    }
+
+    if (paranoid)
+        ctx->paranoid = 1;
+
+    if (set_lock)
+        lock = LOCK_SET;
+
+    return sydbox_internal_main (argc, argv);
+}
+
+int
+main (int argc, char **argv)
+{
+    if (strncmp (ebasename (argv[0]), "sandbox", 8) == 0)
+        return sandbox_main (argc, argv);
+
+    return sydbox_main (argc, argv);
 }
 
