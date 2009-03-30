@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include <confuse.h>
 
@@ -216,163 +217,262 @@ static void dump_config(void) {
     }
 }
 
-static const char *get_username(void) {
-    uid_t uid;
+
+static gchar *
+get_username (void)
+{
     struct passwd *pwd;
+    uid_t uid;
 
-    uid = geteuid();
     errno = 0;
-    pwd = getpwuid(uid);
+    uid = geteuid ();
+    pwd = getpwuid (uid);
 
-    return 0 == errno ? pwd->pw_name : NULL;
+    if (errno)
+        return NULL;
+
+    return g_strdup (pwd->pw_name);
 }
 
-static const char *get_groupname(void) {
-    gid_t gid;
+static gchar *
+get_groupname (void)
+{
     struct group *grp;
+    gid_t gid;
 
     errno = 0;
-    gid = getegid();
-    grp = getgrgid(gid);
+    gid = getegid ();
+    grp = getgrgid (gid);
 
-    return 0 == errno ? grp->gr_name : NULL;
+    if (errno)
+        return NULL;
+
+    return g_strdup (grp->gr_name);
 }
 
+static void
+sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
+{
+    if (trace_me () < 0)
+        _die (EX_SOFTWARE, "failed to set tracing: %s", g_strerror (errno));
+
+    /* stop and wait for the parent to resume us with trace_syscall */
+    if (kill (getpid (), SIGSTOP) < 0)
+        _die (EX_SOFTWARE, "failed to send SIGSTOP: %s", g_strerror (errno));
+
+    if (strncmp (argv[0], "/bin/bash", 9) == 0)
+        g_fprintf (stderr, PINK PINK_FLOYD NORMAL);
+
+    execvp (argv[0], argv);
+    _die (EX_DATAERR, "execve failed: %s", g_strerror (errno));
+}
 
 static int
-sydbox_internal_main (int argc, char *argv[])
+sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
 {
+    int status, retval;
+    struct sigaction new_action, old_action;
+
+    new_action.sa_handler = sig_cleanup;
+    sigemptyset (&new_action.sa_mask);
+    new_action.sa_flags = 0;
+
+#define HANDLE_SIGNAL(signal)                           \
+    do {                                                \
+        sigaction ((signal), NULL, &old_action);        \
+        if (old_action.sa_handler != SIG_IGN)           \
+            sigaction ((signal), &new_action, NULL);    \
+    } while (0)
+
+    HANDLE_SIGNAL(SIGABRT);
+    HANDLE_SIGNAL(SIGSEGV);
+    HANDLE_SIGNAL(SIGINT);
+    HANDLE_SIGNAL(SIGTERM);
+
+#undef HANDLE_SIGNAL
+
+    /* wait for SIGSTOP */
+    wait (&status);
+    if (WIFEXITED (status))
+        die (WEXITSTATUS (status), "wtf? child died before sending SIGSTOP");
+    g_assert (WIFSTOPPED (status) && SIGSTOP == WSTOPSIG (status));
+
+    if (trace_setup (pid) < 0)
+        DIESOFT ("failed to setup tracing options: %s", g_strerror (errno));
+
+    tchild_new (&(ctx->children), pid);
+    ctx->eldest = childtab[pid];
+    ctx->eldest->cwd = g_strdup (ctx->cwd);
+    ctx->eldest->sandbox->net = net;
+    ctx->eldest->sandbox->lock = lock;
+    ctx->eldest->sandbox->write_prefixes = write_prefixes;
+    ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
+
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %lu is read to go, resuming", (gulong) pid);
+    if (trace_syscall (pid, 0) < 0) {
+        trace_kill (pid);
+        DIESOFT ("failed to resume eldest child %lu: %s", (gulong) pid, g_strerror (errno));
+    }
+
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "entering loop");
+    retval = trace_loop (ctx);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "exited loop with return value: %d", retval);
+
+    return retval;
+}
+
+static int
+sydbox_internal_main (int argc, char **argv)
+{
+    GString *command = NULL;
+    gchar *username = NULL, *groupname = NULL;
+    gboolean free_config_file = FALSE, free_profile = FALSE, free_logfile = FALSE;
+    int retval;
     pid_t pid;
+
 
     ctx = context_new();
     ctx->paranoid = -1;
 
-    atexit(cleanup);
+    g_atexit (cleanup);
 
-    if (NULL == profile) {
-        profile = getenv(ENV_PROFILE);
-        if (NULL == profile)
-            profile = "__no_such_profile";
+#if 1
+    if (! profile) {
+        free_profile = TRUE;
+        if (g_getenv (ENV_PROFILE))
+            profile = g_strdup (g_getenv (ENV_PROFILE));
+        else
+            profile = g_strdup ("(unset)");
     }
-    if (!legal_profile(profile))
-        DIEUSER("invalid profile '%s' (reserved name)", profile);
 
-    // Parse configuration file
-    if (NULL == config_file)
-        config_file = getenv(ENV_CONFIG);
-    if (NULL == config_file)
-        config_file = SYSCONFDIR"/sydbox.conf";
-    if (!parse_config(config_file))
-        DIEUSER("Parse error in file %s", config_file);
+    if (! legal_profile (profile)) {
+        g_printerr ("invalid profile '%s' (reserved name)", profile);
+        retval = EXIT_FAILURE;
+        goto out;
+    }
+#endif
 
-    // Parse environment variables
-    char *log_env, *write_env, *predict_env, *net_env;
-    log_env = getenv(ENV_LOG);
-    write_env = getenv(ENV_WRITE);
-    predict_env = getenv(ENV_PREDICT);
-    net_env = getenv(ENV_NET);
 
-    if (NULL == log_file && NULL != log_env)
-        log_file = g_strdup (log_env);
+    if (! config_file) {
+        free_config_file = TRUE;
+        if (g_getenv (ENV_CONFIG))
+            config_file = g_strdup (g_getenv (ENV_CONFIG));
+        else
+            config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
+    }
+
+    if (! parse_config (config_file)) {
+        g_printerr ("parse error in file '%s'", config_file);
+        retval = EXIT_FAILURE;
+        goto out;
+    }
+
+
+    if (! log_file) {
+        free_logfile = TRUE;
+        if (g_getenv (ENV_LOG))
+            log_file = g_strdup (g_getenv (ENV_LOG));
+        else
+            log_file = NULL;
+    }
 
     sydbox_log_init (log_file, verbosity);
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "extending path list using environment variable " ENV_WRITE);
-    pathlist_init(&write_prefixes, write_env);
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "extending path list using environment variable " ENV_PREDICT);
-    pathlist_init(&predict_prefixes, predict_env);
-    if (NULL != net_env)
-        net = 0;
+
+#if 0
+    if (! profile) {
+        /* free_profile = TRUE; */
+        if (g_getenv (ENV_PROFILE))
+            profile = g_strdup (g_getenv (ENV_PROFILE));
+        else
+            profile = g_strdup ("(unset)");
+    }
+
+    if (! legal_profile (profile)) {
+        g_printerr ("invalid profile '%s' (reserved name)", profile);
+        return EXIT_FAILURE;
+    }
+
+    sydbox_config_load_profile (profile);
+#endif
+
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+           "extending path list using environment variable " ENV_WRITE);
+    pathlist_init (&write_prefixes, g_getenv (ENV_WRITE));
+
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+           "extending path list using environment variable " ENV_PREDICT);
+    pathlist_init (&predict_prefixes, g_getenv (ENV_PREDICT));
+
+    if (net == -1) {
+        if (g_getenv (ENV_NET))
+            net = TRUE;
+        else
+            net = FALSE;
+    }
 
     if (dump) {
-        dump_config();
-        return EXIT_SUCCESS;
+        /* sydbox_config_write_to_stderr (); */
+        dump_config ();
+        retval = EXIT_SUCCESS;
+        goto out;
     }
 
-    int cmdsize = 1024;
-    char cmd[1024] = { 0 };
-    for (int i = 0; i < argc; i++) {
-        strncat(cmd, argv[i], cmdsize);
-        if (argc - 1 != i)
-            strncat(cmd, " ", 1);
-        cmdsize -= (strlen(argv[i]) + 1);
+    if (! (username = get_username ())) {
+        g_printerr ("failed to get password file entry: %s", g_strerror (errno));
+        retval = EXIT_SUCCESS;
+        goto out;
     }
 
-    // Get user name and group name
-    const char *username = get_username();
-    if (NULL == username)
-        DIESOFT("Failed to get password file entry: %s", strerror(errno));
-    const char *groupname = get_groupname();
-    if (NULL == groupname)
-        DIESOFT("Failed to get group file entry: %s", strerror(errno));
-
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "forking to execute '%s' as %s:%s profile: %s", cmd, username, groupname, profile);
-    pid = fork();
-    if (0 > pid)
-        DIESOFT("Failed to fork: %s", strerror(errno));
-    else if (0 == pid) { // Child process
-        if (0 > trace_me())
-            _die(EX_SOFTWARE, "Failed to set tracing: %s", strerror(errno));
-        // Stop and wait the parent to resume us with trace_syscall
-        if (0 > kill(getpid(), SIGSTOP))
-            _die(EX_SOFTWARE, "Failed to send SIGSTOP: %s", strerror(errno));
-        // Start the fun!
-        if (strncmp (argv[0], "/bin/bash", 9) == 0) {
-            fprintf(stderr, PINK PINK_FLOYD NORMAL);
-            execvp(argv[0], argv);
-        }
-        else
-            execvp(argv[0], argv);
-        _die(EX_DATAERR, "execve failed: %s", strerror(errno));
+    if (! (groupname = get_groupname ())) {
+        g_printerr ("failed to get group file entry: %s", g_strerror (errno));
+        retval = EXIT_SUCCESS;
+        goto out;
     }
-    else { // Parent process
-        int status, ret;
 
-        // Handle signals
-        struct sigaction new_action, old_action;
-        new_action.sa_handler = sig_cleanup;
-        sigemptyset(&new_action.sa_mask);
-        new_action.sa_flags = 0;
+    command = g_string_new ("");
+    for (gint i = 0; i < argc; i++)
+        g_string_append_printf (command, "%s ", argv[i]);
+    g_string_truncate (command, command->len - 1);
 
-        sigaction (SIGABRT, NULL, &old_action);
-        if (SIG_IGN != old_action.sa_handler)
-            sigaction(SIGABRT, &new_action, NULL);
-        sigaction (SIGSEGV, NULL, &old_action);
-        if (SIG_IGN != old_action.sa_handler)
-            sigaction(SIGSEGV, &new_action, NULL);
-        sigaction (SIGINT, NULL, &old_action);
-        if (SIG_IGN != old_action.sa_handler)
-            sigaction(SIGINT, &new_action, NULL);
-        sigaction (SIGTERM, NULL, &old_action);
-        if (SIG_IGN != old_action.sa_handler)
-            sigaction(SIGTERM, &new_action, NULL);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+           "forking to execute '%s' as %s:%s with profile: %s",
+           command->str, username, groupname, profile);
 
-        // Wait for the SIGSTOP
-        wait(&status);
-        if (WIFEXITED(status))
-            die(WEXITSTATUS(status), "wtf? child died before sending SIGSTOP");
-        assert(WIFSTOPPED(status) && SIGSTOP == WSTOPSIG(status));
-
-        tchild_new(&(ctx->children), pid);
-        ctx->eldest = childtab[pid];
-        if (0 > trace_setup(pid))
-            DIESOFT("Failed to setup tracing options: %s", strerror(errno));
-        ctx->eldest->sandbox->lock = lock;
-        ctx->eldest->sandbox->net = net;
-        ctx->eldest->sandbox->write_prefixes = write_prefixes;
-        ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
-        ctx->eldest->cwd = g_strdup (ctx->cwd);
-
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %i is ready to go, resuming", pid);
-        if (0 > trace_syscall(pid, 0)) {
-            trace_kill(pid);
-            DIESOFT("Failed to resume eldest child %i: %s", pid, strerror(errno));
-        }
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "entering loop");
-        ret = trace_loop(ctx);
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "exit loop with return %d", ret);
-        return ret;
+    if ((pid = fork()) < 0) {
+        g_printerr ("failed to fork: %s", g_strerror (errno));
+        retval = EXIT_FAILURE;
+        goto out;
     }
+
+    if (pid == 0)
+        sydbox_execute_child (argc, argv);
+    else
+        retval = sydbox_execute_parent (argc, argv, pid);
+
+out:
+    if (ctx)
+        context_free (ctx);
+
+    if (free_profile && profile)
+        g_free (profile);
+
+    if (free_config_file && config_file)
+        g_free (config_file);
+
+    if (free_logfile && log_file)
+        g_free (log_file);
+
+    if (command)
+        g_string_free (command, TRUE);
+
+    if (username)
+        g_free (username);
+
+    if (groupname)
+        g_free (groupname);
+
+    return retval;
 }
 
 static int
@@ -382,19 +482,15 @@ sandbox_main (int argc, char **argv)
     char **sandbox_argv;
 
     if (argc < 2) {
-        sandbox_argv = g_malloc (2 * sizeof (char *));
+        sandbox_argv = g_malloc0 (2 * sizeof (char *));
         sandbox_argv[0] = g_strdup ("/bin/bash");
     } else {
-        sandbox_argv = g_malloc0 (argc * sizeof (char *));
-        for (gint i = 0; i < argc - 1; i++)
-            sandbox_argv[i] = g_strdup (argv[i + 1]);
+        sandbox_argv = g_strdupv (&argv[1]);
     }
 
     retval = sydbox_internal_main (argc, sandbox_argv);
 
-    for (gint i = argc; i; i--)
-        g_free (sandbox_argv[argc - i]);
-    g_free (sandbox_argv);
+    g_strfreev (sandbox_argv);
 
     return retval;
 }
