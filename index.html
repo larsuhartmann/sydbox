@@ -7,10 +7,25 @@ title: sydbox the other sandbox
 <h1 id='about'>About</h1>
 <ul>
     <li><a href="http://linux.die.net/man/2/ptrace">Ptrace</a> based sandbox implementation.</li>
-    <li>Intercepts system calls and checks for allowed filesystem prefixes, denies them when checks fail</a>
-    <li>Basic support to disallow network connections</li>
-    <li>Distributed under the terms of the GNU General Public License v2</li>
+    <li>Intercepts system calls and checks for allowed filesystem prefixes, denies them when checks fail.</a>
+    <li>Basic support to disallow network connections.</li>
     <li>Based in part upon <a
         href="https://svn.uludag.org.tr/uludag/trunk/python-modules/catbox/">catbox</a> and <a
         href="http://sourceforge.net/projects/strace">strace</a>.</li>
+    <li>Distributed under the terms of the <a
+        href="http://www.gnu.org/licenses/gpl-2.0.html">GPL2</a>.</li>
+</ul>
+
+<h1 id='why'>Why</h1>
+<ul>
+    <li>Gentoo's sandbox sucks for several reasons, Exherbo needs a better one</li>
+</ul>
+
+<h1 id='testing'>Testing</h1>
+<ul>
+    <li>Grab sys-apps/sydbox from <a
+        href="http://github.com/alip/exherbo-misc/tree/master">::alip-misc</a>.</li>
+    <li>Install paludis from <a
+        href="http://github.com/alip/paludis-sydbox/tree/master">paludis-sydbox</a> branch.</li>
+    <li>If something goes wrong <b>PALUDIS_DO_NOTHING_SANDBOXY</b> is your friend.</li>
 </ul>
