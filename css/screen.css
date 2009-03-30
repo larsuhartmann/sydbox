@@ -9,9 +9,9 @@
 
 html {
   color: #333333;
-  background-color: black;
+  background-color: white;
 
-  background-image: url('/images/syd-translucent.png');
+  background-image: url('/sydbox/images/syd-translucent.png');
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-position: top right;
