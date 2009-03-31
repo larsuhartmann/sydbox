@@ -60,9 +60,9 @@ static gboolean dump;
 static gboolean version;
 static gboolean paranoid;
 
-static gchar *profile;
-static gchar *log_file;
-static gchar *config_file;
+static gchar *profile = NULL;
+static gchar *log_file = NULL;
+static gchar *config_file = NULL;
 
 static gboolean set_lock = FALSE;
 
@@ -87,6 +87,10 @@ static void cleanup(void) {
         g_message ("killing child %i", ctx->eldest->pid);
         if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
             g_warning ("failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
+    }
+    if (NULL != ctx) {
+        context_free(ctx);
+        ctx = NULL;
     }
     sydbox_log_fini ();
 }
@@ -152,6 +156,12 @@ static int parse_config(const char *path) {
         log_file = g_strdup (lf);
     }
 
+    if (NULL == log_file) {
+        const char *env_log = g_getenv(ENV_LOG);
+        if (NULL != env_log)
+            log_file = g_strdup(env_log);
+    }
+
     if (verbosity == -1) {
         verbosity = cfg_getint (cfg, "log_level");
         if (verbosity == -1)
@@ -171,6 +181,7 @@ static int parse_config(const char *path) {
     if (-1 == lock)
         lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
+    sydbox_log_init (log_file, verbosity);
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
     cfg_t *cfg_default, *cfg_profile;
     for (unsigned int i = 0; i < cfg_size(cfg, profile); i++) {
@@ -326,7 +337,7 @@ sydbox_internal_main (int argc, char **argv)
 {
     GString *command = NULL;
     gchar *username = NULL, *groupname = NULL;
-    gboolean free_config_file = FALSE, free_profile = FALSE, free_logfile = FALSE;
+    gboolean free_config_file = FALSE, free_profile = FALSE;
     int retval;
     pid_t pid;
 
@@ -368,15 +379,6 @@ sydbox_internal_main (int argc, char **argv)
     }
 
 
-    if (! log_file) {
-        free_logfile = TRUE;
-        if (g_getenv (ENV_LOG))
-            log_file = g_strdup (g_getenv (ENV_LOG));
-        else
-            log_file = NULL;
-    }
-
-    sydbox_log_init (log_file, verbosity);
 
 
 #if 0
@@ -451,16 +453,13 @@ sydbox_internal_main (int argc, char **argv)
         retval = sydbox_execute_parent (argc, argv, pid);
 
 out:
-    if (ctx)
-        context_free (ctx);
-
     if (free_profile && profile)
         g_free (profile);
 
     if (free_config_file && config_file)
         g_free (config_file);
 
-    if (free_logfile && log_file)
+    if (NULL != log_file)
         g_free (log_file);
 
     if (command)
