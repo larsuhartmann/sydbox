@@ -308,7 +308,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     ctx->eldest->sandbox->write_prefixes = write_prefixes;
     ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %lu is read to go, resuming", (gulong) pid);
+    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {
         trace_kill (pid);
         DIESOFT ("failed to resume eldest child %lu: %s", (gulong) pid, g_strerror (errno));
