@@ -336,7 +336,6 @@ static int
 sydbox_internal_main (int argc, char **argv)
 {
     GString *command = NULL;
-    gchar *username = NULL, *groupname = NULL;
     gboolean free_config_file = FALSE, free_profile = FALSE;
     int retval;
     pid_t pid;
@@ -416,26 +415,34 @@ sydbox_internal_main (int argc, char **argv)
         goto out;
     }
 
-    if (! (username = get_username ())) {
-        g_printerr ("failed to get password file entry: %s", g_strerror (errno));
-        retval = EXIT_SUCCESS;
-        goto out;
-    }
-
-    if (! (groupname = get_groupname ())) {
-        g_printerr ("failed to get group file entry: %s", g_strerror (errno));
-        retval = EXIT_SUCCESS;
-        goto out;
-    }
-
     command = g_string_new ("");
     for (gint i = 0; i < argc; i++)
         g_string_append_printf (command, "%s ", argv[i]);
     g_string_truncate (command, command->len - 1);
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-           "forking to execute '%s' as %s:%s with profile: %s",
-           command->str, username, groupname, profile);
+    if (verbosity > 3) {
+        gchar *username = NULL, *groupname = NULL;
+
+        if (! (username = get_username ())) {
+            g_printerr ("failed to get password file entry: %s", g_strerror (errno));
+            retval = EXIT_SUCCESS;
+            goto out;
+        }
+
+        if (! (groupname = get_groupname ())) {
+            g_printerr ("failed to get group file entry: %s", g_strerror (errno));
+            retval = EXIT_SUCCESS;
+            g_free (username);
+            goto out;
+        }
+
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+               "forking to execute '%s' as %s:%s with profile: %s",
+               command->str, username, groupname, profile);
+
+        g_free (username);
+        g_free (groupname);
+    }
 
     if ((pid = fork()) < 0) {
         g_printerr ("failed to fork: %s", g_strerror (errno));
@@ -460,12 +467,6 @@ out:
 
     if (command)
         g_string_free (command, TRUE);
-
-    if (username)
-        g_free (username);
-
-    if (groupname)
-        g_free (groupname);
 
     return retval;
 }
