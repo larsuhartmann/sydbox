@@ -408,12 +408,8 @@ sydbox_internal_main (int argc, char **argv)
            "extending path list using environment variable " ENV_PREDICT);
     pathlist_init (&predict_prefixes, g_getenv (ENV_PREDICT));
 
-    if (net == -1) {
-        if (g_getenv (ENV_NET))
-            net = TRUE;
-        else
-            net = FALSE;
-    }
+    if (-1 == net)
+        net = g_getenv(ENV_NET) ? FALSE : TRUE;
 
     if (dump) {
         /* sydbox_config_write_to_stderr (); */
