@@ -92,7 +92,7 @@ char *ereadlink(const char *path) {
    or not depends on canonicalize mode.  The result is malloc'd.  */
 
 char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
-        bool resolve, const char *cwd) {
+        gboolean resolve, const char *cwd) {
     int readlinks = 0;
     char *rname, *dest, *extra_buf = NULL;
     char const *start;

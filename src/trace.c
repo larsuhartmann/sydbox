@@ -250,6 +250,19 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
     return 0;
 }
 
+int trace_set_arg(pid_t pid, int arg, long val) {
+    assert(arg >= 0 && arg < MAX_ARGS);
+
+    if (0 > ptrace(PTRACE_POKEUSER, pid, syscall_args[arg], val)) {
+        int save_errno = errno;
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "failed to set argument %d to %ld for child %i: %s",
+                arg, val, pid, g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
 int trace_get_syscall(pid_t pid, long *syscall) {
     if (0 > trace_peek(pid, ORIG_ACCUM, syscall)) {
         int save_errno = errno;

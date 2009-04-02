@@ -46,6 +46,7 @@
 #include "trace.h"
 #include "children.h"
 #include "wrappers.h"
+#include "syscall.h"
 
 static context_t *ctx = NULL;
 static int lock = -1;
@@ -342,6 +343,7 @@ sydbox_internal_main (int argc, char **argv)
     pid_t pid;
 
 
+    syscall_init();
     ctx = context_new();
     ctx->paranoid = -1;
 
@@ -453,6 +455,8 @@ sydbox_internal_main (int argc, char **argv)
         retval = sydbox_execute_parent (argc, argv, pid);
 
 out:
+    syscall_free();
+
     if (free_profile && profile)
         g_free (profile);
 

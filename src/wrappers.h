@@ -2,12 +2,13 @@
 
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright 2009 Ali Polatel <polatel@gmail.com>
  **/
 
 #ifndef __WRAPPERS_H__
 #define __WRAPPERS_H__
 
-#include <stdbool.h>
+#include <glib.h>
 
 typedef enum canonicalize_mode_t
 {
@@ -29,7 +30,7 @@ ereadlink (const char *path);
 char *
 canonicalize_filename_mode (const char *name,
                             canonicalize_mode_t can_mode,
-                            bool resolve,
+                            gboolean resolve,
                             const char *cwd);
 
 #endif
