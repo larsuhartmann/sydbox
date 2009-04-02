@@ -27,6 +27,7 @@
 enum {
     RS_ALLOW,
     RS_NOWRITE,
+    RS_MAGIC,
     RS_DENY,
     RS_ERROR = EX_SOFTWARE
 };
@@ -55,6 +56,7 @@ typedef struct _SystemCallClass {
 
     void (*start_check)(SystemCall *, gpointer, gpointer, gpointer);
     void (*flags)(SystemCall *, gpointer, gpointer, gpointer);
+    void (*magic)(SystemCall *, gpointer, gpointer, gpointer);
     void (*resolve)(SystemCall *, gpointer, gpointer, gpointer);
     void (*canonicalize)(SystemCall *, gpointer, gpointer, gpointer);
     void (*check)(SystemCall *, gpointer, gpointer, gpointer);

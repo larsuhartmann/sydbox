@@ -195,7 +195,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
     struct checkdata *data = (struct checkdata *) data_ptr;
 
     g_debug("starting check for system call %d, child %i", self->no, child->pid);
-    if (self->flags & CHECK_PATH) {
+    if (self->flags & CHECK_PATH || self->flags & MAGIC_STAT) {
         if (!systemcall_get_path(child->pid, 0, data))
             return;
     }
@@ -258,6 +258,129 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
         if (!(data->access_flags & W_OK))
             data->result = RS_NOWRITE;
     }
+}
+
+static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
+{
+    char *path = data->pathlist[0];
+    const char *rpath;
+    char *rpath_sanitized;
+
+    g_debug ("checking if open(\"%s\", ...) is magic", path);
+    if (path_magic_on(path)) {
+        data->result = RS_MAGIC;
+        child->sandbox->on = 1;
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now on", child->pid);
+    }
+    else if (path_magic_off(path)) {
+        data->result = RS_MAGIC;
+        child->sandbox->on = 0;
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now off", child->pid);
+    }
+    else if (path_magic_toggle(path)) {
+        data->result = RS_MAGIC;
+        child->sandbox->on = !(child->sandbox->on);
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now %s",
+                child->pid, child->sandbox->on ? "on" : "off");
+    }
+    else if (path_magic_lock(path)) {
+        data->result = RS_MAGIC;
+        child->sandbox->lock = LOCK_SET;
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
+    }
+    else if (path_magic_exec_lock(path)) {
+        data->result = RS_MAGIC;
+        child->sandbox->lock = LOCK_PENDING;
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands will be denied on execve() for child %i",
+                child->pid);
+    }
+    else if (path_magic_write(path)) {
+        data->result = RS_MAGIC;
+        rpath = path + CMD_WRITE_LEN;
+        pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
+        g_message ("approved addwrite(\"%s\") for child %i", rpath, child->pid);
+    }
+    else if (path_magic_predict(path)) {
+        data->result = RS_MAGIC;
+        rpath = path + CMD_PREDICT_LEN;
+        pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
+        g_message ("approved addpredict(\"%s\") for child %i", rpath, child->pid);
+    }
+    else if (path_magic_rmwrite(path)) {
+        data->result = RS_MAGIC;
+        rpath = path + CMD_RMWRITE_LEN;
+        rpath_sanitized = remove_slash(rpath);
+        if (NULL != child->sandbox->write_prefixes)
+            pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
+        g_message ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_free (rpath_sanitized);
+    }
+    else if (path_magic_rmpredict(path)) {
+        data->result = RS_MAGIC;
+        rpath = path + CMD_RMPREDICT_LEN;
+        rpath_sanitized = remove_slash(rpath);
+        if (NULL != child->sandbox->predict_prefixes)
+            pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
+        g_message ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_free (rpath_sanitized);
+    }
+
+    if (RS_MAGIC == data->result) {
+        g_debug("changing path to /dev/null");
+        if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
+            data->result = RS_ERROR;
+            data->save_errno = errno;
+            if (ESRCH == errno)
+                g_debug("failed to set string to /dev/null: %s", g_strerror(errno));
+            else
+                g_warning("failed to set string to /dev/null: %s", g_strerror(errno));
+        }
+    }
+    else
+        g_debug("open(\"%s\", ...) not magic", path);
+}
+
+static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
+{
+    char *path = data->pathlist[0];
+    g_debug("checking if stat(\"%s\") is magic", path);
+    if (path_magic_dir(path)) {
+        g_debug("stat(\"%s\") is magic, faking stat buffer", path);
+        if (0 > trace_fake_stat(child->pid)) {
+            data->result = RS_ERROR;
+            data->save_errno = errno;
+            if (ESRCH == errno)
+                g_debug("failed to fake stat buffer: %s", g_strerror(errno));
+            else
+                g_warning("failed to fake stat buffer: %s", g_strerror(errno));
+        }
+        else {
+            data->result = RS_DENY;
+            child->retval = 0;
+        }
+    }
+    else
+        g_debug("stat(\"%s\") is not magic", path);
+}
+
+static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
+                             gpointer child_ptr, gpointer data_ptr)
+{
+    context_t *ctx = (context_t *) ctx_ptr;
+    struct tchild *child = (struct tchild *) child_ptr;
+    struct checkdata *data = (struct checkdata *) data_ptr;
+
+    if (RS_ALLOW != data->result)
+        return;
+    else if (LOCK_SET == child->sandbox->lock)
+        return;
+    else if (__NR_open != self->no && __NR_stat != self->no)
+        return;
+
+    if (__NR_open == self->no)
+        systemcall_magic_open(child, data);
+    else
+        systemcall_magic_stat(child, data);
 }
 
 static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
@@ -604,6 +727,7 @@ static void systemcall_class_init(SystemCallClass *cls) {
     // Set signal handlers
     cls->start_check = systemcall_start_check;
     cls->flags = systemcall_flags;
+    cls->magic = systemcall_magic;
     cls->resolve = systemcall_resolve;
     cls->canonicalize = systemcall_canonicalize;
     cls->check = systemcall_check;
@@ -669,6 +793,7 @@ void syscall_init(void) {
                            "flags", (_flags),   \
                            NULL);               \
         g_signal_connect(obj, "check", (GCallback) systemcall_flags, NULL);         \
+        g_signal_connect(obj, "check", (GCallback) systemcall_magic, NULL);         \
         g_signal_connect(obj, "check", (GCallback) systemcall_resolve, NULL);       \
         g_signal_connect(obj, "check", (GCallback) systemcall_canonicalize, NULL);  \
         g_signal_connect(obj, "check", (GCallback) systemcall_check, NULL);         \
@@ -788,14 +913,17 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     break;
                 case RS_ALLOW:
                 case RS_NOWRITE:
+                case RS_MAGIC:
                     g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "allowing access to system call %s()", sname);
                     break;
                 case RS_ERROR:
-                default:
                     if (ESRCH == errno)
                         return handle_esrch(ctx, child);
                     else
                         DIESOFT("error while checking system call %s() for access: %s", sname, g_strerror(errno));
+                    break;
+                default:
+                    g_assert_not_reached();
                     break;
             }
         }
