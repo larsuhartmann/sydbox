@@ -2,6 +2,7 @@
 
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright 2009 Ali Polatel <polatel@gmail.com>
  **/
 
 #ifndef __TRACE_H__
@@ -46,6 +47,9 @@ trace_geteventmsg (pid_t pid, void *data);
 
 int
 trace_get_arg (pid_t pid, int arg, long *res);
+
+int
+trace_set_arg (pid_t pid, int arg, long val);
 
 int
 trace_get_syscall (pid_t pid, long *syscall);
