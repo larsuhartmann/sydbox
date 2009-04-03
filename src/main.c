@@ -158,6 +158,9 @@ static int parse_config(const char *path) {
     if (-1 == lock)
         lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
+    if (-1 == net)
+        net = g_getenv(ENV_NET) ? FALSE : TRUE;
+
     sydbox_log_init (logfile, verbosity);
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
     cfg_t *cfg_prefixes;
@@ -341,9 +344,6 @@ sydbox_internal_main (int argc, char **argv)
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
            "extending path list using environment variable " ENV_PREDICT);
     pathlist_init (&predict_prefixes, g_getenv (ENV_PREDICT));
-
-    if (-1 == net)
-        net = g_getenv(ENV_NET) ? FALSE : TRUE;
 
     if (dump) {
         /* sydbox_config_write_to_stderr (); */
