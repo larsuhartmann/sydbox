@@ -325,11 +325,13 @@ sydbox_internal_main (int argc, char **argv)
 
     if (! parse_config (config_file)) {
         g_printerr ("parse error in file '%s'", config_file);
-        retval = EXIT_FAILURE;
-        goto out;
+        if (free_config_file && config_file)
+            g_free (config_file);
+        return EXIT_FAILURE;
     }
 
-
+    if (free_config_file && config_file)
+        g_free (config_file);
 
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
@@ -390,9 +392,6 @@ sydbox_internal_main (int argc, char **argv)
         retval = sydbox_execute_parent (argc, argv, pid);
 
 out:
-    if (free_config_file && config_file)
-        g_free (config_file);
-
     if (NULL != logfile)
         g_free (logfile);
 
