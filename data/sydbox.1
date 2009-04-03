@@ -1,97 +1,119 @@
-.\" Process this file with
-.\" groff -man -Tascii sydbox.1
+.\"     Title: sydbox
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.73.2 <http://docbook.sf.net/>
+.\"      Date: 04/03/2009
+.\"    Manual: Sydbox Manual
+.\"    Source: sydbox 0.1
 .\"
-.TH sydbox 1 1 "User Manuals"
-.SH NAME
-`sydbox' - ptrace based sandbox
-.Nm sydbox
-.Nd ptrace based sandbox
-.SH SYOPSIS
-.B sydbox [OPTION] -- command [args]
-.SH DESCRIPTION
-`sydbox' is a ptrace based sandboxing utility.
-.SH OPTIONS
-.TP
-.B \-? --help
+.TH "SYDBOX" "1" "04/03/2009" "sydbox 0\.1" "Sydbox Manual"
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+sydbox - ptrace based sandbox
+.SH "SYNOPSIS"
+\fBsydbox\fR [\fIOPTION\fR] \(em command [args]
+.sp
+.SH "DESCRIPTION"
+Sydbox is a sandboxing utility\.
+.PP
+\fBFeatures\fR:
+.RS 4
+.sp
+.RS 4
+\h'-04'\(bu\h'+03'Ptrace based which means it can sandbox static binaries unliked
+\fBLD_PRELOAD\fR
+based sandbox utilities\.
+.RE
+.sp
+.RS 4
+\h'-04'\(bu\h'+03'Intercepts system calls and checks for allowed filesystem prefixes, denies them when checks fail\.
+.RE
+.sp
+.RS 4
+\h'-04'\(bu\h'+03'Basic support for disallowing network connections\.
+.RE
+.RE
+.SH "OPTIONS"
+.PP
+\fB\-?, \-\-help\fR
+.RS 4
 Show help options
-.TP
-.B \-c --config
-Path to the configuration file
-.TP
-.B \-D --dump
+.RE
+.PP
+\fB\-c, \-\-config\fR
+.RS 4
+Specify path to the configuration file
+.RE
+.PP
+\fB\-D, \-\-dump\fR
+.RS 4
 Dump configuration and exit
-.TP
-.B \-L --lock
+.RE
+.PP
+\fB\-L, \-\-lock\fR
+.RS 4
 Disallow magic commands
-.TP
-.B \-l --log-file
-Path to the log file
-.TP
-.B \-C --no-colour
-Disable colouring of messages
-.TP
-.B \-p --paranoid
+.RE
+.PP
+\fB\-C, \-\-no\-colour\fR
+.RS 4
+Disallow colouring of messages
+.RE
+.PP
+\fB\-p, \-\-paranoid\fR
+.RS 4
 Enable paranoid mode (EXPERIMENTAL)
-.TP
-.B \-P --profile
-Specify profile
-.TP
-.B \-V --version
-Print version info and exit.
+.RE
+.PP
+\fB\-V, \-\-version\fR
+.RS 4
+Print version information and exit
+.RE
 .SH "ENVIRONMENT VARIABLES"
-The behaviour of
-.B sydbox
-is affected by the following environment variables.
-.TP
-.B ENV_PROFILE
-This variable specifies the profile to be used by sydbox.  This is equivalent to
-the -P option.
-.TP
-.B ENV_WRITE
-This variable specifies the paths that are allowed to be written to.  It is
-expected to be a colon delimited list of paths.
-.TP
-.B ENV_PREDICT
-This variable specifies the paths that are predicted to be written to.  It is
-expected to be a scolor delimited list of paths.
-.TP
-.B ENV_NET
-This variable controls the behaviour of sydbox with regards to network access.
-If it is set, sydbox will sandbox network connections.
-.TP
-.B ENV_CONFIG
-This variable specifies the configuration file to be used by sydbox.  This is
-equivalent to the -c option.
-.TP
-.B ENV_NO_COLOUR
-This variable controls the behaviour of sydbox with regards to colourized
-output.  If it is et, sydbox's output will not be coloured.
-.TP
-.B ENV_LOG
-This variable specifies the log file to be used by sydbox.  This is equivalent
-to the -l option.
-.SH PARANOID MODE
-.P
-When sydbox is run in paranoid mode, it attempts to ensure security of the
-sandbox.  Fox example, if a system call's path argument is a symlink, sydbox
-will attempt to change it with the resolved path to prevent symlink races.
-.P
-Many packages are known to fail when run under sydbox with paranoid mode
-enabled.
-.P
-sydbox is not considered to be a security tool without this mode enabled.  It
-can still be used by package managers, such as paludis, to ensure that arbitrary
-files are not written to.  It is
-.BI NOT
-meant to be used for protection against malicious upstreams or packagers.
-.SH AUTHOR
+The behaviour of sydbox is affected by the following environment variables\.
+.sp
+.SS "SANDBOX_WRITE"
+This variable specifies the paths that are allowed to be written to\. It is expected to be a colon delimited list of paths\.
+.sp
+.SS "SANDBOX_PREDICT"
+This variable specifies the paths that are predicted to be written to\. It is expected to be a colon delimited list of paths\.
+.sp
+.SS "SANDBOX_NET"
+This variable controls the behaviour of sydbox with regards to network access\. If it is set, sydbox will sandbox network connections\.
+.sp
+.SS "SANDBOX_CONFIG"
+This variable specifies the configuration file to be used by sydbox\. This is equivalent to the \-c option\.
+.sp
+.SS "SANDBOX_NO_COLOUR"
+This variable controls the behaviour of sydbox with regards to colourized output\. If it is set, sydbox\(cqs output will not be coloured\. This is equivalent to the \-C option\.
+.sp
+.SS "SANDBOX_LOG"
+This variable specifies the log file to be used by sydbox\. This is equivalent to the \-l option\.
+.sp
+.SH "PARANOID MODE"
+When sydbox is run in paranoid mode, it attempts to ensure security of the sandbox\. For example, if a system call\(cqs path argument is a symlink, sydbox will attempt to change it with the resolved path to prevent symlink races\.
+.sp
+Many programmes are known to fail when run under sydbox with paranoid mode enabled\.
+.sp
+Sydbox is not considered to be a security tool without this mode enabled\. It can still be used by package managers, such as paludis, to ensure that arbitrary files are not written to\. It is \fBNOT\fR meant to be used for protection against malicious upstreams or packagers\.
+.sp
+.SH "SEE ALSO"
+ptrace(1)
+.sp
+.SH "AUTHORS"
 Ali Polatel <polatel at gmail dot com>
-.br
+.sp
 Saleem Abdulrasool <compnerd at compnerd dot org>
-.SH REPORTING BUGS
-Report bugs to /dev/null
-.SH COPYRIGHT
+.sp
+.SH "REPORTING BUGS"
+Report bugs to /dev/null\.
+.sp
+.SH "COPYRIGHT"
 Copyright (c) 2009 Ali Polatel <polatel at gmail dot com>
-.br
+.sp
 Copyright (c) 2009 Saleem Abdulrasool <compnerd at compnerd dot org>
-
+.sp
+Free use of this software is granted under the terms of the GNU General Public License (GPL)\.
+.sp

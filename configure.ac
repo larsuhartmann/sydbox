@@ -352,6 +352,7 @@ dnl {{{ output
 AM_CONFIG_HEADER(config.h)
 AC_OUTPUT(
 	Makefile
+	data/Makefile
 	src/Makefile
 	tests/Makefile
 	tests/progtests/Makefile
