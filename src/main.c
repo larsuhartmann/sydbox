@@ -61,9 +61,8 @@ static gboolean dump;
 static gboolean version;
 static gboolean paranoid;
 
-static gchar *profile = NULL;
-static gchar *log_file = NULL;
-static gchar *config_file = NULL;
+static gchar *logfile;
+static gchar *config_file;
 
 static gboolean set_lock = FALSE;
 
@@ -73,10 +72,9 @@ static GOptionEntry entries[] =
     { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
     { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &set_lock,    "Disallow magic commands",         NULL },
     { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
-    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &log_file,    "Path to the log file",            NULL },
+    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",            NULL },
     { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
     { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
-    { "profile",   'P', 0, G_OPTION_ARG_STRING,                       &profile,     "Specify profile",                 NULL },
     { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",        NULL },
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
@@ -106,30 +104,10 @@ static void sig_cleanup(int signum) {
     raise(signum);
 }
 
-static bool legal_profile(const char *path) {
-    if (0 == strncmp(path, "colour", 4))
-        return false;
-    else if (0 == strncmp(path, "log_file", 9))
-        return false;
-    else if (0 == strncmp(path, "log_level", 10))
-        return false;
-    else if (0 == strncmp(path, "paranoid", 9))
-        return false;
-    else if (0 == strncmp(path, "lock", 5))
-        return false;
-    else
-        return true;
-}
 
 static int parse_config(const char *path) {
-    cfg_opt_t default_opts[] = {
+    cfg_opt_t prefixes_opts[] = {
         CFG_INT("net", 1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t profile_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
@@ -140,8 +118,7 @@ static int parse_config(const char *path) {
         CFG_INT("log_level", -1, CFGF_NONE),
         CFG_BOOL("paranoid", 0, CFGF_NONE),
         CFG_BOOL("lock", 0, CFGF_NONE),
-        CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC(profile, profile_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("prefixes", prefixes_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()
     };
 
@@ -152,15 +129,15 @@ static int parse_config(const char *path) {
         return 0;
     }
 
-    if (NULL == log_file && NULL != cfg_getstr(cfg, "log_file")) {
+    if (NULL == logfile && NULL != cfg_getstr(cfg, "log_file")) {
         char *lf = cfg_getstr(cfg, "log_file");
-        log_file = g_strdup (lf);
+        logfile = g_strdup (lf);
     }
 
-    if (NULL == log_file) {
+    if (NULL == logfile) {
         const char *env_log = g_getenv(ENV_LOG);
         if (NULL != env_log)
-            log_file = g_strdup(env_log);
+            logfile = g_strdup(env_log);
     }
 
     if (verbosity == -1) {
@@ -182,25 +159,20 @@ static int parse_config(const char *path) {
     if (-1 == lock)
         lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
-    sydbox_log_init (log_file, verbosity);
+    if (-1 == net)
+        net = g_getenv(ENV_NET) ? FALSE : TRUE;
+
+    sydbox_log_init (logfile, verbosity);
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
-    cfg_t *cfg_default, *cfg_profile;
-    for (unsigned int i = 0; i < cfg_size(cfg, profile); i++) {
-        cfg_profile = cfg_getnsec(cfg, profile, i);
-        for (unsigned int j = 0; j < cfg_size(cfg_profile, "write"); j++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_profile, "write", j), 1);
-        for (unsigned int k = 0; k < cfg_size(cfg_profile, "predict"); k++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_profile, "predict", k), 1);
-        net = cfg_getint(cfg_profile, "net");
-    }
-    for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
-        cfg_default = cfg_getnsec(cfg, "default", l);
-        for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m), 1);
-        for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n), 1);
+    cfg_t *cfg_prefixes;
+    for (unsigned int l = 0; l < cfg_size(cfg, "prefixes"); l++) {
+        cfg_prefixes = cfg_getnsec(cfg, "prefixes", l);
+        for (unsigned int m = 0; m < cfg_size(cfg_prefixes, "write"); m++)
+            pathnode_new(&write_prefixes, cfg_getnstr(cfg_prefixes, "write", m), 1);
+        for (unsigned int n = 0; n < cfg_size(cfg_prefixes, "predict"); n++)
+            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_prefixes, "predict", n), 1);
         if (-1 == net)
-            cfg_getint(cfg_default, "net");
+            cfg_getint(cfg_prefixes, "net");
     }
     cfg_free (cfg);
     return 1;
@@ -209,9 +181,8 @@ static int parse_config(const char *path) {
 static void dump_config(void) {
     fprintf(stderr, "config_file = %s\n", config_file);
     fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
-    fprintf(stderr, "profile = %s\n", profile);
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
-    fprintf(stderr, "log_file = %s\n", NULL == log_file ? "stderr" : log_file);
+    fprintf(stderr, "log_file = %s\n", NULL == logfile ? "stderr" : logfile);
     fprintf (stderr, "log_level = %d\n", verbosity);
     fprintf(stderr, "network sandboxing = %s\n", net ? "off" : "on");
     GSList *walk;
@@ -330,16 +301,14 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     retval = trace_loop (ctx);
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "exited loop with return value: %d", retval);
 
+    syscall_free();
     return retval;
 }
 
 static int
 sydbox_internal_main (int argc, char **argv)
 {
-    GString *command = NULL;
-    gchar *username = NULL, *groupname = NULL;
-    gboolean free_config_file = FALSE, free_profile = FALSE;
-    int retval;
+    gchar *config;
     pid_t pid;
 
 
@@ -349,56 +318,22 @@ sydbox_internal_main (int argc, char **argv)
 
     g_atexit (cleanup);
 
-#if 1
-    if (! profile) {
-        free_profile = TRUE;
-        if (g_getenv (ENV_PROFILE))
-            profile = g_strdup (g_getenv (ENV_PROFILE));
-        else
-            profile = g_strdup ("(unset)");
-    }
 
-    if (! legal_profile (profile)) {
-        g_printerr ("invalid profile '%s' (reserved name)", profile);
-        retval = EXIT_FAILURE;
-        goto out;
-    }
-#endif
+    if (config_file)
+        config = g_strdup (config_file);
+    else if (g_getenv (ENV_CONFIG))
+        config = g_strdup (g_getenv (ENV_CONFIG));
+    else
+        config = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
 
-
-    if (! config_file) {
-        free_config_file = TRUE;
-        if (g_getenv (ENV_CONFIG))
-            config_file = g_strdup (g_getenv (ENV_CONFIG));
-        else
-            config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
-    }
-
-    if (! parse_config (config_file)) {
-        g_printerr ("parse error in file '%s'", config_file);
-        retval = EXIT_FAILURE;
-        goto out;
-    }
-
-
-
-
-#if 0
-    if (! profile) {
-        /* free_profile = TRUE; */
-        if (g_getenv (ENV_PROFILE))
-            profile = g_strdup (g_getenv (ENV_PROFILE));
-        else
-            profile = g_strdup ("(unset)");
-    }
-
-    if (! legal_profile (profile)) {
-        g_printerr ("invalid profile '%s' (reserved name)", profile);
+    if (! parse_config (config)) {
+        g_printerr ("parse error in file '%s'", config);
+        g_free (config);
         return EXIT_FAILURE;
     }
 
-    sydbox_config_load_profile (profile);
-#endif
+    g_free (config);
+
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
            "extending path list using environment variable " ENV_WRITE);
@@ -408,70 +343,49 @@ sydbox_internal_main (int argc, char **argv)
            "extending path list using environment variable " ENV_PREDICT);
     pathlist_init (&predict_prefixes, g_getenv (ENV_PREDICT));
 
-    if (-1 == net)
-        net = g_getenv(ENV_NET) ? FALSE : TRUE;
-
     if (dump) {
         /* sydbox_config_write_to_stderr (); */
         dump_config ();
-        retval = EXIT_SUCCESS;
-        goto out;
+        return EXIT_SUCCESS;
     }
 
-    if (! (username = get_username ())) {
-        g_printerr ("failed to get password file entry: %s", g_strerror (errno));
-        retval = EXIT_SUCCESS;
-        goto out;
+    if (verbosity > 3) {
+        gchar *username = NULL, *groupname = NULL;
+        GString *command = NULL;
+
+        if (! (username = get_username ())) {
+            g_printerr ("failed to get password file entry: %s", g_strerror (errno));
+            return EXIT_FAILURE;
+        }
+
+        if (! (groupname = get_groupname ())) {
+            g_printerr ("failed to get group file entry: %s", g_strerror (errno));
+            g_free (username);
+            return EXIT_FAILURE;
+        }
+
+        command = g_string_new ("");
+        for (gint i = 0; i < argc; i++)
+            g_string_append_printf (command, "%s ", argv[i]);
+        g_string_truncate (command, command->len - 1);
+
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+               "forking to execute '%s' as %s:%s", command->str, username, groupname);
+
+        g_free (username);
+        g_free (groupname);
+        g_string_free (command, TRUE);
     }
-
-    if (! (groupname = get_groupname ())) {
-        g_printerr ("failed to get group file entry: %s", g_strerror (errno));
-        retval = EXIT_SUCCESS;
-        goto out;
-    }
-
-    command = g_string_new ("");
-    for (gint i = 0; i < argc; i++)
-        g_string_append_printf (command, "%s ", argv[i]);
-    g_string_truncate (command, command->len - 1);
-
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-           "forking to execute '%s' as %s:%s with profile: %s",
-           command->str, username, groupname, profile);
 
     if ((pid = fork()) < 0) {
         g_printerr ("failed to fork: %s", g_strerror (errno));
-        retval = EXIT_FAILURE;
-        goto out;
+        return EXIT_FAILURE;
     }
 
     if (pid == 0)
         sydbox_execute_child (argc, argv);
     else
-        retval = sydbox_execute_parent (argc, argv, pid);
-
-out:
-    syscall_free();
-
-    if (free_profile && profile)
-        g_free (profile);
-
-    if (free_config_file && config_file)
-        g_free (config_file);
-
-    if (NULL != log_file)
-        g_free (log_file);
-
-    if (command)
-        g_string_free (command, TRUE);
-
-    if (username)
-        g_free (username);
-
-    if (groupname)
-        g_free (groupname);
-
-    return retval;
+        return sydbox_execute_parent (argc, argv, pid);
 }
 
 static int

@@ -55,7 +55,6 @@
                     "                          `\n"
 
 /* environment */
-#define ENV_PROFILE     "SANDBOX_PROFILE"
 #define ENV_LOG         "SANDBOX_LOG"
 #define ENV_CONFIG      "SANDBOX_CONFIG"
 #define ENV_WRITE       "SANDBOX_WRITE"
