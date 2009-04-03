@@ -306,7 +306,6 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 static int
 sydbox_internal_main (int argc, char **argv)
 {
-    GString *command = NULL;
     gboolean free_config_file = FALSE;
     int retval;
     pid_t pid;
@@ -352,13 +351,9 @@ sydbox_internal_main (int argc, char **argv)
         goto out;
     }
 
-    command = g_string_new ("");
-    for (gint i = 0; i < argc; i++)
-        g_string_append_printf (command, "%s ", argv[i]);
-    g_string_truncate (command, command->len - 1);
-
     if (verbosity > 3) {
         gchar *username = NULL, *groupname = NULL;
+        GString *command = NULL;
 
         if (! (username = get_username ())) {
             g_printerr ("failed to get password file entry: %s", g_strerror (errno));
@@ -373,11 +368,17 @@ sydbox_internal_main (int argc, char **argv)
             goto out;
         }
 
+        command = g_string_new ("");
+        for (gint i = 0; i < argc; i++)
+            g_string_append_printf (command, "%s ", argv[i]);
+        g_string_truncate (command, command->len - 1);
+
         g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
                "forking to execute '%s' as %s:%s", command->str, username, groupname);
 
         g_free (username);
         g_free (groupname);
+        g_string_free (command, TRUE);
     }
 
     if ((pid = fork()) < 0) {
@@ -394,9 +395,6 @@ sydbox_internal_main (int argc, char **argv)
 out:
     if (NULL != logfile)
         g_free (logfile);
-
-    if (command)
-        g_string_free (command, TRUE);
 
     return retval;
 }
