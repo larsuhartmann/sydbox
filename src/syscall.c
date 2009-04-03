@@ -466,18 +466,11 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     char *path_sanitized;
     char *resolved_path;
     char *newcwd = NULL;
+    gboolean use_newcwd = FALSE;
 
-    if (isat) {
+    if (isat && NULL != data->dirfdlist[narg - 1]) {
+        use_newcwd = TRUE;
         newcwd = data->dirfdlist[narg - 1];
-        if (0 > trace_set_arg(child->pid, narg - 1, AT_FDCWD)) {
-            data->result = RS_ERROR;
-            data->save_errno = errno;
-            if (ESRCH == errno)
-                g_debug("failed to set dirfd to AT_FDCWD: %s", g_strerror(errno));
-            else
-                g_warning("failed to set dirfd to AT_FDCWD: %s", g_strerror(errno));
-            return NULL;
-        }
     }
     else if ('/' != path[0] && 0 != strncmp(child->cwd, ctx->cwd, strlen(ctx->cwd) + 1)) {
         if (0 == strncmp(ctx->cwd, child->cwd, strlen(ctx->cwd))) {
@@ -495,9 +488,9 @@ static gchar *systemcall_resolvepath(SystemCall *self,
         if (0 > echdir(newcwd)) {
             g_debug("failed to change current working directory to `%s': %s", newcwd, strerror(errno));
             g_debug("adding current working directory to `%s' instead", path);
-            int len = strlen(child->cwd) + strlen(path) + 2;
+            int len = strlen(use_newcwd ? newcwd : child->cwd) + strlen(path) + 2;
             char *pathc = g_malloc(len * sizeof(char));
-            snprintf(pathc, len, "%s/%s", child->cwd, path);
+            snprintf(pathc, len, "%s/%s", use_newcwd ? newcwd : child->cwd, path);
             path_sanitized = remove_slash(pathc);
             g_free(pathc);
         }
@@ -512,7 +505,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
 
     g_debug("mode is %s resolve is %s", maycreat ? "CAN_ALL_BUT_LAST" : "CAN_EXISTING",
                                         data->resolve ? "TRUE" : "FALSE");
-    resolved_path = canonicalize_filename_mode(path_sanitized, mode, data->resolve, isat ? newcwd : child->cwd);
+    resolved_path = canonicalize_filename_mode(path_sanitized, mode, data->resolve, ctx->cwd);
     if (NULL == resolved_path) {
         data->result = RS_DENY;
         child->retval = -errno;
