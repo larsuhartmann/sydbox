@@ -306,7 +306,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 static int
 sydbox_internal_main (int argc, char **argv)
 {
-    gboolean free_config_file = FALSE;
+    gchar *config;
     pid_t pid;
 
 
@@ -316,23 +316,20 @@ sydbox_internal_main (int argc, char **argv)
     g_atexit (cleanup);
 
 
-    if (! config_file) {
-        free_config_file = TRUE;
-        if (g_getenv (ENV_CONFIG))
-            config_file = g_strdup (g_getenv (ENV_CONFIG));
-        else
-            config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
-    }
+    if (config_file)
+        config = g_strdup (config_file);
+    else if (g_getenv (ENV_CONFIG))
+        config = g_strdup (g_getenv (ENV_CONFIG));
+    else
+        config = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
 
-    if (! parse_config (config_file)) {
-        g_printerr ("parse error in file '%s'", config_file);
-        if (free_config_file && config_file)
-            g_free (config_file);
+    if (! parse_config (config)) {
+        g_printerr ("parse error in file '%s'", config);
+        g_free (config);
         return EXIT_FAILURE;
     }
 
-    if (free_config_file && config_file)
-        g_free (config_file);
+    g_free (config);
 
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
@@ -355,13 +352,13 @@ sydbox_internal_main (int argc, char **argv)
 
         if (! (username = get_username ())) {
             g_printerr ("failed to get password file entry: %s", g_strerror (errno));
-            return EXIT_SUCCESS;
+            return EXIT_FAILURE;
         }
 
         if (! (groupname = get_groupname ())) {
             g_printerr ("failed to get group file entry: %s", g_strerror (errno));
             g_free (username);
-            return EXIT_SUCCESS;
+            return EXIT_FAILURE;
         }
 
         command = g_string_new ("");
