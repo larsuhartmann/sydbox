@@ -28,6 +28,7 @@ gprof*
 /missing
 /stamp-h1
 
+data/sydbox.1.xml
 src/sydbox
 src/syscallent.h
 tests/check_sydbox
