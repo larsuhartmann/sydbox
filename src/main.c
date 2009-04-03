@@ -60,9 +60,8 @@ static gboolean dump;
 static gboolean version;
 static gboolean paranoid;
 
-static gchar *profile = NULL;
-static gchar *log_file = NULL;
-static gchar *config_file = NULL;
+static gchar *log_file;
+static gchar *config_file;
 
 static gboolean set_lock = FALSE;
 
@@ -75,7 +74,6 @@ static GOptionEntry entries[] =
     { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &log_file,    "Path to the log file",            NULL },
     { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
     { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
-    { "profile",   'P', 0, G_OPTION_ARG_STRING,                       &profile,     "Specify profile",                 NULL },
     { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",        NULL },
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
@@ -105,30 +103,10 @@ static void sig_cleanup(int signum) {
     raise(signum);
 }
 
-static bool legal_profile(const char *path) {
-    if (0 == strncmp(path, "colour", 4))
-        return false;
-    else if (0 == strncmp(path, "log_file", 9))
-        return false;
-    else if (0 == strncmp(path, "log_level", 10))
-        return false;
-    else if (0 == strncmp(path, "paranoid", 9))
-        return false;
-    else if (0 == strncmp(path, "lock", 5))
-        return false;
-    else
-        return true;
-}
 
 static int parse_config(const char *path) {
-    cfg_opt_t default_opts[] = {
+    cfg_opt_t prefixes_opts[] = {
         CFG_INT("net", 1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t profile_opts[] = {
-        CFG_INT("net", -1, CFGF_NONE),
         CFG_STR_LIST("write", "{}", CFGF_NONE),
         CFG_STR_LIST("predict", "{}", CFGF_NONE),
         CFG_END()
@@ -139,8 +117,7 @@ static int parse_config(const char *path) {
         CFG_INT("log_level", -1, CFGF_NONE),
         CFG_BOOL("paranoid", 0, CFGF_NONE),
         CFG_BOOL("lock", 0, CFGF_NONE),
-        CFG_SEC("default", default_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_SEC(profile, profile_opts, CFGF_TITLE | CFGF_MULTI),
+        CFG_SEC("prefixes", prefixes_opts, CFGF_TITLE | CFGF_MULTI),
         CFG_END()
     };
 
@@ -183,23 +160,15 @@ static int parse_config(const char *path) {
 
     sydbox_log_init (log_file, verbosity);
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
-    cfg_t *cfg_default, *cfg_profile;
-    for (unsigned int i = 0; i < cfg_size(cfg, profile); i++) {
-        cfg_profile = cfg_getnsec(cfg, profile, i);
-        for (unsigned int j = 0; j < cfg_size(cfg_profile, "write"); j++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_profile, "write", j), 1);
-        for (unsigned int k = 0; k < cfg_size(cfg_profile, "predict"); k++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_profile, "predict", k), 1);
-        net = cfg_getint(cfg_profile, "net");
-    }
-    for (unsigned int l = 0; l < cfg_size(cfg, "default"); l++) {
-        cfg_default = cfg_getnsec(cfg, "default", l);
-        for (unsigned int m = 0; m < cfg_size(cfg_default, "write"); m++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_default, "write", m), 1);
-        for (unsigned int n = 0; n < cfg_size(cfg_default, "predict"); n++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_default, "predict", n), 1);
+    cfg_t *cfg_prefixes;
+    for (unsigned int l = 0; l < cfg_size(cfg, "prefixes"); l++) {
+        cfg_prefixes = cfg_getnsec(cfg, "prefixes", l);
+        for (unsigned int m = 0; m < cfg_size(cfg_prefixes, "write"); m++)
+            pathnode_new(&write_prefixes, cfg_getnstr(cfg_prefixes, "write", m), 1);
+        for (unsigned int n = 0; n < cfg_size(cfg_prefixes, "predict"); n++)
+            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_prefixes, "predict", n), 1);
         if (-1 == net)
-            cfg_getint(cfg_default, "net");
+            cfg_getint(cfg_prefixes, "net");
     }
     cfg_free (cfg);
     return 1;
@@ -208,7 +177,6 @@ static int parse_config(const char *path) {
 static void dump_config(void) {
     fprintf(stderr, "config_file = %s\n", config_file);
     fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
-    fprintf(stderr, "profile = %s\n", profile);
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
     fprintf(stderr, "log_file = %s\n", NULL == log_file ? "stderr" : log_file);
     fprintf (stderr, "log_level = %d\n", verbosity);
@@ -336,7 +304,7 @@ static int
 sydbox_internal_main (int argc, char **argv)
 {
     GString *command = NULL;
-    gboolean free_config_file = FALSE, free_profile = FALSE;
+    gboolean free_config_file = FALSE;
     int retval;
     pid_t pid;
 
@@ -345,22 +313,6 @@ sydbox_internal_main (int argc, char **argv)
     ctx->paranoid = -1;
 
     g_atexit (cleanup);
-
-#if 1
-    if (! profile) {
-        free_profile = TRUE;
-        if (g_getenv (ENV_PROFILE))
-            profile = g_strdup (g_getenv (ENV_PROFILE));
-        else
-            profile = g_strdup ("(unset)");
-    }
-
-    if (! legal_profile (profile)) {
-        g_printerr ("invalid profile '%s' (reserved name)", profile);
-        retval = EXIT_FAILURE;
-        goto out;
-    }
-#endif
 
 
     if (! config_file) {
@@ -379,23 +331,6 @@ sydbox_internal_main (int argc, char **argv)
 
 
 
-
-#if 0
-    if (! profile) {
-        /* free_profile = TRUE; */
-        if (g_getenv (ENV_PROFILE))
-            profile = g_strdup (g_getenv (ENV_PROFILE));
-        else
-            profile = g_strdup ("(unset)");
-    }
-
-    if (! legal_profile (profile)) {
-        g_printerr ("invalid profile '%s' (reserved name)", profile);
-        return EXIT_FAILURE;
-    }
-
-    sydbox_config_load_profile (profile);
-#endif
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
            "extending path list using environment variable " ENV_WRITE);
@@ -437,8 +372,7 @@ sydbox_internal_main (int argc, char **argv)
         }
 
         g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-               "forking to execute '%s' as %s:%s with profile: %s",
-               command->str, username, groupname, profile);
+               "forking to execute '%s' as %s:%s", command->str, username, groupname);
 
         g_free (username);
         g_free (groupname);
@@ -456,9 +390,6 @@ sydbox_internal_main (int argc, char **argv)
         retval = sydbox_execute_parent (argc, argv, pid);
 
 out:
-    if (free_profile && profile)
-        g_free (profile);
-
     if (free_config_file && config_file)
         g_free (config_file);
 
