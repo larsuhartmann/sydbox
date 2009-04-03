@@ -392,6 +392,8 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
 
     if (RS_ALLOW != data->result)
         return;
+    else if (!child->sandbox->on)
+        return;
 
     g_debug("deciding whether we should resolve symlinks for system call %d, child %i", self->no, child->pid);
     if (self->flags & DONT_RESOLV)
@@ -529,6 +531,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
 
     if (RS_ALLOW != data->result)
         return;
+    else if (!child->sandbox->on)
+        return;
 
     g_debug("canonicalizing paths for system call %d, child %i", self->no, child->pid);
 
@@ -642,6 +646,8 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     struct checkdata *data = (struct checkdata *) data_ptr;
 
     if (RS_ALLOW != data->result)
+        return;
+    else if (!child->sandbox->on)
         return;
 
     if (self->flags & CHECK_PATH) {
