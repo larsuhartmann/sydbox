@@ -60,7 +60,7 @@ static gboolean dump;
 static gboolean version;
 static gboolean paranoid;
 
-static gchar *log_file;
+static gchar *logfile;
 static gchar *config_file;
 
 static gboolean set_lock = FALSE;
@@ -71,7 +71,7 @@ static GOptionEntry entries[] =
     { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
     { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &set_lock,    "Disallow magic commands",         NULL },
     { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
-    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &log_file,    "Path to the log file",            NULL },
+    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",            NULL },
     { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
     { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
     { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",        NULL },
@@ -128,15 +128,15 @@ static int parse_config(const char *path) {
         return 0;
     }
 
-    if (NULL == log_file && NULL != cfg_getstr(cfg, "log_file")) {
+    if (NULL == logfile && NULL != cfg_getstr(cfg, "log_file")) {
         char *lf = cfg_getstr(cfg, "log_file");
-        log_file = g_strdup (lf);
+        logfile = g_strdup (lf);
     }
 
-    if (NULL == log_file) {
+    if (NULL == logfile) {
         const char *env_log = g_getenv(ENV_LOG);
         if (NULL != env_log)
-            log_file = g_strdup(env_log);
+            logfile = g_strdup(env_log);
     }
 
     if (verbosity == -1) {
@@ -158,7 +158,7 @@ static int parse_config(const char *path) {
     if (-1 == lock)
         lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
 
-    sydbox_log_init (log_file, verbosity);
+    sydbox_log_init (logfile, verbosity);
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
     cfg_t *cfg_prefixes;
     for (unsigned int l = 0; l < cfg_size(cfg, "prefixes"); l++) {
@@ -178,7 +178,7 @@ static void dump_config(void) {
     fprintf(stderr, "config_file = %s\n", config_file);
     fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
     fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
-    fprintf(stderr, "log_file = %s\n", NULL == log_file ? "stderr" : log_file);
+    fprintf(stderr, "log_file = %s\n", NULL == logfile ? "stderr" : logfile);
     fprintf (stderr, "log_level = %d\n", verbosity);
     fprintf(stderr, "network sandboxing = %s\n", net ? "off" : "on");
     GSList *walk;
@@ -393,8 +393,8 @@ out:
     if (free_config_file && config_file)
         g_free (config_file);
 
-    if (NULL != log_file)
-        g_free (log_file);
+    if (NULL != logfile)
+        g_free (logfile);
 
     if (command)
         g_string_free (command, TRUE);
