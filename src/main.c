@@ -307,7 +307,6 @@ static int
 sydbox_internal_main (int argc, char **argv)
 {
     gboolean free_config_file = FALSE;
-    int retval;
     pid_t pid;
 
 
@@ -347,8 +346,7 @@ sydbox_internal_main (int argc, char **argv)
     if (dump) {
         /* sydbox_config_write_to_stderr (); */
         dump_config ();
-        retval = EXIT_SUCCESS;
-        goto out;
+        return EXIT_SUCCESS;
     }
 
     if (verbosity > 3) {
@@ -357,15 +355,13 @@ sydbox_internal_main (int argc, char **argv)
 
         if (! (username = get_username ())) {
             g_printerr ("failed to get password file entry: %s", g_strerror (errno));
-            retval = EXIT_SUCCESS;
-            goto out;
+            return EXIT_SUCCESS;
         }
 
         if (! (groupname = get_groupname ())) {
             g_printerr ("failed to get group file entry: %s", g_strerror (errno));
-            retval = EXIT_SUCCESS;
             g_free (username);
-            goto out;
+            return EXIT_SUCCESS;
         }
 
         command = g_string_new ("");
@@ -383,20 +379,13 @@ sydbox_internal_main (int argc, char **argv)
 
     if ((pid = fork()) < 0) {
         g_printerr ("failed to fork: %s", g_strerror (errno));
-        retval = EXIT_FAILURE;
-        goto out;
+        return EXIT_FAILURE;
     }
 
     if (pid == 0)
         sydbox_execute_child (argc, argv);
     else
-        retval = sydbox_execute_parent (argc, argv, pid);
-
-out:
-    if (NULL != logfile)
-        g_free (logfile);
-
-    return retval;
+        return sydbox_execute_parent (argc, argv, pid);
 }
 
 static int
