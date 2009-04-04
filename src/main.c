@@ -18,20 +18,15 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <assert.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <getopt.h>
 #include <grp.h>
 #include <pwd.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <sysexits.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <sysexits.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -45,7 +40,6 @@
 #include "util.h"
 #include "trace.h"
 #include "children.h"
-#include "wrappers.h"
 
 static context_t *ctx = NULL;
 static int lock = -1;
@@ -450,7 +444,7 @@ sydbox_main (int argc, char **argv)
 int
 main (int argc, char **argv)
 {
-    if (strncmp (ebasename (argv[0]), "sandbox", 8) == 0)
+    if (strncmp (basename (argv[0]), "sandbox", 8) == 0)
         return sandbox_main (argc, argv);
 
     return sydbox_main (argc, argv);
