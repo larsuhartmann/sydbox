@@ -86,12 +86,12 @@ sydbox_log_handler (const gchar *log_domain,
     sydbox_log_output (log_domain, log_level, message);
 }
 
-gboolean
+void
 sydbox_log_init (const gchar * const filename,
                  const gint log_verbosity)
 {
     if (initialized)
-        return TRUE;
+        return;
 
     if (filename) {
         fd = g_fopen (filename, "a");
@@ -107,7 +107,6 @@ sydbox_log_init (const gchar * const filename,
     g_log_set_default_handler (sydbox_log_handler, NULL);
 
     initialized = TRUE;
-    return TRUE;
 }
 
 void
