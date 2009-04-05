@@ -209,8 +209,8 @@ sydbox_internal_main (int argc, char **argv)
     pid_t pid;
 
 
-    ctx = context_new();
-    ctx->paranoid = -1;
+    ctx = context_new ();
+    ctx->paranoid = paranoid;
 
 
     g_atexit (cleanup);
@@ -322,9 +322,6 @@ sydbox_main (int argc, char **argv)
         argc--;
         argv++;
     }
-
-    if (paranoid)
-        ctx->paranoid = 1;
 
     if (set_lock)
         lock = LOCK_SET;
