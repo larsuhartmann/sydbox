@@ -31,7 +31,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#include <confuse.h>
+#include "sydbox-config.h"
 
 #include "log.h"
 #include "defs.h"
@@ -43,9 +43,6 @@
 
 static context_t *ctx = NULL;
 static int lock = -1;
-static int net = -1;
-static GSList *write_prefixes = NULL;
-static GSList *predict_prefixes = NULL;
 
 
 static gint verbosity = -1;
@@ -98,102 +95,6 @@ static void sig_cleanup(int signum) {
 }
 
 
-static int parse_config(const char *path) {
-    cfg_opt_t prefixes_opts[] = {
-        CFG_INT("net", 1, CFGF_NONE),
-        CFG_STR_LIST("write", "{}", CFGF_NONE),
-        CFG_STR_LIST("predict", "{}", CFGF_NONE),
-        CFG_END()
-    };
-    cfg_opt_t sydbox_opts[] = {
-        CFG_BOOL("colour", 1, CFGF_NONE),
-        CFG_STR("log_file", NULL, CFGF_NONE),
-        CFG_INT("log_level", -1, CFGF_NONE),
-        CFG_BOOL("paranoid", 0, CFGF_NONE),
-        CFG_BOOL("lock", 0, CFGF_NONE),
-        CFG_SEC("prefixes", prefixes_opts, CFGF_TITLE | CFGF_MULTI),
-        CFG_END()
-    };
-
-    cfg_t *cfg = cfg_init(sydbox_opts, CFGF_NONE);
-
-    if (CFG_PARSE_ERROR == cfg_parse(cfg, path)) {
-        g_free (cfg);
-        return 0;
-    }
-
-    if (NULL == logfile && NULL != cfg_getstr(cfg, "log_file")) {
-        char *lf = cfg_getstr(cfg, "log_file");
-        logfile = g_strdup (lf);
-    }
-
-    if (NULL == logfile) {
-        const char *env_log = g_getenv(ENV_LOG);
-        if (NULL != env_log)
-            logfile = g_strdup(env_log);
-    }
-
-    if (verbosity == -1) {
-        verbosity = cfg_getint (cfg, "log_level");
-        if (verbosity == -1)
-            verbosity = 0;
-    }
-
-    if (-1 == colour) {
-        if (NULL != getenv(ENV_NO_COLOUR))
-            colour = 0;
-        else
-            colour = cfg_getbool(cfg, "colour");
-    }
-
-    if (-1 == ctx->paranoid)
-        ctx->paranoid = cfg_getbool(cfg, "paranoid");
-
-    if (-1 == lock)
-        lock = cfg_getbool(cfg, "lock") ? LOCK_SET : LOCK_UNSET;
-
-    if (-1 == net)
-        net = g_getenv(ENV_NET) ? FALSE : TRUE;
-
-    sydbox_log_init (logfile, verbosity);
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initializing path list using configuration file");
-    cfg_t *cfg_prefixes;
-    for (unsigned int l = 0; l < cfg_size(cfg, "prefixes"); l++) {
-        cfg_prefixes = cfg_getnsec(cfg, "prefixes", l);
-        for (unsigned int m = 0; m < cfg_size(cfg_prefixes, "write"); m++)
-            pathnode_new(&write_prefixes, cfg_getnstr(cfg_prefixes, "write", m), 1);
-        for (unsigned int n = 0; n < cfg_size(cfg_prefixes, "predict"); n++)
-            pathnode_new(&predict_prefixes, cfg_getnstr(cfg_prefixes, "predict", n), 1);
-        if (-1 == net)
-            cfg_getint(cfg_prefixes, "net");
-    }
-    cfg_free (cfg);
-    return 1;
-}
-
-static void dump_config(void) {
-    fprintf(stderr, "config_file = %s\n", config_file);
-    fprintf(stderr, "paranoid = %s\n", ctx->paranoid ? "yes" : "no");
-    fprintf(stderr, "colour = %s\n", colour ? "true" : "false");
-    fprintf(stderr, "log_file = %s\n", NULL == logfile ? "stderr" : logfile);
-    fprintf (stderr, "log_level = %d\n", verbosity);
-    fprintf(stderr, "network sandboxing = %s\n", net ? "off" : "on");
-    GSList *walk;
-    fprintf(stderr, "write allowed paths:\n");
-    walk = write_prefixes;
-    while (NULL != walk) {
-        fprintf(stderr, "> %s\n", (char *) walk->data);
-        walk = g_slist_next(walk);
-    }
-    fprintf(stderr, "write predicted paths:\n");
-    walk = predict_prefixes;
-    while (NULL != walk) {
-        fprintf(stderr, "> %s\n", (char *) walk->data);
-        walk = g_slist_next(walk);
-    }
-}
-
-
 static gchar *
 get_username (void)
 {
@@ -226,7 +127,7 @@ get_groupname (void)
     return g_strdup (grp->gr_name);
 }
 
-static void
+static void G_GNUC_NORETURN
 sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
 {
     if (trace_me () < 0)
@@ -283,10 +184,10 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = childtab[pid];
     ctx->eldest->cwd = g_strdup (ctx->cwd);
-    ctx->eldest->sandbox->net = net;
+    ctx->eldest->sandbox->net = sydbox_config_get_sandbox_network ();
     ctx->eldest->sandbox->lock = lock;
-    ctx->eldest->sandbox->write_prefixes = write_prefixes;
-    ctx->eldest->sandbox->predict_prefixes = predict_prefixes;
+    ctx->eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
+    ctx->eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes ();
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {
@@ -305,47 +206,32 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 static int
 sydbox_internal_main (int argc, char **argv)
 {
-    gchar *config;
     pid_t pid;
 
 
     ctx = context_new();
     ctx->paranoid = -1;
 
+
     g_atexit (cleanup);
 
-
-    if (config_file)
-        config = g_strdup (config_file);
-    else if (g_getenv (ENV_CONFIG))
-        config = g_strdup (g_getenv (ENV_CONFIG));
-    else
-        config = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
-
-    if (! parse_config (config)) {
-        g_printerr ("parse error in file '%s'", config);
-        g_free (config);
+    if (! sydbox_config_load (config_file))
         return EXIT_FAILURE;
-    }
 
-    g_free (config);
+    /* if the verbosity is specified, update our configuration */
+    if (verbosity != -1)
+        sydbox_config_set_verbosity (verbosity);
 
+    sydbox_log_init (sydbox_config_get_log_file (), sydbox_config_get_verbosity ());
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-           "extending path list using environment variable " ENV_WRITE);
-    pathlist_init (&write_prefixes, g_getenv (ENV_WRITE));
-
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-           "extending path list using environment variable " ENV_PREDICT);
-    pathlist_init (&predict_prefixes, g_getenv (ENV_PREDICT));
+    sydbox_config_update_from_environment ();
 
     if (dump) {
-        /* sydbox_config_write_to_stderr (); */
-        dump_config ();
+        sydbox_config_write_to_stderr ();
         return EXIT_SUCCESS;
     }
 
-    if (verbosity > 3) {
+    if (sydbox_config_get_verbosity () > 3) {
         gchar *username = NULL, *groupname = NULL;
         GString *command = NULL;
 
