@@ -175,12 +175,14 @@ static inline bool syscall_needs_flagcheck(int flags) {
 static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
     int ret, save_errno;
     long flags;
-    if (sflags & OPEN_MODE || sflags & ACCESS_MODE)
+    if (sflags & OPEN_MODE || sflags & ACCESS_MODE) {
         ret = trace_get_arg(pid, 1, &flags);
-    else if (sflags & OPEN_MODE_AT || sflags & ACCESS_MODE_AT)
+    } else if (sflags & OPEN_MODE_AT || sflags & ACCESS_MODE_AT) {
         ret = trace_get_arg(pid, 2, &flags);
-    else
-        DIESOFT("Bug in syscall_has_flagwrite() call");
+    } else {
+        g_printerr ("bug in syscall_has_flagwrite() call");
+        exit (-1);
+    }
 
     if (0 > ret) {
         save_errno = errno;
@@ -196,15 +198,15 @@ static enum res_flag syscall_has_flagwrite(pid_t pid, unsigned int sflags) {
             return RF_WRITE;
         else
             return RF_NOWRITE;
-    }
-    else if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
+    } else if (sflags & ACCESS_MODE || sflags & ACCESS_MODE_AT) {
         if (flags & W_OK)
             return RF_WRITE;
         else
             return RF_NOWRITE;
+    } else {
+        g_printerr ("bug in syscall_has_flagwrite() call");
+        exit (-1);
     }
-    else
-        DIESOFT("Bug in syscall_has_flagwrite() call");
 }
 
 static char *syscall_get_rpath(context_t *ctx, struct tchild *child, unsigned int flags,
@@ -339,8 +341,10 @@ static enum res_syscall syscall_check_path(struct tchild *child, const struct sy
         if (sdef->flags & RETURNS_FD) {
             g_debug ("system call returns fd and its argument is under a predict path");
             g_debug ("changing the path argument to /dev/null");
-            if (0 > trace_set_string(child->pid, npath, "/dev/null", 10))
-                DIESOFT("Failed to set string: %s", strerror(errno));
+            if (0 > trace_set_string(child->pid, npath, "/dev/null", 10)) {
+                g_printerr ("failed to set string: %s", g_strerror (errno));
+                exit (-1);
+            }
             return RS_ALLOW;
         }
         else {
@@ -710,10 +714,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     const char *sname;
 
     if (0 > trace_get_syscall(child->pid, &sno)) {
-        if (ESRCH == errno)
-            return handle_esrch(ctx, child);
-        else
-            DIESOFT("Failed to get syscall: %s", strerror(errno));
+        if (errno != ESRCH) {
+            g_printerr ("failed to get syscall: %s", g_strerror (errno));
+            exit (-1);
+        }
+        return handle_esrch(ctx, child);
     }
 #if 0
     if (LOG_DEBUG <= log_level)
@@ -735,10 +740,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 g_debug ("denying access to system call %s()", sname);
                 child->sno = sno;
                 if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
-                    if (ESRCH == errno)
-                        return handle_esrch(ctx, child);
-                    else
-                        DIESOFT("Failed to set syscall: %s", strerror(errno));
+                    if (errno != ESRCH) {
+                        g_printerr ("failed to set syscall: %s", g_strerror (errno));
+                        exit (-1);
+                    }
+                    return handle_esrch(ctx, child);
                 }
                 break;
             case RS_ALLOW:
@@ -751,8 +757,8 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 else {
                     if (NULL == sname)
                         sname = syscall_get_name(sno);
-                    DIESOFT("Error while checking system call %s() for access: %s", sname,
-                            strerror(errno));
+                    g_printerr ("Error while checking system call %s() for access: %s", sname, g_strerror (errno));
+                    exit (-1);
                 }
                 break;
         }
@@ -764,25 +770,28 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             g_debug ("restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->sno)) {
-                if (ESRCH == errno)
-                    return handle_esrch(ctx, child);
-                else
-                    DIESOFT("Failed to restore syscall: %s", strerror(errno));
+                if (errno != ESRCH) {
+                    g_printerr ("failed to restore syscall: %s", g_strerror (errno));
+                    exit (-1);
+                }
+                return handle_esrch(ctx, child);
             }
             if (0 > trace_set_return(child->pid, child->retval)) {
-                if (ESRCH == errno)
-                    return handle_esrch(ctx, child);
-                else
-                    DIESOFT("Failed to set return code: %s", strerror(errno));
+                if (errno != ESRCH) {
+                    g_printerr ("failed to set return code: %s", g_strerror (errno));
+                    exit (-1);
+                }
+                return handle_esrch(ctx, child);
             }
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
             long retval;
             if (0 > trace_get_return(child->pid, &retval)) {
-                if (ESRCH == errno)
-                    return handle_esrch(ctx, child);
-                else
-                    DIESOFT("Failed to get return code: %s", strerror(errno));
+                if (errno != ESRCH) {
+                    g_printerr ("failed to get return code: %s", g_strerror (errno));
+                    exit (-1);
+                }
+                return handle_esrch(ctx, child);
             }
             if (0 == retval) {
                 // Child has successfully changed directory
@@ -791,10 +800,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     retval = -errno;
                     g_debug ("pgetcwd() failed: %s", strerror(errno));
                     if (0 > trace_set_return(child->pid, retval)) {
-                        if (ESRCH == errno)
-                            return handle_esrch(ctx, child);
-                        else
-                            DIESOFT("Failed to set return code: %s", strerror(errno));
+                        if (errno != ESRCH) {
+                            g_printerr ("Failed to set return code: %s", g_strerror (errno));
+                            exit (-1);
+                        }
+                        return handle_esrch(ctx, child);
                     }
                 }
                 else {

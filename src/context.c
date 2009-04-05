@@ -34,8 +34,10 @@ context_t *context_new(void) {
     ctx = (context_t *) g_malloc (sizeof(context_t));
     ctx->paranoid = 0;
     ctx->cwd = egetcwd();
-    if (NULL == ctx->cwd)
-        DIESOFT("Failed to get current working directory: %s", strerror(errno));
+    if (NULL == ctx->cwd) {
+        g_printerr ("failed to get current working directory: %s", g_strerror (errno));
+        exit (-1);
+    }
     ctx->children = NULL;
     ctx->eldest = NULL;
     return ctx;

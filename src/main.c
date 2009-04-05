@@ -273,8 +273,10 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
         die (WEXITSTATUS (status), "wtf? child died before sending SIGSTOP");
     g_assert (WIFSTOPPED (status) && SIGSTOP == WSTOPSIG (status));
 
-    if (trace_setup (pid) < 0)
-        DIESOFT ("failed to setup tracing options: %s", g_strerror (errno));
+    if (trace_setup (pid) < 0) {
+        g_printerr ("failed to setup tracing options: %s", g_strerror (errno));
+        exit (-1);
+    }
 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = childtab[pid];
@@ -287,7 +289,8 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {
         trace_kill (pid);
-        DIESOFT ("failed to resume eldest child %lu: %s", (gulong) pid, g_strerror (errno));
+        g_printerr ("failed to resume eldest child %lu: %s", (gulong) pid, g_strerror (errno));
+        exit (-1);
     }
 
     g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "entering loop");
