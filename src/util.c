@@ -38,20 +38,6 @@
 int colour = -1;
 
 /* Fatal error. Print message and exit. */
-void die(int err, const char *fmt, ...) {
-    va_list args;
-
-    fprintf(stderr, "%s: ", PACKAGE);
-
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-
-    fputc('\n', stderr);
-
-    exit(err);
-}
-
 void _die(int err, const char *fmt, ...) {
     va_list args;
 

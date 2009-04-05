@@ -269,8 +269,10 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 
     /* wait for SIGSTOP */
     wait (&status);
-    if (WIFEXITED (status))
-        die (WEXITSTATUS (status), "wtf? child died before sending SIGSTOP");
+    if (WIFEXITED (status)) {
+        g_printerr ("wtf? child died before sending SIGSTOP");
+        exit (WEXITSTATUS (status));
+    }
     g_assert (WIFSTOPPED (status) && SIGSTOP == WSTOPSIG (status));
 
     if (trace_setup (pid) < 0) {

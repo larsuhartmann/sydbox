@@ -14,17 +14,7 @@
 #define MAGENTA "[00;35m"
 #define PINK    "[01;35m"
 
-#define DIESOFT(...)    die(EX_SOFTWARE, __VA_ARGS__)
-#define DIEDATA(...)    die(EX_DATAERR, __VA_ARGS__)
-#define DIEOS(...)      die(EX_OSERR, __VA_ARGS__)
-#define DIEUSER(...)    die(EX_USAGE, __VA_ARGS__)
-
 extern int colour;
-
-void
-die (int err, const char *fmt, ...)
-    __attribute__ ((noreturn))
-    __attribute__ ((format (printf, 2, 3)));
 
 void
 _die (int err, const char *fmt, ...)
