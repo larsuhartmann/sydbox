@@ -23,9 +23,11 @@
 #include "../src/trace.h"
 #include "../src/syscall.h"
 #include "../src/children.h"
+#include "../src/sydbox-config.h"
 #include "check_sydbox.h"
 
 void syscall_setup(void) {
+    sydbox_config_load (NULL);
     mkdir("emily", 0755);
     symlink("/dev/null", "arnold_layne");
 }
