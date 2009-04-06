@@ -213,7 +213,6 @@ sydbox_internal_main (int argc, char **argv)
 
 
     ctx = context_new ();
-    ctx->paranoid = paranoid;
 
 
     g_atexit (cleanup);

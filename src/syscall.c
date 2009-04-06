@@ -35,6 +35,8 @@
 
 #include <glib.h>
 
+#include "sydbox-config.h"
+
 #include "getcwd.h"
 #include "log.h"
 #include "path.h"
@@ -571,7 +573,7 @@ found:
             return RS_DENY;
         }
         g_free (pathfirst);
-        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 0);
+        ret = syscall_check_path(child, sdef, sydbox_config_get_paranoid_mode_enabled (), rpath, 0);
         g_free (rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH and CHECK_PATH2 set.
@@ -596,7 +598,7 @@ found:
             return RS_DENY;
         }
         g_free (path);
-        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
+        ret = syscall_check_path(child, sdef, sydbox_config_get_paranoid_mode_enabled (), rpath, 1);
         g_free (rpath);
         return ret;
     }
@@ -642,7 +644,7 @@ found:
             oldcwd = NULL;
         }
         g_free (path);
-        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 1);
+        ret = syscall_check_path(child, sdef, sydbox_config_get_paranoid_mode_enabled (), rpath, 1);
         g_free (rpath);
         /* Return here only if access is denied because some syscalls have
          * both CHECK_PATH_AT and CHECK_PATH_AT2 set.
@@ -692,7 +694,7 @@ found:
             oldcwd = NULL;
         }
         g_free (path);
-        ret = syscall_check_path(child, sdef, ctx->paranoid, rpath, 3);
+        ret = syscall_check_path(child, sdef, sydbox_config_get_paranoid_mode_enabled (), rpath, 3);
         g_free (rpath);
         return ret;
     }

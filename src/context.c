@@ -35,7 +35,6 @@ context_new (void)
 
     ctx->eldest = NULL;
     ctx->children = NULL;
-    ctx->paranoid = FALSE;
 
     if (! (ctx->cwd = egetcwd())) {
         g_printerr ("failed to get current working directory: %s", g_strerror (errno));

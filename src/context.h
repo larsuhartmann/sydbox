@@ -25,7 +25,6 @@
 
 typedef struct
 {
-    gboolean paranoid;
     char *cwd;              // current working directory
     struct tchild *eldest;  // first child is kept to determine return code
     GSList *children;       // list of children
