@@ -25,10 +25,8 @@
 
 typedef enum canonicalize_mode_t
 {
-    /* All components must exist.  */
-    CAN_EXISTING = 0,
-    /* All components excluding last one must exist.  */
-    CAN_ALL_BUT_LAST = 1,
+    CAN_EXISTING,       /* All components must exist.  */
+    CAN_ALL_BUT_LAST,   /* All components excluding last one must exist.  */
 } canonicalize_mode_t;
 
 gchar *
@@ -39,6 +37,12 @@ ebasename (const gchar *path);
 
 gchar *
 ereadlink (const gchar *path);
+
+gchar *
+egetcwd (void);
+
+int
+echdir (gchar *dir);
 
 gchar *
 canonicalize_filename_mode (const gchar *name,

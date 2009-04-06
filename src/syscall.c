@@ -35,9 +35,6 @@
 
 #include <glib.h>
 
-#include "sydbox-config.h"
-
-#include "getcwd.h"
 #include "log.h"
 #include "path.h"
 #include "util.h"
@@ -46,6 +43,7 @@
 #include "syscall.h"
 #include "children.h"
 #include "wrappers.h"
+#include "sydbox-config.h"
 
 // System call dispatch flags
 #define RETURNS_FD              (1 << 0) // The function returns a file descriptor

@@ -22,9 +22,9 @@
 
 #include <glib.h>
 
-#include "getcwd.h"
 #include "context.h"
 #include "children.h"
+#include "wrappers.h"
 
 context_t *
 context_new (void)

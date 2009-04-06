@@ -24,7 +24,6 @@
 
 #include <glib.h>
 
-#include "getcwd.h"
 #include "proc.h"
 #include "wrappers.h"
 
