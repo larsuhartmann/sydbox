@@ -14,8 +14,6 @@
 #define MAGENTA "[00;35m"
 #define PINK    "[01;35m"
 
-extern int colour;
-
 void
 _die (int err, const char *fmt, ...)
     __attribute__ ((noreturn))

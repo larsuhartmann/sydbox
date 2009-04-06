@@ -34,7 +34,7 @@ struct sydbox_config
     gint verbosity;
 
     gboolean sandbox_network;
-    gboolean colourize_output;
+    gboolean colourise_output;
     gboolean allow_magic_commands;
     gboolean paranoid_mode_enabled;
 
@@ -97,9 +97,9 @@ sydbox_config_load (const gchar * const file)
     config->verbosity = cfg_getint (sydbox_config, "log_level");
 
     if (g_getenv (ENV_NO_COLOUR))
-        config->colourize_output = FALSE;
+        config->colourise_output = FALSE;
     else
-        config->colourize_output = cfg_getbool (sydbox_config, "colour");
+        config->colourise_output = cfg_getbool (sydbox_config, "colour");
 
     config->paranoid_mode_enabled = cfg_getbool (sydbox_config, "paranoid");
 
@@ -149,7 +149,7 @@ print_slist_entry (gpointer data, gpointer userdata G_GNUC_UNUSED)
 void
 sydbox_config_write_to_stderr (void)
 {
-    g_fprintf (stderr, "colour = %s\n", config->colourize_output ? "yes" : "no");
+    g_fprintf (stderr, "colour = %s\n", config->colourise_output ? "yes" : "no");
     g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
     g_fprintf (stderr, "network sandboxing = %s\n", config->sandbox_network ? "yes" : "no");
@@ -160,10 +160,20 @@ sydbox_config_write_to_stderr (void)
     g_slist_foreach (config->predict_prefixes, print_slist_entry, NULL);
 }
 
+
 const gchar *
 sydbox_config_get_log_file (void)
 {
     return config->logfile;
+}
+
+void
+sydbox_config_set_log_file (const gchar * const logfile)
+{
+    if (config->logfile)
+        g_free (config->logfile);
+
+    config->logfile = g_strdup (logfile);
 }
 
 gint
@@ -182,6 +192,42 @@ gboolean
 sydbox_config_get_sandbox_network (void)
 {
     return config->sandbox_network;
+}
+
+gboolean
+sydbox_config_get_colourise_output (void)
+{
+    return config->colourise_output;
+}
+
+void
+sydbox_config_set_colourise_output (gboolean colourise)
+{
+    config->colourise_output = colourise;
+}
+
+gboolean
+sydbox_config_get_allow_magic_commands (void)
+{
+    return config->allow_magic_commands;
+}
+
+void
+sydbox_config_set_allow_magic_commands (gboolean allow)
+{
+    config->allow_magic_commands = allow;
+}
+
+gboolean
+sydbox_config_get_paranoid_mode_enabled (void)
+{
+    return config->paranoid_mode_enabled;
+}
+
+void
+sydbox_config_set_paranoid_mode_enabled (gboolean enabled)
+{
+    config->paranoid_mode_enabled = enabled;
 }
 
 const GSList *

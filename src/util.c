@@ -35,7 +35,7 @@
 #include "util.h"
 #include "children.h"
 
-int colour = -1;
+#include "sydbox-config.h"
 
 /* Fatal error. Print message and exit. */
 void _die(int err, const char *fmt, ...) {
@@ -57,7 +57,7 @@ void access_error(pid_t pid, const char *fmt, ...) {
     time_t now;
 
     now = time(NULL);
-    if (colour) {
+    if (sydbox_config_get_colourise_output ()) {
         fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Access violation!"NORMAL"\n", now);
         fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Child pid: "PINK"%i"NORMAL"\n", now, pid);
         fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Reason: "PINK, now);
@@ -72,7 +72,7 @@ void access_error(pid_t pid, const char *fmt, ...) {
     vfprintf(stderr, fmt, args);
     va_end(args);
 
-    if (colour)
+    if (sydbox_config_get_colourise_output ())
         fprintf(stderr, NORMAL "\n");
     else
         fputc('\n', stderr);

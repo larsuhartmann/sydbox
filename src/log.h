@@ -25,8 +25,7 @@
 #define LOG_LEVEL_DEBUG_TRACE       (1 << (G_LOG_LEVEL_USER_SHIFT + 0))
 
 void
-sydbox_log_init (const gchar * const filename,
-                 const gint verbosity);
+sydbox_log_init (void);
 
 void
 sydbox_log_fini (void);

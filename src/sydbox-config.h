@@ -35,6 +35,9 @@ sydbox_config_write_to_stderr (void);
 const gchar *
 sydbox_config_get_log_file (void);
 
+void
+sydbox_config_set_log_file (const gchar * const logfile);
+
 gint
 sydbox_config_get_verbosity (void);
 
@@ -43,6 +46,24 @@ sydbox_config_set_verbosity (gint verbosity);
 
 gboolean
 sydbox_config_get_sandbox_network (void);
+
+gboolean
+sydbox_config_get_colourise_output (void);
+
+void
+sydbox_config_set_colourise_output (gboolean colourise);
+
+gboolean
+sydbox_config_get_allow_magic_commands (void);
+
+void
+sydbox_config_set_allow_magic_commands (gboolean allow);
+
+gboolean
+sydbox_config_get_paranoid_mode_enabled (void);
+
+void
+sydbox_config_set_paranoid_mode_enabled (gboolean enabled);
 
 const GSList *
 sydbox_config_get_write_prefixes (void);

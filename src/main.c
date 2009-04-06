@@ -42,25 +42,24 @@
 #include "children.h"
 
 static context_t *ctx = NULL;
-static int lock = -1;
 
 
 static gint verbosity = -1;
 
-static gboolean dump;
-static gboolean version;
-static gboolean paranoid;
-
 static gchar *logfile;
 static gchar *config_file;
 
-static gboolean set_lock = FALSE;
+static gboolean dump;
+static gboolean lock;
+static gboolean colour;
+static gboolean version;
+static gboolean paranoid;
 
 static GOptionEntry entries[] =
 {
     { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file",  NULL },
     { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
-    { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &set_lock,    "Disallow magic commands",         NULL },
+    { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &lock,        "Disallow magic commands",         NULL },
     { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
     { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",            NULL },
     { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
@@ -185,7 +184,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     ctx->eldest = childtab[pid];
     ctx->eldest->cwd = g_strdup (ctx->cwd);
     ctx->eldest->sandbox->net = sydbox_config_get_sandbox_network ();
-    ctx->eldest->sandbox->lock = lock;
+    ctx->eldest->sandbox->lock = ! sydbox_config_get_allow_magic_commands ();
     ctx->eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
     ctx->eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes ();
 
@@ -218,11 +217,23 @@ sydbox_internal_main (int argc, char **argv)
     if (! sydbox_config_load (config_file))
         return EXIT_FAILURE;
 
-    /* if the verbosity is specified, update our configuration */
-    if (verbosity != -1)
+    if (verbosity >= 0)
         sydbox_config_set_verbosity (verbosity);
 
-    sydbox_log_init (sydbox_config_get_log_file (), sydbox_config_get_verbosity ());
+    if (logfile)
+        sydbox_config_set_log_file (logfile);
+
+    /* initialize logging as early as possible */
+    sydbox_log_init ();
+
+    if (colour)
+        sydbox_config_set_colourise_output (TRUE);
+
+    if (lock)
+        sydbox_config_set_allow_magic_commands (FALSE);
+
+    if (paranoid)
+        sydbox_config_set_paranoid_mode_enabled (TRUE);
 
     sydbox_config_update_from_environment ();
 
@@ -322,9 +333,6 @@ sydbox_main (int argc, char **argv)
         argc--;
         argv++;
     }
-
-    if (set_lock)
-        lock = LOCK_SET;
 
     return sydbox_internal_main (argc, argv);
 }

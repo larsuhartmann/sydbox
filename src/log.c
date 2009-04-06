@@ -18,6 +18,7 @@
  */
 
 #include "log.h"
+#include "sydbox-config.h"
 
 #include <glib/gstdio.h>
 
@@ -25,7 +26,6 @@
 #include <unistd.h>
 
 static FILE *fd;
-static gint verbosity;
 static gboolean initialized;
 
 static inline void
@@ -77,32 +77,29 @@ sydbox_log_handler (const gchar *log_domain,
                     const gchar *message,
                     gpointer user_data G_GNUC_UNUSED)
 {
-    if ( ((log_level & G_LOG_LEVEL_MESSAGE)   && verbosity < 1) ||
-         ((log_level & G_LOG_LEVEL_INFO)      && verbosity < 2) ||
-         ((log_level & G_LOG_LEVEL_DEBUG)     && verbosity < 3) ||
-         ((log_level & LOG_LEVEL_DEBUG_TRACE) && verbosity < 4) )
+    if ( ((log_level & G_LOG_LEVEL_MESSAGE)   && sydbox_config_get_verbosity () < 1) ||
+         ((log_level & G_LOG_LEVEL_INFO)      && sydbox_config_get_verbosity () < 2) ||
+         ((log_level & G_LOG_LEVEL_DEBUG)     && sydbox_config_get_verbosity () < 3) ||
+         ((log_level & LOG_LEVEL_DEBUG_TRACE) && sydbox_config_get_verbosity () < 4) )
         return;
 
     sydbox_log_output (log_domain, log_level, message);
 }
 
 void
-sydbox_log_init (const gchar * const filename,
-                 const gint log_verbosity)
+sydbox_log_init (void)
 {
     if (initialized)
         return;
 
-    if (filename) {
-        fd = g_fopen (filename, "a");
+    if (sydbox_config_get_log_file ()) {
+        fd = g_fopen (sydbox_config_get_log_file (), "a");
         if (! fd) {
             const gchar *error_string = g_strerror (errno);
-            g_printerr ("could not open log '%s': %s\n", filename, error_string);
+            g_printerr ("could not open log '%s': %s\n", sydbox_config_get_log_file (), error_string);
             g_printerr ("all logging will go to stderr\n");
         }
     }
-
-    verbosity = log_verbosity;
 
     g_log_set_default_handler (sydbox_log_handler, NULL);
 
