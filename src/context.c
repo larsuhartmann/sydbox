@@ -23,7 +23,6 @@
 #include <glib.h>
 
 #include "context.h"
-#include "children.h"
 #include "wrappers.h"
 
 context_t *
