@@ -10,7 +10,6 @@
 
 #include <check.h>
 
-#include "../src/defs.h"
 #include "../src/util.h"
 #include "check_sydbox.h"
 

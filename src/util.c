@@ -31,8 +31,8 @@
 #include <glib.h>
 
 #include "log.h"
-#include "defs.h"
 #include "util.h"
+#include "config.h"
 #include "children.h"
 
 #include "sydbox-config.h"

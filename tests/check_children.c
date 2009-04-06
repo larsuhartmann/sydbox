@@ -16,7 +16,6 @@
 #include <glib.h>
 #include <check.h>
 
-#include "../src/defs.h"
 #include "../src/children.h"
 #include "check_sydbox.h"
 

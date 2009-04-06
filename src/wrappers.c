@@ -38,7 +38,6 @@
 
 #include <glib.h>
 
-#include "defs.h"
 #include "path.h"
 #include "wrappers.h"
 

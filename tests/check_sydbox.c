@@ -9,7 +9,6 @@
 #include <check.h>
 
 #include "../src/log.h"
-#include "../src/defs.h"
 #include "../src/util.h"
 #include "check_sydbox.h"
 

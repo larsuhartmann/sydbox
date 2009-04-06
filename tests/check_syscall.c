@@ -18,7 +18,6 @@
 
 #include <check.h>
 
-#include "../src/defs.h"
 #include "../src/path.h"
 #include "../src/trace.h"
 #include "../src/syscall.h"
