@@ -218,8 +218,14 @@ sydbox_internal_main (int argc, char **argv)
 
     g_atexit (cleanup);
 
+    /*
+     * options are loaded from config file, updated from the environment, and
+     * then overridden by the user passed parameters.
+     */
     if (! sydbox_config_load (config_file))
         return EXIT_FAILURE;
+
+    sydbox_config_update_from_environment ();
 
     if (verbosity >= 0)
         sydbox_config_set_verbosity (verbosity);
@@ -238,8 +244,6 @@ sydbox_internal_main (int argc, char **argv)
 
     if (paranoid)
         sydbox_config_set_paranoid_mode_enabled (TRUE);
-
-    sydbox_config_update_from_environment ();
 
     if (dump) {
         sydbox_config_write_to_stderr ();
