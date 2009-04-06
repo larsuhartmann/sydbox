@@ -50,7 +50,9 @@
 #endif
 
 // dirname wrapper which doesn't modify its argument
-char *edirname(const char *path) {
+gchar *
+edirname (const gchar *path)
+{
     char *pathc = g_strdup (path);
     char *dname = dirname(pathc);
     char *dnamec = g_strdup (dname);
@@ -58,12 +60,16 @@ char *edirname(const char *path) {
     return dnamec;
 }
 
-char *ebasename(const char *path) {
+gchar *
+ebasename (const gchar *path)
+{
     return basename(path);
 }
 
 // readlink that allocates the string itself and appends a zero at the end
-char *ereadlink(const char *path) {
+gchar *
+ereadlink (const gchar *path)
+{
     char *buf;
     long nrequested, nwritten;
 
@@ -90,8 +96,12 @@ char *ereadlink(const char *path) {
    separators ('/') or symlinks.  Whether components must exist
    or not depends on canonicalize mode.  The result is malloc'd.  */
 
-char *canonicalize_filename_mode(const char *name, canonicalize_mode_t can_mode,
-        bool resolve, const char *cwd) {
+gchar *
+canonicalize_filename_mode (const gchar *name,
+                            canonicalize_mode_t can_mode,
+                            gboolean resolve,
+                            const gchar *cwd)
+{
     int readlinks = 0;
     char *rname, *dest, *extra_buf = NULL;
     char const *start;
