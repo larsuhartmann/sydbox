@@ -80,7 +80,7 @@ void tchild_new(GSList **children, pid_t pid) {
     *children = g_slist_prepend(*children, child);
 }
 
-static void tchild_free_one(struct tchild *child, void *user_data) {
+static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED) {
     if (NULL != child->sandbox) {
         if (NULL != child->sandbox->write_prefixes)
             pathnode_free(&(child->sandbox->write_prefixes));
