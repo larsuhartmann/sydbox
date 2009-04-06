@@ -8,15 +8,11 @@
 
 #include <check.h>
 
-#include "../src/log.h"
 #include "../src/util.h"
 #include "check_sydbox.h"
 
 int main(void) {
     int number_failed;
-#if 0
-    log_level = LOG_DEBUG_CRAZY;
-#endif
 
     /* Add suites */
     SRunner *sr = srunner_create(util_suite_create());

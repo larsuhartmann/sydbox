@@ -30,9 +30,9 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "sydbox-log.h"
 #include "sydbox-config.h"
 
-#include "log.h"
 #include "loop.h"
 #include "path.h"
 #include "util.h"
@@ -40,6 +40,7 @@
 #include "config.h"
 #include "children.h"
 #include "syscall.h"
+
 /* pink floyd */
 #define PINK_FLOYD  "       ..uu.                               \n" \
                     "       ?$\"\"`?i           z'              \n" \

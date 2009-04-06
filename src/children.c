@@ -25,9 +25,9 @@
 
 #include <glib.h>
 
-#include "log.h"
 #include "path.h"
 #include "children.h"
+#include "sydbox-log.h"
 
 // We keep this for efficient lookups
 struct tchild *childtab[PID_MAX_LIMIT] = { NULL };

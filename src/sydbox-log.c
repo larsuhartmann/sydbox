@@ -17,7 +17,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "log.h"
+#include "sydbox-log.h"
 #include "sydbox-config.h"
 
 #include <glib/gstdio.h>

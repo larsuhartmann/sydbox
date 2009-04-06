@@ -17,8 +17,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef __SYDBOX_LOG_H__
+#define __SYDBOX_LOG_H__
 
 #include <glib.h>
 
