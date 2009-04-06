@@ -15,11 +15,6 @@
 #define PINK    "[01;35m"
 
 void
-_die (int err, const char *fmt, ...)
-    __attribute__ ((noreturn))
-    __attribute__ ((format (printf, 2, 3)));
-
-void
 access_error (pid_t pid, const char *fmt, ...)
     __attribute__ ((format (printf, 2, 3)));
 

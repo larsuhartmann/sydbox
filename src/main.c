@@ -26,7 +26,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <sysexits.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -129,18 +128,23 @@ get_groupname (void)
 static void G_GNUC_NORETURN
 sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
 {
-    if (trace_me () < 0)
-        _die (EX_SOFTWARE, "failed to set tracing: %s", g_strerror (errno));
+    if (trace_me () < 0) {
+        g_printerr ("failed to set tracing: %s", g_strerror (errno));
+        _exit (-1);
+    }
 
     /* stop and wait for the parent to resume us with trace_syscall */
-    if (kill (getpid (), SIGSTOP) < 0)
-        _die (EX_SOFTWARE, "failed to send SIGSTOP: %s", g_strerror (errno));
+    if (kill (getpid (), SIGSTOP) < 0) {
+        g_printerr ("failed to send SIGSTOP: %s", g_strerror (errno));
+        _exit (-1);
+    }
 
     if (strncmp (argv[0], "/bin/bash", 9) == 0)
         g_fprintf (stderr, PINK PINK_FLOYD NORMAL);
 
     execvp (argv[0], argv);
-    _die (EX_DATAERR, "execve failed: %s", g_strerror (errno));
+
+    g_assert_not_reached ();
 }
 
 static int

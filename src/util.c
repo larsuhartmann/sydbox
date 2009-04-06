@@ -37,21 +37,6 @@
 
 #include "sydbox-config.h"
 
-/* Fatal error. Print message and exit. */
-void _die(int err, const char *fmt, ...) {
-    va_list args;
-
-    fprintf(stderr, "%s: ", PACKAGE);
-
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-
-    fputc('\n', stderr);
-
-    _exit(err);
-}
-
 void access_error(pid_t pid, const char *fmt, ...) {
     va_list args;
     time_t now;
