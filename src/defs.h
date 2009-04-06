@@ -54,12 +54,4 @@
                     "    @                  `   ;\"\n" \
                     "                          `\n"
 
-/* environment */
-#define ENV_LOG         "SANDBOX_LOG"
-#define ENV_CONFIG      "SANDBOX_CONFIG"
-#define ENV_WRITE       "SANDBOX_WRITE"
-#define ENV_PREDICT     "SANDBOX_PREDICT"
-#define ENV_NET         "SANDBOX_NET"
-#define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
-
 #endif /* SYDBOX_GUARD_DEFS_H */

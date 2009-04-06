@@ -23,9 +23,17 @@
 
 #include <confuse.h>
 
-#include "defs.h"
 #include "path.h"
 #include "sydbox-config.h"
+
+/* environment variables */
+#define ENV_LOG         "SANDBOX_LOG"
+#define ENV_CONFIG      "SANDBOX_CONFIG"
+#define ENV_WRITE       "SANDBOX_WRITE"
+#define ENV_PREDICT     "SANDBOX_PREDICT"
+#define ENV_NET         "SANDBOX_NET"
+#define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
+
 
 struct sydbox_config
 {
