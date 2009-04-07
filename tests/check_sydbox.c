@@ -23,7 +23,6 @@ int main(void) {
     srunner_add_suite(sr, path_suite_create());
     srunner_add_suite(sr, children_suite_create());
     srunner_add_suite(sr, trace_suite_create());
-    srunner_add_suite(sr, syscall_suite_create());
 
     /* Run and grab the results */
     srunner_run_all(sr, CK_VERBOSE);
