@@ -31,6 +31,8 @@ gprof*
 data/sydbox.1.xml
 src/sydbox
 src/syscallent.h
+src/syscall_marshaller.c
+src/syscall_marshaller.h
 tests/check_sydbox
 tests/arnold_layne
 tests/its_not_the_same

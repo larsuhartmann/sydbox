@@ -1,4 +1,4 @@
-CLEANFILES= syscallent.h gmon.out
+CLEANFILES= syscallent.h syscall_marshaller.c syscall_marshaller.h gmon.out
 
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
 	   $(glib_CFLAGS) $(gobject_CFLAGS) $(confuse_CFLAGS) @SYDBOX_CFLAGS@
