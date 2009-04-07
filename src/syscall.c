@@ -664,7 +664,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
-    if (self->flags & NET_CALL && !(child->sandbox->net)) {
+    if (self->flags & NET_CALL && child->sandbox->net) {
 #if defined(__NR_socketcall)
         access_error(child->pid, "socketcall()");
 #elif defined(__NR_socket)
