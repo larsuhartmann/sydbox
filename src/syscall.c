@@ -894,6 +894,10 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()", child->pid, sname);
+        if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
+            g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
+            child->sandbox->lock = LOCK_SET;
+        }
         handler = syscall_get_handler(sno);
         if (NULL == handler) // Safe system call
             g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "allowing access to system call %s()", sname);
