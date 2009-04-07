@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <asm/unistd.h>
 
@@ -31,7 +32,6 @@
 #include <glib-object.h>
 
 #include "log.h"
-#include "getcwd.h"
 #include "path.h"
 #include "proc.h"
 #include "trace.h"
