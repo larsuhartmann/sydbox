@@ -31,47 +31,18 @@
 #include <glib.h>
 
 #include "log.h"
-#include "defs.h"
 #include "util.h"
+#include "config.h"
 #include "children.h"
 
-int colour = -1;
-
-/* Fatal error. Print message and exit. */
-void die(int err, const char *fmt, ...) {
-    va_list args;
-
-    fprintf(stderr, "%s: ", PACKAGE);
-
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-
-    fputc('\n', stderr);
-
-    exit(err);
-}
-
-void _die(int err, const char *fmt, ...) {
-    va_list args;
-
-    fprintf(stderr, "%s: ", PACKAGE);
-
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
-    va_end(args);
-
-    fputc('\n', stderr);
-
-    _exit(err);
-}
+#include "sydbox-config.h"
 
 void access_error(pid_t pid, const char *fmt, ...) {
     va_list args;
     time_t now;
 
     now = time(NULL);
-    if (colour) {
+    if (sydbox_config_get_colourise_output ()) {
         fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Access violation!"NORMAL"\n", now);
         fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Child pid: "PINK"%i"NORMAL"\n", now, pid);
         fprintf(stderr, PACKAGE"@%ld: "MAGENTA"Reason: "PINK, now);
@@ -86,7 +57,7 @@ void access_error(pid_t pid, const char *fmt, ...) {
     vfprintf(stderr, fmt, args);
     va_end(args);
 
-    if (colour)
+    if (sydbox_config_get_colourise_output ())
         fprintf(stderr, NORMAL "\n");
     else
         fputc('\n', stderr);

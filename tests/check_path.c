@@ -14,7 +14,6 @@
 #include <glib.h>
 #include <check.h>
 
-#include "../src/defs.h"
 #include "../src/path.h"
 #include "check_sydbox.h"
 

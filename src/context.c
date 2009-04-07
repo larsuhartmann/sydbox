@@ -18,33 +18,38 @@
  */
 
 #include <errno.h>
-#include <string.h>
-#include <sysexits.h>
+#include <stdlib.h>
 
 #include <glib.h>
 
-#include "defs.h"
-#include "getcwd.h"
-#include "util.h"
 #include "context.h"
 #include "children.h"
+#include "wrappers.h"
 
-context_t *context_new(void) {
+context_t *
+context_new (void)
+{
     context_t *ctx;
-    ctx = (context_t *) g_malloc (sizeof(context_t));
-    ctx->paranoid = 0;
-    ctx->cwd = egetcwd();
-    if (NULL == ctx->cwd)
-        DIESOFT("Failed to get current working directory: %s", strerror(errno));
-    ctx->children = NULL;
-    ctx->eldest = NULL;
+
+    ctx = (context_t *) g_malloc0 (sizeof (context_t));
+
+    if (! (ctx->cwd = egetcwd())) {
+        g_printerr ("failed to get current working directory: %s", g_strerror (errno));
+        exit (-1);
+    }
+
     return ctx;
 }
 
-void context_free(context_t *ctx) {
+void
+context_free (context_t *ctx)
+{
     if (NULL != ctx->cwd)
         g_free (ctx->cwd);
+
     if (NULL != ctx->children)
-        tchild_free(&(ctx->children));
+        tchild_free (&(ctx->children));
+
     g_free (ctx);
 }
+

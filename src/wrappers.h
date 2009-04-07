@@ -1,8 +1,25 @@
 /* vim: set sw=4 sts=4 fdm=syntax et : */
 
 /**
+ * Copyright (c) 2009 Ali Polatel
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+<<<<<<< HEAD:src/wrappers.h
  * Copyright 2009 Ali Polatel <polatel@gmail.com>
+=======
+ *
+ * This file is part of the sydbox sandbox tool. sydbox is free software;
+ * you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License version 2, as published by the Free Software Foundation.
+ *
+ * sydbox is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA  02111-1307  USA
+>>>>>>> master:src/wrappers.h
  **/
 
 #ifndef __WRAPPERS_H__
@@ -12,26 +29,30 @@
 
 typedef enum canonicalize_mode_t
 {
-    /* All components must exist.  */
-    CAN_EXISTING = 0,
-    /* All components excluding last one must exist.  */
-    CAN_ALL_BUT_LAST = 1,
+    CAN_EXISTING,       /* All components must exist.  */
+    CAN_ALL_BUT_LAST,   /* All components excluding last one must exist.  */
 } canonicalize_mode_t;
 
-char *
-edirname (const char *path);
+gchar *
+edirname (const gchar *path);
 
-char *
-ebasename (const char *path);
+gchar *
+ebasename (const gchar *path);
 
-char *
-ereadlink (const char *path);
+gchar *
+ereadlink (const gchar *path);
 
-char *
-canonicalize_filename_mode (const char *name,
+gchar *
+egetcwd (void);
+
+int
+echdir (gchar *dir);
+
+gchar *
+canonicalize_filename_mode (const gchar *name,
                             canonicalize_mode_t can_mode,
                             gboolean resolve,
-                            const char *cwd);
+                            const gchar *cwd);
 
 #endif
 

@@ -28,6 +28,9 @@ Sydbox is a sandboxing utility.
 
 OPTIONS
 -------
+The ordering of option percedence is configuration file, environment variables,
+command line parameters.
+
 *-?, --help*::
     Show help options
 *-c, --config*::

@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/reg.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
@@ -49,9 +50,9 @@
 
 #include <glib.h>
 
-#include "defs.h"
 #include "log.h"
 #include "trace.h"
+#include "config.h"
 #include "syscall.h"
 
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
