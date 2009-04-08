@@ -119,10 +119,10 @@ sydbox_config_load (const gchar * const file)
         profile_config = cfg_getnsec (sydbox_config, "prefixes", i);
 
         for (j = 0; j < cfg_size (profile_config, "write"); j++)
-            pathnode_new (&config->write_prefixes, cfg_getnstr (profile_config, "write", j), 1);
+            pathnode_new_early (&config->write_prefixes, cfg_getnstr (profile_config, "write", j), 1);
 
         for (j = 0; j < cfg_size (profile_config, "predict"); j++)
-            pathnode_new (&config->predict_prefixes, cfg_getnstr (profile_config, "predict", j), 1);
+            pathnode_new_early (&config->predict_prefixes, cfg_getnstr (profile_config, "predict", j), 1);
 
         config->sandbox_network = cfg_getbool (profile_config, "net");
     }

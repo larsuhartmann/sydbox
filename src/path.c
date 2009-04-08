@@ -117,6 +117,24 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     return 0;
 }
 
+int pathnode_new_early(GSList **pathlist, const char *path, int sanitize)
+{
+    char *data, *spath;
+
+    if (NULL == path || 0 == strlen(path))
+        return -1;
+
+    if (!sanitize)
+        data = g_strdup(path);
+    else {
+        spath = remove_slash(path);
+        data = shell_expand(spath);
+        g_free(spath);
+    }
+    *pathlist = g_slist_prepend(*pathlist, data);
+    return 0;
+}
+
 void pathnode_free(GSList **pathlist) {
     g_slist_foreach(*pathlist, (GFunc) g_free, NULL);
     g_slist_free(*pathlist);

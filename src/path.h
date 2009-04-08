@@ -2,6 +2,7 @@
 
 /**
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright 2009 Ali Polatel <polatel@gmail.com>
  **/
 
 #ifndef __PATH_H__
@@ -64,6 +65,9 @@ path_magic_rmpredict (const char *path);
 
 int
 pathnode_new (GSList **pathlist, const char *path, int sanitize);
+
+int
+pathnode_new_early (GSList **pathlist, const char *path, int sanitize);
 
 void
 pathnode_free (GSList **pathlist);

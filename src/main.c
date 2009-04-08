@@ -252,8 +252,6 @@ sydbox_internal_main (int argc, char **argv)
     if (! sydbox_config_load (config_file))
         return EXIT_FAILURE;
 
-    sydbox_config_update_from_environment ();
-
     if (verbosity >= 0)
         sydbox_config_set_verbosity (verbosity);
 
@@ -262,6 +260,8 @@ sydbox_internal_main (int argc, char **argv)
 
     /* initialize logging as early as possible */
     sydbox_log_init ();
+
+    sydbox_config_update_from_environment ();
 
     if (colour)
         sydbox_config_set_colourise_output (TRUE);
