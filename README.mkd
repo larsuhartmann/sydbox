@@ -1,0 +1,33 @@
+[sydbox](http://alip.github.com/sydbox/) is a ptrace based sandbox tool.
+This tool is devoted to [Roger Keith "Syd" Barrett](http://www.sydbarrett.net/)
+Shine on you Crazy Diamond! You'll always live in our trips.
+
+    In the sad town
+    Cold iron hands clap
+    The party of clowns outside
+    Rain falls in gray far away
+    Please, please, baby lemonade
+
+    In the evening sun going down
+    When the earth streams in, in the morning
+    Send a cage through the post
+    Make your name like a ghost
+    Please, please, baby lemonade
+
+    I'm screaming, I met you this way
+    You're nice to me like ice
+    In the clock they sent through a washing machine
+    Come around, make it soon, so alone
+    Please, please, baby lemonade
+
+    In the sad town
+    Cold iron hands clap
+    The party of clowns outside
+    Rain falls in gray far away
+    Please, please, baby lemonade
+
+    In the evening sun going down
+    When the earth streams in, in the morning
+    Send a cage through the post
+    Make your name like a ghost
+    Please, please, baby lemonade
