@@ -1,5 +1,5 @@
-[sydbox](http://alip.github.com/sydbox/) is a ptrace based sandbox tool.
-This tool is devoted to [Roger Keith "Syd" Barrett](http://www.sydbarrett.net/)
+[sydbox](http://alip.github.com/sydbox/) is a ptrace based sandbox tool.  
+This tool is devoted to [Roger Keith "Syd" Barrett](http://www.sydbarrett.net/).  
 Shine on you Crazy Diamond! You'll always live in our trips.
 
     In the sad town
