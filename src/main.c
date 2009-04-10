@@ -278,7 +278,7 @@ sydbox_internal_main (int argc, char **argv)
         return EXIT_SUCCESS;
     }
 
-    if (sydbox_config_get_verbosity () > 3) {
+    if (sydbox_config_get_verbosity () > 1) {
         gchar *username = NULL, *groupname = NULL;
         GString *command = NULL;
 
