@@ -69,6 +69,10 @@ bool path_magic_toggle(const char *path) {
     return (0 == strncmp(path, CMD_TOGGLE, CMD_TOGGLE_LEN)) ? true : false;
 }
 
+bool path_magic_enabled(const char *path) {
+    return (0 == strncmp(path, CMD_ENABLED, CMD_ENABLED_LEN)) ? true : false;
+}
+
 bool path_magic_lock(const char *path) {
     return (0 == strncmp(path, CMD_LOCK, CMD_LOCK_LEN)) ? true : false;
 }

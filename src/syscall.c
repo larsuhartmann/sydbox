@@ -284,6 +284,10 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now %s",
                 child->pid, child->sandbox->on ? "on" : "off");
     }
+    else if (path_magic_enabled(path) && child->sandbox->on) {
+        data->result = RS_MAGIC;
+        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is on", child->pid);
+    }
     else if (path_magic_lock(path)) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_SET;
@@ -345,7 +349,7 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     g_debug("checking if stat(\"%s\") is magic", path);
-    if (path_magic_dir(path)) {
+    if (path_magic_dir(path) && (child->sandbox->on || !path_magic_enabled(path))) {
         g_debug("stat(\"%s\") is magic, faking stat buffer", path);
         if (0 > trace_fake_stat(child->pid)) {
             data->result = RS_ERROR;

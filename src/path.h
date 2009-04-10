@@ -20,6 +20,8 @@
 #define CMD_OFF_LEN             (CMD_PATH_LEN + 4)
 #define CMD_TOGGLE              CMD_PATH"toggle"
 #define CMD_TOGGLE_LEN          (CMD_PATH_LEN + 7)
+#define CMD_ENABLED             CMD_PATH"enabled"
+#define CMD_ENABLED_LEN         (CMD_PATH_LEN + 8)
 #define CMD_LOCK                CMD_PATH"lock"
 #define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
 #define CMD_EXEC_LOCK           CMD_PATH"exec_lock"
@@ -44,6 +46,9 @@ path_magic_off (const char *path);
 
 bool
 path_magic_toggle (const char *path);
+
+bool
+path_magic_enabled (const char *path);
 
 bool
 path_magic_lock (const char *path);
