@@ -171,7 +171,8 @@ sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
 
     execvp (argv[0], argv);
 
-    g_assert_not_reached ();
+    g_printerr ("execvp() failed: %s\n", g_strerror(errno));
+    _exit(-1);
 }
 
 static int
