@@ -361,13 +361,18 @@ sydbox_main (int argc, char **argv)
     }
 
     if (! dump) {
-        if (! argv[1]) {
+        argc--;
+        argv++;
+
+        if (argv[0] && strcmp (argv[0], "--") == 0) {
+            argc--;
+            argv++;
+        }
+
+        if (! argv[0]) {
             g_printerr ("no command given\n");
             return EXIT_FAILURE;
         }
-
-        argc--;
-        argv++;
     }
 
     return sydbox_internal_main (argc, argv);
