@@ -24,6 +24,10 @@
 
 #define LOG_LEVEL_DEBUG_TRACE       (1 << (G_LOG_LEVEL_USER_SHIFT + 0))
 
+#ifndef g_info
+#define g_info(format...)           g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, format)
+#endif
+
 void
 sydbox_log_init (void);
 
