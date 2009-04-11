@@ -271,32 +271,32 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     if (path_magic_on(path)) {
         data->result = RS_MAGIC;
         child->sandbox->on = 1;
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now on", child->pid);
+        g_info ("sandbox status of child %i is now on", child->pid);
     }
     else if (path_magic_off(path)) {
         data->result = RS_MAGIC;
         child->sandbox->on = 0;
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now off", child->pid);
+        g_info ("sandbox status of child %i is now off", child->pid);
     }
     else if (path_magic_toggle(path)) {
         data->result = RS_MAGIC;
         child->sandbox->on = !(child->sandbox->on);
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is now %s",
+        g_info ("sandbox status of child %i is now %s",
                 child->pid, child->sandbox->on ? "on" : "off");
     }
     else if (path_magic_enabled(path) && child->sandbox->on) {
         data->result = RS_MAGIC;
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "sandbox status of child %i is on", child->pid);
+        g_info ("sandbox status of child %i is on", child->pid);
     }
     else if (path_magic_lock(path)) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_SET;
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
+        g_info ("access to magic commands is now denied for child %i", child->pid);
     }
     else if (path_magic_exec_lock(path)) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_PENDING;
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands will be denied on execve() for child %i",
+        g_info ("access to magic commands will be denied on execve() for child %i",
                 child->pid);
     }
     else if (path_magic_write(path)) {
@@ -986,8 +986,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     if (NULL != child->cwd)
                         g_free (child->cwd);
                     child->cwd = newcwd;
-                    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-                            "child %i has changed directory to '%s'", child->pid, child->cwd);
+                    g_info ("child %i has changed directory to '%s'", child->pid, child->cwd);
                 }
             }
             else

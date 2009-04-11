@@ -24,6 +24,7 @@
 #include <confuse.h>
 
 #include "path.h"
+#include "log.h"
 #include "sydbox-config.h"
 
 /* environment variables */
@@ -136,14 +137,10 @@ sydbox_config_load (const gchar * const file)
 void
 sydbox_config_update_from_environment (void)
 {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-           "extending path list using environment variable " ENV_WRITE);
-
+    g_info ("extending path list using environment variable " ENV_WRITE);
     pathlist_init (&config->write_prefixes, g_getenv (ENV_WRITE));
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-           "extending path list using environment variable " ENV_PREDICT);
-
+    g_info ("extending path list using environment variable " ENV_PREDICT);
     pathlist_init (&config->predict_prefixes, g_getenv (ENV_PREDICT));
 }
 

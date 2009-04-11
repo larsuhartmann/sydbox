@@ -101,11 +101,11 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     char *data;
 
     if (NULL == path) {
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "path is NULL not adding to list");
+        g_info ("path is NULL not adding to list");
         return -1;
     }
     else if (0 == strlen(path)) {
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "path is empty not adding to list");
+        g_info ("path is empty not adding to list");
         return -1;
     }
 
@@ -115,7 +115,7 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
         char *spath = remove_slash(path);
         data = shell_expand (spath);
         g_free (spath);
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "new path item `%s'", data);
+        g_info ("new path item `%s'", data);
     }
     *pathlist = g_slist_prepend(*pathlist, data);
     return 0;
@@ -166,7 +166,7 @@ int pathlist_init(GSList **pathlist, const char *pathlist_env) {
     int nempty, npaths;
 
     if (NULL == pathlist_env) {
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "the given environment variable isn't set");
+        g_info ("the given environment variable isn't set");
         return 0;
     }
 
@@ -182,7 +182,7 @@ int pathlist_init(GSList **pathlist, const char *pathlist_env) {
     }
     npaths = g_strv_length(split) - nempty;
     g_strfreev(split);
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "initialized path list with %d paths", npaths);
+    g_info ("initialized path list with %d paths", npaths);
     return npaths;
 }
 

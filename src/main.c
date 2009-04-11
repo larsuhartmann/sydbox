@@ -96,7 +96,7 @@ static GOptionEntry entries[] =
 
 // Cleanup functions
 static void cleanup(void) {
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "cleaning up before exit");
+    g_info ("cleaning up before exit");
     if (NULL != ctx && NULL != ctx->eldest) {
         g_message ("killing child %i", ctx->eldest->pid);
         if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
@@ -220,16 +220,16 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     ctx->eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
     ctx->eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes ();
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "child %lu is ready to go, resuming", (gulong) pid);
+    g_info ("child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {
         trace_kill (pid);
         g_printerr ("failed to resume eldest child %lu: %s", (gulong) pid, g_strerror (errno));
         exit (-1);
     }
 
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "entering loop");
+    g_info ("entering loop");
     retval = trace_loop (ctx);
-    g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "exited loop with return value: %d", retval);
+    g_info ("exited loop with return value: %d", retval);
 
     syscall_free();
     return retval;
@@ -298,8 +298,7 @@ sydbox_internal_main (int argc, char **argv)
             g_string_append_printf (command, "%s ", argv[i]);
         g_string_truncate (command, command->len - 1);
 
-        g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-               "forking to execute '%s' as %s:%s", command->str, username, groupname);
+        g_info ("forking to execute '%s' as %s:%s", command->str, username, groupname);
 
         g_free (username);
         g_free (groupname);
