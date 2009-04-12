@@ -473,20 +473,22 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     char *newcwd = NULL;
     gboolean use_newcwd = FALSE;
 
-    if (isat && NULL != data->dirfdlist[narg - 1]) {
-        use_newcwd = TRUE;
-        newcwd = data->dirfdlist[narg - 1];
-    }
-    else if ('/' != path[0] && 0 != strncmp(child->cwd, ctx->cwd, strlen(ctx->cwd) + 1)) {
-        if (0 == strncmp(ctx->cwd, child->cwd, strlen(ctx->cwd))) {
-            /* child->cwd begins with ctx->cwd, call chdir using relative path
-             * instead of absolute path to make sure no errors regarding
-             * permissions happen.
-             */
-            newcwd = child->cwd + strlen(ctx->cwd) + 1;
+    if ('/' != path[0]) {
+        if (isat && NULL != data->dirfdlist[narg - 1]) {
+            use_newcwd = TRUE;
+            newcwd = data->dirfdlist[narg - 1];
         }
-        else
-            newcwd = child->cwd;
+        else if (0 != strncmp(child->cwd, ctx->cwd, strlen(ctx->cwd) + 1)) {
+            if (0 == strncmp(ctx->cwd, child->cwd, strlen(ctx->cwd))) {
+                /* child->cwd begins with ctx->cwd, call chdir using relative path
+                 * instead of absolute path to make sure no errors regarding
+                 * permissions happen.
+                 */
+                newcwd = child->cwd + strlen(ctx->cwd) + 1;
+            }
+            else
+                newcwd = child->cwd;
+        }
     }
 
     if (NULL != newcwd) {
