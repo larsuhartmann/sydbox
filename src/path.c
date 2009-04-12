@@ -24,9 +24,9 @@
 
 #include <glib.h>
 
-#include "log.h"
 #include "path.h"
 #include "util.h"
+#include "sydbox-log.h"
 
 
 static char *

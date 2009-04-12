@@ -30,11 +30,11 @@
 
 #include <glib.h>
 
-#include "log.h"
 #include "util.h"
 #include "config.h"
 #include "children.h"
 
+#include "sydbox-log.h"
 #include "sydbox-config.h"
 
 void access_error(pid_t pid, const char *fmt, ...) {

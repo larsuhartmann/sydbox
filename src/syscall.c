@@ -31,7 +31,6 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include "log.h"
 #include "path.h"
 #include "proc.h"
 #include "trace.h"
@@ -40,6 +39,7 @@
 #include "syscall_marshaller.h"
 #include "syscall.h"
 #include "sydbox-config.h"
+#include "sydbox-log.h"
 
 // System call dispatch flags
 #define RETURNS_FD              (1 << 0) // The function returns a file descriptor

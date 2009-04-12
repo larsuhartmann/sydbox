@@ -24,7 +24,7 @@
 #include <confuse.h>
 
 #include "path.h"
-#include "log.h"
+#include "sydbox-log.h"
 #include "sydbox-config.h"
 
 /* environment variables */
