@@ -115,9 +115,9 @@ Report bugs to /dev/null.
 
 COPYRIGHT
 ---------
-Copyright (c) 2009 Ali Polatel <polatel at gmail dot com>
+Copyright (C) 2009 Ali Polatel <polatel at gmail dot com>
 
-Copyright (c) 2009 Saleem Abdulrasool <compnerd at compnerd dot org>
+Copyright (C) 2009 Saleem Abdulrasool <compnerd at compnerd dot org>
 
 Free use of this software is granted under the terms of the GNU General Public
 License (GPL).
