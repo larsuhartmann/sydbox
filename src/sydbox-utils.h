@@ -1,8 +1,7 @@
-/* vim: set sw=4 sts=4 fdm=syntax et : */
+/* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
-/**
- * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
- * Copyright 2009 Ali Polatel <polatel@gmail.com>
+/*
+ * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -16,28 +15,22 @@
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA  02111-1307  USA
- **/
+ */
 
-#ifndef __CONTEXT_H__
-#define __CONTEXT_H__
+#ifndef __SYDBOX_UTILS_H__
+#define __SYDBOX_UTILS_H__
 
-#include "children.h"
+#include <glib.h>
 
-typedef struct
-{
-    char *cwd;              // current working directory
-    struct tchild *eldest;  // first child is kept to determine return code
-    GSList *children;       // list of children
-} context_t;
-
-context_t *
-context_new (void);
+#define ANSI_NORMAL         "[00;00m"
+#define ANSI_MAGENTA        "[00;35m"
+#define ANSI_DARK_MAGENTA   "[01;35m"
 
 void
-context_free (context_t *ctx);
+sydbox_access_violation (const pid_t pid, const gchar *fmt, ...) G_GNUC_PRINTF (2, 3);
 
-int
-context_remove_child (context_t * const ctx, const struct tchild * const child);
+gchar *
+sydbox_compress_path (const gchar * const path);
 
-#endif /* __CONTEXT_H__ */
+#endif
 

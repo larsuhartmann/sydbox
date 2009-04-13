@@ -31,11 +31,11 @@
 #include <glib/gstdio.h>
 
 #include "sydbox-log.h"
+#include "sydbox-utils.h"
 #include "sydbox-config.h"
 
 #include "loop.h"
 #include "path.h"
-#include "util.h"
 #include "trace.h"
 #include "config.h"
 #include "children.h"
@@ -168,11 +168,11 @@ sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
     }
 
     if (strncmp (argv[0], "/bin/bash", 9) == 0)
-        g_fprintf (stderr, PINK PINK_FLOYD NORMAL);
+        g_fprintf (stderr, ANSI_DARK_MAGENTA PINK_FLOYD ANSI_NORMAL);
 
     execvp (argv[0], argv);
 
-    g_printerr ("execvp() failed: %s\n", g_strerror(errno));
+    g_printerr ("execvp() failed: %s\n", g_strerror (errno));
     _exit(-1);
 }
 

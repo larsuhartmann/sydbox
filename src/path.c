@@ -25,8 +25,8 @@
 #include <glib.h>
 
 #include "path.h"
-#include "util.h"
 #include "sydbox-log.h"
+#include "sydbox-utils.h"
 
 
 static char *
@@ -112,7 +112,7 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     if (!sanitize)
         data = g_strdup (path);
     else {
-        char *spath = remove_slash(path);
+        char *spath = sydbox_compress_path (path);
         data = shell_expand (spath);
         g_free (spath);
         g_info ("new path item `%s'", data);
@@ -131,7 +131,7 @@ int pathnode_new_early(GSList **pathlist, const char *path, int sanitize)
     if (!sanitize)
         data = g_strdup(path);
     else {
-        spath = remove_slash(path);
+        spath = sydbox_compress_path (path);
         data = shell_expand(spath);
         g_free(spath);
     }

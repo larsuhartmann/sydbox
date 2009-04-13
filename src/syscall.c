@@ -38,8 +38,10 @@
 #include "wrappers.h"
 #include "syscall_marshaller.h"
 #include "syscall.h"
-#include "sydbox-config.h"
+
 #include "sydbox-log.h"
+#include "sydbox-utils.h"
+#include "sydbox-config.h"
 
 // System call dispatch flags
 #define RETURNS_FD              (1 << 0) // The function returns a file descriptor
@@ -314,7 +316,7 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     else if (path_magic_rmwrite(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMWRITE_LEN;
-        rpath_sanitized = remove_slash(rpath);
+        rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
         g_message ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
@@ -323,7 +325,7 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     else if (path_magic_rmpredict(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMPREDICT_LEN;
-        rpath_sanitized = remove_slash(rpath);
+        rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
         g_message ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
@@ -498,17 +500,17 @@ static gchar *systemcall_resolvepath(SystemCall *self,
             int len = strlen(use_newcwd ? newcwd : child->cwd) + strlen(path) + 2;
             char *pathc = g_malloc(len * sizeof(char));
             snprintf(pathc, len, "%s/%s", use_newcwd ? newcwd : child->cwd, path);
-            path_sanitized = remove_slash(pathc);
+            path_sanitized = sydbox_compress_path (pathc);
             g_free(pathc);
         }
         else {
             g_free(ctx->cwd);
             ctx->cwd = isat ? g_strdup(newcwd) : g_strdup(child->cwd);
-            path_sanitized = remove_slash(path);
+            path_sanitized = sydbox_compress_path (path);
         }
     }
     else
-        path_sanitized = remove_slash(path);
+        path_sanitized = sydbox_compress_path (path);
 
     g_debug("mode is %s resolve is %s", maycreat ? "CAN_ALL_BUT_LAST" : "CAN_EXISTING",
                                         data->resolve ? "TRUE" : "FALSE");
@@ -599,7 +601,7 @@ static void systemcall_check_path(SystemCall *self,
         else
             strcat(reason, "...)");
         sname = syscall_get_name(self->no);
-        access_error(child->pid, reason, sname, path);
+        sydbox_access_violation (child->pid, reason, sname, path);
         g_free(reason);
         data->result = RS_DENY;
     }
@@ -672,9 +674,9 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     }
     if (self->flags & NET_CALL && child->sandbox->net) {
 #if defined(__NR_socketcall)
-        access_error(child->pid, "socketcall()");
+        sydbox_access_violation (child->pid, "socketcall()");
 #elif defined(__NR_socket)
-        access_error(child->pid, "socket()");
+        sydbox_access_violation (child->pid, "socket()");
 #endif
         data->result = RS_DENY;
         child->retval = -EACCES;
@@ -891,7 +893,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             g_printerr ("failed to get syscall: %s", g_strerror (errno));
             exit (-1);
         }
-        return handle_esrch(ctx, child);
+        return context_remove_child (ctx, child);
     }
 
     sname = (0xbadca11 == sno) ? syscall_get_name(child->sno) : syscall_get_name(sno);
@@ -920,7 +922,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                             g_printerr("failed to set syscall: %s", g_strerror(errno));
                             exit(-1);
                         }
-                        return handle_esrch(ctx, child);
+                        return context_remove_child (ctx, child);
                     }
                     break;
                 case RS_ALLOW:
@@ -933,8 +935,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                         g_printerr("error while checking system call %s() for access: %s", sname, g_strerror(errno));
                         exit(-1);
                     }
-                    return handle_esrch(ctx, child);
-                    break;
+                    return context_remove_child (ctx, child);
                 default:
                     g_assert_not_reached();
                     break;
@@ -951,14 +952,14 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     g_printerr("failed to restore syscall: %s", g_strerror (errno));
                     exit(-1);
                 }
-                return handle_esrch(ctx, child);
+                return context_remove_child (ctx, child);
             }
             if (0 > trace_set_return(child->pid, child->retval)) {
                 if (ESRCH != errno) {
                     g_printerr("failed to set return code: %s", g_strerror(errno));
                     exit(-1);
                 }
-                return handle_esrch(ctx, child);
+                return context_remove_child (ctx, child);
             }
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
@@ -968,7 +969,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     g_printerr("failed to get return code: %s", g_strerror (errno));
                     exit(-1);
                 }
-                return handle_esrch(ctx, child);
+                return context_remove_child (ctx, child);
             }
             if (0 == retval) {
                 // Child has successfully changed directory
@@ -981,7 +982,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                             g_printerr("failed to set return code: %s", g_strerror (errno));
                             exit(-1);
                         }
-                        return handle_esrch(ctx, child);
+                        return context_remove_child (ctx, child);
                     }
                 }
                 else {

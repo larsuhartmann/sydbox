@@ -24,6 +24,7 @@
 
 #include "context.h"
 #include "wrappers.h"
+#include "sydbox-log.h"
 
 context_t *
 context_new (void)
@@ -50,5 +51,18 @@ context_free (context_t *ctx)
         tchild_free (&(ctx->children));
 
     g_free (ctx);
+}
+
+int
+context_remove_child (context_t * const ctx, const struct tchild * const child)
+{
+    g_info ("removing child %d from context", child->pid);
+
+    if (ctx->eldest == child)
+        return -1;
+
+    tchild_delete (&ctx->children, child->pid);
+
+    return 0;
 }
 
