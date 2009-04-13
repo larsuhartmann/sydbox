@@ -84,11 +84,15 @@ the -l option.
 PARANOID MODE
 -------------
 When sydbox is run in paranoid mode, it attempts to ensure security of the
-sandbox. For example, if a system call's path argument is a symlink, sydbox will
-attempt to change it with the resolved path to prevent symlink races.
+sandbox. This mode is experimental and many programmes are known to fail when
+run under sydbox with paranoid mode enabled.
 
-Many programmes are known to fail when run under sydbox with paranoid mode
-enabled.
+In this mode sydbox will:::
+- try hard to canonicalize path arguments before checking for filesystem
+  prefixes. If for some reason, this canonicalizing fails the system call will
+  be *denied*.
+- attempt to change system call's path argument with the resolved path, in case
+  it's a symlink, to prevent symlink races.
 
 Sydbox is not considered to be a security tool without this mode enabled.  It
 can still be used by package managers, such as paludis, to ensure that arbitrary

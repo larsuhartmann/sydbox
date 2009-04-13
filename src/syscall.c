@@ -534,6 +534,10 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
         return;
     else if (!child->sandbox->on)
         return;
+    else if (!sydbox_config_get_paranoid_mode_enabled()) {
+        /* systemcall_make_absolute() is used when paranoid mode is off instead. */
+        return;
+    }
 
     g_debug("canonicalizing paths for system call %d, child %i", self->no, child->pid);
 
@@ -569,6 +573,60 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
         else
             g_debug("canonicalized `%s' to `%s'", data->pathlist[3], data->rpathlist[3]);
     }
+}
+
+static gchar *systemcall_add_cwd(SystemCall *self,
+                                 context_t *ctx, struct tchild *child,
+                                 int narg, gboolean isat, struct checkdata *data)
+{
+    char *path = data->pathlist[narg];
+    char *cwd = NULL;
+    char *path_sanitized = NULL;
+
+    if ('/' == path[0])
+        return g_strdup(path);
+    else if (isat && NULL != data->dirfdlist[narg - 1])
+        cwd = data->dirfdlist[narg - 1];
+    else
+        cwd = child->cwd;
+
+    g_debug("adding current working directory `%s' to `%s'", cwd, path);
+    int len = strlen(cwd) + strlen(path) + 2;
+    char *pathc = g_malloc(len * sizeof(char));
+    snprintf(pathc, len, "%s/%s", cwd, path);
+    path_sanitized = sydbox_compress_path(pathc);
+    g_free(pathc);
+
+    return path_sanitized;
+}
+
+static void systemcall_make_absolute(SystemCall *self, gpointer ctx_ptr,
+                                     gpointer child_ptr, gpointer data_ptr)
+{
+    context_t *ctx = (context_t *) ctx_ptr;
+    struct tchild *child = (struct tchild *) child_ptr;
+    struct checkdata *data = (struct checkdata *) data_ptr;
+
+    if (RS_ALLOW != data->result)
+        return;
+    else if (!child->sandbox->on)
+        return;
+    else if (sydbox_config_get_paranoid_mode_enabled()) {
+        /* systemcall_canonicalize() is used when paranoid mode is on instead. */
+        return;
+    }
+
+    g_debug("adding current working directory to non-absolute paths for system call %d, child %i",
+            self->no, child->pid);
+
+    if (self->flags & CHECK_PATH)
+        data->rpathlist[0] = systemcall_add_cwd(self, ctx, child, 0, FALSE, data);
+    if (self->flags & CHECK_PATH2)
+        data->rpathlist[1] = systemcall_add_cwd(self, ctx, child, 1, FALSE, data);
+    if (self->flags & CHECK_PATH_AT)
+        data->rpathlist[1] = systemcall_add_cwd(self, ctx, child, 1, TRUE, data);
+    if (self->flags & CHECK_PATH_AT2)
+        data->rpathlist[3] = systemcall_add_cwd(self, ctx, child, 3, TRUE, data);
 }
 
 static void systemcall_check_path(SystemCall *self,
@@ -737,6 +795,7 @@ static void systemcall_class_init(SystemCallClass *cls) {
     cls->magic = systemcall_magic;
     cls->resolve = systemcall_resolve;
     cls->canonicalize = systemcall_canonicalize;
+    cls->make_absolute = systemcall_make_absolute;
     cls->check = systemcall_check;
     cls->end_check = systemcall_end_check;
 
@@ -803,6 +862,7 @@ void syscall_init(void) {
         g_signal_connect(obj, "check", (GCallback) systemcall_magic, NULL);         \
         g_signal_connect(obj, "check", (GCallback) systemcall_resolve, NULL);       \
         g_signal_connect(obj, "check", (GCallback) systemcall_canonicalize, NULL);  \
+        g_signal_connect(obj, "check", (GCallback) systemcall_make_absolute, NULL); \
         g_signal_connect(obj, "check", (GCallback) systemcall_check, NULL);         \
         g_signal_connect(obj, "check", (GCallback) systemcall_end_check, NULL);     \
         syscalls[i].no = (_no);     \
