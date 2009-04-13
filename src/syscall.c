@@ -496,11 +496,9 @@ static gchar *systemcall_resolvepath(SystemCall *self,
         if (0 > echdir(newcwd)) {
             g_debug("failed to change current working directory to `%s': %s", newcwd, strerror(errno));
             g_debug("adding current working directory to `%s' instead", path);
-            int len = strlen(use_newcwd ? newcwd : child->cwd) + strlen(path) + 2;
-            char *pathc = g_malloc(len * sizeof(char));
-            snprintf(pathc, len, "%s/%s", use_newcwd ? newcwd : child->cwd, path);
-            path_sanitized = sydbox_compress_path (pathc);
-            g_free(pathc);
+            char *abspath = g_build_path(G_DIR_SEPARATOR_S, use_newcwd ? newcwd : child->cwd, path, NULL);
+            path_sanitized = sydbox_compress_path (abspath);
+            g_free(abspath);
         }
         else {
             g_free(ctx->cwd);
@@ -591,11 +589,9 @@ static gchar *systemcall_add_cwd(SystemCall *self,
         cwd = child->cwd;
 
     g_debug("adding current working directory `%s' to `%s'", cwd, path);
-    int len = strlen(cwd) + strlen(path) + 2;
-    char *pathc = g_malloc(len * sizeof(char));
-    snprintf(pathc, len, "%s/%s", cwd, path);
-    path_sanitized = sydbox_compress_path(pathc);
-    g_free(pathc);
+    char *abspath = g_build_path(G_DIR_SEPARATOR_S, cwd, path, NULL);
+    path_sanitized = sydbox_compress_path(abspath);
+    g_free(abspath);
 
     return path_sanitized;
 }
