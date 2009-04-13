@@ -1,7 +1,7 @@
 /* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
 /*
- * Copyright (c) 2009 Ali Polatel
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  * Based in part upon strace which is:
  *  Copyright (c) 1991, 1992 Paul Kranenburg <pk@cs.few.eur.nl>
  *  Copyright (c) 1993 Branko Lankester <branko@hacktic.nl>

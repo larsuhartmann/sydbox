@@ -1,11 +1,8 @@
 /* vim: set sw=4 sts=4 fdm=syntax et : */
 
 /**
- * Copyright (c) 2009 Ali Polatel
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
-<<<<<<< HEAD:src/wrappers.h
- * Copyright 2009 Ali Polatel <polatel@gmail.com>
-=======
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -19,7 +16,6 @@
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA  02111-1307  USA
->>>>>>> master:src/wrappers.h
  **/
 
 #ifndef __WRAPPERS_H__

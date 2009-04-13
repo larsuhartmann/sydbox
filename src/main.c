@@ -1,7 +1,7 @@
 /* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
 /*
- * Copyright (c) 2009 Ali Polatel
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
