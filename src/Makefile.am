@@ -11,7 +11,6 @@ sydbox_SOURCES = children.h context.h sydbox-log.h loop.h \
 sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS) $(confuse_LIBS)
 
 sydbox_SOURCES+= syscallent.h
-BUILT_SOURCES= syscallent.h
 if GCC
 syscallent.h:
 	@echo "Generating $@ from asm/unistd.h"
@@ -32,7 +31,6 @@ syscallent.h:
 endif
 
 sydbox_SOURCES+= syscall_marshaller.h syscall_marshaller.c
-BUILT_SOURCES+= syscall_marshaller.h syscall_marshaller.c
 syscall_marshaller.h: syscall_marshaller.list
 	glib-genmarshal --prefix syscall_marshall --header $< > $@
 syscall_marshaller.c: syscall_marshaller.list
