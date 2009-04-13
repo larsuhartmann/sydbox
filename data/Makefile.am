@@ -1,5 +1,5 @@
 CLEANFILES= sydbox.1.xml
-EXTRA_DIST= sydox.1.txt sydbox.1
+EXTRA_DIST= sydbox.1.txt sydbox.1
 BUILT_SOURCES= sydbox.1
 
 MANPAGE_XSL:=/etc/asciidoc/docbook-xsl/manpage.xsl
