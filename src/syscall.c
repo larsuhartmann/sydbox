@@ -34,7 +34,6 @@
 #include "path.h"
 #include "proc.h"
 #include "trace.h"
-#include "util.h"
 #include "wrappers.h"
 #include "syscall_marshaller.h"
 #include "syscall.h"

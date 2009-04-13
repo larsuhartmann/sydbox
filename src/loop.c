@@ -29,7 +29,6 @@
 #include <glib.h>
 
 #include "loop.h"
-#include "util.h"
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"
