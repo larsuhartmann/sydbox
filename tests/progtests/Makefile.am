@@ -1,5 +1,3 @@
-SUBDIRS = .
-
 CLEANFILES = *.log test-lib.bash
 
 TESTS = t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash t05-lchown.bash \
@@ -8,6 +6,7 @@ TESTS = t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash t05-lchown.ba
 	t14-truncate.bash t15-mount.bash t16-umount.bash t17-umount2.bash t18-utime.bash \
 	t19-unlink.bash t20-renameat-first-atfdcwd.bash t21-renameat-first.bash \
 	t22-renameat-second-atfdcwd.bash t23-renameat-second.bash
+EXTRA_DIST= $(TESTS)
 
 check_PROGRAMS = test-lib.bash t01_chmod t02_chown t03_open \
 		 t04_creat t05_lchown t06_link t07_mkdir t08_mknod t09_access \
@@ -16,8 +15,8 @@ check_PROGRAMS = test-lib.bash t01_chmod t02_chown t03_open \
 		 t20_renameat_first_atfdcwd t21_renameat_first t22_renameat_second_atfdcwd \
 		 t23_renameat_second
 
-test_lib_bash_SOURCES =
+test_lib_bash_SOURCES= test-lib.bash.in
 
 test-lib.bash: test-lib.bash.in
-	sed -e "s:@TOP_BUILDDIR@:$(top_builddir):" test-lib.bash.in > test-lib.bash
+	sed -e "s:@TOP_BUILDDIR@:$(top_builddir):" $< > $@
 
