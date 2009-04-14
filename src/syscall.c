@@ -87,13 +87,6 @@ enum {
     PROP_SYSTEMCALL_FLAGS,
 };
 
-enum {
-    SIGNAL_CHECK,
-    LAST_SIGNAL
-};
-
-static guint systemcall_signal[LAST_SIGNAL] = { 0 };
-
 static inline const char *syscall_get_name(int no) {
     for (int i = 0; sysnames[i].name != NULL; i++) {
         if (sysnames[i].no == no)
@@ -795,21 +788,19 @@ static void systemcall_class_init(SystemCallClass *cls) {
     cls->check = systemcall_check;
     cls->end_check = systemcall_end_check;
 
-
     // Install signals and default handlers
-    systemcall_signal[SIGNAL_CHECK] =
-        g_signal_new("check",
-                     TYPE_SYSTEMCALL,
-                     G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED,
-                     G_STRUCT_OFFSET(SystemCallClass, start_check),
-                     NULL,
-                     NULL,
-                     syscall_marshall_VOID__POINTER_POINTER_POINTER,
-                     G_TYPE_NONE,
-                     3,
-                     G_TYPE_POINTER,
-                     G_TYPE_POINTER,
-                     G_TYPE_POINTER);
+    g_signal_new("check",
+                 TYPE_SYSTEMCALL,
+                 G_SIGNAL_RUN_FIRST | G_SIGNAL_DETAILED,
+                 G_STRUCT_OFFSET(SystemCallClass, start_check),
+                 NULL,
+                 NULL,
+                 syscall_marshall_VOID__POINTER_POINTER_POINTER,
+                 G_TYPE_NONE,
+                 3,
+                 G_TYPE_POINTER,
+                 G_TYPE_POINTER,
+                 G_TYPE_POINTER);
 }
 
 

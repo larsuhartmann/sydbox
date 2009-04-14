@@ -23,7 +23,12 @@
 #include <glib/gstdio.h>
 
 #include <errno.h>
+#include <time.h>
 #include <unistd.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 static FILE *fd;
 static gboolean initialized;
@@ -53,7 +58,10 @@ sydbox_log_output (const gchar *log_domain,
             prefix = g_strdup ("INFO");
             break;
         case G_LOG_LEVEL_DEBUG:
-            prefix = g_strdup_printf ("(%s:%lu): DEBUG", g_get_prgname(), (gulong) getpid());
+            prefix = g_strdup ("DEBUG");
+            break;
+        case LOG_LEVEL_DEBUG_TRACE:
+            prefix = g_strdup ("TRACE");
             break;
         default:
             prefix = g_strdup ("");
@@ -61,8 +69,11 @@ sydbox_log_output (const gchar *log_domain,
     }
 
 
-    output = g_strdup_printf ("%s %s: %s\n",
-                              log_domain ? log_domain : "**", prefix, message);
+    output = g_strdup_printf ("%s (%s%lu@%lu) %s: %s\n",
+                              log_domain ? log_domain : "**",
+                              fd ? "" : PACKAGE":",
+                              (gulong) getpid(), (gulong) time(NULL),
+                              prefix, message);
     g_free (prefix);
 
     g_fprintf (fd ? fd : stderr, "%s", output);
