@@ -193,12 +193,14 @@ egetcwd (void)
     int len;
     int save_errno;
 
+#ifdef HAVE_GETCWD_NULL
     /* First try getcwd() */
     buf = getcwd(NULL, 0);
     if (NULL != buf)
         return buf;
     else if (ENAMETOOLONG != errno)
         return NULL;
+#endif /* HAVE_GETCWD_NULL */
 
     /* Next try stat()'ing and chdir()'ing up */
     bufsiz = PATH_MAX;

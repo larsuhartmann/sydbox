@@ -106,6 +106,32 @@ dnl {{{ Check functions
 AC_CHECK_FUNCS([fchdir])
 dnl }}}
 
+dnl {{{ Check whether getcwd(NULL, 0) allocates memory for result
+AC_MSG_CHECKING([whether getcwd(NULL, 0) allocates memory for result])
+AC_CACHE_VAL([ac_cv_func_getcwd_null])
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(void) {
+    if (0 != chdir("/"))
+        return EXIT_FAILURE;
+    else {
+        char *f = getcwd(NULL, 0);
+        if (NULL != f && '/' == f[0] && '\0' == f[1])
+            return EXIT_SUCCESS;
+        else
+            return EXIT_FAILURE;
+    }
+}
+]])],
+[AC_MSG_RESULT([yes]) ; ac_cv_func_getcwd_null=yes],
+[AC_MSG_RESULT([no]) ; ac_cv_func_getcwd_null=no])
+if test x"$ac_cv_func_getcwd_null" = x"yes"; then
+	AC_DEFINE([HAVE_GETCWD_NULL], 1, [Define for getcwd(NULL, 0) that allocates memory])
+fi
+dnl }}}
+
 dnl {{{ Check for usable /dev/null
 AC_MSG_CHECKING([for usable /dev/null])
 AC_CACHE_VAL(ac_cv_dev_null_usable)
