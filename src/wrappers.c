@@ -156,7 +156,7 @@ echdir (gchar *dir)
             *s = '/';
             break;
         }
-#ifdef HAVE_FCHDIR
+#ifndef HAVE_FCHDIR
         currdir = -1;
 #endif
         *s = '/';
