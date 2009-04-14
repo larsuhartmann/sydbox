@@ -198,7 +198,7 @@ int trace_loop(context_t *ctx) {
                 break;
             case E_EXIT:
                 ret = WEXITSTATUS(status);
-                if (ctx->eldest == child) {
+                if (ctx->eldest == pid) {
                     // Eldest child, keep the return value
                     if (0 != ret)
                         g_message ("eldest child %i exited with return code %d", pid, ret);
@@ -211,7 +211,7 @@ int trace_loop(context_t *ctx) {
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_EXIT_SIGNAL:
-                if (ctx->eldest == child) {
+                if (ctx->eldest == pid) {
                     g_message ("eldest child %i exited with signal %d", pid, WTERMSIG(status));
                     tchild_delete(&(ctx->children), pid);
                     return EXIT_FAILURE;

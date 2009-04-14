@@ -98,10 +98,10 @@ static GOptionEntry entries[] =
 // Cleanup functions
 static void cleanup(void) {
     g_info ("cleaning up before exit");
-    if (NULL != ctx && NULL != ctx->eldest) {
-        g_message ("killing child %i", ctx->eldest->pid);
-        if (0 > trace_kill(ctx->eldest->pid) && ESRCH != errno)
-            g_warning ("failed to kill child %i: %s", ctx->eldest->pid, strerror(errno));
+    if (NULL != ctx) {
+        g_info ("killing child %i", ctx->eldest);
+        if (0 > trace_kill(ctx->eldest) && ESRCH != errno)
+            g_warning ("failed to kill child %i: %s", ctx->eldest, strerror(errno));
     }
     if (NULL != ctx) {
         context_free(ctx);
@@ -181,6 +181,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 {
     int status, retval;
     struct sigaction new_action, old_action;
+    struct tchild *eldest;
 
     new_action.sa_handler = sig_cleanup;
     sigemptyset (&new_action.sa_mask);
@@ -214,12 +215,13 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     }
 
     tchild_new (&(ctx->children), pid);
-    ctx->eldest = childtab[pid];
-    ctx->eldest->cwd = g_strdup (ctx->cwd);
-    ctx->eldest->sandbox->net = sydbox_config_get_sandbox_network ();
-    ctx->eldest->sandbox->lock = ! sydbox_config_get_allow_magic_commands ();
-    ctx->eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
-    ctx->eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes ();
+    ctx->eldest = pid;
+    eldest = childtab[pid];
+    eldest->cwd = g_strdup (ctx->cwd);
+    eldest->sandbox->net = sydbox_config_get_sandbox_network ();
+    eldest->sandbox->lock = ! sydbox_config_get_allow_magic_commands ();
+    eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
+    eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes ();
 
     g_info ("child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {

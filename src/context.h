@@ -21,12 +21,14 @@
 #ifndef __CONTEXT_H__
 #define __CONTEXT_H__
 
+#include <sys/types.h>
+
 #include "children.h"
 
 typedef struct
 {
     char *cwd;              // current working directory
-    struct tchild *eldest;  // first child is kept to determine return code
+    pid_t eldest;           // first child's pid is kept to determine return code
     GSList *children;       // list of children
 } context_t;
 

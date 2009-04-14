@@ -58,7 +58,7 @@ context_remove_child (context_t * const ctx, const struct tchild * const child)
 {
     g_info ("removing child %d from context", child->pid);
 
-    if (ctx->eldest == child)
+    if (ctx->eldest == child->pid)
         return -1;
 
     tchild_delete (&ctx->children, child->pid);
