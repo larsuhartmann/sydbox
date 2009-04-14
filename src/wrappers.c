@@ -50,6 +50,7 @@
 
 #include <errno.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -63,6 +64,10 @@
 #include <sys/stat.h>
 
 #include <glib.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "path.h"
 #include "wrappers.h"
@@ -129,6 +134,10 @@ echdir (gchar *dir)
 
     for (;;) {
         if (!*dir || chdir(dir) == 0) {
+#ifdef HAVE_FCHDIR
+            if (currdir >= 0)
+                close(currdir);
+#endif
             return 0;
         }
         if ((errno != ENAMETOOLONG && errno != ENOMEM) ||
@@ -138,16 +147,33 @@ echdir (gchar *dir)
             ;
         if (s == dir)
             break;
+#ifdef HAVE_FCHDIR
+        if (currdir == -2)
+            currdir = open(".", O_RDONLY|O_NOCTTY);
+#endif
         *s = '\0';
         if (chdir(dir) < 0) {
             *s = '/';
             break;
         }
+#ifdef HAVE_FCHDIR
+        currdir = -1;
+#endif
         *s = '/';
         while (*++s == '/')
             ;
         dir = s;
     }
+#ifdef HAVE_FCHDIR
+    if (currdir >= 0) {
+        if (fchdir(currdir) < 0) {
+            close(currdir);
+            return -2;
+        }
+        close(currdir);
+        return -1;
+    }
+#endif
     return currdir == -2 ? -1 : -2;
 }
 

@@ -102,6 +102,10 @@ dnl {{{ Check headers
 AC_CHECK_HEADERS([sys/reg.h], [], [])
 dnl }}}
 
+dnl {{{ Check functions
+AC_CHECK_FUNCS([fchdir])
+dnl }}}
+
 dnl {{{ Check for usable /dev/null
 AC_MSG_CHECKING([for usable /dev/null])
 AC_CACHE_VAL(ac_cv_dev_null_usable)
