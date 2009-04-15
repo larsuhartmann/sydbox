@@ -49,6 +49,10 @@ char *pgetcwd(context_t *ctx, pid_t pid) {
          */
         g_free(ctx->cwd);
         ctx->cwd = egetcwd();
+        if (NULL == ctx->cwd) {
+            g_printerr("failed to get current working directory: %s", g_strerror(errno));
+            exit(-1);
+        }
         if (0 == ret) {
             /* echdir() was successful */
             return g_strdup(ctx->cwd);
@@ -79,6 +83,10 @@ char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
          */
         g_free(ctx->cwd);
         ctx->cwd = egetcwd();
+        if (NULL == ctx->cwd) {
+            g_printerr("failed to get current working directory: %s", g_strerror(errno));
+            exit(-1);
+        }
         if (0 == ret) {
             /* echdir() was successful */
             return g_strdup(ctx->cwd);
