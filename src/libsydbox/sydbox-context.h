@@ -38,7 +38,7 @@ gboolean
 sydbox_context_get_sandbox_network (const SydboxContext * const ctx);
 
 void
-sydbox_context_set_sandbox_network (SydboxContext * const ctx);
+sydbox_context_set_sandbox_network (SydboxContext * const ctx, gboolean enabled);
 
 const GSList *
 sydbox_context_get_write_prefixes (const SydboxContext * const ctx);
