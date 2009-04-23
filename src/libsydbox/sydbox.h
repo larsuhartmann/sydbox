@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -27,10 +28,14 @@
 
 G_BEGIN_DECLS
 
+#define SYDBOX_EXECUTE_SEARCH_PATH (1 << 0)
+
 gint
 sydbox_execute (const SydboxContext * const ctx,
+                const gint flags,
                 const gint argc,
-                const gchar * const * const argv);
+                const gchar * const * const argv,
+                const gchar * const * const envp);
 
 G_END_DECLS
 
