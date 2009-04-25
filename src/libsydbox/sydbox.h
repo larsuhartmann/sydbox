@@ -30,38 +30,38 @@ G_BEGIN_DECLS
 
 gint
 sydbox_execl (const SydboxContext * const ctx,
-              const gchar * const path,
-              const gchar * const arg,
+              const gchar *path,
+              const gchar *arg,
               ...);
 
 gint
 sydbox_execlp (const SydboxContext * const ctx,
-               const gchar * const file,
-               const gchar * const arg,
+               const gchar *file,
+               const gchar *arg,
                ...);
 
 gint
 sydbox_execle (const SydboxContext * const ctx,
-               const gchar * const path,
-               const gchar * const arg,
+               const gchar *path,
+               const gchar *arg,
                ...,
-               const gchar * const envp[]);
+               gchar * const envp[]);
 
 gint
 sydbox_execv (const SydboxContext * const ctx,
-              const gchar * const path,
-              const gchar * const argv[]);
+              const gchar *path,
+              gchar * const argv[]);
 
 gint
 sydbox_execvp (const SydboxContext * const ctx,
-               const gchar * const file,
-               const gchar * const argv[]);
+               const gchar *file,
+               gchar * const argv[]);
 
 gint
 sydbox_execve (const SydboxContext * const ctx,
-               const gchar * const filename,
-               const gchar * const argv[],
-               const gchar * const envp[]);
+               const gchar *filename,
+               gchar * const argv[],
+               gchar * const envp[]);
 
 G_END_DECLS
 
