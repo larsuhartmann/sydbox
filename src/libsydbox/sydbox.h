@@ -57,6 +57,12 @@ sydbox_execvp (const SydboxContext * const ctx,
                const gchar * const file,
                const gchar * const argv[]);
 
+gint
+sydbox_execve (const SydboxContext * const ctx,
+               const gchar * const filename,
+               const gchar * const argv[],
+               const gchar * const envp[]);
+
 G_END_DECLS
 
 #endif
