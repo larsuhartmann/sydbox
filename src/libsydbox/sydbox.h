@@ -28,14 +28,34 @@
 
 G_BEGIN_DECLS
 
-#define SYDBOX_EXECUTE_SEARCH_PATH (1 << 0)
+gint
+sydbox_execl (const SydboxContext * const ctx,
+              const gchar * const path,
+              const gchar * const arg,
+              ...);
 
 gint
-sydbox_execute (const SydboxContext * const ctx,
-                const gint flags,
-                const gint argc,
-                const gchar * const * const argv,
-                const gchar * const * const envp);
+sydbox_execlp (const SydboxContext * const ctx,
+               const gchar * const file,
+               const gchar * const arg,
+               ...);
+
+gint
+sydbox_execle (const SydboxContext * const ctx,
+               const gchar * const path,
+               const gchar * const arg,
+               ...,
+               const gchar * const envp[]);
+
+gint
+sydbox_execv (const SydboxContext * const ctx,
+              const gchar * const path,
+              const gchar * const argv[]);
+
+gint
+sydbox_execvp (const SydboxContext * const ctx,
+               const gchar * const file,
+               const gchar * const argv[]);
 
 G_END_DECLS
 
