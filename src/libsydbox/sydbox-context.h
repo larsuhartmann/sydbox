@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -23,6 +24,7 @@
 #include <glib.h>
 
 #include <sydbox-unstable.h>
+#include <sydbox-context-internal.h>
 
 G_BEGIN_DECLS
 
