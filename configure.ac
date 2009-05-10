@@ -213,9 +213,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 int main(void) {
     pid_t pid;
 
-
     pid = fork();
-
     if (0 > pid)
         exit(1);
     if (0 == pid) {
