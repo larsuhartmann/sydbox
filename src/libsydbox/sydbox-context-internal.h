@@ -27,7 +27,7 @@
 G_BEGIN_DECLS
 
 struct _SydboxContext {
-    const gchar *cwd;   // current working directory
+    gchar *cwd;         // current working directory
     pid_t eldest;       // first child's pid is kept to determine return code
     GSList *children;   // list of children
 
