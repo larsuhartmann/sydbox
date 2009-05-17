@@ -30,6 +30,10 @@ gprof*
 /install-sh
 /missing
 /stamp-h1
+/ltmain.sh
+
+m4/libtool.m4
+m4/lt*.m4
 
 data/sydbox.1
 data/sydbox.1.xml

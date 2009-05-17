@@ -6,6 +6,8 @@ die() {
     exit 1
 }
 
+echo ">>> libtoolize --copy --force --automake"
+libtoolize --copy --force --automake
 echo ">>> rm -f config.cache"
 rm -f config.cache
 echo ">>> aclocal -I m4"
@@ -16,3 +18,4 @@ echo ">>> autoconf"
 autoconf || die "autoconf failed"
 echo ">>> automake --foreign --add-missing --copy"
 automake --foreign --add-missing --copy || die "automake failed"
+

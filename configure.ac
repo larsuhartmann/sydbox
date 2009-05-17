@@ -44,6 +44,7 @@ if test x"$ac_cv_prog_cc_c99" = x"no"; then
 fi
 AC_GNU_SOURCE
 AC_PROG_INSTALL
+AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_SED
 dnl }}}
