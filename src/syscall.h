@@ -17,6 +17,9 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef SYDBOX_GUARD_SYSCALL_H
+#define SYDBOX_GUARD_SYSCALL_H 1
+
 #include <sysexits.h>
 
 #include <glib-object.h>
@@ -77,3 +80,6 @@ void syscall_init(void);
 void syscall_free(void);
 SystemCall *syscall_get_handler(int no);
 int syscall_handle(context_t *ctx, struct tchild *child);
+
+#endif // SYDBOX_GUARD_SYSCALL_H
+
