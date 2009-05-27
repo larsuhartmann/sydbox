@@ -88,14 +88,14 @@ enum {
 };
 
 /* Look up the system call name in sysnames array.
- * Return name if its found, NULL otherwise.
+ * Return name if its found, UNKNOWN_SYSCALL otherwise.
  */
 static inline const char *syscall_get_name(int no) {
     for (int i = 0; sysnames[i].name != NULL; i++) {
         if (sysnames[i].no == no)
             return sysnames[i].name;
     }
-    return NULL;
+    return UNKNOWN_SYSCALL;
 }
 
 static void systemcall_set_property(GObject *obj,
@@ -1053,10 +1053,6 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
      * system call number is stored in child->sno.
      */
     sname = (0xbadca11 == sno) ? syscall_get_name(child->sno) : syscall_get_name(sno);
-    if (NULL == sname) {
-        /* Failed to determine name, use unknown */
-        sname = UNKNOWN_SYSCALL;
-    }
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()",
