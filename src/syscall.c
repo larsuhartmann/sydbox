@@ -79,7 +79,7 @@ static const struct syscall_name {
 {-1,    NULL}
 };
 
-#define DEFAULT_NAME    "unknown"
+#define UNKNOWN_SYSCALL     "unknown"
 
 enum {
     PROP_SYSTEMCALL_0,
@@ -87,6 +87,9 @@ enum {
     PROP_SYSTEMCALL_FLAGS,
 };
 
+/* Look up the system call name in sysnames array.
+ * Return name if its found, NULL otherwise.
+ */
 static inline const char *syscall_get_name(int no) {
     for (int i = 0; sysnames[i].name != NULL; i++) {
         if (sysnames[i].no == no)
@@ -137,6 +140,12 @@ static void systemcall_get_property(GObject *obj,
     }
 }
 
+/* Receive the path argument at position narg of child with given pid and
+ * update data.
+ * Returns FALSE and sets data->result to RS_ERROR and data->save_errno to
+ * errno on failure.
+ * Returns TRUE and updates data->pathlist[narg] on success.
+ */
 static gboolean systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
 {
     data->pathlist[narg] = trace_get_string(pid, narg);
@@ -152,6 +161,16 @@ static gboolean systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
     return TRUE;
 }
 
+/* Receive dirfd argument at position narg of the given child and update data.
+ * Returns FALSE and sets data->result to RS_ERROR and data->save_errno to
+ * errno on failure.
+ * If dirfd is AT_FDCWD it copies child->cwd to data->dirfdlist[narg].
+ * Otherwise tries to determine the directory using pgetdir().
+ * If pgetdir() fails it sets data->result to RS_DENY and child->retval to
+ * -errno and returns FALSE.
+ * On success TRUE is returned and data->dirfdlist[narg] contains the directory
+ * information about dirfd. This string should be freed after use.
+ */
 static gboolean systemcall_get_dirfd(SystemCall *self,
                                      context_t *ctx, struct tchild *child,
                                      int narg, struct checkdata *data)
@@ -182,6 +201,9 @@ static gboolean systemcall_get_dirfd(SystemCall *self,
     return TRUE;
 }
 
+/* Initial callback for system call handler.
+ * Updates struct checkdata with path and dirfd information.
+ */
 static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
                                    gpointer child_ptr, gpointer data_ptr)
 {
@@ -212,6 +234,20 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
+/* Second callback for system call handler
+ * Checks the flag arguments of system calls.
+ * If data->result isn't RS_ALLOW, which means an error has occured in a
+ * previous callback or a decision has been made, it does nothing and simply
+ * returns.
+ * If the system call isn't one of open, openat, access or accessat, it does
+ * nothing and simply returns.
+ * If an error occurs during flag checking it sets data->result to RS_ERROR,
+ * data->save_errno to errno and returns.
+ * If the flag doesn't have O_CREAT, O_WRONLY or O_RDWR set for system call
+ * open or openat it sets data->result to RS_NOWRITE and returns.
+ * If the flag doesn't have W_OK set for system call access or accessat it
+ * sets data->result to RS_NOWRITE and returns.
+ */
 static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
                              gpointer child_ptr, gpointer data_ptr)
 {
@@ -255,6 +291,13 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
+/* Checks for magic open() call
+ * If the open() call is magic, this function calls the corresponding magic
+ * function and sets data->result to RS_MAGIC. In this case it also sets
+ * open()'s path argument to /dev/null if this fails it sets data->result to
+ * RS_ERROR and data->save_errno to errno.
+ * If the open() call isn't magic this function does nothing.
+ */
 static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
@@ -339,6 +382,13 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         g_debug("open(\"%s\", ...) not magic", path);
 }
 
+/* Checks for magic stat() calls.
+ * If the stat() call is magic, this function calls trace_fake_stat() to fake
+ * the stat buffer and sets data->result to RS_DENY and child->retval to 0.
+ * If trace_fake_stat() fails it sets data->result to RS_ERROR and
+ * data->save_errno to errno.
+ * If the stat() caill isn't magic, this function does nothing.
+ */
 static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
@@ -362,6 +412,18 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         g_debug("stat(\"%s\") is not magic", path);
 }
 
+/* Third callback for system call handler.
+ * Checks for magic calls.
+ * If data->result isn't RS_ALLOW, which means an error has occured in a
+ * previous callback or a decision has been made, it does nothing and simply
+ * returns.
+ * If child->sandbox->lock is set to LOCK_SET which means magic calls are
+ * locked, it does nothing and simply returns.
+ * If the system call isn't one of open() or stat(), it does nothing and
+ * simply returns.
+ * Otherwise it calls systemcall_magic_open() for open() and
+ * systemcall_magic_stat() for stat().
+ */
 static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
                              gpointer child_ptr, gpointer data_ptr)
 {
@@ -382,6 +444,17 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
         systemcall_magic_stat(child, data);
 }
 
+/* Fourth callback for systemcall handler.
+ * Checks whether symlinks should be resolved for the given system call
+ * If data->result isn't RS_ALLOW, which means an error has occured in a
+ * previous callback or a decision has been made, it does nothing and simply
+ * returns.
+ * If child->sandbox->on is FALSE it does nothing and simply returns.
+ * If everything was successful this function sets data->resolve to a boolean
+ * which gives information about whether the symlinks should be resolved.
+ * On failure this function sets data->result to RS_ERROR and data->save_errno
+ * to errno.
+ */
 static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
                                gpointer child_ptr, gpointer data_ptr)
 {
@@ -394,7 +467,8 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     else if (!child->sandbox->on)
         return;
 
-    g_debug("deciding whether we should resolve symlinks for system call %d, child %i", self->no, child->pid);
+    g_debug("deciding whether we should resolve symlinks for system call %d, child %i",
+            self->no, child->pid);
     if (self->flags & DONT_RESOLV)
         data->resolve = FALSE;
     else if (self->flags & IF_AT_SYMLINK_FOLLOW4) {
@@ -443,6 +517,11 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
             data->resolve ? "" : "not ", self->no, child->pid);
 }
 
+/* Resolves path for system calls
+ * This function calls canonicalize_filename_mode() after sanitizing path
+ * On success it returns resolved path.
+ * On failure it sets data->result to RS_DENY and child->retval to -errno.
+ */
 static gchar *systemcall_resolvepath(SystemCall *self,
                                  context_t *ctx, struct tchild *child,
                                  int narg, gboolean isat, struct checkdata *data)
@@ -514,6 +593,16 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     return resolved_path;
 }
 
+/* Fifth callback for system call handler.
+ * Canonicalizes path arguments.
+ * If data->result isn't RS_ALLOW, which means an error has occured in a
+ * previous callback or a decision has been made, it does nothing and simply
+ * returns.
+ * If child->sandbox->on is FALSE it does nothing and simply returns.
+ * This callback is only used in paranoid mode. If paranoid mode isn't enabled
+ * this function simply returns. systemcall_make_absolute() callback is used in
+ * non-paranoid mode.
+ */
 static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
                                     gpointer child_ptr, gpointer data_ptr)
 {
@@ -533,7 +622,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     g_debug("canonicalizing paths for system call %d, child %i", self->no, child->pid);
 
     if (self->flags & CHECK_PATH) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[0], self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[0],
+                self->no, child->pid);
         data->rpathlist[0] = systemcall_resolvepath(self, ctx, child, 0, FALSE, data);
         if (NULL == data->rpathlist[0])
             return;
@@ -541,7 +631,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[0], data->rpathlist[0]);
     }
     if (self->flags & CHECK_PATH2) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[1], self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[1],
+                self->no, child->pid);
         data->rpathlist[1] = systemcall_resolvepath(self, ctx, child, 1, FALSE, data);
         if (NULL == data->rpathlist[1])
             return;
@@ -549,7 +640,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[1], data->rpathlist[1]);
     }
     if (self->flags & CHECK_PATH_AT) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[1], self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[1],
+                self->no, child->pid);
         data->rpathlist[1] = systemcall_resolvepath(self, ctx, child, 1, TRUE, data);
         if (NULL == data->rpathlist[1])
             return;
@@ -557,7 +649,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[1], data->rpathlist[1]);
     }
     if (self->flags & CHECK_PATH_AT2) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[3], self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[3],
+                self->no, child->pid);
         data->rpathlist[3] = systemcall_resolvepath(self, ctx, child, 3, TRUE, data);
         if (NULL == data->rpathlist[3])
             return;
@@ -589,6 +682,9 @@ static gchar *systemcall_add_cwd(SystemCall *self,
     return path_sanitized;
 }
 
+/* Sixth callback for systemcall handler.
+ * TODO: go on writing documentation ;)
+ */
 static void systemcall_make_absolute(SystemCall *self, gpointer ctx_ptr,
                                      gpointer child_ptr, gpointer data_ptr)
 {
@@ -920,6 +1016,9 @@ void syscall_free(void) {
     }
 }
 
+/* Lookup a handler for the system call in syscalls array.
+ * Return the handler if found, NULL otherwise.
+ */
 SystemCall *syscall_get_handler(int no) {
     for (unsigned int i = 0; NULL != syscalls[i].obj; i++) {
         if (syscalls[i].no == no)
@@ -928,37 +1027,66 @@ SystemCall *syscall_get_handler(int no) {
     return NULL;
 }
 
+/* Main syscall handler
+ */
 int syscall_handle(context_t *ctx, struct tchild *child) {
     long sno;
     const char *sname;
     struct checkdata data;
     SystemCall *handler;
 
+    // Get the system call number of child
     if (0 > trace_get_syscall(child->pid, &sno)) {
-        if (errno != ESRCH) {
+        if (ESRCH != errno) {
+            /* Error getting system call using ptrace()
+             * child is still alive, hence the error is fatal.
+             */
             g_printerr ("failed to get syscall: %s", g_strerror (errno));
             exit (-1);
         }
+        // Child is dead, remove it
         return context_remove_child (ctx, child);
     }
 
+    /* Get the name of the syscall for logging
+     * If system call no is 0xbadca11, this is a faked system call and the real
+     * system call number is stored in child->sno.
+     */
     sname = (0xbadca11 == sno) ? syscall_get_name(child->sno) : syscall_get_name(sno);
-    if (NULL == sname)
-        sname = DEFAULT_NAME;
+    if (NULL == sname) {
+        /* Failed to determine name, use unknown */
+        sname = UNKNOWN_SYSCALL;
+    }
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
-        g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()", child->pid, sname);
+        g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()",
+                child->pid, sname);
+
+        /* Check for exec_lock as early as possible
+         */
         if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
-            g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "access to magic commands is now denied for child %i", child->pid);
+            g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
+                    "access to magic commands is now denied for child %i", child->pid);
             child->sandbox->lock = LOCK_SET;
         }
+
+        /* Get handler for the system call
+         */
         handler = syscall_get_handler(sno);
-        if (NULL == handler) // Safe system call
+        if (NULL == handler) {
+            /* There's no handler for this system call.
+             * Safe system call, allow access.
+             */
             g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "allowing access to system call %s()", sname);
+        }
         else {
+            /* There's a handler for this system call,
+             * call the handler.
+             */
             memset(&data, 0, sizeof(struct checkdata));
             g_signal_emit_by_name(handler, "check", ctx, child, &data);
 
+            /* Check result */
             switch(data.result) {
                 case RS_DENY:
                     g_debug("denying access to system call %s()", sname);
@@ -974,11 +1102,13 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 case RS_ALLOW:
                 case RS_NOWRITE:
                 case RS_MAGIC:
-                    g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "allowing access to system call %s()", sname);
+                    g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE,
+                            "allowing access to system call %s()", sname);
                     break;
                 case RS_ERROR:
                     if (ESRCH != errno) {
-                        g_printerr("error while checking system call %s() for access: %s", sname, g_strerror(errno));
+                        g_printerr("error while checking system call %s() for access: %s",
+                                sname, g_strerror(errno));
                         exit(-1);
                     }
                     return context_remove_child (ctx, child);
@@ -989,60 +1119,97 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         }
     }
     else { // Exiting sytem call
-        g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is exiting system call %s()", child->pid, sname);
+        g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is exiting system call %s()",
+                child->pid, sname);
+
         if (0xbadca11 == sno) {
             g_debug("restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->sno)) {
                 if (ESRCH != errno) {
+                    /* Error setting system call using ptrace()
+                     * child is still alive, hence the error is fatal.
+                     */
                     g_printerr("failed to restore syscall: %s", g_strerror (errno));
                     exit(-1);
                 }
+                // Child is dead, remove it.
                 return context_remove_child (ctx, child);
             }
             if (0 > trace_set_return(child->pid, child->retval)) {
                 if (ESRCH != errno) {
+                    /* Error setting return code using ptrace()
+                     * child is still alive, hence the error is fatal.
+                     */
                     g_printerr("failed to set return code: %s", g_strerror(errno));
                     exit(-1);
                 }
+                // Child is dead, remove it.
                 return context_remove_child (ctx, child);
             }
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
+            /* Child is exiting a system call that may have changed its current
+             * working directory. Update current working directory.
+             */
             long retval;
             if (0 > trace_get_return(child->pid, &retval)) {
                 if (ESRCH != errno) {
+                    /* Error getting return code using ptrace()
+                     * child is still alive, hence the error is fatal.
+                     */
                     g_printerr("failed to get return code: %s", g_strerror (errno));
                     exit(-1);
                 }
+                // Child is dead, remove it.
                 return context_remove_child (ctx, child);
             }
             if (0 == retval) {
-                // Child has successfully changed directory
+                /* Child has successfully changed directory,
+                 * update current working directory.
+                 */
                 char *newcwd = pgetcwd(ctx, child->pid);
                 if (NULL == newcwd) {
+                    /* Failed to get current working directory of child.
+                     * Set errno of the child.
+                     * FIXME: We should probably die here as well, because the
+                     * child has successfully changed directory and setting
+                     * errno doesn't change that fact.
+                     */
                     retval = -errno;
                     g_debug("pgetcwd() failed: %s", g_strerror(errno));
                     if (0 > trace_set_return(child->pid, retval)) {
                         if (ESRCH != errno) {
+                            /* Error setting return code using ptrace()
+                             * child is still alive, hence the error is fatal.
+                             */
                             g_printerr("failed to set return code: %s", g_strerror (errno));
                             exit(-1);
                         }
+                        // Child is dead, remove it.
                         return context_remove_child (ctx, child);
                     }
                 }
                 else {
+                    /* Successfully determined the new current working
+                     * directory of child. Update context.
+                     */
                     if (NULL != child->cwd)
                         g_free (child->cwd);
                     child->cwd = newcwd;
                     g_info ("child %i has changed directory to '%s'", child->pid, child->cwd);
                 }
             }
-            else
+            else {
+                /* Child failed to change current working directory,
+                 * nothing to do.
+                 */
                 g_debug("child %i failed to change directory: %s", child->pid, g_strerror(-retval));
+            }
         }
 
     }
     child->flags ^= TCHILD_INSYSCALL;
     return 0;
 }
+
