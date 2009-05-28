@@ -57,6 +57,11 @@ case "$host_os" in
 		case "$kernel_version" in
 			2.6*)
 				AC_MSG_RESULT([$kernel_version])
+				kernel_minor_version=`echo $kernel_version | cut -d'.' -f3`
+				if test "$kernel_minor_version" -lt 29; then
+					AC_MSG_WARN([sydbox works slow on kernels <2.6.29 due to a ptrace bug!])
+					AC_MSG_WARN([See http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=53da1d9456fe7f87a920a78fdbdcf1225d197cb7 for the fix!])
+				fi
 				;;
 			2.5*)
 				kernel_minor_version=`echo $kernel_version | cut -d'.' -f3`
