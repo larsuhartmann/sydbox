@@ -31,19 +31,40 @@ OPTIONS
 The ordering of option percedence is configuration file, environment variables,
 command line parameters.
 
-*-?, --help*::
+*-?*::
+*--help*::
     Show help options
-*-c, --config*::
+
+*-c*::
+*--config*::
     Specify path to the configuration file
-*-D, --dump*::
+
+*-D*::
+*--dump*::
     Dump configuration and exit
-*-L, --lock*::
+
+*-L*::
+*--lock*::
     Disallow magic commands
-*-C, --no-colour*::
+
+*-l*::
+*--log-file*::
+    Path to the log file
+
+*-0::
+*--log-level*::
+    Logging verbosity
+
+*-C*::
+*--no-colour*::
     Disallow colouring of messages
-*-p, --paranoid*::
+
+*-p*::
+*--paranoid*::
     Enable paranoid mode (EXPERIMENTAL)
-*-V, --version*::
+
+*-V*::
+*--version*::
     Print version information and exit
 
 ENVIRONMENT VARIABLES
