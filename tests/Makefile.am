@@ -14,6 +14,10 @@ check_sydbox_SOURCES = check_children.c check_path.c check_trace.c \
 		       $(top_builddir)/src/sydbox-utils.c
 nodist_check_sydbox_SOURCES= $(top_builddir)/src/syscall_marshaller.c
 
-check_sydbox_CFLAGS = @SYDBOX_CFLAGS@ -DSYSCONFDIR=\"$(sysconfdir)\" $(glib_CFLAGS) $(confuse_CFLAGS) $(check_CFLAGS)
+check_sydbox_CFLAGS = \
+		      -I$(top_builddir)/src \
+		      @SYDBOX_CFLAGS@ \
+		      -DSYSCONFDIR=\"$(sysconfdir)\" \
+		      $(glib_CFLAGS) $(confuse_CFLAGS) $(check_CFLAGS)
 check_sydbox_LDADD = $(glib_LIBS) $(gobject_LIBS) $(confuse_LIBS) $(check_LIBS)
 
