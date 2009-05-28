@@ -19,6 +19,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include <glib.h>
 
@@ -54,14 +55,14 @@ context_free (context_t *ctx)
 }
 
 int
-context_remove_child (context_t * const ctx, const struct tchild * const child)
+context_remove_child (context_t * const ctx, pid_t pid)
 {
-    g_info ("removing child %d from context", child->pid);
+    g_info ("removing child %d from context", pid);
 
-    if (ctx->eldest == child->pid)
+    if (ctx->eldest == pid)
         return -1;
 
-    tchild_delete (&ctx->children, child->pid);
+    tchild_delete (&ctx->children, pid);
 
     return 0;
 }

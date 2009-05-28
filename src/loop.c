@@ -42,7 +42,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
             g_printerr ("failed to set tracing options: %s", g_strerror (errno));
             exit (-1);
         }
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
     else
         child->flags &= ~TCHILD_NEEDSETUP;
@@ -53,7 +53,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
             g_printerr ("failed to resume child %i after setup: %s", child->pid, g_strerror (errno));
             exit (-1);
         }
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
 
     g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed child %i after setup", child->pid);
@@ -72,7 +72,7 @@ static int xsyscall(context_t *ctx, struct tchild *child) {
             g_printerr ("failed to resume child %i: %s", child->pid, g_strerror (errno));
             exit (-1);
         }
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
     return 0;
 }
@@ -87,7 +87,7 @@ static int xfork(context_t *ctx, struct tchild *child) {
             g_printerr ("failed to get the pid of the newborn child: %s", g_strerror (errno));
             exit (-1);
         }
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
     else
         g_debug ("the newborn child's pid is %i", childpid);
@@ -100,7 +100,7 @@ static int xfork(context_t *ctx, struct tchild *child) {
                 g_printerr ("failed to resume prematurely born child %i: %s", newchild->pid, g_strerror (errno));
                 exit (-1);
             }
-            return context_remove_child (ctx, newchild);
+            return context_remove_child (ctx, newchild->pid);
         }
         g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed prematurely born child %i", newchild->pid);
     }
@@ -117,7 +117,7 @@ static int xgenuine(context_t * ctx, struct tchild *child, int status) {
             g_printerr ("Failed to resume child %i after genuine signal: %s", child->pid, g_strerror (errno));
             exit (-1);
         }
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
     g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed child %i after genuine signal", child->pid);
     return 0;
@@ -130,7 +130,7 @@ static int xunknown(context_t *ctx, struct tchild *child, int status) {
             g_printerr ("failed to resume child %i after unknown signal %#x: %s", child->pid, status, g_strerror (errno));
             exit (-1);
         }
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
     g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed child %i after unknown signal %#x", child->pid, status);
     return 0;

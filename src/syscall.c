@@ -1045,7 +1045,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             exit (-1);
         }
         // Child is dead, remove it
-        return context_remove_child (ctx, child);
+        return context_remove_child (ctx, child->pid);
     }
 
     /* Get the name of the syscall for logging
@@ -1092,7 +1092,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                             g_printerr("failed to set syscall: %s", g_strerror(errno));
                             exit(-1);
                         }
-                        return context_remove_child (ctx, child);
+                        return context_remove_child (ctx, child->pid);
                     }
                     break;
                 case RS_ALLOW:
@@ -1107,7 +1107,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                                 sname, g_strerror(errno));
                         exit(-1);
                     }
-                    return context_remove_child (ctx, child);
+                    return context_remove_child (ctx, child->pid);
                 default:
                     g_assert_not_reached();
                     break;
@@ -1130,7 +1130,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     exit(-1);
                 }
                 // Child is dead, remove it.
-                return context_remove_child (ctx, child);
+                return context_remove_child (ctx, child->pid);
             }
             if (0 > trace_set_return(child->pid, child->retval)) {
                 if (ESRCH != errno) {
@@ -1141,7 +1141,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     exit(-1);
                 }
                 // Child is dead, remove it.
-                return context_remove_child (ctx, child);
+                return context_remove_child (ctx, child->pid);
             }
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
@@ -1158,7 +1158,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     exit(-1);
                 }
                 // Child is dead, remove it.
-                return context_remove_child (ctx, child);
+                return context_remove_child (ctx, child->pid);
             }
             if (0 == retval) {
                 /* Child has successfully changed directory,
@@ -1183,7 +1183,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                             exit(-1);
                         }
                         // Child is dead, remove it.
-                        return context_remove_child (ctx, child);
+                        return context_remove_child (ctx, child->pid);
                     }
                 }
                 else {
