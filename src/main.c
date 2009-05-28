@@ -216,7 +216,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
-    eldest = childtab[pid];
+    eldest = tchild_find(ctx->children, pid);
     eldest->cwd = g_strdup (ctx->cwd);
     eldest->sandbox->net = sydbox_config_get_sandbox_network ();
     eldest->sandbox->lock = ! sydbox_config_get_allow_magic_commands ();

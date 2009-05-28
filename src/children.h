@@ -1,8 +1,24 @@
 /* vim: set sw=4 sts=4 fdm=syntax et : */
 
-/**
- * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
- **/
+/* vim: set sw=4 sts=4 et foldmethod=syntax : */
+
+/*
+ * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
+ *
+ * This file is part of the sydbox sandbox tool. sydbox is free software;
+ * you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License version 2, as published by the Free Software Foundation.
+ *
+ * sydbox is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #ifndef __CHILDREN_H__
 #define __CHILDREN_H__
@@ -14,16 +30,6 @@
 /* TCHILD flags */
 #define TCHILD_NEEDSETUP   (1 << 0)    /* child needs setup */
 #define TCHILD_INSYSCALL   (1 << 1)    /* child is in syscall */
-
-#ifndef PID_MAX_LIMIT
-#if __WORDSIZE == 64
-#define PID_MAX_LIMIT      (1 << 22)
-#elif __WORDSIZE == 32
-#define PID_MAX_LIMIT      (1 << 15)
-#else
-#error unsupported wordsize
-#endif
-#endif
 
 /* per process tracking data */
 enum lock_status
@@ -52,8 +58,6 @@ struct tchild
    struct tdata *sandbox;              /* sandbox data */
 };
 
-extern struct tchild *childtab[PID_MAX_LIMIT];
-
 void
 tchild_new (GSList **children, pid_t pid);
 
@@ -62,6 +66,9 @@ tchild_free (GSList **children);
 
 void
 tchild_delete (GSList **children, pid_t pid);
+
+struct tchild *
+tchild_find(GSList *children, pid_t pid);
 
 #endif
 

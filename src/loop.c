@@ -92,12 +92,13 @@ static int xfork(context_t *ctx, struct tchild *child) {
     else
         g_debug ("the newborn child's pid is %i", childpid);
 
-    newchild = childtab[childpid];
+    newchild = tchild_find(ctx->children, childpid);
     if (NULL != newchild) {
         g_debug ("child %i is prematurely born, letting it continue its life", newchild->pid);
         if (0 > trace_syscall(newchild->pid, 0)) {
             if (errno != ESRCH) {
-                g_printerr ("failed to resume prematurely born child %i: %s", newchild->pid, g_strerror (errno));
+                g_printerr ("failed to resume prematurely born child %i: %s",
+                        newchild->pid, g_strerror (errno));
                 exit (-1);
             }
             return context_remove_child (ctx, newchild->pid);
@@ -150,7 +151,7 @@ int trace_loop(context_t *ctx) {
             g_printerr ("waitpid failed: %s", g_strerror (errno));
             exit (-1);
         }
-        child = childtab[pid];
+        child = tchild_find(ctx->children, pid);
         event = trace_event(status);
         assert(NULL != child || E_STOP == event || E_EXIT == event || E_EXIT_SIGNAL == event);
 

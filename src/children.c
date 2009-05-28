@@ -29,9 +29,6 @@
 #include "children.h"
 #include "sydbox-log.h"
 
-// We keep this for efficient lookups
-struct tchild *childtab[PID_MAX_LIMIT] = { NULL };
-
 void tchild_new(GSList **children, pid_t pid) {
     struct tchild *child, *parent;
 
@@ -76,7 +73,6 @@ void tchild_new(GSList **children, pid_t pid) {
             }
         }
     }
-    childtab[pid] = child;
     *children = g_slist_prepend(*children, child);
 }
 
@@ -90,7 +86,6 @@ static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
     }
     if (NULL != child->cwd)
         g_free (child->cwd);
-    childtab[child->pid] = NULL;
     g_free (child);
 }
 
@@ -117,3 +112,19 @@ void tchild_delete(GSList **children, pid_t pid) {
         walk = g_slist_next(walk);
     }
 }
+
+struct tchild *tchild_find(GSList *children, pid_t pid)
+{
+    GSList *walk;
+    struct tchild *child;
+
+    walk = children;
+    while (NULL != walk) {
+        child = (struct tchild *) walk->data;
+        if (pid == child->pid)
+            return child;
+        walk = g_slist_next(walk);
+    }
+    return NULL;
+}
+
