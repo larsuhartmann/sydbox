@@ -1,4 +1,4 @@
-/* Check program for t20-rename-first-atfdcwd.bash
+/* Check program for t21-renameat-first.bash
  * vim: set et ts=4 sts=4 sw=4 fdm=syntax :
  * Copyright 2009 Ali Polatel <polatel@gmail.com>
  * Distributed under the terms of the GNU General Public License v2

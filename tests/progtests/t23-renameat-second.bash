@@ -18,16 +18,16 @@ umask $old_umask
 start_test "t23-renameat-second-deny"
 SANDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t23_renameat_second
 if [[ 0 == $? ]]; then
-    die "failed to deny rename"
+    die "failed to deny renameat"
 elif [[ -f jugband.blues ]]; then
-    die "file exists, failed to deny rename"
+    die "file exists, failed to deny renameat"
 fi
 end_test
 
 start_test "t23-renameat-second-predict"
 SANDBOX_WRITE="${cwd}/see.emily.play" SANDBOX_PREDICT="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then
-    die "failed to predict rename"
+    die "failed to predict renameat"
 elif [[ -f jugband.blues ]]; then
     die "predict allowed access"
 fi
@@ -36,8 +36,8 @@ end_test
 start_test "t23-renameat-second-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then
-    die "failed to allow rename"
+    die "failed to allow renameat"
 elif [[ ! -f jugband.blues ]]; then
-    die "file doesn't exist, failed to allow rename"
+    die "file doesn't exist, failed to allow renameat"
 fi
 end_test

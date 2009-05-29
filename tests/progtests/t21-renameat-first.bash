@@ -5,7 +5,7 @@
 
 . test-lib.bash
 
-start_test "t20-renameat-first-deny"
+start_test "t21-renameat-first-deny"
 sydbox -- ./t21_renameat_first
 if [[ 0 == $? ]]; then
     die "failed to deny renameat"
@@ -14,7 +14,7 @@ elif [[ -f its.not.the.same ]]; then
 fi
 end_test
 
-start_test "t20-rename-first-predict"
+start_test "t21-renameat-first-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t21_renameat_first
 if [[ 0 != $? ]]; then
     die "failed to predict renameat"
@@ -23,7 +23,7 @@ elif [[ -f its.not.the.same ]]; then
 fi
 end_test
 
-start_test "t20-rename-first-write"
+start_test "t21-renameat-first-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t21_renameat_first
 if [[ 0 != $? ]]; then
     die "failed to allow renameat"

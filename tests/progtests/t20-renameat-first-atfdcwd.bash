@@ -14,7 +14,7 @@ elif [[ -f its.not.the.same ]]; then
 fi
 end_test
 
-start_test "t20-rename-first-atfdcwd-predict"
+start_test "t20-renameat-first-atfdcwd-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t20_renameat_first_atfdcwd
 if [[ 0 != $? ]]; then
     die "failed to predict renameat"
@@ -23,7 +23,7 @@ elif [[ -f its.not.the.same ]]; then
 fi
 end_test
 
-start_test "t20-rename-first-atfdcwd-write"
+start_test "t20-renameat-first-atfdcwd-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t20_renameat_first_atfdcwd
 if [[ 0 != $? ]]; then
     die "failed to allow renameat"

@@ -36,8 +36,8 @@ end_test
 start_test "t22-renameat-second-atfdcwd-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t22_renameat_second_atfdcwd
 if [[ 0 != $? ]]; then
-    die "failed to allow rename"
+    die "failed to allow renameat"
 elif [[ ! -f jugband.blues ]]; then
-    die "file doesn't exist, failed to allow rename"
+    die "file doesn't exist, failed to allow renameat"
 fi
 end_test
