@@ -5,6 +5,8 @@
 
 tags
 
+/sydbox-*
+
 .deps
 Makefile.in
 Makefile
