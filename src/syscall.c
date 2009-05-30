@@ -659,6 +659,12 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
+/* Adds current working directory to the path argument at position narg of the
+ * given child.
+ * If isat is TRUE then data->dirfdlist[narg - 1] is used instead of current
+ * working directory in case it's not NULL.
+ * Returns the absolute path.
+ */
 static gchar *systemcall_add_cwd(SystemCall *self,
                                  context_t *ctx, struct tchild *child,
                                  int narg, gboolean isat, struct checkdata *data)
@@ -683,7 +689,15 @@ static gchar *systemcall_add_cwd(SystemCall *self,
 }
 
 /* Sixth callback for systemcall handler.
- * TODO: go on writing documentation ;)
+ * Makes non-absolute path name arguments absolute by adding current working
+ * directory.
+ * If data->result isn't RS_ALLOW, which means an error has occured in a
+ * previous callback or a decision has been made, it does nothing and simply
+ * returns.
+ * If child->sandbox->on is FALSE it does nothing and simply returns.
+ * This callback is only used in non-paranoid mode. If paranoid mode is enabled
+ * this function simply returns. systemcall_canonicalize() callback is used in
+ * paranoid mode.
  */
 static void systemcall_make_absolute(SystemCall *self, gpointer ctx_ptr,
                                      gpointer child_ptr, gpointer data_ptr)
