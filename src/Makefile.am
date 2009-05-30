@@ -2,7 +2,7 @@ CLEANFILES= syscallent.h syscall_marshaller.c syscall_marshaller.h gmon.out
 EXTRA_DIST= syscall_marshaller.list
 
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
-	   $(glib_CFLAGS) $(gobject_CFLAGS) $(confuse_CFLAGS) @SYDBOX_CFLAGS@
+	   $(glib_CFLAGS) $(gobject_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = children.h context.h sydbox-log.h loop.h \
 		 path.h proc.h syscall.h trace.h wrappers.h \
@@ -10,7 +10,7 @@ sydbox_SOURCES = children.h context.h sydbox-log.h loop.h \
 		 path.c proc.c children.c \
 		 context.c syscall.c trace.c wrappers.c loop.c \
 		 sydbox-config.c sydbox-log.c sydbox-utils.c main.c
-sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS) $(confuse_LIBS)
+sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS)
 
 nodist_sydbox_SOURCES= syscallent.h syscall_marshaller.h syscall_marshaller.c
 BUILT_SOURCES= syscallent.h syscall_marshaller.h syscall_marshaller.c

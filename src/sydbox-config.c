@@ -21,8 +21,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#include <confuse.h>
-
 #include "path.h"
 #include "sydbox-log.h"
 #include "sydbox-config.h"
@@ -34,7 +32,7 @@
 #define ENV_PREDICT     "SANDBOX_PREDICT"
 #define ENV_NET         "SANDBOX_NET"
 #define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
-
+#define ENV_NO_CONFIG   "SANDBOX_NO_CONFIG"
 
 struct sydbox_config
 {
@@ -52,35 +50,16 @@ struct sydbox_config
 } *config;
 
 
-static cfg_opt_t prefixes_opts[] =
-{
-    CFG_BOOL ("net", FALSE, CFGF_NONE),
-    CFG_STR_LIST ("write", "{}", CFGF_NONE),
-    CFG_STR_LIST ("predict", "{}", CFGF_NONE),
-    CFG_END (),
-};
-
-static cfg_opt_t sydbox_opts[] =
-{
-    CFG_BOOL ("colour", TRUE, CFGF_NONE),
-    CFG_STR ("log_file", NULL, CFGF_NONE),
-    CFG_INT ("log_level", 0, CFGF_NONE),
-    CFG_BOOL ("paranoid", FALSE, CFGF_NONE),
-    CFG_BOOL ("lock", FALSE, CFGF_NONE),
-    CFG_BOOL ("net", FALSE, CFGF_NONE),
-    CFG_SEC ("prefixes", prefixes_opts, CFGF_TITLE | CFGF_MULTI),
-    CFG_END (),
-};
-
-
 gboolean
 sydbox_config_load (const gchar * const file)
 {
-    cfg_t *sydbox_config, *profile_config;
     gchar *config_file;
+    GKeyFile *config_fd;
+    GError *config_error = NULL;
 
-    g_return_val_if_fail (! config, TRUE);
+    g_return_val_if_fail(!config, TRUE);
 
+    // Figure out the path to the configuration file
     if (file)
         config_file = g_strdup (file);
     else if (g_getenv (ENV_CONFIG))
@@ -88,53 +67,165 @@ sydbox_config_load (const gchar * const file)
     else
         config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
 
-    sydbox_config = cfg_init (sydbox_opts, CFGF_NONE);
+    // Initialize config structure
+    config = g_new0 (struct sydbox_config, 1);
 
-    if (cfg_parse (sydbox_config, config_file) == CFG_PARSE_ERROR) {
-        g_printerr ("failed to parse config file: '%s'", config_file);
-        cfg_free (sydbox_config);
-        g_free (config_file);
+    if (g_getenv(ENV_NO_CONFIG)) {
+        /* ENV_NO_CONFIG set, set the defaults and return without parsing the
+         * configuration file.
+         */
+        config->colourise_output = TRUE;
+        config->allow_magic_commands = TRUE;
+        return TRUE;
+    }
+
+    // Initialize key file
+    config_fd = g_key_file_new();
+    if (!g_key_file_load_from_file(config_fd, config_file, G_KEY_FILE_NONE, &config_error)) {
+        g_printerr("failed to parse config file: %s\n", config_error->message);
+        g_error_free(config_error);
+        g_key_file_free(config_fd);
+        g_free(config);
         return FALSE;
     }
 
-    config = g_new0 (struct sydbox_config, 1);
-
-    if (g_getenv (ENV_LOG))
-        config->logfile = g_strdup (g_getenv (ENV_LOG));
-    else if (cfg_getstr (sydbox_config, "log_file"))
-        config->logfile = g_strdup (cfg_getstr (sydbox_config, "log_file"));
-
-    config->verbosity = cfg_getint (sydbox_config, "log_level");
-
-    if (g_getenv (ENV_NO_COLOUR))
-        config->colourise_output = FALSE;
+    // Get main.log_file
+    if (g_getenv(ENV_LOG))
+        config->logfile = g_strdup(g_getenv(ENV_LOG));
     else
-        config->colourise_output = cfg_getbool (sydbox_config, "colour");
+        config->logfile = g_key_file_get_string(config_fd, "main", "log_file", NULL);
 
-    if (g_getenv (ENV_NET))
-        config->sandbox_network = TRUE;
-    else
-        config->sandbox_network = cfg_getbool (sydbox_config, "net");
-
-    config->paranoid_mode_enabled = cfg_getbool (sydbox_config, "paranoid");
-
-    config->allow_magic_commands = cfg_getbool (sydbox_config, "lock");
-
-    for (guint i = 0; i < cfg_size (sydbox_config, "prefixes"); i++) {
-        guint j;
-
-        profile_config = cfg_getnsec (sydbox_config, "prefixes", i);
-
-        for (j = 0; j < cfg_size (profile_config, "write"); j++)
-            pathnode_new_early (&config->write_prefixes, cfg_getnstr (profile_config, "write", j), 1);
-
-        for (j = 0; j < cfg_size (profile_config, "predict"); j++)
-            pathnode_new_early (&config->predict_prefixes, cfg_getnstr (profile_config, "predict", j), 1);
+    // Get main.log_level
+    config->verbosity = g_key_file_get_integer(config_fd, "main", "log_level", &config_error);
+    if (0 == config->verbosity) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.log_level not an integer: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return FALSE;
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->verbosity = 0;
+                break;
+            default:
+                g_assert_not_reached();
+        }
     }
 
-    cfg_free (sydbox_config);
-    g_free (config_file);
+    // Get main.colour
+    if (g_getenv(ENV_NO_COLOUR))
+        config->colourise_output = FALSE;
+    else {
+        config->colourise_output = g_key_file_get_boolean(config_fd, "main", "colour", &config_error);
+        if (!config->colourise_output) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("main.colour not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return FALSE;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->colourise_output = TRUE;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
+        }
+    }
 
+    // Get main.net
+    if (g_getenv(ENV_NET))
+        config->sandbox_network = TRUE;
+    else {
+        config->sandbox_network = g_key_file_get_boolean(config_fd, "main", "net", &config_error);
+        if (!config->sandbox_network && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("main.net not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return FALSE;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->sandbox_network = FALSE;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
+        }
+    }
+
+    // Get main.paranoid
+    config->paranoid_mode_enabled = g_key_file_get_boolean(config_fd, "main", "paranoid", &config_error);
+    if (!config->paranoid_mode_enabled && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.paranoid not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return FALSE;
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->paranoid_mode_enabled = FALSE;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
+    // Get main.lock
+    config->allow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
+    if (!config->allow_magic_commands && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.lock not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return FALSE;
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->allow_magic_commands = TRUE;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
+    // Get prefix.write
+    char **write_prefixes = g_key_file_get_string_list(config_fd, "prefix", "write", NULL, NULL);
+    if (NULL != write_prefixes) {
+        for (unsigned int i = 0; NULL != write_prefixes[i]; i++)
+            pathnode_new_early(&config->write_prefixes, write_prefixes[i], 1);
+        g_strfreev(write_prefixes);
+    }
+
+    // Get prefix.predict
+    char **predict_prefixes = g_key_file_get_string_list(config_fd, "prefix", "predict", NULL, NULL);
+    if (NULL != predict_prefixes) {
+        for (unsigned int i = 0; NULL != predict_prefixes[i]; i++)
+            pathnode_new_early(&config->predict_prefixes, predict_prefixes[i], 1);
+        g_strfreev(predict_prefixes);
+    }
+
+    // Cleanup and return
+    g_key_file_free(config_fd);
+    g_free(config_file);
     return TRUE;
 }
 

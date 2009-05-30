@@ -18,6 +18,6 @@ check_sydbox_CFLAGS = \
 		      -I$(top_builddir)/src \
 		      @SYDBOX_CFLAGS@ \
 		      -DSYSCONFDIR=\"$(sysconfdir)\" \
-		      $(glib_CFLAGS) $(confuse_CFLAGS) $(check_CFLAGS)
-check_sydbox_LDADD = $(glib_LIBS) $(gobject_LIBS) $(confuse_LIBS) $(check_LIBS)
+		      $(glib_CFLAGS) $(gobject_CFLAGS) $(check_CFLAGS)
+check_sydbox_LDADD = $(glib_LIBS) $(gobject_LIBS) $(check_LIBS)
 
