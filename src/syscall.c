@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <asm/unistd.h>
 
 #include <glib.h>
@@ -61,9 +63,13 @@
 #define CAN_CREAT2              (1 << 15) // The system call can create the second path if it doesn't exist
 #define CAN_CREAT_AT            (1 << 16) // CAN_CREAT for at suffixed functions
 #define CAN_CREAT_AT2           (1 << 17) // CAN_CREAT_AT2 for at suffixed functions
-#define MAGIC_OPEN              (1 << 18) // Check if the open() call is magic
-#define MAGIC_STAT              (1 << 19) // Check if the stat() call is magic
-#define NET_CALL                (1 << 20) // Allowing the system call depends on the net flag
+#define MUST_CREAT              (1 << 18) // The system call _must_ create the first path, fails otherwise
+#define MUST_CREAT2             (1 << 19) // The system call _must_ create the second path, fails otherwise
+#define MUST_CREAT_AT           (1 << 20) // MUST_CREAT for at suffixed functions
+#define MUST_CREAT_AT2          (1 << 21) // MUST_CREAT2 for at suffixed functions
+#define MAGIC_OPEN              (1 << 22) // Check if the open() call is magic
+#define MAGIC_STAT              (1 << 23) // Check if the stat() call is magic
+#define NET_CALL                (1 << 24) // Allowing the system call depends on the net flag
 
 struct syscall_def {
     int no;
@@ -530,11 +536,13 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     int mode;
     if (data->open_flags & O_CREAT)
         maycreat = TRUE;
-    else if (0 == narg && self->flags & CAN_CREAT)
+    else if (0 == narg && self->flags & (CAN_CREAT | MUST_CREAT))
         maycreat = TRUE;
-    else if (1 == narg && (self->flags & CAN_CREAT2 || (isat && self->flags & CAN_CREAT_AT)))
+    else if (1 == narg && self->flags & (CAN_CREAT2 | MUST_CREAT2))
         maycreat = TRUE;
-    else if (3 == narg && self->flags & CAN_CREAT_AT2)
+    else if (1 == narg && isat && self->flags & (CAN_CREAT_AT | MUST_CREAT_AT))
+        maycreat = TRUE;
+    else if (3 == narg && self->flags & (CAN_CREAT_AT2 | MUST_CREAT_AT2))
         maycreat = TRUE;
     else
         maycreat = FALSE;
@@ -740,6 +748,22 @@ static void systemcall_check_path(SystemCall *self,
     int allow_predict = pathlist_check(child->sandbox->predict_prefixes, path);
 
     if (!allow_write && !allow_predict) {
+        if (self->flags & (MUST_CREAT | MUST_CREAT2 | MUST_CREAT_AT | MUST_CREAT_AT2)) {
+            g_debug("system call has one of MUST_CREAT* flags set, checking if `%s' exists", path);
+            struct stat buf;
+            if (0 == stat(path, &buf)) {
+                /* The system call _has_ to create the path but it exists.
+                 * Deny the system call and set errno to EEXIST but don't throw
+                 * an access violation.
+                 * Useful for cases like mkdir -p a/b/c.
+                 */
+                g_debug("`%s' exists, system call will fail with EEXIST", path);
+                g_debug("denying system call and failing with EEXIST without violation");
+                data->result = RS_DENY;
+                child->retval = -EEXIST;
+                return;
+            }
+        }
         const char *sname;
         char *reason = g_malloc((strlen(path) + 256) * sizeof(char));
         child->retval = -EPERM;
@@ -981,13 +1005,13 @@ void syscall_init(void) {
 #if defined(__NR_lchown32)
     SYSTEMCALL_HANDLER(__NR_lchown32, CHECK_PATH | DONT_RESOLV);
 #endif
-    SYSTEMCALL_HANDLER(__NR_link, CHECK_PATH | CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_mkdir, CHECK_PATH | CAN_CREAT);
-    SYSTEMCALL_HANDLER(__NR_mknod, CHECK_PATH | CAN_CREAT);
+    SYSTEMCALL_HANDLER(__NR_link, CHECK_PATH | CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV);
+    SYSTEMCALL_HANDLER(__NR_mkdir, CHECK_PATH | MUST_CREAT);
+    SYSTEMCALL_HANDLER(__NR_mknod, CHECK_PATH | MUST_CREAT);
     SYSTEMCALL_HANDLER(__NR_access, CHECK_PATH | ACCESS_MODE);
     SYSTEMCALL_HANDLER(__NR_rename, CHECK_PATH | CHECK_PATH2 | CAN_CREAT2);
     SYSTEMCALL_HANDLER(__NR_rmdir, CHECK_PATH);
-    SYSTEMCALL_HANDLER(__NR_symlink, CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV);
+    SYSTEMCALL_HANDLER(__NR_symlink, CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV);
     SYSTEMCALL_HANDLER(__NR_truncate, CHECK_PATH);
 #if defined(__NR_truncate64)
     SYSTEMCALL_HANDLER(__NR_truncate64, CHECK_PATH);
@@ -1000,13 +1024,13 @@ void syscall_init(void) {
     SYSTEMCALL_HANDLER(__NR_utime, CHECK_PATH);
     SYSTEMCALL_HANDLER(__NR_unlink, CHECK_PATH | DONT_RESOLV);
     SYSTEMCALL_HANDLER(__NR_openat, CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD);
-    SYSTEMCALL_HANDLER(__NR_mkdirat, CHECK_PATH_AT | CAN_CREAT_AT);
-    SYSTEMCALL_HANDLER(__NR_mknodat, CHECK_PATH_AT | CAN_CREAT_AT);
+    SYSTEMCALL_HANDLER(__NR_mkdirat, CHECK_PATH_AT | MUST_CREAT_AT);
+    SYSTEMCALL_HANDLER(__NR_mknodat, CHECK_PATH_AT | MUST_CREAT_AT);
     SYSTEMCALL_HANDLER(__NR_fchownat, CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW4);
     SYSTEMCALL_HANDLER(__NR_unlinkat, CHECK_PATH_AT | IF_AT_REMOVEDIR2);
     SYSTEMCALL_HANDLER(__NR_renameat, CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2);
-    SYSTEMCALL_HANDLER(__NR_linkat, CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW4);
-    SYSTEMCALL_HANDLER(__NR_symlinkat, CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV);
+    SYSTEMCALL_HANDLER(__NR_linkat, CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW4);
+    SYSTEMCALL_HANDLER(__NR_symlinkat, CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | DONT_RESOLV);
     SYSTEMCALL_HANDLER(__NR_fchmodat, CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3);
     SYSTEMCALL_HANDLER(__NR_faccessat, CHECK_PATH_AT | ACCESS_MODE_AT);
 #if defined(__NR_socketcall)
