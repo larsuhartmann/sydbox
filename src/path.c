@@ -17,6 +17,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -35,10 +36,10 @@ shell_expand (const char * const str)
     gchar *argv[4] = { "/bin/sh", "-c", NULL, NULL };
     gchar *quoted, *output = NULL;
     GError *error = NULL;
-    gint retval;
+    gint retval, nlindex;
 
     quoted = g_shell_quote (str);
-    argv[2] = g_strdup_printf ("echo -n '%s'", quoted);
+    argv[2] = g_strdup_printf ("echo '%s'", quoted);
     g_free (quoted);
 
     if (! g_spawn_sync (NULL, argv, NULL, G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL,
@@ -49,6 +50,10 @@ shell_expand (const char * const str)
 
     g_free (argv[2]);
 
+    // Lose the newline at the end.
+    nlindex = strlen(output) - 1;
+    assert('\n' == output[nlindex]);
+    output[nlindex] = '\0';
     return output;
 }
 
