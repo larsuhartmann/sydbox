@@ -29,8 +29,8 @@ syscallent.h:
 		done
 else
 syscallent.h:
-	@echo "Generating dummy syscallent.h because compiler isn't gcc"
-	echo >syscallent.h
+	@echo "Generating dummy $@ because compiler isn't gcc"
+	echo > $@
 endif
 
 syscall_marshaller.h: syscall_marshaller.list
