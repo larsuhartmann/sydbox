@@ -20,5 +20,5 @@ check_PROGRAMS = test-lib.bash t01_chmod t02_chown t03_open \
 test_lib_bash_SOURCES= test-lib.bash.in
 
 test-lib.bash: test-lib.bash.in
-	sed -e "s:@TOP_BUILDDIR@:$(top_builddir):" $< > $@
+	$(SED) -e "s:@TOP_BUILDDIR@:$(top_builddir):" $< > $@
 
