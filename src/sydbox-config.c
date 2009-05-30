@@ -67,6 +67,7 @@ static cfg_opt_t sydbox_opts[] =
     CFG_INT ("log_level", 0, CFGF_NONE),
     CFG_BOOL ("paranoid", FALSE, CFGF_NONE),
     CFG_BOOL ("lock", FALSE, CFGF_NONE),
+    CFG_BOOL ("net", FALSE, CFGF_NONE),
     CFG_SEC ("prefixes", prefixes_opts, CFGF_TITLE | CFGF_MULTI),
     CFG_END (),
 };
@@ -110,6 +111,11 @@ sydbox_config_load (const gchar * const file)
     else
         config->colourise_output = cfg_getbool (sydbox_config, "colour");
 
+    if (g_getenv (ENV_NET))
+        config->sandbox_network = TRUE;
+    else
+        config->sandbox_network = cfg_getbool (sydbox_config, "net");
+
     config->paranoid_mode_enabled = cfg_getbool (sydbox_config, "paranoid");
 
     config->allow_magic_commands = cfg_getbool (sydbox_config, "lock");
@@ -124,8 +130,6 @@ sydbox_config_load (const gchar * const file)
 
         for (j = 0; j < cfg_size (profile_config, "predict"); j++)
             pathnode_new_early (&config->predict_prefixes, cfg_getnstr (profile_config, "predict", j), 1);
-
-        config->sandbox_network = cfg_getbool (profile_config, "net");
     }
 
     cfg_free (sydbox_config);
