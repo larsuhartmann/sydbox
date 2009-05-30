@@ -58,47 +58,47 @@ shell_expand (const char * const str)
 }
 
 
-bool path_magic_dir(const char *path) {
+inline bool path_magic_dir(const char *path) {
     return (0 == strncmp(path, CMD_PATH, CMD_PATH_LEN - 1)) ? true : false;
 }
 
-bool path_magic_on(const char *path) {
+inline bool path_magic_on(const char *path) {
     return (0 == strncmp(path, CMD_ON, CMD_ON_LEN)) ? true : false;
 }
 
-bool path_magic_off(const char *path) {
+inline bool path_magic_off(const char *path) {
     return  (0 == strncmp(path, CMD_OFF, CMD_OFF_LEN)) ? true : false;
 }
 
-bool path_magic_toggle(const char *path) {
+inline bool path_magic_toggle(const char *path) {
     return (0 == strncmp(path, CMD_TOGGLE, CMD_TOGGLE_LEN)) ? true : false;
 }
 
-bool path_magic_enabled(const char *path) {
+inline bool path_magic_enabled(const char *path) {
     return (0 == strncmp(path, CMD_ENABLED, CMD_ENABLED_LEN)) ? true : false;
 }
 
-bool path_magic_lock(const char *path) {
+inline bool path_magic_lock(const char *path) {
     return (0 == strncmp(path, CMD_LOCK, CMD_LOCK_LEN)) ? true : false;
 }
 
-bool path_magic_exec_lock(const char *path) {
+inline bool path_magic_exec_lock(const char *path) {
     return (0 == strncmp(path, CMD_EXEC_LOCK, CMD_EXEC_LOCK_LEN)) ? true : false;
 }
 
-bool path_magic_write(const char *path) {
+inline bool path_magic_write(const char *path) {
     return (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN)) ? true : false;
 }
 
-bool path_magic_predict(const char *path) {
+inline bool path_magic_predict(const char *path) {
     return (0 == strncmp(path, CMD_PREDICT, CMD_PREDICT_LEN)) ? true : false;
 }
 
-bool path_magic_rmwrite(const char *path) {
+inline bool path_magic_rmwrite(const char *path) {
     return (0 == strncmp(path, CMD_RMWRITE, CMD_RMWRITE_LEN)) ? true : false;
 }
 
-bool path_magic_rmpredict(const char *path) {
+inline bool path_magic_rmpredict(const char *path) {
     return (0 == strncmp(path, CMD_RMPREDICT, CMD_RMPREDICT_LEN)) ? true : false;
 }
 
