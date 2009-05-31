@@ -551,40 +551,18 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     char *path = data->pathlist[narg];
     char *path_sanitized;
     char *resolved_path;
-    char *newcwd = NULL;
-    gboolean use_newcwd = FALSE;
 
     if ('/' != path[0]) {
-        if (isat && NULL != data->dirfdlist[narg - 1]) {
-            use_newcwd = TRUE;
-            newcwd = data->dirfdlist[narg - 1];
-        }
-        else if (0 != strncmp(child->cwd, ctx->cwd, strlen(ctx->cwd) + 1)) {
-            if (0 == strncmp(ctx->cwd, child->cwd, strlen(ctx->cwd))) {
-                /* child->cwd begins with ctx->cwd, call chdir using relative path
-                 * instead of absolute path to make sure no errors regarding
-                 * permissions happen.
-                 */
-                newcwd = child->cwd + strlen(ctx->cwd) + 1;
-            }
-            else
-                newcwd = child->cwd;
-        }
-    }
+        char *absdir, *abspath;
+        if (isat && NULL != data->dirfdlist[narg - 1])
+            absdir = data->dirfdlist[narg - 1];
+        else
+            absdir = child->cwd;
 
-    if (NULL != newcwd) {
-        if (0 > echdir(newcwd)) {
-            g_debug("failed to change current working directory to `%s': %s", newcwd, strerror(errno));
-            g_debug("adding current working directory to `%s' instead", path);
-            char *abspath = g_build_path(G_DIR_SEPARATOR_S, use_newcwd ? newcwd : child->cwd, path, NULL);
-            path_sanitized = sydbox_compress_path (abspath);
-            g_free(abspath);
-        }
-        else {
-            g_free(ctx->cwd);
-            ctx->cwd = isat ? g_strdup(newcwd) : g_strdup(child->cwd);
-            path_sanitized = sydbox_compress_path (path);
-        }
+        g_debug("adding `%s' to `%s to make it an absolute path", absdir, path);
+        abspath = g_build_path(G_DIR_SEPARATOR_S, absdir, path, NULL);
+        path_sanitized = sydbox_compress_path(abspath);
+        g_free(abspath);
     }
     else
         path_sanitized = sydbox_compress_path (path);
