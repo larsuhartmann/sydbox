@@ -108,7 +108,7 @@ sydbox_config_load (const gchar * const file)
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
-                config->verbosity = 0;
+                config->verbosity = 1;
                 break;
             default:
                 g_assert_not_reached();
