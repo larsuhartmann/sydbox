@@ -29,6 +29,7 @@
 #include <glib.h>
 
 #include "loop.h"
+#include "proc.h"
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"
@@ -62,6 +63,17 @@ static int xsetup(context_t *ctx, struct tchild *child) {
 
 static int xsetup_premature(context_t *ctx, pid_t pid) {
     tchild_new(&(ctx->children), pid);
+    /* XXX: Shameless hack
+     * We need to update the current working directory here,
+     * because inheritance doesn't work for prematurely borned children.
+     */
+    struct tchild *child = ctx->children->data;
+    g_free(child->cwd);
+    child->cwd = pgetcwd(ctx, child->pid);
+    if (NULL == child->cwd) {
+        g_printerr("failed to determine current working directory of prematurely born child %d", child->pid);
+        exit(-1);
+    }
     return xsetup(ctx, ctx->children->data);
 }
 
@@ -159,11 +171,13 @@ int trace_loop(context_t *ctx) {
             case E_STOP:
                 g_debug ("latest event for child %i is E_STOP, calling event handler", pid);
                 if (NULL == child) {
+                    g_debug("child %d has born prematurely", pid);
                     ret = xsetup_premature(ctx, pid);
                     if (0 != ret)
                         return ret;
                 }
                 else {
+                    g_debug("setting up child %d", child->pid);
                     ret = xsetup(ctx, child);
                     if (0 != ret)
                         return ret;
