@@ -554,12 +554,15 @@ static gchar *systemcall_resolvepath(SystemCall *self,
 
     if ('/' != path[0]) {
         char *absdir, *abspath;
-        if (isat && NULL != data->dirfdlist[narg - 1])
+        if (isat && NULL != data->dirfdlist[narg - 1]) {
             absdir = data->dirfdlist[narg - 1];
-        else
+            g_debug("adding dirfd `%s' to `%s' to make it an absolute path", absdir, path);
+        }
+        else {
             absdir = child->cwd;
+            g_debug("adding current working directory `%s' to `%s' to make it an absolute path", absdir, path);
+        }
 
-        g_debug("adding `%s' to `%s to make it an absolute path", absdir, path);
         abspath = g_build_path(G_DIR_SEPARATOR_S, absdir, path, NULL);
         path_sanitized = sydbox_compress_path(abspath);
         g_free(abspath);
