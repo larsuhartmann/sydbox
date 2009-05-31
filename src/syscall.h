@@ -62,7 +62,6 @@ typedef struct _SystemCallClass {
     void (*magic)(SystemCall *, gpointer, gpointer, gpointer);
     void (*resolve)(SystemCall *, gpointer, gpointer, gpointer);
     void (*canonicalize)(SystemCall *, gpointer, gpointer, gpointer);
-    void (*make_absolute)(SystemCall *, gpointer, gpointer, gpointer);
     void (*check)(SystemCall *, gpointer, gpointer, gpointer);
     void (*end_check)(SystemCall *, gpointer, gpointer, gpointer);
 } SystemCallClass;
