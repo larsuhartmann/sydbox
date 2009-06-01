@@ -1001,14 +1001,6 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()",
                 child->pid, sname);
 
-        /* Check for exec_lock as early as possible
-         */
-        if (__NR_execve == sno && LOCK_PENDING == child->sandbox->lock) {
-            g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO,
-                    "access to magic commands is now denied for child %i", child->pid);
-            child->sandbox->lock = LOCK_SET;
-        }
-
         /* Get handler for the system call
          */
         handler = syscall_get_handler(sno);

@@ -200,6 +200,13 @@ int trace_loop(context_t *ctx) {
                 break;
             case E_EXEC:
                 g_debug ("latest event for child %i is E_EXEC, calling event handler", pid);
+
+                // Check for exec_lock
+                if (LOCK_PENDING == child->sandbox->lock) {
+                    g_info("access to magic commands is now denied for child %i", child->pid);
+                    child->sandbox->lock = LOCK_SET;
+                }
+
                 ret = xsyscall(ctx, child);
                 if (G_UNLIKELY(0 != ret))
                     return ret;
