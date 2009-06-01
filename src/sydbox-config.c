@@ -112,6 +112,7 @@ sydbox_config_load (const gchar * const file)
                 break;
             default:
                 g_assert_not_reached();
+                break;
         }
     }
 
