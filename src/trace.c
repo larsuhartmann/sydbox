@@ -82,13 +82,13 @@ static int umovestr(pid_t pid, long addr, char *dest, size_t len) {
         addr &= -sizeof(long); // residue
         errno = 0;
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (0 != errno) {
-            if (started && (EPERM == errno || EIO == errno)) {
+        if (G_UNLIKELY(0 != errno)) {
+            if (G_LIKELY(started && (EPERM == errno || EIO == errno))) {
                 // Ran into end of memory - stupid "printpath"
                 return 0;
             }
             // But if not started, we had a bogus address
-            if (0 != addr && EIO != errno) {
+            if (G_UNLIKELY(0 != addr && EIO != errno)) {
                 save_errno = errno;
                 g_info ("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, g_strerror (errno));
                 errno = save_errno;
@@ -105,13 +105,13 @@ static int umovestr(pid_t pid, long addr, char *dest, size_t len) {
     while (len > 0) {
         errno = 0;
         u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
-        if (0 != errno) {
-            if (started && (EPERM == errno || EIO == errno)) {
+        if (G_UNLIKELY(0 != errno)) {
+            if (G_LIKELY(started && (EPERM == errno || EIO == errno))) {
                 // Ran into end of memory - stupid "printpath"
                 return 0;
             }
             // But if not started, we had a bogus address
-            if (0 != addr && EIO != errno) {
+            if (G_UNLIKELY(0 != addr && EIO != errno)) {
                 save_errno = errno;
                 g_info ("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, g_strerror (errno));
                 errno = save_errno;
@@ -162,7 +162,7 @@ unsigned int trace_event(int status) {
 }
 
 int trace_me(void) {
-    if (0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL)) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_TRACEME, 0, NULL, NULL))) {
         int save_errno = errno;
         g_info ("failed to set tracing: %s", strerror(errno));
         errno = save_errno;
@@ -174,12 +174,12 @@ int trace_me(void) {
 int trace_setup(pid_t pid) {
     // Setup ptrace options
     g_debug ("setting tracing options for child %i", pid);
-    if (0 > ptrace(PTRACE_SETOPTIONS, pid, NULL,
+    if (G_UNLIKELY(0 > ptrace(PTRACE_SETOPTIONS, pid, NULL,
                     PTRACE_O_TRACESYSGOOD
                     | PTRACE_O_TRACECLONE
                     | PTRACE_O_TRACEFORK
                     | PTRACE_O_TRACEVFORK
-                    | PTRACE_O_TRACEEXEC)) {
+                    | PTRACE_O_TRACEEXEC))) {
         int save_errno = errno;
         g_info ("setting tracing options failed for child %i: %s", pid, strerror(errno));
         errno = save_errno;
@@ -189,7 +189,7 @@ int trace_setup(pid_t pid) {
 }
 
 int trace_kill(pid_t pid) {
-    if (0 > ptrace(PTRACE_KILL, pid, NULL, NULL) && ESRCH != errno) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_KILL, pid, NULL, NULL) && ESRCH != errno)) {
         int save_errno = errno;
         g_info ("failed to kill child %i: %s", pid, strerror(errno));
         errno = save_errno;
@@ -199,7 +199,7 @@ int trace_kill(pid_t pid) {
 }
 
 int trace_cont(pid_t pid) {
-    if (0 > ptrace(PTRACE_CONT, pid, NULL, NULL)) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_CONT, pid, NULL, NULL))) {
         int save_errno = errno;
         g_info ("failed to continue child %i: %s", pid, strerror(errno));
         errno = save_errno;
@@ -209,7 +209,7 @@ int trace_cont(pid_t pid) {
 }
 
 int trace_syscall(pid_t pid, int data) {
-    if (0 > ptrace(PTRACE_SYSCALL, pid, NULL, data)) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_SYSCALL, pid, NULL, data))) {
         int save_errno = errno;
         g_info ("failed to resume child %i: %s", pid, strerror(errno));
         errno = save_errno;
@@ -219,7 +219,7 @@ int trace_syscall(pid_t pid, int data) {
 }
 
 int trace_geteventmsg(pid_t pid, void *data) {
-    if (0 > ptrace(PTRACE_GETEVENTMSG, pid, NULL, data)) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_GETEVENTMSG, pid, NULL, data))) {
         int save_errno = errno;
         g_info ("failed to get event message of child %i: %s", pid, strerror(errno));
         errno = save_errno;
@@ -233,7 +233,7 @@ static int trace_peek(pid_t pid, long off, long *res) {
 
     errno = 0;
     val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
-    if (-1 == val && 0 != errno) {
+    if (G_UNLIKELY(-1 == val && 0 != errno)) {
         int save_errno = errno;
         g_info ("ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s", pid, off, strerror(errno));
         errno = save_errno;
@@ -246,7 +246,7 @@ static int trace_peek(pid_t pid, long off, long *res) {
 int trace_get_arg(pid_t pid, int arg, long *res) {
     assert(arg >= 0 && arg < MAX_ARGS);
 
-    if (0 > trace_peek(pid, syscall_args[arg], res)) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], res))) {
         int save_errno = errno;
         g_info ("failed to get argument %d for child %i: %s", arg, pid, strerror(errno));
         errno = save_errno;
@@ -258,7 +258,7 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 int trace_set_arg(pid_t pid, int arg, long val) {
     assert(arg >= 0 && arg < MAX_ARGS);
 
-    if (0 > ptrace(PTRACE_POKEUSER, pid, syscall_args[arg], val)) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_POKEUSER, pid, syscall_args[arg], val))) {
         int save_errno = errno;
         g_info ("failed to set argument %d to %ld for child %i: %s",
                 arg, val, pid, g_strerror (errno));
@@ -269,7 +269,7 @@ int trace_set_arg(pid_t pid, int arg, long val) {
 }
 
 int trace_get_syscall(pid_t pid, long *syscall) {
-    if (0 > trace_peek(pid, ORIG_ACCUM, syscall)) {
+    if (G_UNLIKELY(0 > trace_peek(pid, ORIG_ACCUM, syscall))) {
         int save_errno = errno;
         g_info ("failed to get syscall number for child %i: %s", pid, g_strerror (errno));
         errno = save_errno;
@@ -279,7 +279,7 @@ int trace_get_syscall(pid_t pid, long *syscall) {
 }
 
 int trace_set_syscall(pid_t pid, long syscall) {
-    if (0 > ptrace(PTRACE_POKEUSER, pid, ORIG_ACCUM, syscall)) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_POKEUSER, pid, ORIG_ACCUM, syscall))) {
         int save_errno = errno;
         g_info ("failed to set syscall number to %ld for child %i: %s", syscall, pid, g_strerror (errno));
         errno = save_errno;
@@ -289,7 +289,7 @@ int trace_set_syscall(pid_t pid, long syscall) {
 }
 
 int trace_get_return(pid_t pid, long *res) {
-    if (0 > trace_peek(pid, ACCUM, res)) {
+    if (G_UNLIKELY(0 > trace_peek(pid, ACCUM, res))) {
         int save_errno = errno;
         g_info ("failed to get return value for child %i: %s", pid, g_strerror (errno));
         errno = save_errno;
@@ -299,7 +299,7 @@ int trace_get_return(pid_t pid, long *res) {
 }
 
 int trace_set_return(pid_t pid, long val) {
-    if (0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val)) {
+    if (G_UNLIKELY(0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val))) {
         int save_errno = errno;
         g_info ("ptrace(PTRACE_POKEUSER,%i,ACCUM,%ld) failed: %s", pid, val, g_strerror (errno));
         errno = save_errno;
@@ -313,7 +313,7 @@ char *trace_get_string(pid_t pid, int arg) {
     long addr = 0;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], &addr))) {
         save_errno = errno;
         g_info ("failed to get address of argument %d: %s", arg, g_strerror (errno));
         errno = save_errno;
@@ -325,7 +325,7 @@ char *trace_get_string(pid_t pid, int arg) {
     for (;;) {
         buf = g_realloc (buf, len * sizeof(char));
         memset(buf, 0, len * sizeof(char));
-        if (0 > umovestr(pid, addr, buf, len)) {
+        if (G_UNLIKELY(0 > umovestr(pid, addr, buf, len))) {
             g_free (buf);
             return NULL;
         }
@@ -346,7 +346,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     } u;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (0 > trace_peek(pid, syscall_args[arg], &addr)) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], &addr))) {
         save_errno = errno;
         g_info ("failed to get address of argument %d for child %i: %s", arg, pid, g_strerror (errno));
         errno = save_errno;
@@ -358,7 +358,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
 
     while (n < m) {
         memcpy(u.x, src, sizeof(long));
-        if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
+        if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val))) {
             save_errno = errno;
             g_info ("failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, g_strerror (errno));
             errno = save_errno;
@@ -372,14 +372,14 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     if (0 != m) {
         errno = 0;
         u.val = ptrace(PTRACE_PEEKDATA, pid, addr + n * ADDR_MUL, 0);
-        if (errno != 0) {
+        if (G_UNLIKELY(0 != errno)) {
             save_errno = errno;
             g_info ("failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, g_strerror (errno));
             errno = save_errno;
             return -1;
         }
         memcpy(u.x, src, m);
-        if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
+        if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val))) {
             save_errno = errno;
             g_info ("failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, g_strerror (errno));
             errno = save_errno;
@@ -398,7 +398,7 @@ int trace_fake_stat(pid_t pid) {
     } u;
     struct stat fakebuf;
 
-    if (0 > trace_peek(pid, syscall_args[1], &addr)) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[1], &addr))) {
         save_errno = errno;
         g_info ("failed to get address of argument 1 for child %i: %s", pid, g_strerror (errno));
         errno = save_errno;
@@ -428,7 +428,7 @@ int trace_fake_stat(pid_t pid) {
     m = sizeof(struct stat) % sizeof(long);
     if (0 != m) {
         memcpy(u.x, fakeptr, m);
-        if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
+        if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val))) {
             save_errno = errno;
             g_info ("failed to set argument 1 to %p for child %i: %s", (void *) fakeptr, pid, g_strerror (errno));
             errno = save_errno;
@@ -437,3 +437,4 @@ int trace_fake_stat(pid_t pid) {
     }
     return 0;
 }
+

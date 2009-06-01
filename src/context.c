@@ -34,7 +34,8 @@ context_new (void)
 
     ctx = (context_t *) g_malloc0 (sizeof (context_t));
 
-    if (! (ctx->cwd = egetcwd())) {
+    ctx->cwd = egetcwd();
+    if (G_UNLIKELY(NULL == ctx->cwd)) {
         g_printerr ("failed to get current working directory: %s", g_strerror (errno));
         exit (-1);
     }
@@ -45,10 +46,10 @@ context_new (void)
 void
 context_free (context_t *ctx)
 {
-    if (NULL != ctx->cwd)
+    if (G_LIKELY(NULL != ctx->cwd))
         g_free (ctx->cwd);
 
-    if (NULL != ctx->children)
+    if (G_LIKELY(NULL != ctx->children))
         tchild_free (&(ctx->children));
 
     g_free (ctx);
@@ -59,7 +60,7 @@ context_remove_child (context_t * const ctx, pid_t pid)
 {
     g_info ("removing child %d from context", pid);
 
-    if (ctx->eldest == pid)
+    if (G_UNLIKELY(ctx->eldest == pid))
         return -1;
 
     tchild_delete (&ctx->children, pid);

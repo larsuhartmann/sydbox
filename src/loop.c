@@ -39,7 +39,7 @@
 // Event handlers
 static int xsetup(context_t *ctx, struct tchild *child) {
     if (0 > trace_setup(child->pid)) {
-        if (errno != ESRCH) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_printerr ("failed to set tracing options: %s", g_strerror (errno));
             exit (-1);
         }
@@ -49,7 +49,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
         child->flags &= ~TCHILD_NEEDSETUP;
 
     if (0 > trace_syscall(child->pid, 0)) {
-        if (errno != ESRCH) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_critical ("failed to resume child %i after setup: %s", child->pid, g_strerror (errno));
             g_printerr ("failed to resume child %i after setup: %s", child->pid, g_strerror (errno));
             exit (-1);
@@ -63,7 +63,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
 
 static int xsyscall(context_t *ctx, struct tchild *child) {
     if (0 > trace_syscall(child->pid, 0)) {
-        if (errno != ESRCH) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_critical ("Failed to resume child %i: %s", child->pid, g_strerror (errno));
             g_printerr ("failed to resume child %i: %s", child->pid, g_strerror (errno));
             exit (-1);
@@ -78,8 +78,8 @@ static int xfork(context_t *ctx, struct tchild *child) {
     struct tchild *newchild;
 
     // Get new child's pid
-    if (0 > trace_geteventmsg(child->pid, &childpid)) {
-        if (errno != ESRCH) {
+    if (G_UNLIKELY(0 > trace_geteventmsg(child->pid, &childpid))) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_printerr ("failed to get the pid of the newborn child: %s", g_strerror (errno));
             exit (-1);
         }
@@ -97,7 +97,7 @@ static int xfork(context_t *ctx, struct tchild *child) {
     }
 
     if (0 > trace_syscall(childpid, 0)) {
-        if (ESRCH != errno) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_printerr("failed to resume new born child %i", childpid);
             exit(-1);
         }
@@ -114,8 +114,8 @@ static int xfork(context_t *ctx, struct tchild *child) {
 }
 
 static int xgenuine(context_t * ctx, struct tchild *child, int status) {
-    if (0 > trace_syscall(child->pid, WSTOPSIG(status))) {
-        if (errno != ESRCH) {
+    if (G_UNLIKELY(0 > trace_syscall(child->pid, WSTOPSIG(status)))) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_printerr ("Failed to resume child %i after genuine signal: %s", child->pid, g_strerror (errno));
             exit (-1);
         }
@@ -126,8 +126,8 @@ static int xgenuine(context_t * ctx, struct tchild *child, int status) {
 }
 
 static int xunknown(context_t *ctx, struct tchild *child, int status) {
-    if (0 > trace_syscall(child->pid, WSTOPSIG(status))) {
-        if (errno != ESRCH) {
+    if (G_UNLIKELY(0 > trace_syscall(child->pid, WSTOPSIG(status)))) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             g_critical ("failed to resume child %i after unknown signal %#x: %s",
                     child->pid, status, g_strerror (errno));
             g_printerr ("failed to resume child %i after unknown signal %#x: %s",
@@ -202,7 +202,7 @@ int trace_loop(context_t *ctx) {
                 g_debug ("latest event for child %i is E_EXEC, calling event handler", pid);
 
                 // Check for exec_lock
-                if (LOCK_PENDING == child->sandbox->lock) {
+                if (G_UNLIKELY(LOCK_PENDING == child->sandbox->lock)) {
                     g_info("access to magic commands is now denied for child %i", child->pid);
                     child->sandbox->lock = LOCK_SET;
                 }
@@ -219,7 +219,7 @@ int trace_loop(context_t *ctx) {
                 break;
             case E_EXIT:
                 ret = WEXITSTATUS(status);
-                if (ctx->eldest == pid) {
+                if (G_UNLIKELY(ctx->eldest == pid)) {
                     // Eldest child, keep the return value
                     if (0 != ret)
                         g_message ("eldest child %i exited with return code %d", pid, ret);
@@ -232,7 +232,7 @@ int trace_loop(context_t *ctx) {
                 tchild_delete(&(ctx->children), pid);
                 break;
             case E_EXIT_SIGNAL:
-                if (ctx->eldest == pid) {
+                if (G_UNLIKELY(ctx->eldest == pid)) {
                     g_message ("eldest child %i exited with signal %d", pid, WTERMSIG(status));
                     tchild_delete(&(ctx->children), pid);
                     return EXIT_FAILURE;
@@ -250,3 +250,4 @@ int trace_loop(context_t *ctx) {
     }
     return ret;
 }
+

@@ -109,7 +109,7 @@ ereadlink (const gchar *path)
     for (;;) {
         buf = g_realloc (buf, nrequested);
         nwritten = readlink(path, buf, nrequested);
-        if (0 > nwritten) {
+        if (G_UNLIKELY(0 > nwritten)) {
             g_free (buf);
             return NULL;
         }

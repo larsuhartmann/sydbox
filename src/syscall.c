@@ -155,7 +155,7 @@ static void systemcall_get_property(GObject *obj,
 static gboolean systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
 {
     data->pathlist[narg] = trace_get_string(pid, narg);
-    if (NULL == data->pathlist[narg]) {
+    if (G_UNLIKELY(NULL == data->pathlist[narg])) {
         data->result = RS_ERROR;
         data->save_errno = errno;
         if (ESRCH == errno)
@@ -182,7 +182,7 @@ static gboolean systemcall_get_dirfd(SystemCall *self,
                                      int narg, struct checkdata *data)
 {
     long dfd;
-    if (0 > trace_get_arg(child->pid, narg, &dfd)) {
+    if (G_UNLIKELY(0 > trace_get_arg(child->pid, narg, &dfd))) {
         data->result = RS_ERROR;
         data->save_errno = errno;
         if (ESRCH == errno)
@@ -261,7 +261,7 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    if (RS_ALLOW != data->result)
+    if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
     else if (!(self->flags & OPEN_MODE || self->flags & OPEN_MODE_AT
                 || self->flags & ACCESS_MODE || self->flags & ACCESS_MODE_AT))
@@ -269,7 +269,7 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
 
     if (self->flags & OPEN_MODE || self->flags & OPEN_MODE_AT) {
         int arg = self->flags & OPEN_MODE ? 1 : 2;
-        if (0 > trace_get_arg(child->pid, arg, &(data->open_flags))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, arg, &(data->open_flags)))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -283,7 +283,7 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
     }
     else {
         int arg = self->flags & ACCESS_MODE ? 1 : 2;
-        if (0 > trace_get_arg(child->pid, arg, &(data->access_flags))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, arg, &(data->access_flags)))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -311,50 +311,50 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     char *rpath_sanitized;
 
     g_debug ("checking if open(\"%s\", ...) is magic", path);
-    if (path_magic_on(path)) {
+    if (G_UNLIKELY(path_magic_on(path))) {
         data->result = RS_MAGIC;
         child->sandbox->on = 1;
         g_info ("sandbox status of child %i is now on", child->pid);
     }
-    else if (path_magic_off(path)) {
+    else if (G_UNLIKELY(path_magic_off(path))) {
         data->result = RS_MAGIC;
         child->sandbox->on = 0;
         g_info ("sandbox status of child %i is now off", child->pid);
     }
-    else if (path_magic_toggle(path)) {
+    else if (G_UNLIKELY(path_magic_toggle(path))) {
         data->result = RS_MAGIC;
         child->sandbox->on = !(child->sandbox->on);
         g_info ("sandbox status of child %i is now %s",
                 child->pid, child->sandbox->on ? "on" : "off");
     }
-    else if (path_magic_enabled(path) && child->sandbox->on) {
+    else if (G_UNLIKELY(path_magic_enabled(path) && child->sandbox->on)) {
         data->result = RS_MAGIC;
         g_info ("sandbox status of child %i is on", child->pid);
     }
-    else if (path_magic_lock(path)) {
+    else if (G_UNLIKELY(path_magic_lock(path))) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_SET;
         g_info ("access to magic commands is now denied for child %i", child->pid);
     }
-    else if (path_magic_exec_lock(path)) {
+    else if (G_UNLIKELY(path_magic_exec_lock(path))) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_PENDING;
         g_info ("access to magic commands will be denied on execve() for child %i",
                 child->pid);
     }
-    else if (path_magic_write(path)) {
+    else if (G_UNLIKELY(path_magic_write(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
         g_message ("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (path_magic_predict(path)) {
+    else if (G_UNLIKELY(path_magic_predict(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_PREDICT_LEN;
         pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
         g_message ("approved addpredict(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (path_magic_rmwrite(path)) {
+    else if (G_UNLIKELY(path_magic_rmwrite(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMWRITE_LEN;
         rpath_sanitized = sydbox_compress_path (rpath);
@@ -363,7 +363,7 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         g_message ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free (rpath_sanitized);
     }
-    else if (path_magic_rmpredict(path)) {
+    else if (G_UNLIKELY(path_magic_rmpredict(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMPREDICT_LEN;
         rpath_sanitized = sydbox_compress_path (rpath);
@@ -373,9 +373,9 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         g_free (rpath_sanitized);
     }
 
-    if (RS_MAGIC == data->result) {
+    if (G_UNLIKELY(RS_MAGIC == data->result)) {
         g_debug("changing path to /dev/null");
-        if (0 > trace_set_string(child->pid, 0, "/dev/null", 10)) {
+        if (G_UNLIKELY(0 > trace_set_string(child->pid, 0, "/dev/null", 10))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -399,9 +399,9 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     g_debug("checking if stat(\"%s\") is magic", path);
-    if (path_magic_dir(path) && (child->sandbox->on || !path_magic_enabled(path))) {
+    if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->on || !path_magic_enabled(path)))) {
         g_debug("stat(\"%s\") is magic, faking stat buffer", path);
-        if (0 > trace_fake_stat(child->pid)) {
+        if (G_UNLIKELY(0 > trace_fake_stat(child->pid))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -437,13 +437,13 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    if (RS_ALLOW != data->result)
+    if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
     else if (LOCK_SET == child->sandbox->lock) {
         g_debug("Lock is set for child %i, skipping magic checks", child->pid);
         return;
     }
-    else if (__NR_open != self->no && __NR_stat != self->no)
+    else if (G_LIKELY(__NR_open != self->no && __NR_stat != self->no))
         return;
 
     if (__NR_open == self->no)
@@ -470,9 +470,9 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    if (RS_ALLOW != data->result)
+    if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (!child->sandbox->on)
+    else if (G_UNLIKELY(!child->sandbox->on))
         return;
 
     g_debug("deciding whether we should resolve symlinks for system call %d, child %i",
@@ -481,7 +481,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
         data->resolve = FALSE;
     else if (self->flags & IF_AT_SYMLINK_FOLLOW4) {
         long symflags;
-        if (0 > trace_get_arg(child->pid, 4, &symflags)) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, 4, &symflags))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -495,7 +495,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     else if (self->flags & IF_AT_SYMLINK_NOFOLLOW3 || self->flags & IF_AT_SYMLINK_NOFOLLOW4) {
         long symflags;
         int arg = self->flags & IF_AT_SYMLINK_NOFOLLOW3 ? 3 : 4;
-        if (0 > trace_get_arg(child->pid, arg, &symflags)) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, arg, &symflags))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -508,7 +508,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     }
     else if (self->flags & IF_AT_REMOVEDIR2) {
         long rmflags;
-        if (0 > trace_get_arg(child->pid, 2, &rmflags)) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, 2, &rmflags))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -598,9 +598,9 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    if (RS_ALLOW != data->result)
+    if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (!child->sandbox->on)
+    else if (G_UNLIKELY(!child->sandbox->on))
         return;
 
     g_debug("canonicalizing paths for system call %d, child %i", self->no, child->pid);
@@ -654,7 +654,7 @@ static void systemcall_check_path(SystemCall *self,
     g_debug("checking `%s' for predict access", path);
     int allow_predict = pathlist_check(child->sandbox->predict_prefixes, path);
 
-    if (!allow_write && !allow_predict) {
+    if (G_UNLIKELY(!allow_write && !allow_predict)) {
         if (self->flags & (MUST_CREAT | MUST_CREAT2 | MUST_CREAT_AT | MUST_CREAT_AT2)) {
             g_debug("system call has one of MUST_CREAT* flags set, checking if `%s' exists", path);
             struct stat buf;
@@ -716,7 +716,7 @@ static void systemcall_check_path(SystemCall *self,
          * prevent symlink races.
          */
         g_debug ("paranoia! system call resolves symlinks, substituting path with resolved path");
-        if (0 > trace_set_string(child->pid, narg, path, strlen(path) + 1)) {
+        if (G_UNLIKELY(0 > trace_set_string(child->pid, narg, path, strlen(path) + 1))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -734,9 +734,9 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    if (RS_ALLOW != data->result)
+    if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (!child->sandbox->on)
+    else if (G_UNLIKELY(!child->sandbox->on))
         return;
 
     if (self->flags & CHECK_PATH) {
@@ -980,7 +980,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
 
     // Get the system call number of child
     if (0 > trace_get_syscall(child->pid, &sno)) {
-        if (ESRCH != errno) {
+        if (G_UNLIKELY(ESRCH != errno)) {
             /* Error getting system call using ptrace()
              * child is still alive, hence the error is fatal.
              */
@@ -1023,7 +1023,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     g_debug("denying access to system call %s()", sname);
                     child->sno = sno;
                     if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
-                        if (ESRCH != errno) {
+                        if (G_UNLIKELY(ESRCH != errno)) {
                             g_printerr("failed to set syscall: %s", g_strerror(errno));
                             exit(-1);
                         }
@@ -1037,7 +1037,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                             "allowing access to system call %s()", sname);
                     break;
                 case RS_ERROR:
-                    if (ESRCH != errno) {
+                    if (G_UNLIKELY(ESRCH != errno)) {
                         g_printerr("error while checking system call %s() for access: %s",
                                 sname, g_strerror(errno));
                         exit(-1);
@@ -1057,7 +1057,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             g_debug("restoring real call number for denied system call %s()", sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->sno)) {
-                if (ESRCH != errno) {
+                if (G_UNLIKELY(ESRCH != errno)) {
                     /* Error setting system call using ptrace()
                      * child is still alive, hence the error is fatal.
                      */
@@ -1068,7 +1068,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 return context_remove_child (ctx, child->pid);
             }
             if (0 > trace_set_return(child->pid, child->retval)) {
-                if (ESRCH != errno) {
+                if (G_UNLIKELY(ESRCH != errno)) {
                     /* Error setting return code using ptrace()
                      * child is still alive, hence the error is fatal.
                      */
@@ -1085,7 +1085,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
              */
             long retval;
             if (0 > trace_get_return(child->pid, &retval)) {
-                if (ESRCH != errno) {
+                if (G_UNLIKELY(ESRCH != errno)) {
                     /* Error getting return code using ptrace()
                      * child is still alive, hence the error is fatal.
                      */
@@ -1110,7 +1110,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                     retval = -errno;
                     g_debug("pgetcwd() failed: %s", g_strerror(errno));
                     if (0 > trace_set_return(child->pid, retval)) {
-                        if (ESRCH != errno) {
+                        if (G_UNLIKELY(ESRCH != errno)) {
                             /* Error setting return code using ptrace()
                              * child is still alive, hence the error is fatal.
                              */

@@ -35,7 +35,7 @@ char *pgetcwd(context_t *ctx, pid_t pid) {
 
     // First try ereadlink()
     cwd = ereadlink(linkcwd);
-    if (NULL != cwd)
+    if (G_LIKELY(NULL != cwd))
         return cwd;
     else if (ENAMETOOLONG != errno)
         return NULL;
@@ -43,7 +43,7 @@ char *pgetcwd(context_t *ctx, pid_t pid) {
     // Now try egetcwd()
     errno = 0;
     ret = echdir(linkcwd);
-    if (0 == ret || -2 == ret) {
+    if (G_LIKELY(0 == ret || -2 == ret)) {
         /* Either we've chdir()'ed successfully or current working directory was
          * lost during the chdir() attempt so we need to update ctx->cwd.
          */
@@ -69,7 +69,7 @@ char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
 
     // First try ereadlink()
     dir = ereadlink(linkdir);
-    if (NULL != dir)
+    if (G_LIKELY(NULL != dir))
         return dir;
     else if (ENAMETOOLONG != errno)
         return NULL;
@@ -77,7 +77,7 @@ char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
     // Now try egetcwd()
     errno = 0;
     ret = echdir(linkdir);
-    if (0 == ret || -2 == ret) {
+    if (G_LIKELY(0 == ret || -2 == ret)) {
         /* Either we've chdir()'ed successfully or current working directory was
          * lost during the chdir() attempt so we need to update ctx->cwd.
          */
@@ -94,3 +94,4 @@ char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
     }
     return NULL;
 }
+

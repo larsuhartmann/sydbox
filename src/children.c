@@ -48,16 +48,16 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
     child->sandbox->predict_prefixes = NULL;
 
     // Inheritance
-    if (0 < ppid) {
+    if (G_LIKELY(0 < ppid)) {
         parent = tchild_find(*children, ppid);
         assert(NULL != parent);
 
-        if (NULL != parent->cwd) {
+        if (G_LIKELY(NULL != parent->cwd)) {
             g_debug ("child %i inherits parent %i's current working directory '%s'", pid, parent->pid, parent->cwd);
             child->cwd = g_strdup (parent->cwd);
         }
 
-        if (NULL != parent->sandbox) {
+        if (G_LIKELY(NULL != parent->sandbox)) {
             GSList *walk;
             child->sandbox->on = parent->sandbox->on;
             child->sandbox->lock = parent->sandbox->lock;
@@ -79,14 +79,14 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
 }
 
 static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED) {
-    if (NULL != child->sandbox) {
-        if (NULL != child->sandbox->write_prefixes)
+    if (G_LIKELY(NULL != child->sandbox)) {
+        if (G_LIKELY(NULL != child->sandbox->write_prefixes))
             pathnode_free(&(child->sandbox->write_prefixes));
-        if (NULL != child->sandbox->predict_prefixes)
+        if (G_LIKELY(NULL != child->sandbox->predict_prefixes))
             pathnode_free(&(child->sandbox->predict_prefixes));
         g_free (child->sandbox);
     }
-    if (NULL != child->cwd)
+    if (G_LIKELY(NULL != child->cwd))
         g_free (child->cwd);
     g_free (child);
 }

@@ -42,8 +42,8 @@ shell_expand (const char * const str)
     argv[2] = g_strdup_printf ("echo '%s'", quoted);
     g_free (quoted);
 
-    if (! g_spawn_sync (NULL, argv, NULL, G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL,
-                        &output, NULL, &retval, &error)) {
+    if (G_UNLIKELY(! g_spawn_sync (NULL, argv, NULL, G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL,
+                    &output, NULL, &retval, &error))) {
         g_printerr ("failed to expand `%s': %s", str, error->message);
         g_error_free (error);
     }
@@ -105,16 +105,16 @@ inline bool path_magic_rmpredict(const char *path) {
 int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     char *data;
 
-    if (NULL == path) {
+    if (G_UNLIKELY(NULL == path)) {
         g_info ("path is NULL not adding to list");
         return -1;
     }
-    else if (0 == strlen(path)) {
+    else if (G_UNLIKELY(0 == strlen(path))) {
         g_info ("path is empty not adding to list");
         return -1;
     }
 
-    if (!sanitize)
+    if (G_LIKELY(!sanitize))
         data = g_strdup (path);
     else {
         char *spath = sydbox_compress_path (path);
@@ -130,7 +130,7 @@ int pathnode_new_early(GSList **pathlist, const char *path, int sanitize)
 {
     char *data, *spath;
 
-    if (NULL == path || 0 == strlen(path))
+    if (G_UNLIKELY(NULL == path || 0 == strlen(path)))
         return -1;
 
     if (!sanitize)
@@ -237,3 +237,4 @@ int pathlist_check(GSList *pathlist, const char *path_sanitized) {
         g_debug ("path list check failed for `%s'", path_sanitized);
     return ret;
 }
+
