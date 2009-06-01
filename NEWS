@@ -5,6 +5,10 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta3:
+    * Fixed event handling and inheritance of sandbox data. Sydbox behaves
+      correctly now when a child calls fork(), vfork() or clone().
+
 0.1_beta2:
     * Canonicalize filenames by default. This was previously only done in
       paranoid mode. This makes sydbox stricter (expect more test
