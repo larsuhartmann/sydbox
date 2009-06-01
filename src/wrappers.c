@@ -48,6 +48,7 @@
 #define _GNU_SOURCE
 #endif
 
+#include <assert.h>
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -291,6 +292,46 @@ egetcwd (void)
     return NULL;
 }
 
+// lstat() wrapper that tries to take care of ENAMETOOLONG by chdir()'ing
+static int elstat(const char *path, struct stat *buf)
+{
+    int ret, save_errno;
+    char *dname, *bname, *save_cwd;
+
+    ret = lstat(path, buf);
+    if (G_LIKELY(0 == ret))
+        return ret;
+    else if (ENAMETOOLONG != errno)
+        return ret;
+
+    dname = edirname(path);
+    bname = ebasename(path);
+
+    // Save current working directory
+    save_cwd = egetcwd();
+    assert(NULL != save_cwd);
+
+    // chdir() to the target directory
+    ret = echdir(dname);
+    if (G_UNLIKELY(0 != ret)) {
+        /* failed to change the directory
+         * nothing else to do.
+         */
+        if (-2 == ret)
+            assert(0 == echdir(save_cwd));
+        g_free(dname);
+        g_free(save_cwd);
+        errno = ENAMETOOLONG;
+        return -1;
+    }
+    ret = lstat(bname, buf);
+    save_errno = errno;
+    assert(0 == echdir(save_cwd));
+    g_free(dname);
+    g_free(save_cwd);
+    errno = save_errno;
+    return ret;
+}
 
 /* Return the canonical absolute name of file NAME.  A canonical name
    does not contain any `.', `..' components nor any repeated file name
@@ -382,7 +423,7 @@ canonicalize_filename_mode (const gchar *name,
             dest += end - start;
             *dest = '\0';
 
-            if (lstat (rname, &st) != 0) {
+            if (elstat (rname, &st) != 0) {
                 if (can_mode == CAN_EXISTING)
                     goto error;
                 if (can_mode == CAN_ALL_BUT_LAST && *end)
