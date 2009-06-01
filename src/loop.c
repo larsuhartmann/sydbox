@@ -90,7 +90,9 @@ static int xfork(context_t *ctx, struct tchild *child) {
 
     newchild = tchild_find(ctx->children, childpid);
     if (NULL == newchild) {
-        // Add the child, setup has already been done.
+        /* Child is born prematurely, setup has already been done
+         * Add the child to the list of children.
+         */
         tchild_new(&(ctx->children), childpid, child->pid);
     }
 
@@ -99,8 +101,12 @@ static int xfork(context_t *ctx, struct tchild *child) {
             g_printerr("failed to resume new born child %i", childpid);
             exit(-1);
         }
-        if (NULL != newchild)
+        if (NULL != newchild) {
+            /* Child isn't prematurely born, and it's dead (rip).
+             * Remove it from the list of children.
+             */
             return context_remove_child(ctx, childpid);
+        }
     }
     g_debug("resumed new born child %i", childpid);
 
