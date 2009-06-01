@@ -309,7 +309,11 @@ static int elstat(const char *path, struct stat *buf)
 
     // Save current working directory
     save_cwd = egetcwd();
-    assert(NULL != save_cwd);
+    if (G_UNLIKELY(NULL == save_cwd)) {
+        g_free(dname);
+        errno = ENAMETOOLONG;
+        return -1;
+    }
 
     // chdir() to the target directory
     ret = echdir(dname);
