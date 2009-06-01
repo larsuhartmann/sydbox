@@ -105,7 +105,7 @@ static int xfork(context_t *ctx, struct tchild *child) {
             /* Child isn't prematurely born, and it's dead (rip).
              * Remove it from the list of children.
              */
-            return context_remove_child(ctx, childpid);
+            context_remove_child(ctx, childpid);
         }
     }
     g_debug("resumed new born child %i", childpid);
