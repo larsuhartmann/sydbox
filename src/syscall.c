@@ -439,8 +439,10 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
 
     if (RS_ALLOW != data->result)
         return;
-    else if (LOCK_SET == child->sandbox->lock)
+    else if (LOCK_SET == child->sandbox->lock) {
+        g_debug("Lock is set for child %i, skipping magic checks", child->pid);
         return;
+    }
     else if (__NR_open != self->no && __NR_stat != self->no)
         return;
 

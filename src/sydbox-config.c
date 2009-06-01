@@ -250,6 +250,7 @@ void
 sydbox_config_write_to_stderr (void)
 {
     g_fprintf (stderr, "colour = %s\n", config->colourise_output ? "yes" : "no");
+    g_fprintf (stderr, "lock = %s\n", config->allow_magic_commands ? "unset" : "set");
     g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
     g_fprintf (stderr, "network sandboxing = %s\n", config->sandbox_network ? "yes" : "no");

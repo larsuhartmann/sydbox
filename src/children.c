@@ -62,6 +62,9 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
             child->sandbox->on = parent->sandbox->on;
             child->sandbox->lock = parent->sandbox->lock;
             child->sandbox->net = parent->sandbox->net;
+            g_debug("child %i inherits parent %i's sandbox status: %s", child->sandbox->on ? "on" : "off");
+            g_debug("child %i inherits parent %i's sandbox lock status: %s", child->sandbox->lock ? "set" : "unset");
+            g_debug("child %i inherits parent %i's sandbox net status: %s", child->sandbox->net ? "on" : "off");
             // Copy path lists
             walk = parent->sandbox->write_prefixes;
             while (NULL != walk) {
