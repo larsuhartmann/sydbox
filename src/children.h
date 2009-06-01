@@ -59,7 +59,7 @@ struct tchild
 };
 
 void
-tchild_new (GSList **children, pid_t pid);
+tchild_new (GSList **children, pid_t pid, pid_t ppid);
 
 void
 tchild_free (GSList **children);

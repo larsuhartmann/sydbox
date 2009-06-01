@@ -214,7 +214,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
         exit (-1);
     }
 
-    tchild_new (&(ctx->children), pid);
+    tchild_new (&(ctx->children), pid, -1);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
     eldest->cwd = g_strdup (ctx->cwd);

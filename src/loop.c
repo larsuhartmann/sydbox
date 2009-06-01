@@ -61,22 +61,6 @@ static int xsetup(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
-static int xsetup_premature(context_t *ctx, pid_t pid) {
-    tchild_new(&(ctx->children), pid);
-    /* XXX: Shameless hack
-     * We need to update the current working directory here,
-     * because inheritance doesn't work for prematurely borned children.
-     */
-    struct tchild *child = ctx->children->data;
-    g_free(child->cwd);
-    child->cwd = pgetcwd(ctx, child->pid);
-    if (NULL == child->cwd) {
-        g_printerr("failed to determine current working directory of prematurely born child %d", child->pid);
-        exit(-1);
-    }
-    return xsetup(ctx, ctx->children->data);
-}
-
 static int xsyscall(context_t *ctx, struct tchild *child) {
     if (0 > trace_syscall(child->pid, 0)) {
         if (errno != ESRCH) {
@@ -105,22 +89,21 @@ static int xfork(context_t *ctx, struct tchild *child) {
         g_debug ("the newborn child's pid is %i", childpid);
 
     newchild = tchild_find(ctx->children, childpid);
-    if (NULL != newchild) {
-        g_debug ("child %i is prematurely born, letting it continue its life", newchild->pid);
-        if (0 > trace_syscall(newchild->pid, 0)) {
-            if (errno != ESRCH) {
-                g_printerr ("failed to resume prematurely born child %i: %s",
-                        newchild->pid, g_strerror (errno));
-                exit (-1);
-            }
-            return context_remove_child (ctx, newchild->pid);
+    if (NULL == newchild) {
+        // Add the child, setup has already been done.
+        tchild_new(&(ctx->children), childpid, child->pid);
+    }
+
+    if (0 > trace_syscall(childpid, 0)) {
+        if (ESRCH != errno) {
+            g_printerr("failed to resume new born child %i", childpid);
+            exit(-1);
         }
-        g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed prematurely born child %i", newchild->pid);
+        if (NULL != newchild)
+            return context_remove_child(ctx, childpid);
     }
-    else {
-        // Add the child, setup will be done later
-        tchild_new(&(ctx->children), childpid);
-    }
+    g_debug("resumed new born child %i", childpid);
+
     return xsyscall(ctx, child);
 }
 
@@ -139,8 +122,10 @@ static int xgenuine(context_t * ctx, struct tchild *child, int status) {
 static int xunknown(context_t *ctx, struct tchild *child, int status) {
     if (0 > trace_syscall(child->pid, WSTOPSIG(status))) {
         if (errno != ESRCH) {
-            g_critical ("failed to resume child %i after unknown signal %#x: %s", child->pid, status, g_strerror (errno));
-            g_printerr ("failed to resume child %i after unknown signal %#x: %s", child->pid, status, g_strerror (errno));
+            g_critical ("failed to resume child %i after unknown signal %#x: %s",
+                    child->pid, status, g_strerror (errno));
+            g_printerr ("failed to resume child %i after unknown signal %#x: %s",
+                    child->pid, status, g_strerror (errno));
             exit (-1);
         }
         return context_remove_child (ctx, child->pid);
@@ -171,13 +156,21 @@ int trace_loop(context_t *ctx) {
             case E_STOP:
                 g_debug ("latest event for child %i is E_STOP, calling event handler", pid);
                 if (NULL == child) {
-                    g_debug("child %d has born prematurely", pid);
-                    ret = xsetup_premature(ctx, pid);
-                    if (0 != ret)
-                        return ret;
+                    /* Child is born before PTRACE_EVENT_FORK, setup the child
+                     * but don't resume it until we receive the event.
+                     */
+                    g_debug("setting up prematurely born child %i", pid);
+                    if (0 > trace_setup(pid)) {
+                        if (ESRCH != errno) {
+                            g_printerr("failed to set up prematurely born child %i", pid);
+                            exit(-1);
+                        }
+                        else
+                            g_debug("failed to set up prematurely born child %i: %s", pid, g_strerror(errno));
+                    }
                 }
                 else {
-                    g_debug("setting up child %d", child->pid);
+                    g_debug("setting up child %i", child->pid);
                     ret = xsetup(ctx, child);
                     if (0 != ret)
                         return ret;

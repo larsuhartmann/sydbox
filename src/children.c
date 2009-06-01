@@ -19,6 +19,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,7 @@
 #include "children.h"
 #include "sydbox-log.h"
 
-void tchild_new(GSList **children, pid_t pid) {
+void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
     struct tchild *child, *parent;
 
     g_debug ("new child %i", pid);
@@ -47,8 +48,9 @@ void tchild_new(GSList **children, pid_t pid) {
     child->sandbox->predict_prefixes = NULL;
 
     // Inheritance
-    if (NULL != *children && NULL != (*children)->data) {
-        parent = (*children)->data;
+    if (0 < ppid) {
+        parent = tchild_find(*children, ppid);
+        assert(NULL != parent);
 
         if (NULL != parent->cwd) {
             g_debug ("child %i inherits parent %i's current working directory '%s'", pid, parent->pid, parent->cwd);

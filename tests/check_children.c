@@ -24,7 +24,7 @@ START_TEST(check_tchild_new) {
     GSList *tc = NULL;
     struct tchild *child;
 
-    tchild_new(&tc, 666);
+    tchild_new(&tc, 666, -1);
 
     fail_unless(NULL != tc);
     child = (struct tchild *) tc->data;
@@ -43,7 +43,7 @@ START_TEST(check_tchild_free) {
     PRINT_TEST_HEADER;
     GSList *tc = NULL;
 
-    tchild_new(&tc, 666);
+    tchild_new(&tc, 666, -1);
     tchild_free(&tc);
 
     fail_unless(NULL == tc);
@@ -54,7 +54,7 @@ START_TEST(check_tchild_delete_first) {
     PRINT_TEST_HEADER;
     GSList *tc = NULL;
 
-    tchild_new(&tc, 666);
+    tchild_new(&tc, 666, -1);
     tchild_delete(&tc, 666);
 
     fail_unless(NULL == tc);
@@ -67,9 +67,9 @@ START_TEST(check_tchild_delete) {
     GSList *tc = NULL;
     GSList *walk = NULL;
 
-    tchild_new(&tc, 666);
-    tchild_new(&tc, 667);
-    tchild_new(&tc, 668);
+    tchild_new(&tc, 666, -1);
+    tchild_new(&tc, 667, 666);
+    tchild_new(&tc, 668, 667);
 
     tchild_delete(&tc, 666);
 

@@ -129,21 +129,25 @@ static int umovestr(pid_t pid, long addr, char *dest, size_t len) {
 }
 
 unsigned int trace_event(int status) {
+    int sig;
+    unsigned int event;
+
     if (WIFSTOPPED(status)) {
-        int sig = WSTOPSIG(status);
+        sig = WSTOPSIG(status);
         if (SIGSTOP == sig)
             return E_STOP;
         else if ((SIGTRAP | 0x80) == sig)
             return E_SYSCALL;
 
-        switch (status) {
-            case SIGTRAP | PTRACE_EVENT_FORK << 8:
+        event = (status >> 16) & 0xffff;
+        switch (event) {
+            case PTRACE_EVENT_FORK:
                 return E_FORK;
-            case SIGTRAP | PTRACE_EVENT_VFORK << 8:
+            case PTRACE_EVENT_VFORK:
                 return E_VFORK;
-            case SIGTRAP | PTRACE_EVENT_CLONE << 8:
+            case PTRACE_EVENT_CLONE:
                 return E_CLONE;
-            case SIGTRAP | PTRACE_EVENT_EXEC << 8:
+            case PTRACE_EVENT_EXEC:
                 return E_EXEC;
             default:
                 return E_GENUINE;
