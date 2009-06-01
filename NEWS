@@ -1,0 +1,26 @@
+News for sydbox
+===============
+
+This file lists the major changes between versions. For a more detailed list of
+every change, see git log.
+
+
+0.1_beta2:
+    * Canonicalize filenames by default. This was previously only done in
+      paranoid mode. This makes sydbox stricter (expect more test
+      suites to fail).
+
+0.1_beta:
+    * Fix bogus access violations. As an example sydbox would
+      throw an access violation in a simple case like
+      $ mkdir -p /var/tmp/paludis
+      because of mkdir("/var", ...) being called.
+      This is now fixed.
+    * Use glib's key file format for configuration file. This kills the
+      dependency on dev-libs/confuse. Being a crucial system tool we're
+      trying to keep the dependencies as few as possible.
+    * Many other small fixes.
+
+0.1_alpha:
+    * Initial public release
+
