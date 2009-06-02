@@ -27,7 +27,9 @@ if [[ "${TERM}" != "dumb" && -t 1 ]]; then
     tput bold >/dev/null 2>&1 &&
     tput setaf 1 >/dev/null 2>&1 &&
     tput sgr0 >/dev/null 2>&1 &&
-    color=t
+    colour=true
+else
+    colour=false
 fi
 
 cwd="$(readlink -f .)"
@@ -72,7 +74,7 @@ sydbox() {
     SANDBOX_NO_CONFIG=1 @TOP_BUILDDIR@/src/sydbox -0 4 -l "${SANDBOX_LOG}" "$@"
 }
 
-if [[ -n "${color}" ]]; then
+if [[ $colour ]]; then
     say() {
         case "$1" in
             error) tput bold; tput setaf 1;;  # bold red
