@@ -28,6 +28,10 @@
 #define g_info(...)                 g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
 #endif
 
+#ifndef g_debug_trace
+#define g_debug_trace(...)          g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, __VA_ARGS__)
+#endif
+
 void
 sydbox_log_init (void);
 

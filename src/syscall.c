@@ -998,8 +998,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
     sname = (0xbadca11 == sno) ? syscall_get_name(child->sno) : syscall_get_name(sno);
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
-        g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is entering system call %s()",
-                child->pid, sname);
+        g_debug_trace("child %i is entering system call %s()", child->pid, sname);
 
         /* Get handler for the system call
          */
@@ -1008,7 +1007,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             /* There's no handler for this system call.
              * Safe system call, allow access.
              */
-            g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "allowing access to system call %s()", sname);
+            g_debug_trace("allowing access to system call %s()", sname);
         }
         else {
             /* There's a handler for this system call,
@@ -1033,8 +1032,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 case RS_ALLOW:
                 case RS_NOWRITE:
                 case RS_MAGIC:
-                    g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE,
-                            "allowing access to system call %s()", sname);
+                    g_debug_trace("allowing access to system call %s()", sname);
                     break;
                 case RS_ERROR:
                     if (G_UNLIKELY(ESRCH != errno)) {
@@ -1050,8 +1048,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         }
     }
     else { // Exiting sytem call
-        g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "child %i is exiting system call %s()",
-                child->pid, sname);
+        g_debug_trace("child %i is exiting system call %s()", child->pid, sname);
 
         if (0xbadca11 == sno) {
             g_debug("restoring real call number for denied system call %s()", sname);

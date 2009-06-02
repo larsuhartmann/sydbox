@@ -57,7 +57,7 @@ static int xsetup(context_t *ctx, struct tchild *child) {
         return context_remove_child (ctx, child->pid);
     }
 
-    g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed child %i after setup", child->pid);
+    g_debug_trace("resumed child %i after setup", child->pid);
     return 0;
 }
 
@@ -121,7 +121,7 @@ static int xgenuine(context_t * ctx, struct tchild *child, int status) {
         }
         return context_remove_child (ctx, child->pid);
     }
-    g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed child %i after genuine signal", child->pid);
+    g_debug_trace("resumed child %i after genuine signal", child->pid);
     return 0;
 }
 
@@ -136,7 +136,7 @@ static int xunknown(context_t *ctx, struct tchild *child, int status) {
         }
         return context_remove_child (ctx, child->pid);
     }
-    g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, "resumed child %i after unknown signal %#x", child->pid, status);
+    g_debug_trace("resumed child %i after unknown signal %#x", child->pid, status);
     return 0;
 }
 
