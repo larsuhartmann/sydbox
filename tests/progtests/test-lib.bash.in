@@ -12,6 +12,7 @@ export LANG=C
 export LC_ALL=C
 export TZ=UTC
 
+unset CDPATH
 unset PWD
 unset SANDBOX_PHASE
 unset SANDBOX_WRITE
@@ -20,6 +21,14 @@ unset SANDBOX_NET
 unset SANDBOX_CONFIG
 unset SANDBOX_NO_COLOUR
 unset SANDBOX_LOG
+
+# Colour
+if [[ "${TERM}" != "dumb" && -t 1 ]]; then
+    tput bold >/dev/null 2>&1 &&
+    tput setaf 1 >/dev/null 2>&1 &&
+    tput sgr0 >/dev/null 2>&1 &&
+    color=t
+fi
 
 cwd="$(readlink -f .)"
 SANDBOX_LOG="${cwd}/sydbox-$$.log"
@@ -63,20 +72,36 @@ sydbox() {
     SANDBOX_NO_CONFIG=1 @TOP_BUILDDIR@/src/sydbox -0 4 -l "${SANDBOX_LOG}" "$@"
 }
 
-say() {
-    echo "* $@"
-}
+if [[ -n "${color}" ]]; then
+    say() {
+        case "$1" in
+            error) tput bold; tput setaf 1;;  # bold red
+            skip)  tput bold; tput setaf 2;;  # bold green
+            pass)  tput setaf 2;;             # green
+            info)  tput setaf 3;;             # brown
+        esac
+        shift
+        printf "* %s" "$@"
+        tput sgr0
+        echo
+    }
+else
+    say() {
+        shift
+        echo "* $@"
+    }
+fi
 
 die() {
-    echo "REASON: $@" >&2
-    echo "LOG: ${SANDBOX_LOG}"
+    say error "Reason: $@"
+    say error "Log: ${SANDBOX_LOG}"
     echo ">>> Testcase failed: $@" >> "${SANDBOX_LOG}"
     remove_log=false
     exit 1
 }
 
 start_test() {
-    say "$@"
+    say info "$@"
     echo ">>> Starting testcase $@" >> "${SANDBOX_LOG}"
 }
 
