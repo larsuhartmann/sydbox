@@ -295,7 +295,7 @@ egetcwd (void)
 // lstat() wrapper that tries to take care of ENAMETOOLONG by chdir()'ing
 static int elstat(const char *path, struct stat *buf)
 {
-    int ret, save_errno;
+    int ret, cret, save_errno;
     char *dname, *bname, *save_cwd;
 
     ret = lstat(path, buf);
@@ -321,8 +321,10 @@ static int elstat(const char *path, struct stat *buf)
         /* failed to change the directory
          * nothing else to do.
          */
-        if (-2 == ret)
-            assert(0 == echdir(save_cwd));
+        if (-2 == ret) {
+            cret = echdir(save_cwd);
+            assert(0 == cret);
+        }
         g_free(dname);
         g_free(save_cwd);
         errno = ENAMETOOLONG;
@@ -330,7 +332,8 @@ static int elstat(const char *path, struct stat *buf)
     }
     ret = lstat(bname, buf);
     save_errno = errno;
-    assert(0 == echdir(save_cwd));
+    cret = echdir(save_cwd);
+    assert(0 == cret);
     g_free(dname);
     g_free(save_cwd);
     errno = save_errno;
