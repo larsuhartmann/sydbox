@@ -159,9 +159,9 @@ kill_long() {
     perl="$(type -P perl 2>/dev/null)"
     [[ -z "$perl" ]] && return 0
 
-    "$perl" \
-        -e 'use File::Path;' \
-        -e 'my $dir = '$long_dir';' \
+    "$perl"                             \
+        -e 'use File::Path;'            \
+        -e 'my $dir = '$long_dir';'     \
         -e 'rmtree($dir) or die "$!";'
 }
 
@@ -171,10 +171,10 @@ mkdir_long() {
     # bash fails to do it so use perl instead...
     perl="$(find_perl_or_skip)"
 
-    if ! "$perl" \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" ' \
+    if ! "$perl"                                                \
+        -e 'my $dir = '$long_dir';'                             \
+        -e 'foreach my $i (1..64) {'                            \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" '  \
         -e '}'
     then
         say skip "failed to create too long directory structure, skipping test"
@@ -189,15 +189,15 @@ lstat_long() {
     local fname="$1"
     perl="$(find_perl_or_skip)"
 
-    "$perl" \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    chdir($dir) or exit(127)' \
-        -e '}' \
-        -e 'if (!lstat("'$fname'")) {' \
-        -e '    exit(1)' \
-        -e '} else {' \
-        -e '    exit(0)' \
+    "$perl"                                 \
+        -e 'my $dir = '$long_dir';'         \
+        -e 'foreach my $i (1..64) {'        \
+        -e '    chdir($dir) or exit(127)'   \
+        -e '}'                              \
+        -e 'if (!lstat("'$fname'")) {'      \
+        -e '    exit(1)'                    \
+        -e '} else {'                       \
+        -e '    exit(0)'                    \
         -e '}'
 }
 
@@ -217,14 +217,14 @@ mkstemp_long() {
     # bash fails to do it so use perl instead...
     perl="$(find_perl_or_skip)"
 
-    tempfile=$("$perl" \
-        -e 'use File::Temp qw/ :mktemp  /;' \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" ' \
-        -e '}' \
+    tempfile=$("$perl"                                                  \
+        -e 'use File::Temp qw/ :mktemp  /;'                             \
+        -e 'my $dir = '$long_dir';'                                     \
+        -e 'foreach my $i (1..64) {'                                    \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" '          \
+        -e '}'                                                          \
         -e '($fh, $file) = mkstemps("'$template'", "syd") or die "$!";' \
-        -e 'close($fh);' \
+        -e 'close($fh);'                                                \
         -e 'printf($file);')
     if [[ -z "$tempfile" ]]; then
         say skip "failed to create temporary file, skipping test"
@@ -247,13 +247,13 @@ mkdtemp_long() {
     # bash fails to do it so use perl instead...
     perl="$(find_perl_or_skip)"
 
-    if ! "$perl" \
-        -e 'use File::Temp qw/ :mktemp  /;' \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" ' \
-        -e '}' \
-        -e '$tmpdir = mkdtemp("'$template'") or die "$!";' \
+    if ! "$perl"                                                \
+        -e 'use File::Temp qw/ :mktemp  /;'                     \
+        -e 'my $dir = '$long_dir';'                             \
+        -e 'foreach my $i (1..64) {'                            \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" '  \
+        -e '}'                                                  \
+        -e '$tmpdir = mkdtemp("'$template'") or die "$!";'      \
         -e 'printf($tmpdir);'
     then
         say skip "failed to create temporary directory, skipping test"
@@ -268,11 +268,11 @@ perm_long() {
     fname="$1"
     perl="$(find_perl_or_skip)"
     "$perl" \
-        -e "use Fcntl ':mode';" \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    chdir($dir) or die "$!"' \
-        -e '}' \
+        -e "use Fcntl ':mode';"                             \
+        -e 'my $dir = '$long_dir';'                         \
+        -e 'foreach my $i (1..64) {'                        \
+        -e '    chdir($dir) or die "$!"'                    \
+        -e '}'                                              \
         -e '($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,' \
         -e '    $atime,$mtime,$ctime,$blksize,$blocks) = stat("'$tmpfile'") or die "$!";' \
         -e 'printf(S_IMODE($mode));'
@@ -284,16 +284,16 @@ read_long() {
     # bash fails to do it so use perl instead...
     fname="$1"
     perl="$(find_perl_or_skip)"
-    if ! "$perl" \
-        -e 'my $dir = '$long_dir';' \
-        -e 'my $data;' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    chdir($dir) or die "$!"' \
-        -e '}' \
-        -e 'open(TEMPFILE, "'$fname'") or die "$!";' \
-        -e 'while (0 != (read(TEMPFILE, $data, 1))) {' \
-        -e '    printf($data);' \
-        -e '}' \
+    if ! "$perl"                                        \
+        -e 'my $dir = '$long_dir';'                     \
+        -e 'my $data;'                                  \
+        -e 'foreach my $i (1..64) {'                    \
+        -e '    chdir($dir) or die "$!"'                \
+        -e '}'                                          \
+        -e 'open(TEMPFILE, "'$fname'") or die "$!";'    \
+        -e 'while (0 != (read(TEMPFILE, $data, 1))) {'  \
+        -e '    printf($data);'                         \
+        -e '}'                                          \
         -e 'close(TEMPFILE);'
     then
         say skip "failed to read data, skipping test"
@@ -308,13 +308,13 @@ write_long() {
     fname="$1"
     shift
     perl="$(find_perl_or_skip)"
-    if ! "$perl" \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!"' \
-        -e '}' \
-        -e 'open(TEMPFILE, ">'$fname'") or die "$!";' \
-        -e 'print TEMPFILE '$@';' \
+    if ! "$perl"                                                \
+        -e 'my $dir = '$long_dir';'                             \
+        -e 'foreach my $i (1..64) {'                            \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!"'   \
+        -e '}'                                                  \
+        -e 'open(TEMPFILE, ">'$fname'") or die "$!";'           \
+        -e 'print TEMPFILE '$@';'                               \
         -e 'close(TEMPFILE);'
     then
         say skip "failed to write data, skipping test"
