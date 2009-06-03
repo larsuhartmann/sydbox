@@ -5,13 +5,9 @@
 
 . test-lib.bash
 
-rm -fr arnold.layne
-if [[ 0 != $? ]]; then
-    die "rm -fr arnold.layne"
-fi
-ln -s its.not.the.same arnold.layne
-if [[ 0 != $? ]]; then
-    die "ln -s its.not.the.same arnold.layne"
+if ! ln -s arnold.layne its.not.the.same; then
+    say skip "failed to create symbolic link, skipping test"
+    exit 0
 fi
 
 start_test "t05-lchown-deny"

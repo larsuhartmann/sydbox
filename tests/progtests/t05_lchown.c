@@ -12,7 +12,7 @@
 int main(void) {
     uid_t uid = geteuid();
     gid_t gid = getegid();
-    if (0 > lchown("arnold.layne", uid, gid))
+    if (0 > lchown("its.not.the.same", uid, gid))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;
