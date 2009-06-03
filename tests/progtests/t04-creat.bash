@@ -3,12 +3,8 @@
 # Copyright 2009 Ali Polatel <polatel@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+no_create_file=1
 . test-lib.bash
-
-rm -fr arnold.layne
-if [[ 0 != $? ]]; then
-    die "rm -fr arnold.layne"
-fi
 
 start_test "t04-creat-deny"
 sydbox -- ./t04_creat
