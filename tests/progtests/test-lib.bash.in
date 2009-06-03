@@ -235,6 +235,32 @@ mkstemp_long() {
     umask $old_umask
 }
 
+mkdtemp_long() {
+    local perl template
+
+    if [[ -z "$1" ]]; then
+        template=tmp.XXXXXXXXXX
+    else
+        template="$1"
+    fi
+
+    # bash fails to do it so use perl instead...
+    perl="$(find_perl_or_skip)"
+
+    if ! "$perl" \
+        -e 'use File::Temp qw/ :mktemp  /;' \
+        -e 'my $dir = '$long_dir';' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" ' \
+        -e '}' \
+        -e '$tmpdir = mkdtemp("'$template'") or die "$!";' \
+        -e 'printf($tmpdir);'
+    then
+        say skip "failed to create temporary directory, skipping test"
+        exit 0
+    fi
+}
+
 perm_long() {
     local fname perl
 
