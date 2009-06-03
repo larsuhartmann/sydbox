@@ -138,7 +138,7 @@ cleanup() {
     echo "  rm -fr ${clean_files[@]}" >>"${SANDBOX_LOG}"
     rm -fr "${clean_files[@]}" >>${SANDBOX_LOG} 2>&1
     echo "  rm -fr LONG_DIR" >>"${SANDBOX_LOG}"
-    rm -fr "$long_dir" >>"${SANDBOX_LOG}" 2>&1
+    kill_long >>"${SANDBOX_LOG}" 2>&1
     $remove_log && rm -f "${SANDBOX_LOG}" 2>&1
 }
 trap 'cleanup' EXIT
@@ -152,10 +152,23 @@ find_perl_or_skip() {
     echo "$p"
 }
 
+kill_long() {
+    local perl
+
+    # bash fails to do it so use perl instead...
+    perl="$(type -P perl 2>/dev/null)"
+    [[ -z "$perl" ]] && return 0
+
+    "$perl" \
+        -e 'use File::Path;' \
+        -e 'my $dir = '$long_dir';' \
+        -e 'rmtree($dir) or die "$!";'
+}
+
 mkdir_long() {
     local perl
 
-    # bash fails to do it so use perl instead
+    # bash fails to do it so use perl instead...
     perl="$(find_perl_or_skip)"
 
     if ! "$perl" \
