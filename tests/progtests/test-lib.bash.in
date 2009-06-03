@@ -129,7 +129,7 @@ find_perl_or_skip() {
 }
 
 mkstemp_long() {
-    local old_umask perl tempfile template toolong_dir
+    local old_umask perl tempfile template
 
     if [[ -z "$1" ]]; then
         template=tmp.XXXXXXXXXX
