@@ -33,6 +33,13 @@ else
 fi
 
 cwd="$(readlink -f .)"
+long_dir=$(printf '%200s' ' ' | tr ' ' x)
+toolong_dir="$(
+    for ((i=1; i <= 64; i++)); do
+        printf "$long_dir"
+        [[ $i != 64 ]] && printf /
+    done)"
+
 SANDBOX_LOG="${cwd}/sydbox-$$.log"
 remove_log=true
 
@@ -110,3 +117,48 @@ start_test() {
 end_test() {
     echo ">>> Finished testcase" >> "${SANDBOX_LOG}"
 }
+
+find_perl_or_skip() {
+    local p="$(type -P perl 2>/dev/null)"
+    if [[ -z "$p" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
+    echo "$p"
+}
+
+mkstemp_long() {
+    local old_umask perl tempfile template toolong_dir
+
+    if [[ -z "$1" ]]; then
+        template=tmp.XXXXXXXXXX
+    else
+        template="$1"
+    fi
+
+    # save & set umask
+    old_umask=$(umask)
+    umask 022
+
+    # bash fails to do it so use perl instead...
+    perl="$(find_perl_or_skip)"
+
+    tempfile=$("$perl" \
+        -e 'use File::Temp qw/ :mktemp  /;' \
+        -e 'my $dir = '$long_dir';' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" ' \
+        -e '}' \
+        -e '($fh, $file) = mkstemps("'$template'", "syd") or die "$!";' \
+        -e 'close($fh);' \
+        -e 'printf($file);')
+    if [[ -z "$tempfile" ]]; then
+        say skip "failed to create temporary file, skipping test"
+        rm -fr $long_dir
+        exit 0
+    fi
+
+    echo $tempfile
+    umask $old_umask
+}
+

@@ -9,7 +9,7 @@ TESTS = t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash t05-lchown.ba
 	t25-linkat-first.bash t26-linkat-second-atfdcwd.bash t27-linkat-second.bash
 EXTRA_DIST= $(TESTS)
 
-check_PROGRAMS = test-lib.bash t01_chmod t02_chown t03_open \
+check_PROGRAMS = test-lib.bash t01_chmod t01_chmod_toolong t02_chown t03_open \
 		 t04_creat t05_lchown t06_link t07_mkdir t08_mknod t09_access \
 		 t10_rename_first t11_rename_second t12_rmdir t13_symlink t14_truncate \
 		 t15_mount t16_umount t17_umount2 t18_utime t19_unlink \
