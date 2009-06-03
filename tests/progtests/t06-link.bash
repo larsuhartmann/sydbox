@@ -7,6 +7,10 @@
 
 clean_files+=( "arnold.layne.hard" )
 
+# To make sure links are handled correctly, add see.emily.play to
+# SANDBOX_WRITE as we're creating a hard link to that file.
+export SANDBOX_WRITE="$cwd"/see.emily.play
+
 start_test "t06-link-deny"
 sydbox -- ./t06_link
 if [[ 0 == $? ]]; then

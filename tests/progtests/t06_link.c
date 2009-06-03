@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 int main(void) {
-    if (0 > link("arnold.layne", "arnold.layne.hard"))
+    if (0 > link("see.emily.play/gnome", "arnold.layne.hard"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;
