@@ -73,6 +73,7 @@ cleanup() {
     rm -f see.emily.play/gnome >>"${SANDBOX_LOG}" 2>&1
     rmdir see.emily.play >>"${SANDBOX_LOG}" 2>&1
     unlink jugband.blues >>"${SANDBOX_LOG}" 2>&1
+    rm -fr "$long_dir" >>"${SANDBOX_LOG}" 2>&1
     $remove_log && rm -f "${SANDBOX_LOG}" 2>&1
 }
 trap 'cleanup' EXIT

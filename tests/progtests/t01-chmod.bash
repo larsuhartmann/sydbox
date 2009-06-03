@@ -57,7 +57,6 @@ tmpfile="$(mkstemp_long)"
 start_test "t01-chmod-deny-toolong"
 sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
 if [[ 0 == $? ]]; then
-    rm -fr "$long_dir"
     die "failed to deny chmod"
 fi
 end_test
@@ -65,16 +64,13 @@ end_test
 start_test "t01-chmod-predict-toolong"
 SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
-    rm -fr "$long_dir"
     die "failed to predict chmod"
 fi
 perms=$(perm_toolong "$tmpfile")
 if [[ -z "$perms" ]]; then
     say skip "failed to get permissions of the file, skipping test"
-    rm -fr $long_dir
     exit 0
 elif [[ "$perms" == 0 ]]; then
-    rm -fr "$long_dir"
     die "predict allowed access"
 fi
 end_test
@@ -82,17 +78,13 @@ end_test
 start_test "t01-chmod-allow-toolong"
 SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
-    rm -fr "$long_dir"
     die "failed to allow chmod"
 fi
 perms=$(perm_toolong "$tmpfile")
 if [[ -z "$perms" ]]; then
     say skip "failed to get permissions of the file, skipping test"
-    rm -fr $long_dir
     exit 0
 elif [[ "$perms" != 0 ]]; then
-    rm -fr "$long_dir"
     die "write didn't allow access"
 fi
 end_test
-rm -fr $long_dir
