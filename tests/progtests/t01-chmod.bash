@@ -35,23 +35,6 @@ fi
 end_test
 
 # Tests dealing with too long paths
-perm_toolong() {
-    local fname perl
-
-    # bash fails to do it so use perl instead...
-    fname="$1"
-    perl="$(find_perl_or_skip)"
-    "$perl" \
-        -e "use Fcntl ':mode';" \
-        -e 'my $dir = '$long_dir';' \
-        -e 'foreach my $i (1..64) {' \
-        -e '    chdir($dir) or die "$!"' \
-        -e '}' \
-        -e '($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,' \
-        -e '    $atime,$mtime,$ctime,$blksize,$blocks) = stat("'$tmpfile'") or die "$!";' \
-        -e 'printf(S_IMODE($mode));'
-}
-
 tmpfile="$(mkstemp_long)"
 
 start_test "t01-chmod-deny-toolong"
@@ -66,7 +49,7 @@ SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmp
 if [[ 0 != $? ]]; then
     die "failed to predict chmod"
 fi
-perms=$(perm_toolong "$tmpfile")
+perms=$(perm_long "$tmpfile")
 if [[ -z "$perms" ]]; then
     say skip "failed to get permissions of the file, skipping test"
     exit 0
@@ -80,7 +63,7 @@ SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfi
 if [[ 0 != $? ]]; then
     die "failed to allow chmod"
 fi
-perms=$(perm_toolong "$tmpfile")
+perms=$(perm_long "$tmpfile")
 if [[ -z "$perms" ]]; then
     say skip "failed to get permissions of the file, skipping test"
     exit 0

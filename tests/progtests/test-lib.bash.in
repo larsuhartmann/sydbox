@@ -128,6 +128,42 @@ find_perl_or_skip() {
     echo "$p"
 }
 
+mkdir_long() {
+    local perl
+
+    # bash fails to do it so use perl instead
+    perl="$(find_perl_or_skip)"
+
+    if ! "$perl" \
+        -e 'my $dir = '$long_dir';' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!" ' \
+        -e '}'
+    then
+        say skip "failed to create too long directory structure, skipping test"
+        exit 0
+    fi
+}
+
+stat_long() {
+    local perl ret
+
+    # bash fails to do it so use perl instead
+    local fname="$1"
+    perl="$(find_perl_or_skip)"
+
+    "$perl" \
+        -e 'my $dir = '$long_dir';' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    chdir($dir) or exit(127)' \
+        -e '}' \
+        -e 'if (!stat("'$fname'")) {' \
+        -e '    exit(1)' \
+        -e '} else {' \
+        -e '    exit(0)' \
+        -e '}'
+}
+
 mkstemp_long() {
     local old_umask perl tempfile template
 
@@ -155,11 +191,50 @@ mkstemp_long() {
         -e 'printf($file);')
     if [[ -z "$tempfile" ]]; then
         say skip "failed to create temporary file, skipping test"
-        rm -fr $long_dir
         exit 0
     fi
 
     echo $tempfile
     umask $old_umask
+}
+
+perm_long() {
+    local fname perl
+
+    # bash fails to do it so use perl instead...
+    fname="$1"
+    perl="$(find_perl_or_skip)"
+    "$perl" \
+        -e "use Fcntl ':mode';" \
+        -e 'my $dir = '$long_dir';' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    chdir($dir) or die "$!"' \
+        -e '}' \
+        -e '($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,' \
+        -e '    $atime,$mtime,$ctime,$blksize,$blocks) = stat("'$tmpfile'") or die "$!";' \
+        -e 'printf(S_IMODE($mode));'
+}
+
+read_long() {
+    local fname perl
+
+    # bash fails to do it so use perl instead...
+    fname="$1"
+    perl="$(find_perl_or_skip)"
+    if ! "$perl" \
+        -e 'my $dir = '$long_dir';' \
+        -e 'my $data;' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    chdir($dir) or die "$!"' \
+        -e '}' \
+        -e 'open(TEMPFILE, "'$fname'") or die "$!";' \
+        -e 'while (0 != (read(TEMPFILE, $data, 1))) {' \
+        -e '    printf($data);' \
+        -e '}' \
+        -e 'close(TEMPFILE);'
+    then
+        say skip "failed to read data, skipping test"
+        exit 0
+    fi
 }
 
