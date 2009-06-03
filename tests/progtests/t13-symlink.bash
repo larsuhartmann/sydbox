@@ -33,3 +33,38 @@ elif [[ ! -h jugband.blues ]]; then
     die "symlink doesn't exist, write didn't allow access"
 fi
 end_test
+
+# Tests dealing with too long paths
+sname="jugband.blues"
+tname="/tmp/arnold.layne"
+mkdir_long
+
+# Make sure symlinks are handled correctly
+export SANDBOX_WRITE=/tmp
+
+start_test "t13-symlink-toolong-deny"
+sydbox -- ./t13_symlink_toolong "$long_dir" "$tname" "$sname"
+if [[ 0 == $? ]]; then
+    die "failed to deny symlink"
+elif lstat_long "$sname" >>"${SANDBOX_LOG}" 2>&1; then
+    die "symlink exists, failed to deny symlink"
+fi
+end_test
+
+start_test "t13-symlink-toolong-predict"
+SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t13_symlink_toolong "$long_dir" "$tname" "$sname"
+if [[ 0 != $? ]]; then
+    die "failed to predict symlink"
+elif lstat_long "$sname" >>"${SANDBOX_LOG}" 2>&1; then
+    die "predict allowed access"
+fi
+end_test
+
+start_test "t13-symlink-toolong-write"
+SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t13_symlink_toolong "$long_dir" "$tname" "$sname"
+if [[ 0 != $? ]]; then
+    die "write didn't allow access"
+elif ! lstat_long "$sname" >>"${SANDBOX_LOG}" 2>&1; then
+    die "symlink doesn't exist, write didn't allow access"
+fi
+end_test

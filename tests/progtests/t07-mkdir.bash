@@ -43,7 +43,7 @@ start_test "t07-mkdir-toolong-deny"
 sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
 if [[ 0 == $? ]]; then
     die "failed to deny mkdir"
-elif stat_long "$dname"; then
+elif lstat_long "$dname"; then
     die "failed to deny mkdir, dir exists"
 fi
 
@@ -51,7 +51,7 @@ start_test "t07-mkdir-toolong-predict"
 SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
 if [[ 0 != $? ]]; then
     die "failed to predict mkdir"
-elif stat_long "$dname"; then
+elif lstat_long "$dname"; then
     die "predict allowed access"
 fi
 
@@ -59,7 +59,7 @@ start_test "t07-mkdir-toolong-write"
 SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
 if [[ 0 != $? ]]; then
     die "failed to allow mkdir"
-elif ! stat_long "$dname"; then
+elif ! lstat_long "$dname"; then
     die "failed to allow mkdir, dir doesn't exist"
 fi
 end_test

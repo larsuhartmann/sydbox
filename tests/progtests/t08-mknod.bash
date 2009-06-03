@@ -42,7 +42,7 @@ start_test "t08-mknod-toolong-deny"
 sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
 if [[ 0 == $? ]]; then
     die "failed to deny mknod"
-elif stat_long "$fname"; then
+elif lstat_long "$fname"; then
     die "failed to deny mknod, fifo exists"
 fi
 
@@ -50,7 +50,7 @@ start_test "t08-mknod-toolong-predict"
 SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
 if [[ 0 != $? ]]; then
     die "failed to predict mknod"
-elif stat_long "$fname"; then
+elif lstat_long "$fname"; then
     die "predict allowed access"
 fi
 
@@ -58,7 +58,7 @@ start_test "t08-mknod-toolong-write"
 SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
 if [[ 0 != $? ]]; then
     die "failed to allow mknod"
-elif ! stat_long "$fname"; then
+elif ! lstat_long "$fname"; then
     die "failed to allow mknod, fifo doesn't exist"
 fi
 end_test

@@ -47,7 +47,7 @@ start_test "t12-rmdir-toolong-deny"
 sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
 if [[ 0 == $? ]]; then
     die "failed to deny rmdir"
-elif ! stat_long "$tmpdir"; then
+elif ! lstat_long "$tmpdir"; then
     die "dir doesn't exist, failed to deny rmdir"
 fi
 end_test
@@ -56,7 +56,7 @@ start_test "t12-rmdir-toolong-predict"
 SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
 if [[ 0 != $? ]]; then
     die "failed to predict rmdir"
-elif ! stat_long "$tmpdir"; then
+elif ! lstat_long "$tmpdir"; then
     die "predict allowed access"
 fi
 end_test
@@ -65,7 +65,7 @@ start_test "t12-rmdir-toolong-write"
 SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
-elif stat_long "$tmpdir"; then
+elif lstat_long "$tmpdir"; then
     die "dir exists, write didn't allow access"
 fi
 end_test

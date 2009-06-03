@@ -182,7 +182,7 @@ mkdir_long() {
     fi
 }
 
-stat_long() {
+lstat_long() {
     local perl ret
 
     # bash fails to do it so use perl instead
@@ -194,7 +194,7 @@ stat_long() {
         -e 'foreach my $i (1..64) {' \
         -e '    chdir($dir) or exit(127)' \
         -e '}' \
-        -e 'if (!stat("'$fname'")) {' \
+        -e 'if (!lstat("'$fname'")) {' \
         -e '    exit(1)' \
         -e '} else {' \
         -e '    exit(0)' \
