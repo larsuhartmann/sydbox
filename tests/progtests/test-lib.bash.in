@@ -155,7 +155,7 @@ find_perl_or_skip() {
 kill_long() {
     local perl
 
-    # bash fails to do it so use perl instead...
+    # rm may fail to do it so use perl instead...
     perl="$(type -P perl 2>/dev/null)"
     [[ -z "$perl" ]] && return 0
 
