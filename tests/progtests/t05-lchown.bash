@@ -5,6 +5,10 @@
 
 . test-lib.bash
 
+# To make sure symbolic links are handled correctly, add see.emily.play to
+# SANDBOX_WRITE as its.not.the.same is a symbolic to a file in that directory.
+export SANDBOX_WRITE="$cwd"/see.emily.play
+
 start_test "t05-lchown-deny"
 sydbox -- ./t05_lchown
 if [[ 0 == $? ]]; then
