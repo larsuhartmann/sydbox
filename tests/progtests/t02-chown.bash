@@ -25,3 +25,27 @@ if [[ 0 != $? ]]; then
     die "write didn't allow access"
 fi
 end_test
+
+# Tests dealing with too long paths
+tmpfile="$(mkstemp_long)"
+
+start_test "t02-chown-deny-toolong"
+sydbox -- ./t02_chown_toolong "$long_dir" "$tmpfile"
+if [[ 0 == $? ]]; then
+    die "failed to deny chown"
+fi
+end_test
+
+start_test "t02-chown-predict-toolong"
+SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t02_chown_toolong "$long_dir" "$tmpfile"
+if [[ 0 != $? ]]; then
+    die "failed to predict chown"
+fi
+end_test
+
+start_test "t02-chown-allow-toolong"
+SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t02_chown_toolong "$long_dir" "$tmpfile"
+if [[ 0 != $? ]]; then
+    die "write didn't allow access"
+fi
+end_test
