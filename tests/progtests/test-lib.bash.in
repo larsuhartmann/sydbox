@@ -301,3 +301,24 @@ read_long() {
     fi
 }
 
+write_long() {
+    local fname perl
+
+    # bash fails to do it so use perl instead...
+    fname="$1"
+    shift
+    perl="$(find_perl_or_skip)"
+    if ! "$perl" \
+        -e 'my $dir = '$long_dir';' \
+        -e 'foreach my $i (1..64) {' \
+        -e '    mkdir($dir, 0700) && chdir($dir) or die "$!"' \
+        -e '}' \
+        -e 'open(TEMPFILE, ">'$fname'") or die "$!";' \
+        -e 'print TEMPFILE '$@';' \
+        -e 'close(TEMPFILE);'
+    then
+        say skip "failed to write data, skipping test"
+        exit 0
+    fi
+}
+

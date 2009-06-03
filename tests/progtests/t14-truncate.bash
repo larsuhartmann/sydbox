@@ -60,3 +60,40 @@ elif [[ ! -z "$(<arnold.layne)" ]]; then
     die "file not truncated, failed to allow access"
 fi
 end_test
+
+# Tests dealing with too long paths
+fname="lucifer.sam"
+write_long "$fname" "That cat's something i can't explain"
+
+start_test "t14-truncate-toolong-deny"
+sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
+if [[ 0 == $? ]]; then
+    die "failed to deny truncate"
+fi
+data="$(read_long $fname)"
+if [[ -z "$data" ]]; then
+    die "file truncated, failed to deny truncate"
+fi
+end_test
+
+start_test "t14-truncate-toolong-predict"
+SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
+if [[ 0 != $? ]]; then
+    die "failed to predict truncate"
+fi
+data="$(read_long $fname)"
+if [[ -z "$data" ]]; then
+    die "predict allowed access"
+fi
+end_test
+
+start_test "t14-truncate-toolong-write"
+SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
+if [[ 0 != $? ]]; then
+    die "failed to allow access"
+fi
+data="$(read_long $fname)"
+if [[ ! -z "$data" ]]; then
+    die "file not truncated, failed to allow access"
+fi
+end_test

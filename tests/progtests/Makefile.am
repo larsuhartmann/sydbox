@@ -13,10 +13,10 @@ check_PROGRAMS = test-lib.bash t01_chmod t01_chmod_toolong t02_chown t02_chown_t
 		 t03_open t03_open_toolong t04_creat t04_creat_toolong t05_lchown \
 		 t06_link t07_mkdir t07_mkdir_toolong t08_mknod t08_mknod_toolong t09_access \
 		 t10_rename_first t11_rename_second t12_rmdir t12_rmdir_toolong t13_symlink \
-		 t13_symlink_toolong t14_truncate t15_mount t16_umount t17_umount2 t18_utime \
-		 t19_unlink t20_renameat_first_atfdcwd t21_renameat_first t22_renameat_second_atfdcwd \
-		 t23_renameat_second t24_linkat_first_atfdcwd t25_linkat_first \
-		 t26_linkat_second_atfdcwd t27_linkat_second
+		 t13_symlink_toolong t14_truncate t14_truncate_toolong t15_mount t16_umount \
+		 t17_umount2 t18_utime t19_unlink t20_renameat_first_atfdcwd t21_renameat_first \
+		 t22_renameat_second_atfdcwd t23_renameat_second t24_linkat_first_atfdcwd \
+		 t25_linkat_first t26_linkat_second_atfdcwd t27_linkat_second
 
 test_lib_bash_SOURCES= test-lib.bash.in
 
