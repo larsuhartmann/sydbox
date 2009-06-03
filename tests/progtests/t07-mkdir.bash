@@ -37,7 +37,7 @@ end_test
 
 # Tests dealing with too long paths
 dname="see.emily.play"
-tmpfile="$(mkdir_long)"
+mkdir_long
 
 start_test "t07-mkdir-toolong-deny"
 sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
