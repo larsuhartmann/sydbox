@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    if (0 > renameat(AT_FDCWD, "see.emily.play/gnome", AT_FDCWD, "jugband.blues"))
+    if (0 > renameat(AT_FDCWD, "see.emily.play/gnome", AT_FDCWD, "lucifer.sam"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

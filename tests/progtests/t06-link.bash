@@ -5,10 +5,7 @@
 
 . test-lib.bash
 
-rm -fr arnold.layne
-if [[ 0 != $? ]]; then
-    die "rm -fr arnold.layne"
-fi
+clean_files+=( "arnold.layne.hard" )
 
 start_test "t06-link-deny"
 sydbox -- ./t06_link
@@ -28,7 +25,7 @@ start_test "t06-link-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t06_link
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
-elif [[ ! -f arnold.layne ]]; then
+elif [[ ! -f arnold.layne.hard ]]; then
     die "file doesn't exist, write didn't allow access"
 fi
 end_test

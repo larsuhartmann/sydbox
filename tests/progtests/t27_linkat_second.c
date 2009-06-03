@@ -18,7 +18,7 @@ int main(void) {
     int dfd = dirfd(dot);
     if (-1 == dfd)
         return EXIT_FAILURE;
-    if (0 > linkat(AT_FDCWD, "see.emily.play/gnome", dfd, "jugband.blues", 0))
+    if (0 > linkat(AT_FDCWD, "see.emily.play/gnome", dfd, "arnold.layne.hard", 0))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

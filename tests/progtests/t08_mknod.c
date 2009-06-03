@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 int main(void) {
-    if (0 > mknod("arnold.layne", S_IFIFO, 0))
+    if (0 > mknod("arnold.layne.fifo", S_IFIFO, 0))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

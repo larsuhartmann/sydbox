@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 int main(void) {
-    if (0 > link("t06-link.bash", "arnold.layne"))
+    if (0 > link("arnold.layne", "arnold.layne.hard"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    if (0 > linkat(AT_FDCWD, "see.emily.play/gnome", AT_FDCWD, "jugband.blues", 0))
+    if (0 > linkat(AT_FDCWD, "see.emily.play/gnome", AT_FDCWD, "arnold.layne.hard", 0))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

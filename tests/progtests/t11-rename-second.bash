@@ -5,15 +5,7 @@
 
 . test-lib.bash
 
-old_umask=$(umask)
-umask 022
-touch see.emily.play/gnome
-if [[ 0 != $? ]]; then
-    die "touch see.emily.play/gnome"
-elif [[ ! -f arnold.layne ]]; then
-    die "touch see.emily.play/gnome (no file)"
-fi
-umask $old_umask
+clean_files+=( "jugband.blues" )
 
 start_test "t11-rename-second-deny"
 SANDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t11_rename_second

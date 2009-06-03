@@ -10,7 +10,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    if (0 > renameat(AT_FDCWD, "arnold.layne", AT_FDCWD, "its.not.the.same"))
+    if (0 > renameat(AT_FDCWD, "arnold.layne", AT_FDCWD, "lucifer.sam"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

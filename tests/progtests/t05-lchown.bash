@@ -5,11 +5,6 @@
 
 . test-lib.bash
 
-if ! ln -s arnold.layne its.not.the.same; then
-    say skip "failed to create symbolic link, skipping test"
-    exit 0
-fi
-
 start_test "t05-lchown-deny"
 sydbox -- ./t05_lchown
 if [[ 0 == $? ]]; then

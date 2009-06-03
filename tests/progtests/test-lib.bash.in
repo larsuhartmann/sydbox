@@ -32,52 +32,6 @@ else
     colour=false
 fi
 
-cwd="$(readlink -f .)"
-long_dir=$(printf '%200s' ' ' | tr ' ' x)
-toolong_dir="$(
-    for ((i=1; i <= 64; i++)); do
-        printf "$long_dir"
-        [[ $i != 64 ]] && printf /
-    done)"
-
-SANDBOX_LOG="${cwd}/sydbox-$$.log"
-remove_log=true
-
-if [[ -z "${no_create_file}" ]]; then
-    old_umask=$(umask)
-    umask 022
-    touch arnold.layne
-    if [[ 0 != $? ]]; then
-        die "touch arnold.layne"
-    elif [[ ! -f arnold.layne ]]; then
-        die "touch arnold.layne (no file)"
-    fi
-    umask $old_umask
-fi
-
-if [[ -z "${no_create_dir}" ]]; then
-    old_umask=$(umask)
-    umask 022
-    mkdir see.emily.play
-    if [[ 0 != $? ]]; then
-        die "mkdir see.emily.play"
-    elif [[ ! -d see.emily.play ]]; then
-        die "mkdir see.emily.play (no dir)"
-    fi
-    umask $old_umask
-fi
-
-cleanup() {
-    rm -fr arnold.layne >>"${SANDBOX_LOG}" 2>&1
-    rm -f its.not.the.same >>"${SANDBOX_LOG}" 2>&1
-    rm -f see.emily.play/gnome >>"${SANDBOX_LOG}" 2>&1
-    rmdir see.emily.play >>"${SANDBOX_LOG}" 2>&1
-    unlink jugband.blues >>"${SANDBOX_LOG}" 2>&1
-    rm -fr "$long_dir" >>"${SANDBOX_LOG}" 2>&1
-    $remove_log && rm -f "${SANDBOX_LOG}" 2>&1
-}
-trap 'cleanup' EXIT
-
 sydbox() {
     SANDBOX_NO_CONFIG=1 @TOP_BUILDDIR@/src/sydbox -0 4 -l "${SANDBOX_LOG}" "$@"
 }
@@ -118,6 +72,76 @@ start_test() {
 end_test() {
     echo ">>> Finished testcase" >> "${SANDBOX_LOG}"
 }
+
+# Global variables
+cwd="$(readlink -f .)"
+long_dir=$(printf '%200s' ' ' | tr ' ' x)
+toolong_dir="$(
+    for ((i=1; i <= 64; i++)); do
+        printf "$long_dir"
+        [[ $i != 64 ]] && printf /
+    done)"
+
+SANDBOX_LOG="${cwd}/sydbox-$$.log"
+remove_log=true
+
+# Files created automatically by test-lib.bash:
+# arnold.layne          (Normal file)
+# see.emily.play/       (Directory)
+# see.emily.play/gnome  (Normal file)
+# its.not.the.same      (Symbolic link to see.emily.play/gnome)
+#
+# no_create_files environment variable can be set to prevent creation.
+# If a test suite creates a file that has to be cleaned add it to the
+# clean_files[] array.
+clean_files=()
+if [[ -z "$no_create_files" ]]; then
+    # save & set umask
+    old_umask=$(umask)
+    umask 022
+
+    if ! touch arnold.layne >>"${SANDBOX_LOG}" 2>&1; then
+        die "touch arnold.layne"
+    elif [[ ! -f arnold.layne ]]; then
+        die "touch arnold.layne (no file)"
+    else
+        clean_files+=( "arnold.layne" )
+    fi
+
+    if ! mkdir see.emily.play >>"${SANDBOX_LOG}" 2>&1; then
+        die "mkdir see.emily.play"
+    elif [[ ! -d see.emily.play ]]; then
+        die "mkdir see.emily.play (no file)"
+    else
+        clean_files+=( "see.emily.play" )
+    fi
+
+    if ! touch see.emily.play/gnome >>"${SANDBOX_LOG}" 2>&1; then
+        die "touch see.emily.play/gnome"
+    elif [[ ! -f see.emily.play/gnome ]]; then
+        die "touch see.emily.play/gnome (no file)"
+    else
+        clean_files+=( "see.emily.play/gnome" )
+    fi
+
+    if ! ln -s see.emily.play/gnome its.not.the.same >>"${SANDBOX_LOG}" 2>&1; then
+        die "ln -s see.emily.play/gnome its.not.the.same"
+    elif [[ ! -h its.not.the.same ]]; then
+        die "ln -s see.emily.play/gnome its.not.the.same (no symbolic link)"
+    else
+        clean_files+=( "its.not.the.same" )
+    fi
+fi
+
+cleanup() {
+    echo "Cleaning up:" >>"${SANDBOX_LOG}"
+    echo "  rm -fr ${clean_files[@]}" >>"${SANDBOX_LOG}"
+    rm -fr "${clean_files[@]}" >>${SANDBOX_LOG} 2>&1
+    echo "  rm -fr LONG_DIR" >>"${SANDBOX_LOG}"
+    rm -fr "$long_dir" >>"${SANDBOX_LOG}" 2>&1
+    $remove_log && rm -f "${SANDBOX_LOG}" 2>&1
+}
+trap 'cleanup' EXIT
 
 find_perl_or_skip() {
     local p="$(type -P perl 2>/dev/null)"

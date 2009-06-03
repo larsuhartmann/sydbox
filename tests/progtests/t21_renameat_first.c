@@ -18,7 +18,7 @@ int main(void) {
     int dfd = dirfd(dot);
     if (-1 == dfd)
         return EXIT_FAILURE;
-    if (0 > renameat(dfd, "arnold.layne", AT_FDCWD, "its.not.the.same"))
+    if (0 > renameat(dfd, "arnold.layne", AT_FDCWD, "lucifer.sam"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

@@ -5,21 +5,13 @@
 
 . test-lib.bash
 
-old_umask=$(umask)
-umask 022
-touch see.emily.play/gnome
-if [[ 0 != $? ]]; then
-    die "touch see.emily.play/gnome"
-elif [[ ! -f arnold.layne ]]; then
-    die "touch see.emily.play/gnome (no file)"
-fi
-umask $old_umask
+clean_files+=( "lucifer.sam" )
 
 start_test "t23-renameat-second-deny"
 SANDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t23_renameat_second
 if [[ 0 == $? ]]; then
     die "failed to deny renameat"
-elif [[ -f jugband.blues ]]; then
+elif [[ -f lucifer.sam ]]; then
     die "file exists, failed to deny renameat"
 fi
 end_test
@@ -28,7 +20,7 @@ start_test "t23-renameat-second-predict"
 SANDBOX_WRITE="${cwd}/see.emily.play" SANDBOX_PREDICT="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then
     die "failed to predict renameat"
-elif [[ -f jugband.blues ]]; then
+elif [[ -f lucifer.sam ]]; then
     die "predict allowed access"
 fi
 end_test
@@ -37,7 +29,7 @@ start_test "t23-renameat-second-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then
     die "failed to allow renameat"
-elif [[ ! -f jugband.blues ]]; then
+elif [[ ! -f lucifer.sam ]]; then
     die "file doesn't exist, failed to allow renameat"
 fi
 end_test

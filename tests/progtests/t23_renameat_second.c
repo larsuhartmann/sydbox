@@ -18,7 +18,7 @@ int main(void) {
     int dfd = dirfd(dot);
     if (-1 == dfd)
         return EXIT_FAILURE;
-    if (0 > renameat(AT_FDCWD, "see.emily.play/gnome", dfd, "jugband.blues"))
+    if (0 > renameat(AT_FDCWD, "see.emily.play/gnome", dfd, "lucifer.sam"))
         return EXIT_FAILURE;
     else
         return EXIT_SUCCESS;

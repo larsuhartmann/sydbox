@@ -3,7 +3,15 @@
 # Copyright 2009 Ali Polatel <polatel@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+no_create_files=1
 . test-lib.bash
+
+clean_files+=( "see.emily.play")
+if ! mkdir see.emily.play >>"${SANDBOX_LOG}" 2>&1; then
+    die "mkdir see.emily.play"
+elif [[ ! -d see.emily.play ]]; then
+    die "mkdir see.emily.play (no file)"
+fi
 
 start_test "t12-rmdir-deny"
 sydbox -- ./t12_rmdir

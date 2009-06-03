@@ -5,21 +5,13 @@
 
 . test-lib.bash
 
-old_umask=$(umask)
-umask 022
-touch see.emily.play/gnome
-if [[ 0 != $? ]]; then
-    die "touch see.emily.play/gnome"
-elif [[ ! -f arnold.layne ]]; then
-    die "touch see.emily.play/gnome (no file)"
-fi
-umask $old_umask
+clean_files+=( "arnold.layne.hard" )
 
 start_test "t27-linkat-second-deny"
 SANDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t27_linkat_second
 if [[ 0 == $? ]]; then
     die "failed to deny linkat"
-elif [[ -f jugband.blues ]]; then
+elif [[ -f arnold.layne.hard ]]; then
     die "file exists, failed to deny linkat"
 fi
 end_test
@@ -28,7 +20,7 @@ start_test "t27-linkat-second-predict"
 SANDBOX_WRITE="${cwd}/see.emily.play" SANDBOX_PREDICT="${cwd}" sydbox -- ./t27_linkat_second
 if [[ 0 != $? ]]; then
     die "failed to predict linkat"
-elif [[ -f jugband.blues ]]; then
+elif [[ -f arnold.layne.hard ]]; then
     die "predict allowed access"
 fi
 end_test
@@ -37,7 +29,7 @@ start_test "t27-linkat-second-write"
 SANDBOX_WRITE="${cwd}" sydbox -- ./t27_linkat_second
 if [[ 0 != $? ]]; then
     die "failed to allow linkat"
-elif [[ ! -f jugband.blues ]]; then
+elif [[ ! -f arnold.layne.hard ]]; then
     die "file doesn't exist, failed to allow linkat"
 fi
 end_test

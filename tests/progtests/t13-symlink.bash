@@ -5,6 +5,8 @@
 
 . test-lib.bash
 
+clean_files+=( "jugband.blues" )
+
 start_test "t13-symlink-deny"
 sydbox -- ./t13_symlink
 if [[ 0 == $? ]]; then
