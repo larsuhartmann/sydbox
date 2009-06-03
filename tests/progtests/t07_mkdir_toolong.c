@@ -24,7 +24,6 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
     }
 
-
     if (0 > mkdir(fname, 0644))
         return EXIT_FAILURE;
     else
