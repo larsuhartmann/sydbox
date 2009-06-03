@@ -36,7 +36,7 @@ end_test
 
 # Tests dealing with too long paths
 perm_toolong() {
-    local fname perl perms
+    local fname perl
 
     # bash fails to do it so use perl instead...
     fname="$1"
