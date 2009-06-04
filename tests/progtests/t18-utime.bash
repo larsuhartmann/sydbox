@@ -8,14 +8,14 @@
 start_test "t18-utime-deny"
 sydbox -- ./t18_utime
 if [[ 0 == $? ]]; then
-    echo "Failed to deny utime"
+    die "failed to deny utime"
 fi
 end_test
 
 start_test "t18-utime-predict"
 SANDBOX_PREDICT="${cwd}" sydbox -- ./t18_utime
 if [[ 0 != $? ]]; then
-    echo "Failed to predict utime"
+    die "failed to predict utime"
 fi
 end_test
 
