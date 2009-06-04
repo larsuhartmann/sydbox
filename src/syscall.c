@@ -697,6 +697,8 @@ static void systemcall_check_path(SystemCall *self,
             strcpy(reason, "%s(\"%s\", ");
         else if (1 == narg)
             strcpy(reason, "%s(?, \"%s\", ");
+        else if (2 == narg)
+            strcpy(reason, "%s(?, ?, \"%s\", ");
         else if (3 == narg)
             strcpy(reason, "%s(?, ?, ?, \"%s\", ");
 
