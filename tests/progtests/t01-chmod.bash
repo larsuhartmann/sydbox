@@ -10,6 +10,10 @@ sydbox -- ./t01_chmod
 if [[ 0 == $? ]]; then
     die "failed to deny chmod"
 fi
+perms=$(ls -l arnold.layne | cut -d' ' -f1)
+if [[ "${perms}" != '-rw-r--r--' ]]; then
+    die "permissions changed, failed to deny chmod"
+fi
 end_test
 
 start_test "t01-chmod-predict"
