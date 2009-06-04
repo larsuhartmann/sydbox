@@ -1,4 +1,4 @@
-/* Check program for t28-symlinkat-atfdcwd.bash
+/* Check program for t29-symlinkat.bash
  * vim: set et ts=4 sts=4 sw=4 fdm=syntax :
  * Copyright 2009 Ali Polatel <polatel@gmail.com>
  * Distributed under the terms of the GNU General Public License v2
