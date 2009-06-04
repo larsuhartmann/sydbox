@@ -761,7 +761,7 @@ static void systemcall_check_path(SystemCall *self,
             strcat(reason, "O_WRONLY/O_RDWR)");
         else
             strcat(reason, "...)");
-        sydbox_access_violation (child->pid, reason, sname, path);
+        sydbox_access_violation (child->pid, reason, sname ? sname : syscall_get_name(self->no), path);
         g_free(reason);
         data->result = RS_DENY;
     }
