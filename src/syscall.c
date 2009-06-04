@@ -146,6 +146,7 @@ enum {
 };
 
 SystemCall *SystemCallHandler;
+const char *sname;
 
 /* Look up the system call name in sysnames array.
  * Return name if its found, UNKNOWN_SYSCALL otherwise.
@@ -252,7 +253,7 @@ static gboolean systemcall_get_dirfd(SystemCall *self,
             data->result = RS_DENY;
             child->retval = -errno;
             g_debug("pgetdir() failed: %s", g_strerror(errno));
-            g_debug("denying access to system call %d", self->no);
+            g_debug("denying access to system call %d(%s)", self->no, sname);
             return FALSE;
         }
     }
@@ -271,7 +272,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    g_debug("starting check for system call %d, child %i", self->no, child->pid);
+    g_debug("starting check for system call %d(%s), child %i", self->no, sname, child->pid);
     if (self->flags & CHECK_PATH || self->flags & MAGIC_STAT) {
         if (!systemcall_get_path(child->pid, 0, data))
             return;
@@ -535,8 +536,8 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     else if (G_UNLIKELY(!child->sandbox->on))
         return;
 
-    g_debug("deciding whether we should resolve symlinks for system call %d, child %i",
-            self->no, child->pid);
+    g_debug("deciding whether we should resolve symlinks for system call %d(%s), child %i",
+            self->no, sname, child->pid);
     if (self->flags & DONT_RESOLV)
         data->resolve = FALSE;
     else if (self->flags & IF_AT_SYMLINK_FOLLOW4) {
@@ -581,8 +582,8 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     }
     else
         data->resolve = TRUE;
-    g_debug("decided %sto resolve symlinks for system call %d, child %i",
-            data->resolve ? "" : "not ", self->no, child->pid);
+    g_debug("decided %sto resolve symlinks for system call %d(%s), child %i",
+            data->resolve ? "" : "not ", self->no, sname, child->pid);
 }
 
 /* Resolves path for system calls
@@ -665,11 +666,11 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     else if (G_UNLIKELY(!child->sandbox->on))
         return;
 
-    g_debug("canonicalizing paths for system call %d, child %i", self->no, child->pid);
+    g_debug("canonicalizing paths for system call %d(%s), child %i", self->no, sname, child->pid);
 
     if (self->flags & CHECK_PATH) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[0],
-                self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
+                self->no, sname, child->pid);
         data->rpathlist[0] = systemcall_resolvepath(self, ctx, child, 0, FALSE, data);
         if (NULL == data->rpathlist[0])
             return;
@@ -677,8 +678,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[0], data->rpathlist[0]);
     }
     if (self->flags & CHECK_PATH2) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[1],
-                self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[1],
+                self->no, sname, child->pid);
         data->rpathlist[1] = systemcall_resolvepath(self, ctx, child, 1, FALSE, data);
         if (NULL == data->rpathlist[1])
             return;
@@ -686,8 +687,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[1], data->rpathlist[1]);
     }
     if (self->flags & CHECK_PATH_AT) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[1],
-                self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[1],
+                self->no, sname, child->pid);
         data->rpathlist[1] = systemcall_resolvepath(self, ctx, child, 1, TRUE, data);
         if (NULL == data->rpathlist[1])
             return;
@@ -695,8 +696,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[1], data->rpathlist[1]);
     }
     if (self->flags & CHECK_PATH_AT1) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[2],
-                self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[2],
+                self->no, sname, child->pid);
         data->rpathlist[2] = systemcall_resolvepath(self, ctx, child, 2, TRUE, data);
         if (NULL == data->rpathlist[2])
             return;
@@ -704,8 +705,8 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             g_debug("canonicalized `%s' to `%s'", data->pathlist[2], data->rpathlist[2]);
     }
     if (self->flags & CHECK_PATH_AT2) {
-        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[3],
-                self->no, child->pid);
+        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[3],
+                self->no, sname, child->pid);
         data->rpathlist[3] = systemcall_resolvepath(self, ctx, child, 3, TRUE, data);
         if (NULL == data->rpathlist[3])
             return;
@@ -727,7 +728,8 @@ static void systemcall_check_path(SystemCall *self,
 
     if (G_UNLIKELY(!allow_write && !allow_predict)) {
         if (self->flags & (MUST_CREAT | MUST_CREAT2 | MUST_CREAT_AT | MUST_CREAT_AT2)) {
-            g_debug("system call has one of MUST_CREAT* flags set, checking if `%s' exists", path);
+            g_debug("system call %d(%s) has one of MUST_CREAT* flags set, checking if `%s' exists",
+                    self->no, sname, path);
             struct stat buf;
             if (0 == stat(path, &buf)) {
                 /* The system call _has_ to create the path but it exists.
@@ -735,14 +737,13 @@ static void systemcall_check_path(SystemCall *self,
                  * an access violation.
                  * Useful for cases like mkdir -p a/b/c.
                  */
-                g_debug("`%s' exists, system call will fail with EEXIST", path);
-                g_debug("denying system call and failing with EEXIST without violation");
+                g_debug("`%s' exists, system call %d(%s) will fail with EEXIST", path, self->no, sname);
+                g_debug("denying system call %d(%s) and failing with EEXIST without violation", self->no, sname);
                 data->result = RS_DENY;
                 child->retval = -EEXIST;
                 return;
             }
         }
-        const char *sname;
         char *reason = g_malloc((strlen(path) + 256) * sizeof(char));
         child->retval = -EPERM;
         if (0 == narg)
@@ -760,14 +761,13 @@ static void systemcall_check_path(SystemCall *self,
             strcat(reason, "O_WRONLY/O_RDWR)");
         else
             strcat(reason, "...)");
-        sname = syscall_get_name(self->no);
         sydbox_access_violation (child->pid, reason, sname, path);
         g_free(reason);
         data->result = RS_DENY;
     }
     else if (!allow_write && allow_predict) {
         if (self->flags & RETURNS_FD) {
-            g_debug("system call returns fd and its argument is under a predict path");
+            g_debug("system call %d(%s) returns fd and its argument is under a predict path", self->no, sname);
             g_debug("changing the path argument to /dev/null");
             if (0 > trace_set_string(child->pid, narg, "/dev/null", 10)) {
                 data->result = RS_ERROR;
@@ -788,7 +788,8 @@ static void systemcall_check_path(SystemCall *self,
         /* Change the path argument with the resolved path to
          * prevent symlink races.
          */
-        g_debug ("paranoia! system call resolves symlinks, substituting path with resolved path");
+        g_debug ("paranoia! system call %d(%s) resolves symlinks, substituting path with resolved path",
+                self->no, sname);
         if (G_UNLIKELY(0 > trace_set_string(child->pid, narg, path, strlen(path) + 1))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
@@ -855,7 +856,7 @@ static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr,
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
-    g_debug("ending check for system call %d, child %i", self->no, child->pid);
+    g_debug("ending check for system call %d(%s), child %i", self->no, sname, child->pid);
     for (unsigned int i = 0; i < 2; i++)
         g_free(data->dirfdlist[i]);
     for (unsigned int i = 0; i < 4; i++) {
@@ -992,7 +993,6 @@ SystemCall *syscall_get_handler(int no) {
  */
 int syscall_handle(context_t *ctx, struct tchild *child) {
     long sno;
-    const char *sname;
     struct checkdata data;
     SystemCall *handler;
 
@@ -1002,7 +1002,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             /* Error getting system call using ptrace()
              * child is still alive, hence the error is fatal.
              */
-            g_printerr ("failed to get syscall: %s", g_strerror (errno));
+            g_printerr ("failed to get system call: %s", g_strerror (errno));
             exit (-1);
         }
         // Child is dead, remove it
@@ -1013,10 +1013,14 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
      * If system call no is 0xbadca11, this is a faked system call and the real
      * system call number is stored in child->sno.
      */
-    sname = (0xbadca11 == sno) ? syscall_get_name(child->sno) : syscall_get_name(sno);
+#define SYSCALL_NAME(_child, _sno) (0xbadca11 == sno) ? syscall_get_name((_child)->sno) : syscall_get_name(_sno)
+    if (2 < sydbox_config_get_verbosity())
+        sname = SYSCALL_NAME(child, sno);
+    else
+        sname = NULL;
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
-        g_debug_trace("child %i is entering system call %s()", child->pid, sname);
+        g_debug_trace("child %i is entering system call %lu(%s)", child->pid, sno, sname);
 
         /* Get handler for the system call
          */
@@ -1025,7 +1029,7 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             /* There's no handler for this system call.
              * Safe system call, allow access.
              */
-            g_debug_trace("allowing access to system call %s()", sname);
+            g_debug_trace("allowing access to system call %lu(%s)", sno, sname);
         }
         else {
             /* There's a handler for this system call,
@@ -1037,11 +1041,11 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
             /* Check result */
             switch(data.result) {
                 case RS_DENY:
-                    g_debug("denying access to system call %s()", sname);
+                    g_debug("denying access to system call %lu(%s)", sno, sname);
                     child->sno = sno;
                     if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
                         if (G_UNLIKELY(ESRCH != errno)) {
-                            g_printerr("failed to set syscall: %s", g_strerror(errno));
+                            g_printerr("failed to set system call: %s", g_strerror(errno));
                             exit(-1);
                         }
                         return context_remove_child (ctx, child->pid);
@@ -1050,12 +1054,12 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
                 case RS_ALLOW:
                 case RS_NOWRITE:
                 case RS_MAGIC:
-                    g_debug_trace("allowing access to system call %s()", sname);
+                    g_debug_trace("allowing access to system call %lu(%s)", sno, sname);
                     break;
                 case RS_ERROR:
                     if (G_UNLIKELY(ESRCH != errno)) {
-                        g_printerr("error while checking system call %s() for access: %s",
-                                sname, g_strerror(errno));
+                        g_printerr("error while checking system call %lu(%s) for access: %s",
+                                sno, SYSCALL_NAME(child, sno), g_strerror(errno));
                         exit(-1);
                     }
                     return context_remove_child (ctx, child->pid);
@@ -1066,17 +1070,17 @@ int syscall_handle(context_t *ctx, struct tchild *child) {
         }
     }
     else { // Exiting sytem call
-        g_debug_trace("child %i is exiting system call %s()", child->pid, sname);
+        g_debug_trace("child %i is exiting system call %lu(%s)", child->pid, sno, sname);
 
         if (0xbadca11 == sno) {
-            g_debug("restoring real call number for denied system call %s()", sname);
+            g_debug("restoring real call number for denied system call %lu(%s)", child->sno, sname);
             // Restore real call number and return our error code
             if (0 > trace_set_syscall(child->pid, child->sno)) {
                 if (G_UNLIKELY(ESRCH != errno)) {
                     /* Error setting system call using ptrace()
                      * child is still alive, hence the error is fatal.
                      */
-                    g_printerr("failed to restore syscall: %s", g_strerror (errno));
+                    g_printerr("failed to restore system call: %s", g_strerror (errno));
                     exit(-1);
                 }
                 // Child is dead, remove it.
