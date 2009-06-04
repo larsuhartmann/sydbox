@@ -73,11 +73,61 @@
 #define MAGIC_STAT              (1 << 25) // Check if the stat() call is magic
 #define NET_CALL                (1 << 26) // Allowing the system call depends on the net flag
 
-struct syscall_def {
+// System call dispatch table
+static const struct syscall_def {
     int no;
-    SystemCall *obj;
+    int flags;
+} syscalls[] = {
+    {__NR_chmod,        CHECK_PATH},
+    {__NR_chown,        CHECK_PATH},
+#if defined(__NR_chown32)
+    {__NR_chown32,      CHECK_PATH},
+#endif
+    {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
+    {__NR_creat,        CHECK_PATH | CAN_CREAT | RETURNS_FD},
+    {__NR_stat,         MAGIC_STAT},
+#if defined(__NR_stat64)
+    {__NR_stat64,       MAGIC_STAT},
+#endif
+    {__NR_lchown,       CHECK_PATH | DONT_RESOLV},
+#if defined(__NR_lchown32)
+    {__NR_lchown32,     CHECK_PATH | DONT_RESOLV},
+#endif
+    {__NR_link,         CHECK_PATH | CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV},
+    {__NR_mkdir,        CHECK_PATH | MUST_CREAT},
+    {__NR_mknod,        CHECK_PATH | MUST_CREAT},
+    {__NR_access,       CHECK_PATH | ACCESS_MODE},
+    {__NR_rename,       CHECK_PATH | CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV},
+    {__NR_rmdir,        CHECK_PATH},
+    {__NR_symlink,      CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV},
+    {__NR_truncate,     CHECK_PATH},
+#if defined(__NR_truncate64)
+    {__NR_truncate64,   CHECK_PATH},
+#endif
+    {__NR_mount,        CHECK_PATH2},
+#if defined(__NR_umount)
+    {__NR_umount,       CHECK_PATH},
+#endif
+    {__NR_umount2,      CHECK_PATH},
+    {__NR_utime,        CHECK_PATH},
+    {__NR_unlink,       CHECK_PATH | DONT_RESOLV},
+    {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
+    {__NR_mkdirat,      CHECK_PATH_AT | MUST_CREAT_AT},
+    {__NR_mknodat,      CHECK_PATH_AT | MUST_CREAT_AT},
+    {__NR_fchownat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW4},
+    {__NR_unlinkat,     CHECK_PATH_AT | IF_AT_REMOVEDIR2},
+    {__NR_renameat,     CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV},
+    {__NR_linkat,       CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW4},
+    {__NR_symlinkat,    CHECK_PATH_AT1 | MUST_CREAT_AT1 | DONT_RESOLV},
+    {__NR_fchmodat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3},
+    {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
+#if defined(__NR_socketcall)
+    {__NR_socketcall,   NET_CALL},
+#elif defined(__NR_socket)
+    {__NR_socket,       NET_CALL},
+#endif
+    {-1,                -1},
 };
-static struct syscall_def syscalls[64];
 
 static const struct syscall_name {
     int no;
@@ -94,6 +144,8 @@ enum {
     PROP_SYSTEMCALL_NO,
     PROP_SYSTEMCALL_FLAGS,
 };
+
+SystemCall *SystemCallHandler;
 
 /* Look up the system call name in sysnames array.
  * Return name if its found, UNKNOWN_SYSCALL otherwise.
@@ -903,95 +955,35 @@ void syscall_init(void) {
 
     g_type_init();
 
-    int i = 0;
-    SystemCall *obj;
-#define SYSTEMCALL_HANDLER(_no, _flags)         \
-    do {                                        \
-        obj = g_object_new(TYPE_SYSTEMCALL,     \
-                           "no", (_no),         \
-                           "flags", (_flags),   \
-                           NULL);               \
-        g_signal_connect(obj, "check", (GCallback) systemcall_flags, NULL);         \
-        g_signal_connect(obj, "check", (GCallback) systemcall_magic, NULL);         \
-        g_signal_connect(obj, "check", (GCallback) systemcall_resolve, NULL);       \
-        g_signal_connect(obj, "check", (GCallback) systemcall_canonicalize, NULL);  \
-        g_signal_connect(obj, "check", (GCallback) systemcall_check, NULL);         \
-        g_signal_connect(obj, "check", (GCallback) systemcall_end_check, NULL);     \
-        syscalls[i].no = (_no);     \
-        syscalls[i++].obj = obj;    \
-    } while (0)
-
-    SYSTEMCALL_HANDLER(__NR_chmod, CHECK_PATH);
-    SYSTEMCALL_HANDLER(__NR_chown, CHECK_PATH);
-#if defined(__NR_chown32)
-    SYSTEMCALL_HANDLER(__NR_chown32, CHECK_PATH);
-#endif
-    SYSTEMCALL_HANDLER(__NR_open, CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN);
-    SYSTEMCALL_HANDLER(__NR_creat, CHECK_PATH | CAN_CREAT | RETURNS_FD);
-    SYSTEMCALL_HANDLER(__NR_stat, MAGIC_STAT);
-#if defined(__NR_stat64)
-    SYSTEMCALL_HANDLER(__NR_stat64, MAGIC_STAT);
-#endif
-    SYSTEMCALL_HANDLER(__NR_lchown, CHECK_PATH | DONT_RESOLV);
-#if defined(__NR_lchown32)
-    SYSTEMCALL_HANDLER(__NR_lchown32, CHECK_PATH | DONT_RESOLV);
-#endif
-    SYSTEMCALL_HANDLER(__NR_link, CHECK_PATH | CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_mkdir, CHECK_PATH | MUST_CREAT);
-    SYSTEMCALL_HANDLER(__NR_mknod, CHECK_PATH | MUST_CREAT);
-    SYSTEMCALL_HANDLER(__NR_access, CHECK_PATH | ACCESS_MODE);
-    SYSTEMCALL_HANDLER(__NR_rename, CHECK_PATH | CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_rmdir, CHECK_PATH);
-    SYSTEMCALL_HANDLER(__NR_symlink, CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_truncate, CHECK_PATH);
-#if defined(__NR_truncate64)
-    SYSTEMCALL_HANDLER(__NR_truncate64, CHECK_PATH);
-#endif
-    SYSTEMCALL_HANDLER(__NR_mount, CHECK_PATH2);
-#if defined(__NR_umount)
-    SYSTEMCALL_HANDLER(__NR_umount, CHECK_PATH);
-#endif
-    SYSTEMCALL_HANDLER(__NR_umount2, CHECK_PATH);
-    SYSTEMCALL_HANDLER(__NR_utime, CHECK_PATH);
-    SYSTEMCALL_HANDLER(__NR_unlink, CHECK_PATH | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_openat, CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD);
-    SYSTEMCALL_HANDLER(__NR_mkdirat, CHECK_PATH_AT | MUST_CREAT_AT);
-    SYSTEMCALL_HANDLER(__NR_mknodat, CHECK_PATH_AT | MUST_CREAT_AT);
-    SYSTEMCALL_HANDLER(__NR_fchownat, CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW4);
-    SYSTEMCALL_HANDLER(__NR_unlinkat, CHECK_PATH_AT | IF_AT_REMOVEDIR2);
-    SYSTEMCALL_HANDLER(__NR_renameat, CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_linkat, CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW4);
-    SYSTEMCALL_HANDLER(__NR_symlinkat, CHECK_PATH_AT1 | MUST_CREAT_AT1 | DONT_RESOLV);
-    SYSTEMCALL_HANDLER(__NR_fchmodat, CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3);
-    SYSTEMCALL_HANDLER(__NR_faccessat, CHECK_PATH_AT | ACCESS_MODE_AT);
-#if defined(__NR_socketcall)
-    SYSTEMCALL_HANDLER(__NR_socketcall, NET_CALL);
-#elif defined(__NR_socket)
-    SYSTEMCALL_HANDLER(__NR_socket, NET_CALL);
-#endif
-
-#undef SYSTEMCALL_HANDLER
-
-    syscalls[i].no = -1;
-    syscalls[i].obj = NULL;
+    SystemCallHandler = g_object_new(TYPE_SYSTEMCALL,
+            "no",       -1,
+            "flags",    -1,
+            NULL);
+    g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_flags, NULL);
+    g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_magic, NULL);
+    g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_resolve, NULL);
+    g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_canonicalize, NULL);
+    g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_check, NULL);
+    g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_end_check, NULL);
 
     initialized = TRUE;
 }
 
 void syscall_free(void) {
-    for (unsigned int i = 0; NULL != syscalls[i].obj; i++) {
-        g_object_unref(syscalls[i].obj);
-        syscalls[i].obj = NULL;
-    }
+    g_object_unref(SystemCallHandler);
+    SystemCallHandler = NULL;
 }
 
 /* Lookup a handler for the system call in syscalls array.
  * Return the handler if found, NULL otherwise.
  */
 SystemCall *syscall_get_handler(int no) {
-    for (unsigned int i = 0; NULL != syscalls[i].obj; i++) {
-        if (syscalls[i].no == no)
-            return syscalls[i].obj;
+    for (unsigned int i = 0; -1 != syscalls[i].no; i++) {
+        if (syscalls[i].no == no) {
+            SystemCallHandler->no = syscalls[i].no;
+            SystemCallHandler->flags = syscalls[i].flags;
+            return SystemCallHandler;
+        }
     }
     return NULL;
 }
