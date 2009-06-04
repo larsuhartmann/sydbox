@@ -635,6 +635,19 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     else
         path_sanitized = sydbox_compress_path (path);
 
+    /* Special case for /proc/self.
+     * This symbolic link resolves to /proc/PID, if we let
+     * canonicalize_filename_mode() resolve this, we'll get a different result.
+     */
+    if (0 == strncmp(path_sanitized, "/proc/self", 10)) {
+        g_debug("substituting /proc/self with /proc/%i", child->pid);
+        char *tmp = g_malloc(strlen(path_sanitized) + 32);
+        snprintf(tmp, strlen(path_sanitized) + 32, "/proc/%i/%s", child->pid, path_sanitized + 10);
+        g_free(path_sanitized);
+        path_sanitized = sydbox_compress_path(tmp);
+        g_free(tmp);
+    }
+
     g_debug("mode is %s resolve is %s", maycreat ? "CAN_ALL_BUT_LAST" : "CAN_EXISTING",
                                         data->resolve ? "TRUE" : "FALSE");
     resolved_path = canonicalize_filename_mode(path_sanitized, mode, data->resolve, ctx->cwd);
