@@ -45,31 +45,33 @@
 #include "sydbox-config.h"
 
 // System call dispatch flags
-#define RETURNS_FD              (1 << 0) // The function returns a file descriptor
-#define OPEN_MODE               (1 << 1) // Check the mode argument of open()
-#define OPEN_MODE_AT            (1 << 2) // Check the mode argument of openat()
-#define ACCESS_MODE             (1 << 3) // Check the mode argument of access()
-#define ACCESS_MODE_AT          (1 << 4) // Check the mode argument of faccessat()
-#define CHECK_PATH              (1 << 5) // First argument should be a valid path
-#define CHECK_PATH2             (1 << 6) // Second argument should be a valid path
-#define CHECK_PATH_AT           (1 << 7) // CHECK_PATH for at suffixed functions
-#define CHECK_PATH_AT2          (1 << 8) // CHECK_PATH2 for at suffixed functions
-#define DONT_RESOLV             (1 << 9) // Don't resolve symlinks
-#define IF_AT_SYMLINK_FOLLOW4   (1 << 10) // Resolving path depends on AT_SYMLINK_FOLLOW (4th argument)
-#define IF_AT_SYMLINK_NOFOLLOW3 (1 << 11) // Resolving path depends on AT_SYMLINK_NOFOLLOW (3th argument)
-#define IF_AT_SYMLINK_NOFOLLOW4 (1 << 12) // Resolving path depends on AT_SYMLINK_NOFOLLOW (4th argument)
-#define IF_AT_REMOVEDIR2        (1 << 13) // Resolving path depends on AT_REMOVEDIR (2nd argument)
-#define CAN_CREAT               (1 << 14) // The system call can create the first path if it doesn't exist
-#define CAN_CREAT2              (1 << 15) // The system call can create the second path if it doesn't exist
-#define CAN_CREAT_AT            (1 << 16) // CAN_CREAT for at suffixed functions
-#define CAN_CREAT_AT2           (1 << 17) // CAN_CREAT_AT2 for at suffixed functions
-#define MUST_CREAT              (1 << 18) // The system call _must_ create the first path, fails otherwise
-#define MUST_CREAT2             (1 << 19) // The system call _must_ create the second path, fails otherwise
-#define MUST_CREAT_AT           (1 << 20) // MUST_CREAT for at suffixed functions
-#define MUST_CREAT_AT2          (1 << 21) // MUST_CREAT2 for at suffixed functions
-#define MAGIC_OPEN              (1 << 22) // Check if the open() call is magic
-#define MAGIC_STAT              (1 << 23) // Check if the stat() call is magic
-#define NET_CALL                (1 << 24) // Allowing the system call depends on the net flag
+#define RETURNS_FD              (1 << 0)  // The function returns a file descriptor
+#define OPEN_MODE               (1 << 1)  // Check the mode argument of open()
+#define OPEN_MODE_AT            (1 << 2)  // Check the mode argument of openat()
+#define ACCESS_MODE             (1 << 3)  // Check the mode argument of access()
+#define ACCESS_MODE_AT          (1 << 4)  // Check the mode argument of faccessat()
+#define CHECK_PATH              (1 << 5)  // First argument should be a valid path
+#define CHECK_PATH2             (1 << 6)  // Second argument should be a valid path
+#define CHECK_PATH_AT           (1 << 7)  // CHECK_PATH for at suffixed functions
+#define CHECK_PATH_AT1          (1 << 8)  // CHECK_PATH2 for symlinkat()
+#define CHECK_PATH_AT2          (1 << 9)  // CHECK_PATH2 for at suffixed functions
+#define DONT_RESOLV             (1 << 10) // Don't resolve symlinks
+#define IF_AT_SYMLINK_FOLLOW4   (1 << 11) // Resolving path depends on AT_SYMLINK_FOLLOW (4th argument)
+#define IF_AT_SYMLINK_NOFOLLOW3 (1 << 12) // Resolving path depends on AT_SYMLINK_NOFOLLOW (3th argument)
+#define IF_AT_SYMLINK_NOFOLLOW4 (1 << 13) // Resolving path depends on AT_SYMLINK_NOFOLLOW (4th argument)
+#define IF_AT_REMOVEDIR2        (1 << 14) // Resolving path depends on AT_REMOVEDIR (2nd argument)
+#define CAN_CREAT               (1 << 15) // The system call can create the first path if it doesn't exist
+#define CAN_CREAT2              (1 << 16) // The system call can create the second path if it doesn't exist
+#define CAN_CREAT_AT            (1 << 17) // CAN_CREAT for at suffixed functions
+#define CAN_CREAT_AT2           (1 << 18) // CAN_CREAT_AT2 for at suffixed functions
+#define MUST_CREAT              (1 << 19) // The system call _must_ create the first path, fails otherwise
+#define MUST_CREAT2             (1 << 20) // The system call _must_ create the second path, fails otherwise
+#define MUST_CREAT_AT           (1 << 21) // MUST_CREAT for at suffixed functions
+#define MUST_CREAT_AT1          (1 << 22) // MUST_CREAT2 for symlinkat()
+#define MUST_CREAT_AT2          (1 << 23) // MUST_CREAT2 for at suffixed functions
+#define MAGIC_OPEN              (1 << 24) // Check if the open() call is magic
+#define MAGIC_STAT              (1 << 25) // Check if the stat() call is magic
+#define NET_CALL                (1 << 26) // Allowing the system call depends on the net flag
 
 struct syscall_def {
     int no;
@@ -230,6 +232,12 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_dirfd(self, ctx, child, 0, data))
             return;
         if (!systemcall_get_path(child->pid, 1, data))
+            return;
+    }
+    if (self->flags & CHECK_PATH_AT1) {
+        if (!systemcall_get_dirfd(self, ctx, child, 1, data))
+            return;
+        if (!systemcall_get_path(child->pid, 2, data))
             return;
     }
     if (self->flags & CHECK_PATH_AT2) {
@@ -544,6 +552,8 @@ static gchar *systemcall_resolvepath(SystemCall *self,
         maycreat = TRUE;
     else if (1 == narg && isat && self->flags & (CAN_CREAT_AT | MUST_CREAT_AT))
         maycreat = TRUE;
+    else if (2 == narg && isat && self->flags & MUST_CREAT_AT1)
+        maycreat = TRUE;
     else if (3 == narg && self->flags & (CAN_CREAT_AT2 | MUST_CREAT_AT2))
         maycreat = TRUE;
     else
@@ -631,6 +641,15 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             return;
         else
             g_debug("canonicalized `%s' to `%s'", data->pathlist[1], data->rpathlist[1]);
+    }
+    if (self->flags & CHECK_PATH_AT1) {
+        g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[2],
+                self->no, child->pid);
+        data->rpathlist[2] = systemcall_resolvepath(self, ctx, child, 2, TRUE, data);
+        if (NULL == data->rpathlist[2])
+            return;
+        else
+            g_debug("canonicalized `%s' to `%s'", data->pathlist[2], data->rpathlist[2]);
     }
     if (self->flags & CHECK_PATH_AT2) {
         g_debug("canonicalizing `%s' for system call %d, child %i", data->pathlist[3],
@@ -751,6 +770,11 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     }
     if (self->flags & CHECK_PATH_AT) {
         systemcall_check_path(self, ctx, child, 1, data);
+        if (RS_ERROR == data->result || RS_DENY == data->result)
+            return;
+    }
+    if (self->flags & CHECK_PATH_AT1) {
+        systemcall_check_path(self, ctx, child, 2, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
@@ -935,7 +959,7 @@ void syscall_init(void) {
     SYSTEMCALL_HANDLER(__NR_unlinkat, CHECK_PATH_AT | IF_AT_REMOVEDIR2);
     SYSTEMCALL_HANDLER(__NR_renameat, CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV);
     SYSTEMCALL_HANDLER(__NR_linkat, CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW4);
-    SYSTEMCALL_HANDLER(__NR_symlinkat, CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | DONT_RESOLV);
+    SYSTEMCALL_HANDLER(__NR_symlinkat, CHECK_PATH_AT1 | MUST_CREAT_AT1 | DONT_RESOLV);
     SYSTEMCALL_HANDLER(__NR_fchmodat, CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3);
     SYSTEMCALL_HANDLER(__NR_faccessat, CHECK_PATH_AT | ACCESS_MODE_AT);
 #if defined(__NR_socketcall)
