@@ -16,42 +16,42 @@
 #include "../src/sydbox-utils.h"
 
 START_TEST (check_sydbox_utils_sydbox_compress_path_begin) {
-   PRINT_TEST_HEADER;
+   PRINT_TEST_HEADER();
    gchar *dest = sydbox_compress_path ("////dev/null");
    fail_unless (strncmp (dest, "/dev/null", 10) == 0, "/dev/null != '%s'", dest);
    g_free (dest);
 } END_TEST
 
 START_TEST (check_sydbox_utils_sydbox_compress_path_middle) {
-   PRINT_TEST_HEADER;
+   PRINT_TEST_HEADER();
    gchar *dest = sydbox_compress_path ("/dev////null");
    fail_unless (strncmp (dest, "/dev/null", 10) == 0, "/dev/null != '%s'", dest);
    g_free (dest);
 } END_TEST
 
 START_TEST (check_sydbox_utils_sydbox_compress_path_end) {
-   PRINT_TEST_HEADER;
+   PRINT_TEST_HEADER();
    gchar *dest = sydbox_compress_path ("/dev/null////");
    fail_unless (strncmp (dest, "/dev/null", 10) == 0, "/dev/null != '%s'", dest);
    g_free (dest);
 } END_TEST
 
 START_TEST (check_sydbox_utils_sydbox_compress_path_single_slash) {
-   PRINT_TEST_HEADER;
+   PRINT_TEST_HEADER();
    gchar *dest = sydbox_compress_path ("/");
    fail_unless (strncmp (dest, "/", 2) == 0, "/ != '%s'", dest);
    g_free (dest);
 } END_TEST
 
 START_TEST (check_sydbox_utils_sydbox_compress_path_only_slashes) {
-   PRINT_TEST_HEADER;
+   PRINT_TEST_HEADER();
    gchar *dest = sydbox_compress_path ("////");
    fail_unless (strncmp (dest, "/", 2) == 0, "/ != '%s'", dest);
    g_free (dest);
 } END_TEST
 
 START_TEST (check_sydbox_utils_sydbox_compress_path_empty_string) {
-   PRINT_TEST_HEADER;
+   PRINT_TEST_HEADER();
    gchar *dest = sydbox_compress_path ("");
    fail_unless (strncmp (dest, "", 1) == 0, "'' != '%s'", dest);
    g_free (dest);

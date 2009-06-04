@@ -20,7 +20,7 @@
 #include "check_sydbox.h"
 
 START_TEST(check_tchild_new) {
-    PRINT_TEST_HEADER;
+    PRINT_TEST_HEADER();
     GSList *tc = NULL;
     struct tchild *child;
 
@@ -40,7 +40,7 @@ START_TEST(check_tchild_new) {
 END_TEST
 
 START_TEST(check_tchild_free) {
-    PRINT_TEST_HEADER;
+    PRINT_TEST_HEADER();
     GSList *tc = NULL;
 
     tchild_new(&tc, 666, -1);
@@ -51,7 +51,7 @@ START_TEST(check_tchild_free) {
 END_TEST
 
 START_TEST(check_tchild_delete_first) {
-    PRINT_TEST_HEADER;
+    PRINT_TEST_HEADER();
     GSList *tc = NULL;
 
     tchild_new(&tc, 666, -1);
@@ -62,7 +62,7 @@ START_TEST(check_tchild_delete_first) {
 END_TEST
 
 START_TEST(check_tchild_delete) {
-    PRINT_TEST_HEADER;
+    PRINT_TEST_HEADER();
     int i = 0;
     GSList *tc = NULL;
     GSList *walk = NULL;

@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#define PRINT_TEST_HEADER  fprintf(stderr, ">>> starting test %s\n", __func__)
+#define PRINT_TEST_HEADER()  fprintf(stderr, ">>> starting test %s\n", __func__)
 
 Suite *util_suite_create(void);
 Suite *path_suite_create(void);
