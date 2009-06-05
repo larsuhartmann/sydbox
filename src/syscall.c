@@ -635,6 +635,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     else
         path_sanitized = sydbox_compress_path (path);
 
+#ifdef HAVE_PROC_SELF
     /* Special case for /proc/self.
      * This symbolic link resolves to /proc/PID, if we let
      * canonicalize_filename_mode() resolve this, we'll get a different result.
@@ -647,6 +648,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
         path_sanitized = sydbox_compress_path(tmp);
         g_free(tmp);
     }
+#endif
 
     g_debug("mode is %s resolve is %s", maycreat ? "CAN_ALL_BUT_LAST" : "CAN_EXISTING",
                                         data->resolve ? "TRUE" : "FALSE");

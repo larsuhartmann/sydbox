@@ -322,6 +322,37 @@ fail:
 if test x"$ac_cv_proc_fd_usable" = x"no"; then
 	AC_MSG_ERROR([/proc fails to give directory file descriptor information about pids])
 fi
+
+AC_MSG_CHECKING([whether /proc/self resolves to /proc/PID])
+AC_CACHE_VAL(ac_cv_have_prof_self)
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#define PROC_SELF "/proc/self"
+
+int main(void) {
+    char buf[64], proc_pid[64];
+    pid_t pid;
+
+    if (0 > readlink(PROC_SELF, buf, 64)) {
+        perror("readlink");
+        return EXIT_FAILURE;
+    }
+
+    pid = getpid();
+    snprintf(proc_pid, 64, "%i", pid);
+    return (0 == strncmp(buf, proc_pid, 64)) ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+]])],
+[AC_MSG_RESULT([yes]) ; ac_cv_have_proc_self=yes],
+[AC_MSG_RESULT([no]) ; ac_cv_have_proc_self=no])
+if test x"$ac_cv_have_proc_self" = x"yes"; then
+	AC_DEFINE([HAVE_PROC_SELF], 1, [Define for /proc/self])
+fi
 dnl }}}
 
 dnl {{{ Extra CFLAGS
