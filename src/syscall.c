@@ -145,8 +145,8 @@ enum {
     PROP_SYSTEMCALL_FLAGS,
 };
 
-SystemCall *SystemCallHandler;
-const char *sname;
+static SystemCall *SystemCallHandler;
+static const char *sname;
 
 /* Look up the system call name in sysnames array.
  * Return name if its found, UNKNOWN_SYSCALL otherwise.
