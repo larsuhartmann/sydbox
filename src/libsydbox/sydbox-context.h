@@ -24,7 +24,6 @@
 #include <glib.h>
 
 #include <sydbox-unstable.h>
-#include <sydbox-context-internal.h>
 
 G_BEGIN_DECLS
 
