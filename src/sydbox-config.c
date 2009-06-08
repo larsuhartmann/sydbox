@@ -244,8 +244,9 @@ sydbox_config_update_from_environment (void)
 static inline void
 print_slist_entry (gpointer data, gpointer userdata G_GNUC_UNUSED)
 {
-    if (NULL != data && '\0' != data[0])
-        g_fprintf (stderr, "\t%s\n", (gchar *) data);
+    gchar *cdata = (gchar *) data;
+    if (NULL != cdata && '\0' != cdata[0])
+        g_fprintf (stderr, "\t%s\n", cdata);
 }
 
 void
