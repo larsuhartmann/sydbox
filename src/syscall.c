@@ -139,6 +139,10 @@ static const struct syscall_name {
 
 #define UNKNOWN_SYSCALL     "unknown"
 
+#define MODE_STRING(flags)                                                      \
+    ((flags) & ACCESS_MODE) ? "O_WR" :                                          \
+    ((flags) & OPEN_MODE || (flags) & OPEN_MODE_AT) ? "O_WRONLY/O_RDWR" : "..."
+
 enum {
     PROP_SYSTEMCALL_0,
     PROP_SYSTEMCALL_NO,
@@ -315,10 +319,9 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
  * If the flag doesn't have W_OK set for system call access or accessat it
  * sets data->result to RS_NOWRITE and returns.
  */
-static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_flags(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                              gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
@@ -491,10 +494,9 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
  * Otherwise it calls systemcall_magic_open() for open() and
  * systemcall_magic_stat() for stat().
  */
-static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                              gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
@@ -524,10 +526,9 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
  * On failure this function sets data->result to RS_ERROR and data->save_errno
  * to errno.
  */
-static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                                gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
@@ -731,7 +732,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
 }
 
 static void systemcall_check_path(SystemCall *self,
-                                  context_t *ctx, struct tchild *child,
+                                  context_t *ctx G_GNUC_UNUSED, struct tchild *child,
                                   int narg, struct checkdata *data)
 {
     char *path = data->rpathlist[narg];
@@ -759,25 +760,34 @@ static void systemcall_check_path(SystemCall *self,
                 return;
             }
         }
-        char *reason = g_malloc((strlen(path) + 256) * sizeof(char));
         child->retval = -EPERM;
-        if (0 == narg)
-            strcpy(reason, "%s(\"%s\", ");
-        else if (1 == narg)
-            strcpy(reason, "%s(?, \"%s\", ");
-        else if (2 == narg)
-            strcpy(reason, "%s(?, ?, \"%s\", ");
-        else if (3 == narg)
-            strcpy(reason, "%s(?, ?, ?, \"%s\", ");
 
-        if (self->flags & ACCESS_MODE)
-            strcat(reason, "O_WR)");
-        else if (self->flags & OPEN_MODE || self->flags & OPEN_MODE_AT)
-            strcat(reason, "O_WRONLY/O_RDWR)");
-        else
-            strcat(reason, "...)");
-        sydbox_access_violation (child->pid, reason, sname ? sname : syscall_get_name(self->no), path);
-        g_free(reason);
+        switch (narg) {
+            case 0:
+                sydbox_access_violation(child->pid, "%s(\"%s\", %s)",
+                                        sname ? sname : syscall_get_name (self->no),
+                                        path, MODE_STRING(self->flags));
+                break;
+            case 1:
+                sydbox_access_violation(child->pid, "%s(?, \"%s\", %s)",
+                                        sname ? sname : syscall_get_name (self->no),
+                                        path, MODE_STRING(self->flags));
+                break;
+            case 2:
+                sydbox_access_violation(child->pid, "%s(?, ?, \"%s\", %s)",
+                                        sname ? sname : syscall_get_name (self->no),
+                                        path, MODE_STRING(self->flags));
+                break;
+            case 3:
+                sydbox_access_violation(child->pid, "%s(?, ?, ?, \"%s\", %s)",
+                                        sname ? sname : syscall_get_name (self->no),
+                                        path, MODE_STRING(self->flags));
+                break;
+            default:
+                g_assert_not_reached ();
+                break;
+        }
+
         data->result = RS_DENY;
     }
     else if (!allow_write && allow_predict) {
@@ -864,10 +874,9 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
-static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                                  gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
