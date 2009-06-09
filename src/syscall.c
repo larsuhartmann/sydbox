@@ -407,13 +407,13 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
-        g_message ("approved addwrite(\"%s\") for child %i", rpath, child->pid);
+        g_info ("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
     else if (G_UNLIKELY(path_magic_predict(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_PREDICT_LEN;
         pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
-        g_message ("approved addpredict(\"%s\") for child %i", rpath, child->pid);
+        g_info ("approved addpredict(\"%s\") for child %i", rpath, child->pid);
     }
     else if (G_UNLIKELY(path_magic_rmwrite(path))) {
         data->result = RS_MAGIC;
@@ -421,7 +421,7 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
-        g_message ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_info ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free (rpath_sanitized);
     }
     else if (G_UNLIKELY(path_magic_rmpredict(path))) {
@@ -430,7 +430,7 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
-        g_message ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_info ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free (rpath_sanitized);
     }
 
