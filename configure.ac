@@ -409,9 +409,14 @@ PKG_CHECK_MODULES([gobject], [gobject-2.0 >= $GLIB_REQUIRED],,
 PKG_CHECK_MODULES([check], [check >= $CHECK_REQUIRED])
 dnl }}}
 
+dnl {{{ shave
+SHAVE_INIT([.], [enable])
+dnl }}}
+
 dnl {{{ output
 AM_CONFIG_HEADER(config.h)
 AC_OUTPUT(
+	shave
 	Makefile
 	data/Makefile
 	src/Makefile
