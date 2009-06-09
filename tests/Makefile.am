@@ -1,4 +1,4 @@
-SUBDIRS = . progtests
+SUBDIRS = . progtests unit
 
 TESTS = check_sydbox
 check_PROGRAMS = check_sydbox
