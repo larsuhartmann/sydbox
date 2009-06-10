@@ -431,6 +431,7 @@ AC_OUTPUT(
 	Makefile
 	data/Makefile
 	src/Makefile
+	src/libsydbox/Makefile
 	tests/Makefile
 	tests/progtests/Makefile
 	tests/unit/Makefile
