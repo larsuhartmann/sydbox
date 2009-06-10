@@ -22,69 +22,81 @@
 
 struct _SydboxContext
 {
-   gboolean sandbox_network;
+    gboolean sandbox_network;
 
-   GSList *write_prefixes;
-   GSList *predict_prefixes;
+    GSList *write_prefixes;
+    GSList *predict_prefixes;
 };
 
 SydboxContext *
 sydbox_context_create (void)
 {
-   return g_try_new0 (SydboxContext, 1);
+    return g_try_new0 (SydboxContext, 1);
 }
 
 void
 sydbox_context_destroy (SydboxContext *ctx)
 {
-   g_free (ctx);
+    g_free (ctx);
 }
 
 gboolean
 sydbox_context_get_sandbox_network (const SydboxContext * const ctx)
 {
-   return ctx->sandbox_network;
+    return ctx->sandbox_network;
 }
 
 void
 sydbox_context_set_sandbox_network (SydboxContext * const ctx, gboolean enabled)
 {
-   ctx->sandbox_network = enabled;
+    ctx->sandbox_network = enabled;
 }
 
 const GSList *
 sydbox_context_get_write_prefixes (const SydboxContext * const ctx)
 {
-   return ctx->write_prefixes;
-}
-
-static void
-_sydbox_copy_slist (gpointer data, gpointer user_data)
-{
-   g_slist_append (user_data, g_strdup ((gchar *)(((GSList *) data)->data)));
+    return ctx->write_prefixes;
 }
 
 void
 sydbox_context_set_write_prefixes (SydboxContext * const ctx,
                                    const GSList * const prefixes)
 {
-   if (ctx->write_prefixes)
-      g_slist_free (ctx->write_prefixes);
-   g_slist_foreach (prefixes, _sydbox_copy_slist, ctx->write_prefixes);
+    gchar *prefix;
+    const GSList *entry;
+
+    if (ctx->write_prefixes)
+        g_slist_free (ctx->write_prefixes);
+
+    for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
+        prefix = (gchar *) entry->data;
+        g_assert(NULL != prefix);
+        g_assert('/' == prefix[0]);
+        ctx->write_prefixes = g_slist_append(ctx->write_prefixes, g_strdup(prefix));
+    }
 }
 
 const GSList *
 sydbox_context_get_predict_prefixes (const SydboxContext * const ctx)
 {
-   return ctx->predict_prefixes;
+    return ctx->predict_prefixes;
 }
 
 void
 sydbox_context_set_predict_prefixes (SydboxContext * const ctx,
                                      const GSList * const prefixes)
 {
-   if (ctx->predict_prefixes)
-      g_slist_free (ctx->write_prefixes);
-   g_slist_foreach (prefixes, _sydbox_copy_slist, ctx->predict_prefixes);
+    gchar *prefix;
+    const GSList *entry;
+
+    if (ctx->predict_prefixes)
+        g_slist_free (ctx->write_prefixes);
+
+    for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
+        prefix = (gchar *) entry->data;
+        g_assert(NULL != prefix);
+        g_assert('/' == prefix[0]);
+        ctx->write_prefixes = g_slist_append(ctx->write_prefixes, g_strdup(prefix));
+    }
 }
 
