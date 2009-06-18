@@ -150,9 +150,13 @@ int trace_loop(context_t *ctx) {
     while (NULL != ctx->children) {
         pid = waitpid(-1, &status, __WALL);
         if (G_UNLIKELY(0 > pid)) {
-            g_critical ("waitpid failed: %s", g_strerror (errno));
-            g_printerr ("waitpid failed: %s", g_strerror (errno));
-            exit (-1);
+            if (ECHILD == errno)
+                break;
+            else {
+                g_critical ("waitpid failed: %s", g_strerror (errno));
+                g_printerr ("waitpid failed: %s", g_strerror (errno));
+                exit (-1);
+            }
         }
         child = tchild_find(ctx->children, pid);
         event = trace_event(status);
