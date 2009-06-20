@@ -5,6 +5,10 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta4:
+    * Use an lstat(2) wrapper which tries hard to avoid ENAMETOOLONG issues.
+    * Handle /proc/self correctly when resolving paths.
+
 0.1_beta3:
     * Fixed event handling and inheritance of sandbox data. Sydbox behaves
       correctly now when a child calls fork(), vfork() or clone().
