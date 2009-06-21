@@ -36,7 +36,7 @@ sydbox() {
     SANDBOX_NO_CONFIG=1 @TOP_BUILDDIR@/src/sydbox -0 4 -l "${SANDBOX_LOG}" "$@"
 }
 
-if [[ $colour ]]; then
+if $colour; then
     say() {
         case "$1" in
             error) tput bold; tput setaf 1;;  # bold red
