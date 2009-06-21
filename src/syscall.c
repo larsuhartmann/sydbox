@@ -393,10 +393,6 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         g_info ("sandbox status of child %i is now %s",
                 child->pid, child->sandbox->on ? "on" : "off");
     }
-    else if (G_UNLIKELY(path_magic_enabled(path) && child->sandbox->on)) {
-        data->result = RS_MAGIC;
-        g_info ("sandbox status of child %i is on", child->pid);
-    }
     else if (G_UNLIKELY(path_magic_lock(path))) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_SET;
