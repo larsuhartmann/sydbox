@@ -102,6 +102,16 @@ inline bool path_magic_rmpredict(const char *path) {
     return (0 == strncmp(path, CMD_RMPREDICT, CMD_RMPREDICT_LEN)) ? true : false;
 }
 
+inline bool path_magic_ban_exec(const char *path)
+{
+    return (0 == strncmp(path, CMD_BAN_EXEC, CMD_BAN_EXEC_LEN)) ? true : false;
+}
+
+inline bool path_magic_unban_exec(const char *path)
+{
+    return (0 == strncmp(path, CMD_UNBAN_EXEC, CMD_UNBAN_EXEC_LEN)) ? true : false;
+}
+
 int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     char *data;
 

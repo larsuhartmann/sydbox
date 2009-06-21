@@ -1,12 +1,25 @@
-/* vim: set sw=4 sts=4 fdm=syntax et : */
+/* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
-/**
- * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
- * Copyright 2009 Ali Polatel <polatel@gmail.com>
- **/
+/*
+ * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
+ *
+ * This file is part of the sydbox sandbox tool. sydbox is free software;
+ * you can redistribute it and/or modify it under the terms of the GNU General
+ * Public License version 2, as published by the Free Software Foundation.
+ *
+ * sydbox is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+ * Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
-#ifndef __PATH_H__
-#define __PATH_H__
+#ifndef SYDBOX_GUARD_PATH_H
+#define SYDBOX_GUARD_PATH_H 1
 
 #include <stdbool.h>
 
@@ -34,6 +47,10 @@
 #define CMD_RMWRITE_LEN         (CMD_PATH_LEN + 8)
 #define CMD_RMPREDICT           CMD_PATH"unpredict/"
 #define CMD_RMPREDICT_LEN       (CMD_PATH_LEN + 10)
+#define CMD_BAN_EXEC            CMD_PATH"ban_exec"
+#define CMD_BAN_EXEC_LEN        (CMD_PATH_LEN + 9)
+#define CMD_UNBAN_EXEC          CMD_PATH"unban_exec"
+#define CMD_UNBAN_EXEC_LEN      (CMD_PATH_LEN + 11)
 
 bool
 path_magic_dir (const char *path);
@@ -68,6 +85,12 @@ path_magic_rmwrite (const char *path);
 bool
 path_magic_rmpredict (const char *path);
 
+bool
+path_magic_ban_exec (const char *path);
+
+bool
+path_magic_unban_exec (const char *path);
+
 int
 pathnode_new (GSList **pathlist, const char *path, int sanitize);
 
@@ -86,5 +109,5 @@ pathlist_init (GSList **pathlist, const char *pathlist_env);
 int
 pathlist_check (GSList *pathlist, const char *path_sanitized);
 
-#endif
+#endif // SYDBOX_GUARD_PATH_H
 

@@ -44,6 +44,7 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
     child->sandbox->on = 1;
     child->sandbox->lock = LOCK_UNSET;
     child->sandbox->net = 1;
+    child->sandbox->exec_banned = 0;
     child->sandbox->write_prefixes = NULL;
     child->sandbox->predict_prefixes = NULL;
 
@@ -62,6 +63,7 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
             child->sandbox->on = parent->sandbox->on;
             child->sandbox->lock = parent->sandbox->lock;
             child->sandbox->net = parent->sandbox->net;
+            child->sandbox->exec_banned = parent->sandbox->exec_banned;
             // Copy path lists
             walk = parent->sandbox->write_prefixes;
             while (NULL != walk) {

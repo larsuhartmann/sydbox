@@ -44,6 +44,7 @@ struct tdata
    int on;                             /* whether sydbox is on for the child */
    int lock;                           /* whether magic commands are locked for the child */
    int net;                            /* whether child is allowed to access network */
+   int exec_banned;                    /* whether execve() calls are banned for child */
    GSList *write_prefixes;
    GSList *predict_prefixes;
 };

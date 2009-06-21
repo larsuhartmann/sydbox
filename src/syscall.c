@@ -72,6 +72,7 @@
 #define MAGIC_OPEN              (1 << 24) // Check if the open() call is magic
 #define MAGIC_STAT              (1 << 25) // Check if the stat() call is magic
 #define NET_CALL                (1 << 26) // Allowing the system call depends on the net flag
+#define EXEC_CALL               (1 << 27) // Allowing the system call depends on the exec_banned flag
 
 // System call dispatch table
 static const struct syscall_def {
@@ -126,6 +127,7 @@ static const struct syscall_def {
 #elif defined(__NR_socket)
     {__NR_socket,       NET_CALL},
 #endif
+    {__NR_execve,       EXEC_CALL},
     {-1,                -1},
 };
 
@@ -435,6 +437,16 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
         g_info ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free (rpath_sanitized);
+    }
+    else if (G_UNLIKELY(path_magic_ban_exec(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->exec_banned = 1;
+        g_info("exec() calls are now banned for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_unban_exec(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->exec_banned = 0;
+        g_info("exec() calls are now unbanned for child %i", child->pid);
     }
 
     if (G_UNLIKELY(RS_MAGIC == data->result)) {
@@ -869,6 +881,11 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
 #elif defined(__NR_socket)
         sydbox_access_violation (child->pid, "socket()");
 #endif
+        data->result = RS_DENY;
+        child->retval = -EACCES;
+    }
+    if (self->flags & EXEC_CALL && child->sandbox->exec_banned) {
+        sydbox_access_violation(child->pid, "execve()");
         data->result = RS_DENY;
         child->retval = -EACCES;
     }
