@@ -5,6 +5,12 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta5:
+    * Implement /dev/sydbox/{un,}ban_exec. paludis-sydbox branch makes use of
+      these magic commands to ban execve() calls in metadata phase.
+    * When shell_expand() returns empty string, it was added to the pathlist
+      resulting every path prefix check to be allowed, this is now fixed.
+
 0.1_beta4:
     * Use an lstat(2) wrapper which tries hard to avoid ENAMETOOLONG issues.
     * Handle /proc/self correctly when resolving paths.
