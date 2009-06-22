@@ -44,7 +44,6 @@ struct sydbox_config
     gboolean colourise_output;
     gboolean allow_magic_commands;
     gboolean paranoid_mode_enabled;
-    gboolean ban_exec_calls;
 
     GSList *write_prefixes;
     GSList *predict_prefixes;
@@ -80,7 +79,6 @@ sydbox_config_load (const gchar * const file)
         config->verbosity = 1;
         config->sandbox_network = FALSE;
         config->paranoid_mode_enabled = FALSE;
-        config->ban_exec_calls = FALSE;
         return TRUE;
     }
 
@@ -213,27 +211,6 @@ sydbox_config_load (const gchar * const file)
         }
     }
 
-    // Get main.ban_exec
-    config->ban_exec_calls = g_key_file_get_boolean(config_fd, "main", "ban_exec", &config_error);
-    if (!config->ban_exec_calls && config_error) {
-        switch (config_error->code) {
-            case G_KEY_FILE_ERROR_INVALID_VALUE:
-                g_printerr("main.ban_exec not a boolean: %s", config_error->message);
-                g_error_free(config_error);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return FALSE;
-            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                g_error_free(config_error);
-                config_error = NULL;
-                config->ban_exec_calls = FALSE;
-                break;
-            default:
-                g_assert_not_reached();
-                break;
-        }
-    }
-
     // Get prefix.write
     char **write_prefixes = g_key_file_get_string_list(config_fd, "prefix", "write", NULL, NULL);
     if (NULL != write_prefixes) {
@@ -279,7 +256,6 @@ void
 sydbox_config_write_to_stderr (void)
 {
     g_fprintf (stderr, "colour = %s\n", config->colourise_output ? "yes" : "no");
-    g_fprintf (stderr, "ban_exec = %s\n", config->ban_exec_calls ? "yes" : "no");
     g_fprintf (stderr, "lock = %s\n", config->allow_magic_commands ? "unset" : "set");
     g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
@@ -359,18 +335,6 @@ void
 sydbox_config_set_paranoid_mode_enabled (gboolean enabled)
 {
     config->paranoid_mode_enabled = enabled;
-}
-
-gboolean
-sydbox_config_get_ban_exec_calls (void)
-{
-    return config->ban_exec_calls;
-}
-
-void
-sydbox_config_set_ban_exec_calls (gboolean ban)
-{
-    config->ban_exec_calls = ban;
 }
 
 const GSList *

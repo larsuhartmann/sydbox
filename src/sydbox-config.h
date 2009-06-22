@@ -2,7 +2,6 @@
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
- * Copyright (c) Ali Polatel <polatel@gmail.com>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -65,12 +64,6 @@ sydbox_config_get_paranoid_mode_enabled (void);
 
 void
 sydbox_config_set_paranoid_mode_enabled (gboolean enabled);
-
-gboolean
-sydbox_config_get_ban_exec_calls (void);
-
-void
-sydbox_config_set_ban_exec_calls (gboolean ban);
 
 const GSList *
 sydbox_config_get_write_prefixes (void);
