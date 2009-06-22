@@ -77,6 +77,7 @@ static gchar *logfile;
 static gchar *config_file;
 
 static gboolean dump;
+static gboolean ban_exec;
 static gboolean lock;
 static gboolean colour;
 static gboolean version;
@@ -86,6 +87,7 @@ static GOptionEntry entries[] =
 {
     { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file",  NULL },
     { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
+    { "ban_exec",  'B', 0, G_OPTION_ARG_NONE,                         &ban_exec,    "Ban execve() calls",              NULL },
     { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &lock,        "Disallow magic commands",         NULL },
     { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
     { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",            NULL },
@@ -218,6 +220,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
     eldest->cwd = g_strdup (ctx->cwd);
+    eldest->sandbox->exec_banned = sydbox_config_get_ban_exec_calls();
     eldest->sandbox->net = sydbox_config_get_sandbox_network ();
     eldest->sandbox->lock = sydbox_config_get_allow_magic_commands () ? LOCK_UNSET : LOCK_SET;
     eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
@@ -269,6 +272,9 @@ sydbox_internal_main (int argc, char **argv)
 
     if (colour)
         sydbox_config_set_colourise_output (TRUE);
+
+    if (ban_exec)
+        sydbox_config_set_ban_exec_calls (TRUE);
 
     if (lock)
         sydbox_config_set_allow_magic_commands (FALSE);
