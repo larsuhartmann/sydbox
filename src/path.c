@@ -116,21 +116,28 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     char *data;
 
     if (G_UNLIKELY(NULL == path)) {
-        g_info ("path is NULL not adding to list");
+        g_info("path is NULL not adding to list");
         return -1;
     }
     else if (G_UNLIKELY('\0' == path[0])) {
-        g_info ("path is empty not adding to list");
+        g_info("path is empty not adding to list");
         return -1;
     }
 
     if (G_LIKELY(!sanitize))
-        data = g_strdup (path);
+        data = g_strdup(path);
     else {
-        char *spath = sydbox_compress_path (path);
-        data = shell_expand (spath);
-        g_free (spath);
-        g_info ("new path item `%s'", data);
+        char *spath = sydbox_compress_path(path);
+        data = shell_expand(spath);
+        g_free(spath);
+        /* shell_expand() may return empty string! */
+        if (G_UNLIKELY('\0' == data[0])) {
+            g_info("shell_expand() returned empty string for `%s', not adding to list", path);
+            g_free(data);
+            return -1;
+        }
+        else
+            g_info("new path item `%s'", data);
     }
     *pathlist = g_slist_prepend(*pathlist, data);
     return 0;
@@ -149,6 +156,11 @@ int pathnode_new_early(GSList **pathlist, const char *path, int sanitize)
         spath = sydbox_compress_path(path);
         data = shell_expand(spath);
         g_free(spath);
+        /* shell_expand() may return empty string! */
+        if (G_UNLIKELY('\0' == data[0])) {
+            g_free(data);
+            return -1;
+        }
     }
     *pathlist = g_slist_prepend(*pathlist, data);
     return 0;
