@@ -76,6 +76,9 @@ sydbox_config_load (const gchar * const file)
          */
         config->colourise_output = TRUE;
         config->allow_magic_commands = TRUE;
+        config->verbosity = 1;
+        config->sandbox_network = FALSE;
+        config->paranoid_mode_enabled = FALSE;
         return TRUE;
     }
 
