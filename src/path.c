@@ -119,7 +119,7 @@ int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
         g_info ("path is NULL not adding to list");
         return -1;
     }
-    else if (G_UNLIKELY(0 == strlen(path))) {
+    else if (G_UNLIKELY('\0' == path[0])) {
         g_info ("path is empty not adding to list");
         return -1;
     }
@@ -140,13 +140,13 @@ int pathnode_new_early(GSList **pathlist, const char *path, int sanitize)
 {
     char *data, *spath;
 
-    if (G_UNLIKELY(NULL == path || 0 == strlen(path)))
+    if (G_UNLIKELY(NULL == path || '\0' == path[0]))
         return -1;
 
     if (!sanitize)
         data = g_strdup(path);
     else {
-        spath = sydbox_compress_path (path);
+        spath = sydbox_compress_path(path);
         data = shell_expand(spath);
         g_free(spath);
     }
