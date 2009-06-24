@@ -38,7 +38,8 @@ sydbox_log_output (const gchar *log_domain,
                    GLogLevelFlags log_level,
                    const gchar *message)
 {
-    gchar *prefix, *output;
+    gchar *output;
+    const gchar *prefix;
 
     g_return_if_fail (initialized);
     g_return_if_fail (message != NULL && message[0] != '\0');
@@ -46,25 +47,25 @@ sydbox_log_output (const gchar *log_domain,
     switch (log_level)
     {
         case G_LOG_LEVEL_CRITICAL:
-            prefix = g_strdup ("CRITICAL");
+            prefix = "CRITICAL";
             break;
         case G_LOG_LEVEL_WARNING:
-            prefix = g_strdup ("WARNING");
+            prefix = "WARNING";
             break;
         case G_LOG_LEVEL_MESSAGE:
-            prefix = g_strdup ("Message");
+            prefix = "Message";
             break;
         case G_LOG_LEVEL_INFO:
-            prefix = g_strdup ("INFO");
+            prefix = "INFO";
             break;
         case G_LOG_LEVEL_DEBUG:
-            prefix = g_strdup ("DEBUG");
+            prefix = "DEBUG";
             break;
         case LOG_LEVEL_DEBUG_TRACE:
-            prefix = g_strdup ("TRACE");
+            prefix = "TRACE";
             break;
         default:
-            prefix = g_strdup ("");
+            prefix = "";
             break;
     }
 
@@ -74,7 +75,6 @@ sydbox_log_output (const gchar *log_domain,
                               fd ? "" : PACKAGE":",
                               (gulong) getpid(), (gulong) time(NULL),
                               prefix, message);
-    g_free (prefix);
 
     g_fprintf (fd ? fd : stderr, "%s", output);
     fflush (fd ? fd : stderr);
