@@ -21,15 +21,17 @@
 #ifndef __CONTEXT_H__
 #define __CONTEXT_H__
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 #include "children.h"
 
 typedef struct
 {
-    char *cwd;              // current working directory
-    pid_t eldest;           // first child's pid is kept to determine return code
-    GSList *children;       // list of children
+    char *cwd;                  // current working directory
+    pid_t eldest;               // first child's pid is kept to determine return code.
+    bool before_initial_execve; // first execve() is noted here for execve(2) sandboxing.
+    GSList *children;           // list of children
 } context_t;
 
 context_t *

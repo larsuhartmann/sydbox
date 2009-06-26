@@ -18,6 +18,7 @@
  */
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -33,6 +34,8 @@ context_new (void)
     context_t *ctx;
 
     ctx = (context_t *) g_malloc0 (sizeof (context_t));
+
+    ctx->before_initial_execve = true;
 
     ctx->cwd = egetcwd();
     if (G_UNLIKELY(NULL == ctx->cwd)) {

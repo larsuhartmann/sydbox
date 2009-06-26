@@ -305,7 +305,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, 3, data))
             return;
     }
-    if (self->flags & EXEC_CALL && child->sandbox->exec) {
+    if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
         if (!systemcall_get_path(child->pid, 0, data))
             return;
     }
@@ -741,7 +741,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
         else
             g_debug("canonicalized `%s' to `%s'", data->pathlist[3], data->rpathlist[3]);
     }
-    if (self->flags & EXEC_CALL && child->sandbox->exec) {
+    if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
                 self->no, sname, child->pid);
         data->rpathlist[0] = systemcall_resolvepath(self, ctx, child, 0, TRUE, data);
@@ -893,7 +893,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         data->result = RS_DENY;
         child->retval = -EACCES;
     }
-    if (self->flags & EXEC_CALL && child->sandbox->exec) {
+    if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
         g_debug("checking `%s' for exec access", data->rpathlist[0]);
         int allow_exec = pathlist_check(child->sandbox->exec_prefixes, data->rpathlist[0]);
         if (!allow_exec) {
@@ -904,13 +904,18 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
-static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
+static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr,
                                  gpointer child_ptr, gpointer data_ptr)
 {
+    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
     g_debug("ending check for system call %d(%s), child %i", self->no, sname, child->pid);
+
+    if (ctx->before_initial_execve && self->flags & EXEC_CALL)
+        ctx->before_initial_execve = false;
+
     for (unsigned int i = 0; i < 2; i++)
         g_free(data->dirfdlist[i]);
     for (unsigned int i = 0; i < 4; i++) {
