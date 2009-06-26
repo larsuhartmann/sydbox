@@ -77,6 +77,8 @@ static gchar *logfile;
 static gchar *config_file;
 
 static gboolean dump;
+static gboolean exec;
+static gboolean net;
 static gboolean lock;
 static gboolean colour;
 static gboolean version;
@@ -86,6 +88,8 @@ static GOptionEntry entries[] =
 {
     { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file",  NULL },
     { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
+    { "exec",      'e', 0, G_OPTION_ARG_NONE,                         &exec,        "Enable execve(2) sandboxing",     NULL },
+    { "net",       'n', 0, G_OPTION_ARG_NONE,                         &net,         "Enable network sandboxing",       NULL },
     { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &lock,        "Disallow magic commands",         NULL },
     { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
     { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",            NULL },
@@ -271,6 +275,12 @@ sydbox_internal_main (int argc, char **argv)
 
     if (colour)
         sydbox_config_set_colourise_output (TRUE);
+
+    if (exec)
+        sydbox_config_set_sandbox_exec(TRUE);
+
+    if (net)
+        sydbox_config_set_sandbox_network(TRUE);
 
     if (lock)
         sydbox_config_set_disallow_magic_commands (TRUE);

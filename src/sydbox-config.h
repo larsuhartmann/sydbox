@@ -48,8 +48,14 @@ sydbox_config_set_verbosity (gint verbosity);
 gboolean
 sydbox_config_get_sandbox_exec (void);
 
+void
+sydbox_config_set_sandbox_exec (gboolean on);
+
 gboolean
 sydbox_config_get_sandbox_network (void);
+
+void
+sydbox_config_set_sandbox_network (gboolean on);
 
 gboolean
 sydbox_config_get_colourise_output (void);

@@ -345,10 +345,22 @@ sydbox_config_get_sandbox_exec (void)
     return config->sandbox_exec;
 }
 
+void
+sydbox_config_set_sandbox_exec (gboolean on)
+{
+    config->sandbox_exec = on;
+}
+
 gboolean
 sydbox_config_get_sandbox_network (void)
 {
     return config->sandbox_network;
+}
+
+void
+sydbox_config_set_sandbox_network (gboolean on)
+{
+    config->sandbox_network = on;
 }
 
 gboolean
