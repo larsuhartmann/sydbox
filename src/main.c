@@ -86,16 +86,16 @@ static gboolean paranoid;
 
 static GOptionEntry entries[] =
 {
-    { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file",  NULL },
-    { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",     NULL },
-    { "exec",      'e', 0, G_OPTION_ARG_NONE,                         &exec,        "Enable execve(2) sandboxing",     NULL },
-    { "net",       'n', 0, G_OPTION_ARG_NONE,                         &net,         "Enable network sandboxing",       NULL },
-    { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &lock,        "Disallow magic commands",         NULL },
-    { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",               NULL },
-    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",            NULL },
-    { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disabling colouring of messages", NULL },
-    { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",    NULL },
-    { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",        NULL },
+    { "config",    'c', 0, G_OPTION_ARG_FILENAME,                     &config_file, "Path to the configuration file", NULL },
+    { "dump",      'D', 0, G_OPTION_ARG_NONE,                         &dump,        "Dump configuration and exit",    NULL },
+    { "exec",      'e', 0, G_OPTION_ARG_NONE,                         &exec,        "Enable execve(2) sandboxing",    NULL },
+    { "net",       'n', 0, G_OPTION_ARG_NONE,                         &net,         "Enable network sandboxing",      NULL },
+    { "lock",      'L', 0, G_OPTION_ARG_NONE,                         &lock,        "Disallow magic commands",        NULL },
+    { "log-level", '0', 0, G_OPTION_ARG_INT,                          &verbosity,   "Logging verbosity",              NULL },
+    { "log-file",  'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,     "Path to the log file",           NULL },
+    { "no-colour", 'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,      "Disable colouring of messages",  NULL },
+    { "paranoid",  'p', 0, G_OPTION_ARG_NONE,                         &paranoid,    "Paranoid mode (EXPERIMENTAL)",   NULL },
+    { "version",   'V', 0, G_OPTION_ARG_NONE,                         &version,     "Show version information",       NULL },
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
 
