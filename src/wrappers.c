@@ -52,6 +52,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -348,7 +349,7 @@ static int elstat(const char *path, struct stat *buf)
 gchar *
 canonicalize_filename_mode (const gchar *name,
                             canonicalize_mode_t can_mode,
-                            gboolean resolve,
+                            bool resolve,
                             const gchar *cwd)
 {
     int readlinks = 0;

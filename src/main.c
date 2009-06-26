@@ -21,6 +21,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,13 +77,13 @@ static gint verbosity = -1;
 static gchar *logfile;
 static gchar *config_file;
 
-static gboolean dump;
-static gboolean exec;
-static gboolean net;
-static gboolean lock;
-static gboolean colour;
-static gboolean version;
-static gboolean paranoid;
+static bool dump;
+static bool exec;
+static bool net;
+static bool lock;
+static bool colour;
+static bool version;
+static bool paranoid;
 
 static GOptionEntry entries[] =
 {

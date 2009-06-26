@@ -2,7 +2,7 @@
 
 /**
  * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
- * Copyright 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -20,6 +20,8 @@
 
 #ifndef __WRAPPERS_H__
 #define __WRAPPERS_H__
+
+#include <stdbool.h>
 
 #include <glib.h>
 
@@ -47,7 +49,7 @@ echdir (gchar *dir);
 gchar *
 canonicalize_filename_mode (const gchar *name,
                             canonicalize_mode_t can_mode,
-                            gboolean resolve,
+                            bool resolve,
                             const gchar *cwd);
 
 #endif

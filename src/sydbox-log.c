@@ -31,7 +31,7 @@
 #endif
 
 static FILE *fd;
-static gboolean initialized;
+static bool initialized;
 
 static inline void
 sydbox_log_output (const gchar *log_domain,
@@ -114,7 +114,7 @@ sydbox_log_init (void)
 
     g_log_set_default_handler (sydbox_log_handler, NULL);
 
-    initialized = TRUE;
+    initialized = true;
 }
 
 void
@@ -126,6 +126,6 @@ sydbox_log_fini (void)
     if (fd)
         fclose (fd);
 
-    initialized = FALSE;
+    initialized = false;
 }
 

@@ -17,6 +17,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include <glib/gstdio.h>
@@ -52,9 +53,9 @@ sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)
 gchar *
 sydbox_compress_path (const gchar * const path)
 {
+    bool skip_slashes = false;
     gchar *retval;
     GString *compressed;
-    gboolean skip_slashes = FALSE;
     guint i;
 
     compressed = g_string_sized_new (strlen (path));

@@ -22,9 +22,11 @@
 #ifndef __SYDBOX_CONFIG_H__
 #define __SYDBOX_CONFIG_H__
 
+#include <stdbool.h>
+
 #include <glib.h>
 
-gboolean
+bool
 sydbox_config_load (const gchar * const config);
 
 void
@@ -45,35 +47,35 @@ sydbox_config_get_verbosity (void);
 void
 sydbox_config_set_verbosity (gint verbosity);
 
-gboolean
+bool
 sydbox_config_get_sandbox_exec (void);
 
 void
-sydbox_config_set_sandbox_exec (gboolean on);
+sydbox_config_set_sandbox_exec (bool on);
 
-gboolean
+bool
 sydbox_config_get_sandbox_network (void);
 
 void
-sydbox_config_set_sandbox_network (gboolean on);
+sydbox_config_set_sandbox_network (bool on);
 
-gboolean
+bool
 sydbox_config_get_colourise_output (void);
 
 void
-sydbox_config_set_colourise_output (gboolean colourise);
+sydbox_config_set_colourise_output (bool colourise);
 
-gboolean
+bool
 sydbox_config_get_disallow_magic_commands (void);
 
 void
-sydbox_config_set_disallow_magic_commands (gboolean disallow);
+sydbox_config_set_disallow_magic_commands (bool disallow);
 
-gboolean
+bool
 sydbox_config_get_paranoid_mode_enabled (void);
 
 void
-sydbox_config_set_paranoid_mode_enabled (gboolean enabled);
+sydbox_config_set_paranoid_mode_enabled (bool enabled);
 
 const GSList *
 sydbox_config_get_write_prefixes (void);

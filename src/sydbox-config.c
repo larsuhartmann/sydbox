@@ -18,6 +18,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdbool.h>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -42,11 +44,11 @@ struct sydbox_config
 
     gint verbosity;
 
-    gboolean sandbox_exec;
-    gboolean sandbox_network;
-    gboolean colourise_output;
-    gboolean disallow_magic_commands;
-    gboolean paranoid_mode_enabled;
+    bool sandbox_exec;
+    bool sandbox_network;
+    bool colourise_output;
+    bool disallow_magic_commands;
+    bool paranoid_mode_enabled;
 
     GSList *write_prefixes;
     GSList *predict_prefixes;
@@ -54,14 +56,14 @@ struct sydbox_config
 } *config;
 
 
-gboolean
+bool
 sydbox_config_load (const gchar * const file)
 {
     gchar *config_file;
     GKeyFile *config_fd;
     GError *config_error = NULL;
 
-    g_return_val_if_fail(!config, TRUE);
+    g_return_val_if_fail(!config, true);
 
     // Figure out the path to the configuration file
     if (file)
@@ -78,12 +80,12 @@ sydbox_config_load (const gchar * const file)
         /* ENV_NO_CONFIG set, set the defaults and return without parsing the
          * configuration file.
          */
-        config->colourise_output = TRUE;
+        config->colourise_output = true;
         config->verbosity = 1;
-        config->sandbox_network = FALSE;
-        config->sandbox_exec = FALSE;
-        config->disallow_magic_commands = FALSE;
-        config->paranoid_mode_enabled = FALSE;
+        config->sandbox_network = false;
+        config->sandbox_exec = false;
+        config->disallow_magic_commands = false;
+        config->paranoid_mode_enabled = false;
         return TRUE;
     }
 
@@ -94,7 +96,7 @@ sydbox_config_load (const gchar * const file)
         g_error_free(config_error);
         g_key_file_free(config_fd);
         g_free(config);
-        return FALSE;
+        return false;
     }
 
     // Get main.log_file
@@ -126,7 +128,7 @@ sydbox_config_load (const gchar * const file)
 
     // Get main.colour
     if (g_getenv(ENV_NO_COLOUR))
-        config->colourise_output = FALSE;
+        config->colourise_output = false;
     else {
         config->colourise_output = g_key_file_get_boolean(config_fd, "main", "colour", &config_error);
         if (!config->colourise_output) {
@@ -136,11 +138,11 @@ sydbox_config_load (const gchar * const file)
                     g_error_free(config_error);
                     g_key_file_free(config_fd);
                     g_free(config);
-                    return FALSE;
+                    return false;
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
-                    config->colourise_output = TRUE;
+                    config->colourise_output = true;
                     break;
                 default:
                     g_assert_not_reached();
@@ -151,7 +153,7 @@ sydbox_config_load (const gchar * const file)
 
     // Get main.exec
     if (g_getenv(ENV_EXEC))
-        config->sandbox_exec = TRUE;
+        config->sandbox_exec = true;
     else {
         config->sandbox_exec = g_key_file_get_boolean(config_fd, "main", "exec", &config_error);
         if (!config->sandbox_exec && config_error) {
@@ -161,11 +163,11 @@ sydbox_config_load (const gchar * const file)
                     g_error_free(config_error);
                     g_key_file_free(config_fd);
                     g_free(config);
-                    return FALSE;
+                    return false;
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
-                    config->sandbox_exec = FALSE;
+                    config->sandbox_exec = false;
                     break;
                 default:
                     g_assert_not_reached();
@@ -176,7 +178,7 @@ sydbox_config_load (const gchar * const file)
 
     // Get main.net
     if (g_getenv(ENV_NET))
-        config->sandbox_network = TRUE;
+        config->sandbox_network = true;
     else {
         config->sandbox_network = g_key_file_get_boolean(config_fd, "main", "net", &config_error);
         if (!config->sandbox_network && config_error) {
@@ -186,11 +188,11 @@ sydbox_config_load (const gchar * const file)
                     g_error_free(config_error);
                     g_key_file_free(config_fd);
                     g_free(config);
-                    return FALSE;
+                    return false;
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
-                    config->sandbox_network = FALSE;
+                    config->sandbox_network = false;
                     break;
                 default:
                     g_assert_not_reached();
@@ -208,11 +210,11 @@ sydbox_config_load (const gchar * const file)
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
                 g_free(config);
-                return FALSE;
+                return false;
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
-                config->paranoid_mode_enabled = FALSE;
+                config->paranoid_mode_enabled = false;
                 break;
             default:
                 g_assert_not_reached();
@@ -229,11 +231,11 @@ sydbox_config_load (const gchar * const file)
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
                 g_free(config);
-                return FALSE;
+                return false;
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
-                config->disallow_magic_commands = FALSE;
+                config->disallow_magic_commands = false;
                 break;
             default:
                 g_assert_not_reached();
@@ -268,7 +270,7 @@ sydbox_config_load (const gchar * const file)
     // Cleanup and return
     g_key_file_free(config_fd);
     g_free(config_file);
-    return TRUE;
+    return true;
 }
 
 void
@@ -339,62 +341,62 @@ sydbox_config_set_verbosity (gint verbosity)
     config->verbosity = verbosity;
 }
 
-gboolean
+bool
 sydbox_config_get_sandbox_exec (void)
 {
     return config->sandbox_exec;
 }
 
 void
-sydbox_config_set_sandbox_exec (gboolean on)
+sydbox_config_set_sandbox_exec (bool on)
 {
     config->sandbox_exec = on;
 }
 
-gboolean
+bool
 sydbox_config_get_sandbox_network (void)
 {
     return config->sandbox_network;
 }
 
 void
-sydbox_config_set_sandbox_network (gboolean on)
+sydbox_config_set_sandbox_network (bool on)
 {
     config->sandbox_network = on;
 }
 
-gboolean
+bool
 sydbox_config_get_colourise_output (void)
 {
     return config->colourise_output;
 }
 
 void
-sydbox_config_set_colourise_output (gboolean colourise)
+sydbox_config_set_colourise_output (bool colourise)
 {
     config->colourise_output = colourise;
 }
 
-gboolean
+bool
 sydbox_config_get_disallow_magic_commands (void)
 {
     return config->disallow_magic_commands;
 }
 
 void
-sydbox_config_set_disallow_magic_commands (gboolean disallow)
+sydbox_config_set_disallow_magic_commands (bool disallow)
 {
     config->disallow_magic_commands = disallow;
 }
 
-gboolean
+bool
 sydbox_config_get_paranoid_mode_enabled (void)
 {
     return config->paranoid_mode_enabled;
 }
 
 void
-sydbox_config_set_paranoid_mode_enabled (gboolean enabled)
+sydbox_config_set_paranoid_mode_enabled (bool enabled)
 {
     config->paranoid_mode_enabled = enabled;
 }

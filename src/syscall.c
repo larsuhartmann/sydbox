@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -213,7 +214,7 @@ static void systemcall_get_property(GObject *obj,
  * errno on failure.
  * Returns TRUE and updates data->pathlist[narg] on success.
  */
-static gboolean systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
+static bool systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
 {
     data->pathlist[narg] = trace_get_string(pid, narg);
     if (G_UNLIKELY(NULL == data->pathlist[narg])) {
@@ -223,9 +224,9 @@ static gboolean systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
             g_debug("failed to grab string from argument %d: %s", narg, g_strerror(errno));
         else
             g_warning("failed to grab string from argument %d: %s", narg, g_strerror(errno));
-        return FALSE;
+        return false;
     }
-    return TRUE;
+    return true;
 }
 
 /* Receive dirfd argument at position narg of the given child and update data.
@@ -238,9 +239,9 @@ static gboolean systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
  * On success TRUE is returned and data->dirfdlist[narg] contains the directory
  * information about dirfd. This string should be freed after use.
  */
-static gboolean systemcall_get_dirfd(SystemCall *self,
-                                     context_t *ctx, struct tchild *child,
-                                     int narg, struct checkdata *data)
+static bool systemcall_get_dirfd(SystemCall *self,
+                                 context_t *ctx, struct tchild *child,
+                                 int narg, struct checkdata *data)
 {
     long dfd;
     if (G_UNLIKELY(0 > trace_get_arg(child->pid, narg, &dfd))) {
@@ -250,7 +251,7 @@ static gboolean systemcall_get_dirfd(SystemCall *self,
             g_debug("failed to get dirfd from argument %d: %s", narg, g_strerror(errno));
         else
             g_warning("failed to get dirfd from argument %d: %s", narg, g_strerror(errno));
-        return FALSE;
+        return false;
     }
 
     if (AT_FDCWD != dfd) {
@@ -260,12 +261,12 @@ static gboolean systemcall_get_dirfd(SystemCall *self,
             child->retval = -errno;
             g_debug("pgetdir() failed: %s", g_strerror(errno));
             g_debug("denying access to system call %d(%s)", self->no, sname);
-            return FALSE;
+            return false;
         }
     }
     else
         data->dirfdlist[narg] = g_strdup(child->cwd);
-    return TRUE;
+    return true;
 }
 
 /* Initial callback for system call handler.
@@ -606,24 +607,24 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
  */
 static gchar *systemcall_resolvepath(SystemCall *self,
                                  context_t *ctx, struct tchild *child,
-                                 int narg, gboolean isat, struct checkdata *data)
+                                 int narg, bool isat, struct checkdata *data)
 {
-    gboolean maycreat;
+    bool maycreat;
     int mode;
     if (data->open_flags & O_CREAT)
-        maycreat = TRUE;
+        maycreat = true;
     else if (0 == narg && self->flags & (CAN_CREAT | MUST_CREAT))
-        maycreat = TRUE;
+        maycreat = true;
     else if (1 == narg && self->flags & (CAN_CREAT2 | MUST_CREAT2))
-        maycreat = TRUE;
+        maycreat = true;
     else if (1 == narg && isat && self->flags & (CAN_CREAT_AT | MUST_CREAT_AT))
-        maycreat = TRUE;
+        maycreat = true;
     else if (2 == narg && isat && self->flags & MUST_CREAT_AT1)
-        maycreat = TRUE;
+        maycreat = true;
     else if (3 == narg && self->flags & (CAN_CREAT_AT2 | MUST_CREAT_AT2))
-        maycreat = TRUE;
+        maycreat = true;
     else
-        maycreat = FALSE;
+        maycreat = false;
     mode = maycreat ? CAN_ALL_BUT_LAST : CAN_EXISTING;
 
     char *path = data->pathlist[narg];
@@ -1009,7 +1010,7 @@ GType systemcall_get_type(void) {
 }
 
 void syscall_init(void) {
-    static gboolean initialized = FALSE;
+    static bool initialized = false;
     if (initialized)
         return;
 
@@ -1026,7 +1027,7 @@ void syscall_init(void) {
     g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_check, NULL);
     g_signal_connect(SystemCallHandler, "check", (GCallback) systemcall_end_check, NULL);
 
-    initialized = TRUE;
+    initialized = true;
 }
 
 void syscall_free(void) {
