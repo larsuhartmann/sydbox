@@ -72,7 +72,7 @@
 #define MAGIC_OPEN              (1 << 24) // Check if the open() call is magic
 #define MAGIC_STAT              (1 << 25) // Check if the stat() call is magic
 #define NET_CALL                (1 << 26) // Allowing the system call depends on the net flag
-#define EXEC_CALL               (1 << 27) // Allowing the system call depends on the exec_banned flag
+#define EXEC_CALL               (1 << 27) // Allowing the system call depends on the exec flag
 
 // System call dispatch table
 static const struct syscall_def {
