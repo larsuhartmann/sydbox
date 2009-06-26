@@ -217,11 +217,13 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid, -1);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
-    eldest->cwd = g_strdup (ctx->cwd);
-    eldest->sandbox->net = sydbox_config_get_sandbox_network ();
-    eldest->sandbox->lock = sydbox_config_get_allow_magic_commands () ? LOCK_UNSET : LOCK_SET;
-    eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes ();
-    eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes ();
+    eldest->cwd = g_strdup(ctx->cwd);
+    eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
+    eldest->sandbox->net = sydbox_config_get_sandbox_network();
+    eldest->sandbox->lock = sydbox_config_get_allow_magic_commands() ? LOCK_UNSET : LOCK_SET;
+    eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes();
+    eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes();
+    eldest->sandbox->exec_prefixes = sydbox_config_get_exec_prefixes();
 
     g_info ("child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {

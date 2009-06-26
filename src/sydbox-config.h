@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -45,6 +46,9 @@ void
 sydbox_config_set_verbosity (gint verbosity);
 
 gboolean
+sydbox_config_get_sandbox_exec (void);
+
+gboolean
 sydbox_config_get_sandbox_network (void);
 
 gboolean
@@ -70,6 +74,9 @@ sydbox_config_get_write_prefixes (void);
 
 const GSList *
 sydbox_config_get_predict_prefixes (void);
+
+const GSList *
+sydbox_config_get_exec_prefixes (void);
 
 #endif
 

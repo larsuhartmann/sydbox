@@ -47,10 +47,10 @@
 #define CMD_RMWRITE_LEN         (CMD_PATH_LEN + 8)
 #define CMD_RMPREDICT           CMD_PATH"unpredict/"
 #define CMD_RMPREDICT_LEN       (CMD_PATH_LEN + 10)
-#define CMD_BAN_EXEC            CMD_PATH"ban_exec"
-#define CMD_BAN_EXEC_LEN        (CMD_PATH_LEN + 9)
-#define CMD_UNBAN_EXEC          CMD_PATH"unban_exec"
-#define CMD_UNBAN_EXEC_LEN      (CMD_PATH_LEN + 11)
+#define CMD_SANDBOX_EXEC        CMD_PATH"sandbox_exec"
+#define CMD_SANDBOX_EXEC_LEN    (CMD_PATH_LEN + 13)
+#define CMD_UNSANDBOX_EXEC      CMD_PATH"unsandbox_exec"
+#define CMD_UNSANDBOX_EXEC_LEN  (CMD_PATH_LEN + 15)
 
 bool
 path_magic_dir (const char *path);
@@ -86,10 +86,10 @@ bool
 path_magic_rmpredict (const char *path);
 
 bool
-path_magic_ban_exec (const char *path);
+path_magic_sandbox_exec (const char *path);
 
 bool
-path_magic_unban_exec (const char *path);
+path_magic_unsandbox_exec (const char *path);
 
 int
 pathnode_new (GSList **pathlist, const char *path, int sanitize);

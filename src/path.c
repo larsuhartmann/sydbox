@@ -102,14 +102,14 @@ inline bool path_magic_rmpredict(const char *path) {
     return (0 == strncmp(path, CMD_RMPREDICT, CMD_RMPREDICT_LEN));
 }
 
-inline bool path_magic_ban_exec(const char *path)
+inline bool path_magic_sandbox_exec(const char *path)
 {
-    return (0 == strncmp(path, CMD_BAN_EXEC, CMD_BAN_EXEC_LEN));
+    return (0 == strncmp(path, CMD_SANDBOX_EXEC, CMD_SANDBOX_EXEC_LEN));
 }
 
-inline bool path_magic_unban_exec(const char *path)
+inline bool path_magic_unsandbox_exec(const char *path)
 {
-    return (0 == strncmp(path, CMD_UNBAN_EXEC, CMD_UNBAN_EXEC_LEN));
+    return (0 == strncmp(path, CMD_UNSANDBOX_EXEC, CMD_UNSANDBOX_EXEC_LEN));
 }
 
 int pathnode_new(GSList **pathlist, const char *path, int sanitize) {

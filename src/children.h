@@ -1,5 +1,3 @@
-/* vim: set sw=4 sts=4 fdm=syntax et : */
-
 /* vim: set sw=4 sts=4 et foldmethod=syntax : */
 
 /*
@@ -44,9 +42,10 @@ struct tdata
    int on;                             /* whether sydbox is on for the child */
    int lock;                           /* whether magic commands are locked for the child */
    int net;                            /* whether child is allowed to access network */
-   int exec_banned;                    /* whether execve() calls are banned for child */
+   int exec;                           /* whether execve() calls are sandboxed for child */
    GSList *write_prefixes;
    GSList *predict_prefixes;
+   GSList *exec_prefixes;
 };
 
 struct tchild

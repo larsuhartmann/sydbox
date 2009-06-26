@@ -30,6 +30,8 @@
 #define ENV_CONFIG      "SANDBOX_CONFIG"
 #define ENV_WRITE       "SANDBOX_WRITE"
 #define ENV_PREDICT     "SANDBOX_PREDICT"
+#define ENV_EXEC_ALLOW  "SANDBOX_EXEC_ALLOW"
+#define ENV_EXEC        "SANDBOX_EXEC"
 #define ENV_NET         "SANDBOX_NET"
 #define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
 #define ENV_NO_CONFIG   "SANDBOX_NO_CONFIG"
@@ -40,6 +42,7 @@ struct sydbox_config
 
     gint verbosity;
 
+    gboolean sandbox_exec;
     gboolean sandbox_network;
     gboolean colourise_output;
     gboolean allow_magic_commands;
@@ -47,6 +50,7 @@ struct sydbox_config
 
     GSList *write_prefixes;
     GSList *predict_prefixes;
+    GSList *exec_prefixes;
 } *config;
 
 
@@ -78,6 +82,7 @@ sydbox_config_load (const gchar * const file)
         config->allow_magic_commands = TRUE;
         config->verbosity = 1;
         config->sandbox_network = FALSE;
+        config->sandbox_exec = FALSE;
         config->paranoid_mode_enabled = FALSE;
         return TRUE;
     }
@@ -136,6 +141,31 @@ sydbox_config_load (const gchar * const file)
                     g_error_free(config_error);
                     config_error = NULL;
                     config->colourise_output = TRUE;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
+        }
+    }
+
+    // Get main.exec
+    if (g_getenv(ENV_EXEC))
+        config->sandbox_exec = TRUE;
+    else {
+        config->sandbox_exec = g_key_file_get_boolean(config_fd, "main", "exec", &config_error);
+        if (!config->sandbox_exec && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("main.exec not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return FALSE;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->sandbox_exec = FALSE;
                     break;
                 default:
                     g_assert_not_reached();
@@ -227,6 +257,14 @@ sydbox_config_load (const gchar * const file)
         g_strfreev(predict_prefixes);
     }
 
+    // Get prefix.exec
+    char **exec_prefixes = g_key_file_get_string_list(config_fd, "prefix", "exec", NULL, NULL);
+    if (NULL != exec_prefixes) {
+        for (unsigned int i = 0; NULL != exec_prefixes[i]; i++)
+            pathnode_new_early(&config->exec_prefixes, exec_prefixes[i], 1);
+        g_strfreev(exec_prefixes);
+    }
+
     // Cleanup and return
     g_key_file_free(config_fd);
     g_free(config_file);
@@ -241,6 +279,9 @@ sydbox_config_update_from_environment (void)
 
     g_info ("extending path list using environment variable " ENV_PREDICT);
     pathlist_init (&config->predict_prefixes, g_getenv (ENV_PREDICT));
+
+    g_info ("extending path list using environment variable " ENV_EXEC_ALLOW);
+    pathlist_init(&config->exec_prefixes, g_getenv(ENV_EXEC_ALLOW));
 }
 
 
@@ -259,12 +300,15 @@ sydbox_config_write_to_stderr (void)
     g_fprintf (stderr, "lock = %s\n", config->allow_magic_commands ? "unset" : "set");
     g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
+    g_fprintf (stderr, "execve(2) sandboxing = %s\n", config->sandbox_exec ? "yes" : "no");
     g_fprintf (stderr, "network sandboxing = %s\n", config->sandbox_network ? "yes" : "no");
     g_fprintf (stderr, "paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
     g_fprintf (stderr, "allowed write prefixes:\n");
     g_slist_foreach (config->write_prefixes, print_slist_entry, NULL);
     g_fprintf (stderr, "predicted write prefixes:\n");
     g_slist_foreach (config->predict_prefixes, print_slist_entry, NULL);
+    g_fprintf (stderr, "exec allowed prefixes:\n");
+    g_slist_foreach (config->exec_prefixes, print_slist_entry, NULL);
 }
 
 
@@ -293,6 +337,12 @@ void
 sydbox_config_set_verbosity (gint verbosity)
 {
     config->verbosity = verbosity;
+}
+
+gboolean
+sydbox_config_get_sandbox_exec (void)
+{
+    return config->sandbox_exec;
 }
 
 gboolean
@@ -347,5 +397,11 @@ const GSList *
 sydbox_config_get_predict_prefixes (void)
 {
     return config->predict_prefixes;
+}
+
+const GSList *
+sydbox_config_get_exec_prefixes (void)
+{
+    return config->exec_prefixes;
 }
 

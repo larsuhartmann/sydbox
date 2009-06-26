@@ -43,10 +43,11 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
     child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
     child->sandbox->on = 1;
     child->sandbox->lock = LOCK_UNSET;
-    child->sandbox->net = 1;
-    child->sandbox->exec_banned = 0;
+    child->sandbox->exec = 0;
+    child->sandbox->net = 0;
     child->sandbox->write_prefixes = NULL;
     child->sandbox->predict_prefixes = NULL;
+    child->sandbox->exec_prefixes = NULL;
 
     // Inheritance
     if (G_LIKELY(0 < ppid)) {
@@ -62,8 +63,8 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
             GSList *walk;
             child->sandbox->on = parent->sandbox->on;
             child->sandbox->lock = parent->sandbox->lock;
+            child->sandbox->exec = parent->sandbox->exec;
             child->sandbox->net = parent->sandbox->net;
-            child->sandbox->exec_banned = parent->sandbox->exec_banned;
             // Copy path lists
             walk = parent->sandbox->write_prefixes;
             while (NULL != walk) {
@@ -73,6 +74,11 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
             walk = parent->sandbox->predict_prefixes;
             while (NULL != walk) {
                 pathnode_new(&(child->sandbox->predict_prefixes), walk->data, 0);
+                walk = g_slist_next(walk);
+            }
+            walk = parent->sandbox->exec_prefixes;
+            while (NULL != walk) {
+                pathnode_new(&(child->sandbox->exec_prefixes), walk->data, 0);
                 walk = g_slist_next(walk);
             }
         }
@@ -86,6 +92,8 @@ static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
             pathnode_free(&(child->sandbox->write_prefixes));
         if (G_LIKELY(NULL != child->sandbox->predict_prefixes))
             pathnode_free(&(child->sandbox->predict_prefixes));
+        if (G_LIKELY(NULL != child->sandbox->exec_prefixes))
+            pathnode_free(&(child->sandbox->exec_prefixes));
         g_free (child->sandbox);
     }
     if (G_LIKELY(NULL != child->cwd))
