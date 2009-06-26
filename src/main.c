@@ -220,7 +220,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     eldest->cwd = g_strdup(ctx->cwd);
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
     eldest->sandbox->net = sydbox_config_get_sandbox_network();
-    eldest->sandbox->lock = sydbox_config_get_allow_magic_commands() ? LOCK_UNSET : LOCK_SET;
+    eldest->sandbox->lock = sydbox_config_get_disallow_magic_commands() ? LOCK_SET : LOCK_UNSET;
     eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes();
     eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes();
     eldest->sandbox->exec_prefixes = sydbox_config_get_exec_prefixes();
@@ -273,7 +273,7 @@ sydbox_internal_main (int argc, char **argv)
         sydbox_config_set_colourise_output (TRUE);
 
     if (lock)
-        sydbox_config_set_allow_magic_commands (FALSE);
+        sydbox_config_set_disallow_magic_commands (TRUE);
 
     if (paranoid)
         sydbox_config_set_paranoid_mode_enabled (TRUE);

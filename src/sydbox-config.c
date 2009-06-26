@@ -45,7 +45,7 @@ struct sydbox_config
     gboolean sandbox_exec;
     gboolean sandbox_network;
     gboolean colourise_output;
-    gboolean allow_magic_commands;
+    gboolean disallow_magic_commands;
     gboolean paranoid_mode_enabled;
 
     GSList *write_prefixes;
@@ -79,10 +79,10 @@ sydbox_config_load (const gchar * const file)
          * configuration file.
          */
         config->colourise_output = TRUE;
-        config->allow_magic_commands = TRUE;
         config->verbosity = 1;
         config->sandbox_network = FALSE;
         config->sandbox_exec = FALSE;
+        config->disallow_magic_commands = FALSE;
         config->paranoid_mode_enabled = FALSE;
         return TRUE;
     }
@@ -221,8 +221,8 @@ sydbox_config_load (const gchar * const file)
     }
 
     // Get main.lock
-    config->allow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
-    if (!config->allow_magic_commands && config_error) {
+    config->disallow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
+    if (!config->disallow_magic_commands && config_error) {
         switch (config_error->code) {
             case G_KEY_FILE_ERROR_INVALID_VALUE:
                 g_printerr("main.lock not a boolean: %s", config_error->message);
@@ -233,7 +233,7 @@ sydbox_config_load (const gchar * const file)
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
-                config->allow_magic_commands = TRUE;
+                config->disallow_magic_commands = FALSE;
                 break;
             default:
                 g_assert_not_reached();
@@ -297,7 +297,7 @@ void
 sydbox_config_write_to_stderr (void)
 {
     g_fprintf (stderr, "colour = %s\n", config->colourise_output ? "yes" : "no");
-    g_fprintf (stderr, "lock = %s\n", config->allow_magic_commands ? "unset" : "set");
+    g_fprintf (stderr, "lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
     g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
     g_fprintf (stderr, "execve(2) sandboxing = %s\n", config->sandbox_exec ? "yes" : "no");
@@ -364,15 +364,15 @@ sydbox_config_set_colourise_output (gboolean colourise)
 }
 
 gboolean
-sydbox_config_get_allow_magic_commands (void)
+sydbox_config_get_disallow_magic_commands (void)
 {
-    return config->allow_magic_commands;
+    return config->disallow_magic_commands;
 }
 
 void
-sydbox_config_set_allow_magic_commands (gboolean allow)
+sydbox_config_set_disallow_magic_commands (gboolean disallow)
 {
-    config->allow_magic_commands = allow;
+    config->disallow_magic_commands = disallow;
 }
 
 gboolean

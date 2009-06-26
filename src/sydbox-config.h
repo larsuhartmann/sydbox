@@ -58,10 +58,10 @@ void
 sydbox_config_set_colourise_output (gboolean colourise);
 
 gboolean
-sydbox_config_get_allow_magic_commands (void);
+sydbox_config_get_disallow_magic_commands (void);
 
 void
-sydbox_config_set_allow_magic_commands (gboolean allow);
+sydbox_config_set_disallow_magic_commands (gboolean disallow);
 
 gboolean
 sydbox_config_get_paranoid_mode_enabled (void);
