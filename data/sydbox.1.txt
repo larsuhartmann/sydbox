@@ -25,6 +25,7 @@ Sydbox is a sandboxing utility.
   based sandbox utilities.
 - Intercepts system calls and checks for allowed filesystem prefixes, denies them when checks fail.
 - Basic support for disallowing network connections.
+- Basic support for sandboxing execve(2) calls.
 
 OPTIONS
 -------
@@ -34,6 +35,10 @@ command line parameters.
 *-?*::
 *--help*::
     Show help options
+
+*-V*::
+*--version*::
+    Print version information and exit
 
 *-c*::
 *--config*::
@@ -59,13 +64,17 @@ command line parameters.
 *--no-colour*::
     Disallow colouring of messages
 
+*-e*::
+*--exec*::
+    Enable execve(2) sandboxing
+
+*-n*::
+*--net*::
+    Enable network sandboxing
+
 *-p*::
 *--paranoid*::
     Enable paranoid mode (EXPERIMENTAL)
-
-*-V*::
-*--version*::
-    Print version information and exit
 
 ENVIRONMENT VARIABLES
 ---------------------
@@ -80,6 +89,17 @@ SANDBOX_PREDICT
 ~~~~~~~~~~~~~~~
 This variable specifies the paths that are predicted to be written to. It is
 expected to be a colon delimited list of paths.
+
+SANDBOX_EXEC
+~~~~~~~~~~~~
+This variable controls the behaviour of sydbox with regard to execve(2) access.
+If it is set, sydbox will sandbox execve(2) connections.
+
+SANDBOX_EXEC_ALLOW
+~~~~~~~~~~~~~~~~~~
+This variable specifies the paths that execve(2) access is allowed. It is
+expected to be a colon delimited list of paths. This is only used when execve(2)
+sandboxing is on.
 
 SANDBOX_NET
 ~~~~~~~~~~~
@@ -109,9 +129,6 @@ sandbox. This mode is experimental and many programmes are known to fail when
 run under sydbox with paranoid mode enabled.
 
 In this mode sydbox will:::
-- try hard to canonicalize path arguments before checking for filesystem
-  prefixes. If for some reason, this canonicalizing fails the system call will
-  be *denied*.
 - attempt to change system call's path argument with the resolved path, in case
   it's a symlink, to prevent symlink races.
 
