@@ -240,7 +240,7 @@ static bool systemcall_get_path(pid_t pid, int narg, struct checkdata *data)
  * information about dirfd. This string should be freed after use.
  */
 static bool systemcall_get_dirfd(SystemCall *self,
-                                 context_t *ctx, struct tchild *child,
+                                 struct tchild *child,
                                  int narg, struct checkdata *data)
 {
     long dfd;
@@ -255,7 +255,7 @@ static bool systemcall_get_dirfd(SystemCall *self,
     }
 
     if (AT_FDCWD != dfd) {
-        data->dirfdlist[narg] = pgetdir(ctx, child->pid, dfd);
+        data->dirfdlist[narg] = pgetdir(child->pid, dfd);
         if (NULL == data->dirfdlist[narg]) {
             data->result = RS_DENY;
             child->retval = -errno;
@@ -289,19 +289,19 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
             return;
     }
     if (self->flags & CHECK_PATH_AT) {
-        if (!systemcall_get_dirfd(self, ctx, child, 0, data))
+        if (!systemcall_get_dirfd(self, child, 0, data))
             return;
         if (!systemcall_get_path(child->pid, 1, data))
             return;
     }
     if (self->flags & CHECK_PATH_AT1) {
-        if (!systemcall_get_dirfd(self, ctx, child, 1, data))
+        if (!systemcall_get_dirfd(self, child, 1, data))
             return;
         if (!systemcall_get_path(child->pid, 2, data))
             return;
     }
     if (self->flags & CHECK_PATH_AT2) {
-        if (!systemcall_get_dirfd(self, ctx, child, 2, data))
+        if (!systemcall_get_dirfd(self, child, 2, data))
             return;
         if (!systemcall_get_path(child->pid, 3, data))
             return;
@@ -606,7 +606,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
  * On failure it sets data->result to RS_DENY and child->retval to -errno.
  */
 static gchar *systemcall_resolvepath(SystemCall *self,
-                                 context_t *ctx, struct tchild *child,
+                                 struct tchild *child,
                                  int narg, bool isat, struct checkdata *data)
 {
     bool maycreat;
@@ -666,7 +666,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
 
     g_debug("mode is %s resolve is %s", maycreat ? "CAN_ALL_BUT_LAST" : "CAN_EXISTING",
                                         data->resolve ? "TRUE" : "FALSE");
-    resolved_path = canonicalize_filename_mode(path_sanitized, mode, data->resolve, ctx->cwd);
+    resolved_path = canonicalize_filename_mode(path_sanitized, mode, data->resolve);
     if (NULL == resolved_path) {
         data->result = RS_DENY;
         child->retval = -errno;
@@ -700,7 +700,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     if (self->flags & CHECK_PATH) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
                 self->no, sname, child->pid);
-        data->rpathlist[0] = systemcall_resolvepath(self, ctx, child, 0, FALSE, data);
+        data->rpathlist[0] = systemcall_resolvepath(self, child, 0, FALSE, data);
         if (NULL == data->rpathlist[0])
             return;
         else
@@ -709,7 +709,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     if (self->flags & CHECK_PATH2) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[1],
                 self->no, sname, child->pid);
-        data->rpathlist[1] = systemcall_resolvepath(self, ctx, child, 1, FALSE, data);
+        data->rpathlist[1] = systemcall_resolvepath(self, child, 1, FALSE, data);
         if (NULL == data->rpathlist[1])
             return;
         else
@@ -718,7 +718,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     if (self->flags & CHECK_PATH_AT) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[1],
                 self->no, sname, child->pid);
-        data->rpathlist[1] = systemcall_resolvepath(self, ctx, child, 1, TRUE, data);
+        data->rpathlist[1] = systemcall_resolvepath(self, child, 1, TRUE, data);
         if (NULL == data->rpathlist[1])
             return;
         else
@@ -727,7 +727,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     if (self->flags & CHECK_PATH_AT1) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[2],
                 self->no, sname, child->pid);
-        data->rpathlist[2] = systemcall_resolvepath(self, ctx, child, 2, TRUE, data);
+        data->rpathlist[2] = systemcall_resolvepath(self, child, 2, TRUE, data);
         if (NULL == data->rpathlist[2])
             return;
         else
@@ -736,7 +736,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     if (self->flags & CHECK_PATH_AT2) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[3],
                 self->no, sname, child->pid);
-        data->rpathlist[3] = systemcall_resolvepath(self, ctx, child, 3, TRUE, data);
+        data->rpathlist[3] = systemcall_resolvepath(self, child, 3, TRUE, data);
         if (NULL == data->rpathlist[3])
             return;
         else
@@ -745,7 +745,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
                 self->no, sname, child->pid);
-        data->rpathlist[0] = systemcall_resolvepath(self, ctx, child, 0, TRUE, data);
+        data->rpathlist[0] = systemcall_resolvepath(self, child, 0, TRUE, data);
         if (NULL == data->rpathlist[0])
             return;
         else
@@ -1180,7 +1180,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                 /* Child has successfully changed directory,
                  * update current working directory.
                  */
-                char *newcwd = pgetcwd(ctx, child->pid);
+                char *newcwd = pgetcwd(child->pid);
                 if (NULL == newcwd) {
                     /* Failed to get current working directory of child.
                      * Set errno of the child.

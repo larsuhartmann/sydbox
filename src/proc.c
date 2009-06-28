@@ -27,7 +27,7 @@
 #include "proc.h"
 #include "wrappers.h"
 
-char *pgetcwd(context_t *ctx, pid_t pid) {
+char *pgetcwd(pid_t pid) {
     int ret;
     char *cwd;
     char linkcwd[64];
@@ -43,25 +43,13 @@ char *pgetcwd(context_t *ctx, pid_t pid) {
     // Now try egetcwd()
     errno = 0;
     ret = echdir(linkcwd);
-    if (G_LIKELY(0 == ret || -2 == ret)) {
-        /* Either we've chdir()'ed successfully or current working directory was
-         * lost during the chdir() attempt so we need to update ctx->cwd.
-         */
-        g_free(ctx->cwd);
-        ctx->cwd = egetcwd();
-        if (NULL == ctx->cwd) {
-            g_printerr("failed to get current working directory: %s", g_strerror(errno));
-            exit(-1);
-        }
-        if (0 == ret) {
-            /* echdir() was successful */
-            return g_strdup(ctx->cwd);
-        }
-    }
+    if (G_LIKELY(0 == ret))
+        return egetcwd();
+    errno = ENAMETOOLONG;
     return NULL;
 }
 
-char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
+char *pgetdir(pid_t pid, int dfd) {
     int ret;
     char *dir;
     char linkdir[128];
@@ -77,21 +65,9 @@ char *pgetdir(context_t *ctx, pid_t pid, int dfd) {
     // Now try egetcwd()
     errno = 0;
     ret = echdir(linkdir);
-    if (G_LIKELY(0 == ret || -2 == ret)) {
-        /* Either we've chdir()'ed successfully or current working directory was
-         * lost during the chdir() attempt so we need to update ctx->cwd.
-         */
-        g_free(ctx->cwd);
-        ctx->cwd = egetcwd();
-        if (NULL == ctx->cwd) {
-            g_printerr("failed to get current working directory: %s", g_strerror(errno));
-            exit(-1);
-        }
-        if (0 == ret) {
-            /* echdir() was successful */
-            return g_strdup(ctx->cwd);
-        }
-    }
+    if (G_LIKELY(0 == ret))
+        return egetcwd();
+    errno = ENAMETOOLONG;
     return NULL;
 }
 

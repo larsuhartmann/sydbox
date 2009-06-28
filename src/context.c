@@ -37,21 +37,12 @@ context_new (void)
 
     ctx->before_initial_execve = true;
 
-    ctx->cwd = egetcwd();
-    if (G_UNLIKELY(NULL == ctx->cwd)) {
-        g_printerr ("failed to get current working directory: %s", g_strerror (errno));
-        exit (-1);
-    }
-
     return ctx;
 }
 
 void
 context_free (context_t *ctx)
 {
-    if (G_LIKELY(NULL != ctx->cwd))
-        g_free (ctx->cwd);
-
     if (G_LIKELY(NULL != ctx->children))
         tchild_free (&(ctx->children));
 

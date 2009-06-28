@@ -41,6 +41,7 @@
 #include "config.h"
 #include "children.h"
 #include "syscall.h"
+#include "wrappers.h"
 
 /* pink floyd */
 #define PINK_FLOYD  "       ..uu.                               \n" \
@@ -229,13 +230,18 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
-    eldest->cwd = g_strdup(ctx->cwd);
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
     eldest->sandbox->net = sydbox_config_get_sandbox_network();
     eldest->sandbox->lock = sydbox_config_get_disallow_magic_commands() ? LOCK_SET : LOCK_UNSET;
     eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes();
     eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes();
     eldest->sandbox->exec_prefixes = sydbox_config_get_exec_prefixes();
+    eldest->cwd = egetcwd();
+    if (NULL == eldest->cwd) {
+        g_critical("failed to get current working directory: %s", g_strerror(errno));
+        g_printerr("failed to get current working directory: %s", g_strerror(errno));
+        exit(-1);
+    }
     eldest->inherited = true;
 
     g_info ("child %lu is ready to go, resuming", (gulong) pid);

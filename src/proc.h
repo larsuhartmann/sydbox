@@ -10,10 +10,10 @@
 #include "context.h"
 
 char *
-pgetcwd (context_t *ctx, pid_t pid);
+pgetcwd (pid_t pid);
 
 char *
-pgetdir (context_t *ctx, pid_t pid, int dfd);
+pgetdir (pid_t pid, int dfd);
 
 #endif
 

@@ -49,8 +49,7 @@ echdir (gchar *dir);
 gchar *
 canonicalize_filename_mode (const gchar *name,
                             canonicalize_mode_t can_mode,
-                            bool resolve,
-                            const gchar *cwd);
+                            bool resolve);
 
 #endif
 

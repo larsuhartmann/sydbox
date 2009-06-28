@@ -296,8 +296,8 @@ egetcwd (void)
 // lstat() wrapper that tries to take care of ENAMETOOLONG by chdir()'ing
 static int elstat(const char *path, struct stat *buf)
 {
-    int ret, cret, save_errno;
-    char *dname, *bname, *save_cwd;
+    int ret, save_errno;
+    char *dname, *bname;
 
     ret = lstat(path, buf);
     if (G_LIKELY(0 == ret))
@@ -308,35 +308,19 @@ static int elstat(const char *path, struct stat *buf)
     dname = edirname(path);
     bname = ebasename(path);
 
-    // Save current working directory
-    save_cwd = egetcwd();
-    if (G_UNLIKELY(NULL == save_cwd)) {
-        g_free(dname);
-        errno = ENAMETOOLONG;
-        return -1;
-    }
-
     // chdir() to the target directory
     ret = echdir(dname);
     if (G_UNLIKELY(0 != ret)) {
         /* failed to change the directory
          * nothing else to do.
          */
-        if (-2 == ret) {
-            cret = echdir(save_cwd);
-            assert(0 == cret);
-        }
         g_free(dname);
-        g_free(save_cwd);
         errno = ENAMETOOLONG;
         return -1;
     }
     ret = lstat(bname, buf);
     save_errno = errno;
-    cret = echdir(save_cwd);
-    assert(0 == cret);
     g_free(dname);
-    g_free(save_cwd);
     errno = save_errno;
     return ret;
 }
@@ -349,8 +333,7 @@ static int elstat(const char *path, struct stat *buf)
 gchar *
 canonicalize_filename_mode (const gchar *name,
                             canonicalize_mode_t can_mode,
-                            bool resolve,
-                            const gchar *cwd)
+                            bool resolve)
 {
     int readlinks = 0;
     char *rname, *dest, *extra_buf = NULL;
@@ -369,6 +352,7 @@ canonicalize_filename_mode (const gchar *name,
         return NULL;
     }
 
+#if 0
     if (name[0] != '/') {
         rname = g_strdup (cwd);
         dest = strchr(rname, '\0');
@@ -381,13 +365,12 @@ canonicalize_filename_mode (const gchar *name,
         else
             rname_limit = dest;
     }
-    else {
-        cwd = NULL;
-        rname = g_malloc (PATH_MAX);
-        rname_limit = rname + PATH_MAX;
-        rname[0] = '/';
-        dest = rname + 1;
-    }
+#endif
+    assert('/' == name[0]);
+    rname = g_malloc (PATH_MAX);
+    rname_limit = rname + PATH_MAX;
+    rname[0] = '/';
+    dest = rname + 1;
 
     for (start = end = name; *start; start = end) {
         /* Skip sequence of multiple file name separators.  */
