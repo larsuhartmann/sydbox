@@ -102,17 +102,24 @@ static GOptionEntry entries[] =
 
 // Cleanup functions
 static void cleanup(void) {
-    g_info ("cleaning up before exit");
+    GSList *walk;
+    struct tchild *child;
+
+    g_info("cleaning up before exit");
     if (NULL != ctx) {
-        g_info ("killing child %i", ctx->eldest);
-        if (0 > trace_kill(ctx->eldest) && ESRCH != errno)
-            g_warning ("failed to kill child %i: %s", ctx->eldest, strerror(errno));
-    }
-    if (NULL != ctx) {
+        walk = ctx->children;
+        while (NULL != walk) {
+            child = (struct tchild *) walk->data;
+            g_info("killing child %i", child->pid);
+            if (0 > trace_kill(child->pid) && ESRCH != errno)
+                g_warning("failed to kill child %i: %s", child->pid, g_strerror(errno));
+            walk = g_slist_next(walk);
+        }
+
         context_free(ctx);
         ctx = NULL;
     }
-    sydbox_log_fini ();
+    sydbox_log_fini();
 }
 
 static void sig_cleanup(int signum) {
