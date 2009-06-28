@@ -5,3 +5,13 @@ ACLOCAL_AMFLAGS= -I m4
 AUTOMAKE_OPTIONS= dist-bzip2 no-dist-gzip std-options foreign
 EXTRA_DIST= autogen.sh README.mkd conf/sydbox.conf
 SUBDIRS = src data . tests
+
+checksum: dist
+	@echo "SHA1 $(PACKAGE)-$(VERSION).tar.bz2"
+	sha1sum $(PACKAGE)-$(VERSION).tar.bz2 > $(PACKAGE)-$(VERSION).tar.bz2.sha1sum
+	@echo "SIGN $(PACKAGE)-$(VERSION).tar.bz2"
+	gpg --detach-sign --armor $(PACKAGE)-$(VERSION).tar.bz2
+
+upload: checksum
+	@echo "UPLOAD $(PACKAGE)-$(VERSION).tar.bz2"
+	scp $(PACKAGE)-$(VERSION).tar.bz2* anapnea.net:/www/sydbox
