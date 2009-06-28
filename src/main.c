@@ -226,7 +226,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
         exit (-1);
     }
 
-    tchild_new (&(ctx->children), pid, -1);
+    tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
     eldest->cwd = g_strdup(ctx->cwd);
@@ -236,6 +236,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes();
     eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes();
     eldest->sandbox->exec_prefixes = sydbox_config_get_exec_prefixes();
+    eldest->inherited = true;
 
     g_info ("child %lu is ready to go, resuming", (gulong) pid);
     if (trace_syscall (pid, 0) < 0) {

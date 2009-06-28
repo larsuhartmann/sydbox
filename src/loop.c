@@ -79,25 +79,21 @@ static void xfork(context_t *ctx, struct tchild *child) {
 
     newchild = tchild_find(ctx->children, childpid);
     if (NULL == newchild) {
-        /* Child is born prematurely, setup has already been done
-         * Add the child to the list of children.
+        /* Child hasn't been born yet, add it to the list of children and
+         * inherit parent's sandbox data.
          */
-        tchild_new(&(ctx->children), childpid, child->pid);
+        tchild_new(&(ctx->children), childpid);
+        newchild = tchild_find(ctx->children, childpid);
+        tchild_inherit(newchild, child);
     }
-
-    if (0 > trace_syscall(childpid, 0)) {
-        if (G_UNLIKELY(ESRCH != errno)) {
-            g_printerr("failed to resume new born child %i", childpid);
-            exit(-1);
-        }
-        if (NULL != newchild) {
-            /* Child isn't prematurely born, and it's dead (rip).
-             * Remove it from the list of children.
-             */
-            context_remove_child(ctx, childpid);
-        }
+    else if (!newchild->inherited) {
+        /* Child has already been born but hasn't inherited parent's sandbox data
+         * yet. Inherit parent's sandbox data and resume the child.
+         */
+        g_debug("prematurely born child %i inherits sandbox data from her parent %i", newchild->pid, child->pid);
+        tchild_inherit(newchild, child);
+        xsyscall(ctx, newchild);
     }
-    g_debug("resumed new born child %i", childpid);
 }
 
 static void xgenuine(context_t * ctx, struct tchild *child, int status) {
@@ -150,20 +146,16 @@ int trace_loop(context_t *ctx) {
 
         switch(event) {
             case E_STOP:
-                g_debug ("latest event for child %i is E_STOP, calling event handler", pid);
+                g_debug("latest event for child %i is E_STOP, calling event handler", pid);
                 if (NULL == child) {
-                    /* Child is born before PTRACE_EVENT_FORK, setup the child
-                     * but don't resume it until we receive the event.
+                    /* Child is born before PTRACE_EVENT_FORK.
+                     * Set her up but don't resume her until we receive the
+                     * event.
                      */
                     g_debug("setting up prematurely born child %i", pid);
-                    if (0 > trace_setup(pid)) {
-                        if (ESRCH != errno) {
-                            g_printerr("failed to set up prematurely born child %i", pid);
-                            exit(-1);
-                        }
-                        else
-                            g_debug("failed to set up prematurely born child %i: %s", pid, g_strerror(errno));
-                    }
+                    tchild_new(&(ctx->children), pid);
+                    child = tchild_find(ctx->children, pid);
+                    xsetup(ctx, child);
                 }
                 else {
                     g_debug("setting up child %i", child->pid);

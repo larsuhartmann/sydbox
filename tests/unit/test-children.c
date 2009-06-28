@@ -27,7 +27,7 @@ test1 (void)
     GSList *children = NULL;
     struct tchild *child;
 
-    tchild_new (&children, 666, -1);
+    tchild_new (&children, 666);
     g_assert (children);
 
     child = (struct tchild *) children->data;
@@ -46,7 +46,7 @@ test2 (void)
 {
     GSList *children = NULL;
 
-    tchild_new (&children, 666, -1);
+    tchild_new (&children, 666);
     tchild_free (&children);
 
     g_assert (! children);
@@ -57,7 +57,7 @@ test3 (void)
 {
     GSList *children = NULL;
 
-    tchild_new (&children, 666, -1);
+    tchild_new (&children, 666);
     tchild_delete (&children, 666);
 
     g_assert (! children);
@@ -69,9 +69,9 @@ test4 (void)
     GSList *children = NULL;
     GSList *entry = NULL;
 
-    tchild_new (&children, 666, -1);
-    tchild_new (&children, 667, 666);
-    tchild_new (&children, 668, 667);
+    tchild_new (&children, 666);
+    tchild_new (&children, 667);
+    tchild_new (&children, 668);
 
     tchild_delete (&children, 666);
 

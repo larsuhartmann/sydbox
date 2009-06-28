@@ -21,6 +21,7 @@
 #ifndef __CHILDREN_H__
 #define __CHILDREN_H__
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 #include <glib.h>
@@ -50,16 +51,20 @@ struct tdata
 
 struct tchild
 {
-   int flags;                          /* TCHILD_ flags */
-   pid_t pid;                          /* pid of child */
-   char *cwd;                          /* child's current working directory */
-   unsigned long sno;                  /* original syscall no when a system call is faked */
-   long retval;                        /* faked syscall will return this value */
-   struct tdata *sandbox;              /* sandbox data */
+   int flags;               // TCHILD_ flags
+   pid_t pid;               // Process ID of the child.
+   char *cwd;               // Child's current working directory.
+   unsigned long sno;       // Original syscall no when a system call is faked.
+   long retval;             // Faked syscall will return this value.
+   bool inherited;          // true if the child has inherited sandbox data from her parent.
+   struct tdata *sandbox;   // Sandbox data */
 };
 
 void
-tchild_new (GSList **children, pid_t pid, pid_t ppid);
+tchild_new (GSList **children, pid_t pid);
+
+void
+tchild_inherit(struct tchild *child, struct tchild *parent);
 
 void
 tchild_free (GSList **children);

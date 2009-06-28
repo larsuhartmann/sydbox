@@ -21,6 +21,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,8 +31,8 @@
 #include "children.h"
 #include "sydbox-log.h"
 
-void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
-    struct tchild *child, *parent;
+void tchild_new(GSList **children, pid_t pid) {
+    struct tchild *child;
 
     g_debug ("new child %i", pid);
     child = (struct tchild *) g_malloc (sizeof(struct tchild));
@@ -40,6 +41,7 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
     child->sno = 0xbadca11;
     child->retval = -1;
     child->cwd = NULL;
+    child->inherited = false;
     child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
     child->sandbox->on = 1;
     child->sandbox->lock = LOCK_UNSET;
@@ -48,42 +50,44 @@ void tchild_new(GSList **children, pid_t pid, pid_t ppid) {
     child->sandbox->write_prefixes = NULL;
     child->sandbox->predict_prefixes = NULL;
     child->sandbox->exec_prefixes = NULL;
-
-    // Inheritance
-    if (G_LIKELY(0 < ppid)) {
-        parent = tchild_find(*children, ppid);
-        assert(NULL != parent);
-
-        if (G_LIKELY(NULL != parent->cwd)) {
-            g_debug ("child %i inherits parent %i's current working directory '%s'", pid, parent->pid, parent->cwd);
-            child->cwd = g_strdup (parent->cwd);
-        }
-
-        if (G_LIKELY(NULL != parent->sandbox)) {
-            GSList *walk;
-            child->sandbox->on = parent->sandbox->on;
-            child->sandbox->lock = parent->sandbox->lock;
-            child->sandbox->exec = parent->sandbox->exec;
-            child->sandbox->net = parent->sandbox->net;
-            // Copy path lists
-            walk = parent->sandbox->write_prefixes;
-            while (NULL != walk) {
-                pathnode_new(&(child->sandbox->write_prefixes), walk->data, 0);
-                walk = g_slist_next(walk);
-            }
-            walk = parent->sandbox->predict_prefixes;
-            while (NULL != walk) {
-                pathnode_new(&(child->sandbox->predict_prefixes), walk->data, 0);
-                walk = g_slist_next(walk);
-            }
-            walk = parent->sandbox->exec_prefixes;
-            while (NULL != walk) {
-                pathnode_new(&(child->sandbox->exec_prefixes), walk->data, 0);
-                walk = g_slist_next(walk);
-            }
-        }
-    }
     *children = g_slist_prepend(*children, child);
+}
+
+void tchild_inherit(struct tchild *child, struct tchild *parent)
+{
+    GSList *walk;
+
+    assert(NULL != child && NULL != parent);
+    if (child->inherited)
+        return;
+
+    if (G_LIKELY(NULL != parent->cwd)) {
+        g_debug("child %i inherits parent %i's current working directory `%s'", child->pid, parent->pid, parent->cwd);
+        child->cwd = g_strdup(parent->cwd);
+    }
+
+    child->sandbox->on = parent->sandbox->on;
+    child->sandbox->lock = parent->sandbox->lock;
+    child->sandbox->exec = parent->sandbox->exec;
+    child->sandbox->net = parent->sandbox->net;
+    // Copy path lists
+    walk = parent->sandbox->write_prefixes;
+    while (NULL != walk) {
+        pathnode_new(&(child->sandbox->write_prefixes), walk->data, 0);
+        walk = g_slist_next(walk);
+    }
+    walk = parent->sandbox->predict_prefixes;
+    while (NULL != walk) {
+        pathnode_new(&(child->sandbox->predict_prefixes), walk->data, 0);
+        walk = g_slist_next(walk);
+    }
+    walk = parent->sandbox->exec_prefixes;
+    while (NULL != walk) {
+        pathnode_new(&(child->sandbox->exec_prefixes), walk->data, 0);
+        walk = g_slist_next(walk);
+    }
+
+    child->inherited = true;
 }
 
 static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED) {
