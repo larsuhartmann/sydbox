@@ -26,8 +26,8 @@ title: sydbox the other sandbox
 <ul>
     <li>Grab sys-apps/sydbox from <a
         href="http://github.com/alip/exherbo-misc/tree/master">::alip-misc</a>.</li>
-    <li>Install paludis from <a
-        href="http://github.com/alip/paludis-sydbox/tree/master">paludis-sydbox</a> branch.</li>
+    <li>Switch to sydbox with: sudo sed -i -e 's/sandbox/sydbox/g' /usr/share/paludis/eapis/exheres-0.conf</li>
+    <li>To switch back: sudo sed -i -e 's/sydbox/sandbox/g' /usr/share/paludis/eapis/exheres-0.conf</li>
     <li>If something goes wrong <b>PALUDIS_DO_NOTHING_SANDBOXY</b> is your friend.</li>
 </ul>
 
