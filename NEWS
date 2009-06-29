@@ -5,6 +5,11 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta6:
+    * Implement proper execve(2) sandboxing instead of the ban_exec hack.
+    * Add command line options --sandbox-exec and --sandbox--network.
+    * Fix inheritance of sandbox data between children.
+
 0.1_beta5:
     * Implement /dev/sydbox/{un,}ban_exec. paludis-sydbox branch makes use of
       these magic commands to ban execve() calls in metadata phase.
