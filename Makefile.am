@@ -12,6 +12,6 @@ checksum: dist
 	@echo "SIGN $(PACKAGE)-$(VERSION).tar.bz2"
 	gpg --detach-sign --armor $(PACKAGE)-$(VERSION).tar.bz2
 
-upload: checksum
-	@echo "UPLOAD $(PACKAGE)-$(VERSION).tar.bz2"
-	scp $(PACKAGE)-$(VERSION).tar.bz2* anapnea.net:/www/sydbox
+upload:
+	@echo "UPLOAD $(PACKAGE)-$(VERSION).tar.bz2*"
+	scp $(PACKAGE)-$(VERSION).tar.bz2* anapnea.net:www/sydbox
