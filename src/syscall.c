@@ -519,8 +519,13 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
         g_debug("Lock is set for child %i, skipping magic checks", child->pid);
         return;
     }
+#if defined(__NR_stat64)
+    else if (G_LIKELY(__NR_open != self->no && __NR_stat != self->no && __NR_stat64 != self->no))
+        return;
+#else
     else if (G_LIKELY(__NR_open != self->no && __NR_stat != self->no))
         return;
+#endif
 
     if (__NR_open == self->no)
         systemcall_magic_open(child, data);
