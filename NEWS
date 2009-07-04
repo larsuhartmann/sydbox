@@ -5,6 +5,10 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta7:
+    * Fix magic stat problems on x86
+    * Fix segfaults caused by wrong handling of the list of children.
+
 0.1_beta6:
     * Implement proper execve(2) sandboxing instead of the ban_exec hack.
     * Add command line options --sandbox-exec and --sandbox--network.
