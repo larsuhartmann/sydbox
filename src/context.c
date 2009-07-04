@@ -49,10 +49,12 @@ context_free (context_t *ctx)
     g_free (ctx);
 }
 
-void
+int
 context_remove_child (context_t * const ctx, pid_t pid)
 {
     g_info("removing child %d from context", pid);
     tchild_delete(&ctx->children, pid);
+
+    return (NULL == ctx->children) ? -1 : 0;
 }
 

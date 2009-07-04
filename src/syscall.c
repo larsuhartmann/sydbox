@@ -1056,7 +1056,7 @@ SystemCall *syscall_get_handler(int no) {
 
 /* Main syscall handler
  */
-void syscall_handle(context_t *ctx, struct tchild *child) {
+int syscall_handle(context_t *ctx, struct tchild *child) {
     long sno;
     struct checkdata data;
     SystemCall *handler;
@@ -1072,7 +1072,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
             exit(-1);
         }
         // Child is dead, remove it
-        context_remove_child(ctx, child->pid);
+        return context_remove_child(ctx, child->pid);
     }
 
     /* Get the name of the syscall for logging
@@ -1115,7 +1115,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                             g_printerr("failed to set system call: %s", g_strerror(errno));
                             exit(-1);
                         }
-                        context_remove_child(ctx, child->pid);
+                        return context_remove_child(ctx, child->pid);
                     }
                     break;
                 case RS_ALLOW:
@@ -1129,7 +1129,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                                 sno, SYSCALL_NAME(child, sno), g_strerror(errno));
                         exit(-1);
                     }
-                    context_remove_child(ctx, child->pid);
+                    return context_remove_child(ctx, child->pid);
                 default:
                     g_assert_not_reached();
                     break;
@@ -1151,7 +1151,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                     exit(-1);
                 }
                 // Child is dead, remove it.
-                context_remove_child(ctx, child->pid);
+                return context_remove_child(ctx, child->pid);
             }
             if (0 > trace_set_return(child->pid, child->retval)) {
                 if (G_UNLIKELY(ESRCH != errno)) {
@@ -1162,7 +1162,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                     exit(-1);
                 }
                 // Child is dead, remove it.
-                context_remove_child(ctx, child->pid);
+                return context_remove_child(ctx, child->pid);
             }
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
@@ -1179,7 +1179,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                     exit(-1);
                 }
                 // Child is dead, remove it.
-                context_remove_child(ctx, child->pid);
+                return context_remove_child(ctx, child->pid);
             }
             if (0 == retval) {
                 /* Child has successfully changed directory,
@@ -1204,7 +1204,7 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
                             exit(-1);
                         }
                         // Child is dead, remove it.
-                        context_remove_child(ctx, child->pid);
+                        return context_remove_child(ctx, child->pid);
                     }
                 }
                 else {
@@ -1227,5 +1227,6 @@ void syscall_handle(context_t *ctx, struct tchild *child) {
 
     }
     child->flags ^= TCHILD_INSYSCALL;
+    return 0;
 }
 

@@ -39,7 +39,7 @@ context_new (void);
 void
 context_free (context_t *ctx);
 
-void
+int
 context_remove_child (context_t * const ctx, pid_t pid);
 
 #endif /* __CONTEXT_H__ */

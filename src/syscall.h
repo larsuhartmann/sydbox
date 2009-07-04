@@ -78,7 +78,7 @@ GType systemcall_get_type(void);
 void syscall_init(void);
 void syscall_free(void);
 SystemCall *syscall_get_handler(int no);
-void syscall_handle(context_t *ctx, struct tchild *child);
+int syscall_handle(context_t *ctx, struct tchild *child);
 
 #endif // SYDBOX_GUARD_SYSCALL_H
 
