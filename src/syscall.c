@@ -45,6 +45,10 @@
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 // System call dispatch flags
 #define RETURNS_FD              (1 << 0)  // The function returns a file descriptor
 #define OPEN_MODE               (1 << 1)  // Check the mode argument of open()
