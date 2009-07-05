@@ -85,6 +85,7 @@ static bool lock;
 static bool colour;
 static bool version;
 static bool paranoid;
+static bool wait_all;
 
 static GOptionEntry entries[] =
 {
@@ -108,6 +109,8 @@ static GOptionEntry entries[] =
         "Enable execve(2) sandboxing",    NULL },
     { "sandbox-network",    'N', 0, G_OPTION_ARG_NONE,                         &net,
         "Enable network sandboxing",      NULL },
+    { "wait-all",           'W', 0, G_OPTION_ARG_NONE,                         &wait_all,
+        "Wait for all children to exit before exiting", NULL},
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
 
@@ -309,6 +312,9 @@ sydbox_internal_main (int argc, char **argv)
 
     if (lock)
         sydbox_config_set_disallow_magic_commands (TRUE);
+
+    if (wait_all)
+        sydbox_config_set_wait_all (TRUE);
 
     if (paranoid)
         sydbox_config_set_paranoid_mode_enabled (TRUE);

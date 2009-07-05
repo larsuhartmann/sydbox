@@ -72,6 +72,12 @@ void
 sydbox_config_set_disallow_magic_commands (bool disallow);
 
 bool
+sydbox_config_get_wait_all (void);
+
+void
+sydbox_config_set_wait_all (bool waitall);
+
+bool
 sydbox_config_get_paranoid_mode_enabled (void);
 
 void

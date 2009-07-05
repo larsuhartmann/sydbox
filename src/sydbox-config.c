@@ -49,6 +49,7 @@ struct sydbox_config
     bool colourise_output;
     bool disallow_magic_commands;
     bool paranoid_mode_enabled;
+    bool wait_all;
 
     GSList *write_prefixes;
     GSList *predict_prefixes;
@@ -86,6 +87,7 @@ sydbox_config_load (const gchar * const file)
         config->sandbox_exec = false;
         config->disallow_magic_commands = false;
         config->paranoid_mode_enabled = false;
+        config->wait_all = false;
         return TRUE;
     }
 
@@ -243,6 +245,27 @@ sydbox_config_load (const gchar * const file)
         }
     }
 
+    // Get main.wait_all
+    config->wait_all = g_key_file_get_boolean(config_fd, "main", "wait_all", &config_error);
+    if (!config->wait_all && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.wait_all not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->wait_all = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
     // Get prefix.write
     char **write_prefixes = g_key_file_get_string_list(config_fd, "prefix", "write", NULL, NULL);
     if (NULL != write_prefixes) {
@@ -304,6 +327,7 @@ sydbox_config_write_to_stderr (void)
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
     g_fprintf (stderr, "execve(2) sandboxing = %s\n", config->sandbox_exec ? "yes" : "no");
     g_fprintf (stderr, "network sandboxing = %s\n", config->sandbox_network ? "yes" : "no");
+    g_fprintf (stderr, "wait for all children = %s\n", config->wait_all ? "yes" : "no");
     g_fprintf (stderr, "paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
     g_fprintf (stderr, "allowed write prefixes:\n");
     g_slist_foreach (config->write_prefixes, print_slist_entry, NULL);
@@ -387,6 +411,18 @@ void
 sydbox_config_set_disallow_magic_commands (bool disallow)
 {
     config->disallow_magic_commands = disallow;
+}
+
+bool
+sydbox_config_get_wait_all (void)
+{
+    return config->wait_all;
+}
+
+void
+sydbox_config_set_wait_all (bool waitall)
+{
+    config->wait_all = waitall;
 }
 
 bool

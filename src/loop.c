@@ -33,6 +33,7 @@
 #include "trace.h"
 #include "syscall.h"
 #include "children.h"
+#include "sydbox-config.h"
 #include "sydbox-log.h"
 
 
@@ -218,23 +219,23 @@ int trace_loop(context_t *ctx) {
                         g_message("eldest child %i exited with return code %d", pid, ret);
                     else
                         g_info("eldest child %i exited with return code %d", pid, ret);
-                    return ret;
+                    if (!sydbox_config_get_wait_all())
+                        return ret;
                 }
-                else {
+                else
                     g_debug("child %i exited with return code: %d", pid, ret);
-                    tchild_delete(&(ctx->children), pid);
-                }
+                tchild_delete(&(ctx->children), pid);
                 break;
             case E_EXIT_SIGNAL:
                 if (G_UNLIKELY(ctx->eldest == pid)) {
                     ret = EXIT_FAILURE;
                     g_message("eldest child %i exited with signal %d", pid, WTERMSIG(status));
-                    return ret;
+                    if (!sydbox_config_get_wait_all())
+                        return ret;
                 }
-                else {
+                else
                     g_info("child %i exited with signal %d", pid, WTERMSIG(status));
-                    tchild_delete(&(ctx->children), pid);
-                }
+                tchild_delete(&(ctx->children), pid);
                 break;
             case E_UNKNOWN:
                 g_info("unknown signal %#x received from child %i", WSTOPSIG(status), pid);
