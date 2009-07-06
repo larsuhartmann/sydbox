@@ -78,6 +78,12 @@ void
 sydbox_config_set_wait_all (bool waitall);
 
 bool
+sydbox_config_get_allow_proc_pid (void);
+
+void
+sydbox_config_set_allow_proc_pid (bool allow);
+
+bool
 sydbox_config_get_paranoid_mode_enabled (void);
 
 void

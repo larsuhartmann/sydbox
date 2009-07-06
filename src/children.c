@@ -30,6 +30,7 @@
 #include "path.h"
 #include "children.h"
 #include "sydbox-log.h"
+#include "sydbox-config.h"
 
 void tchild_new(GSList **children, pid_t pid) {
     gchar *proc_pid;
@@ -52,14 +53,14 @@ void tchild_new(GSList **children, pid_t pid) {
     child->sandbox->predict_prefixes = NULL;
     child->sandbox->exec_prefixes = NULL;
 
-    /* Allow /proc/%d by default.
-     * There is no way for the user to add this,
-     * and it's crucial for processes to work reliably.
-     * FIXME: This path will be inherited by children as well.
-     */
-    proc_pid = g_strdup_printf("/proc/%i", pid);
-    pathnode_new(&(child->sandbox->write_prefixes), proc_pid, 0);
-    g_free(proc_pid);
+    if (sydbox_config_get_allow_proc_pid()) {
+        /* Allow /proc/%d which is needed for processes to work reliably.
+         * FIXME: This path will be inherited by children as well.
+         */
+        proc_pid = g_strdup_printf("/proc/%i", pid);
+        pathnode_new(&(child->sandbox->write_prefixes), proc_pid, 0);
+        g_free(proc_pid);
+    }
 
     *children = g_slist_prepend(*children, child);
 }
