@@ -138,6 +138,28 @@ SANDBOX_WAIT_ALL
 If this variable is set, sydbox will wait for all children to exit before
 exiting. This is equivalent to *-W* option.
 
+MAGIC COMMANDS
+--------------
+Sydbox has a concept of magic commands to interact with it during its run.
+These commands are special system calls that sydbox recognizes and does things
+according to the command. Currently there are two type of magic commands.
+
+- Magic commands based on open(2)
+  * */dev/sydbox/off*               opening this path turns off path sandboxing.
+  * */dev/sydbox/on*                opening this path turns on path sandboxing.
+  * */dev/sydbox/toggle*            opening this path toggles path sandboxing.
+  * */dev/sydbox/lock*              opening this path locks magic commands.
+  * */dev/sydbox/exec_lock*         opening this path locks magic commands when an execve(2) is encountered.
+  * */dev/sydbox/sandbox_exec*      opening this path turns on execve(2) sandboxing.
+  * */dev/sydbox/unsandbox_exec*    opening this path turns off execve(2) sandboxing.
+  * */dev/sydbox/write/PATH*        opening this path adds *PATH* to the list of write allowed paths.
+  * */dev/sydbox/predict/PATH*      opening this path adds *PATH* to the list of write predicted paths.
+  * */dev/sydbox/unwrite/PATH*      opening this path removes *PATH* from the list of write allowed paths.
+  * */dev/sydbox/unpredict/PATH*    opening this path removes *PATH* from the list of write predicted paths.
+- Magic commands based on stat(2)
+  * */dev/sydbox*           stat'ing this path succeeds if magic commands are allowed.
+  * */dev/sydbox/enabled*   stat'ing this path succeeds if path sandboxing is on, fails otherwise.
+
 PARANOID MODE
 -------------
 When sydbox is run in paranoid mode, it attempts to ensure security of the
