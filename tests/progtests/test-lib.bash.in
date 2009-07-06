@@ -38,7 +38,16 @@ else
 fi
 
 sydbox() {
-    SANDBOX_NO_CONFIG=1 @TOP_BUILDDIR@/src/sydbox -0 4 -l "${SANDBOX_LOG}" "$@"
+    local vdir
+    if [[ -n "$SYDBOX_RUN_UNDER_VALGRIND" ]]; then
+        vdir="@TOP_BUILDDIR@/tests/valgrind"
+        SYDBOX_VALGRIND="$vdir" SANDBOX_NO_CONFIG=1 \
+            "$vdir"/valgrind.sh \
+            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SANDBOX_LOG" "$@"
+    else
+        SANDBOX_NO_CONFIG=1 \
+            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SANDBOX_LOG" "$@"
+    fi
 }
 
 if $colour; then

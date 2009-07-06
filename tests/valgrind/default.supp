@@ -1,0 +1,23 @@
+# valgrind suppressions file for sydbox
+{
+	ignore-tchild-pathnode-leak
+	Memcheck:Leak
+	fun:malloc
+	fun:g_malloc
+	fun:g_slice_alloc
+	fun:g_slist_prepend
+	fun:pathnode_new
+	fun:tchild_new
+}
+
+{
+	ignore-gobject-type-leak
+	Memcheck:Leak
+	fun:calloc
+	fun:g_malloc0
+	fun:type_node_any_new_W
+	fun:type_node_fundamental_new_W
+	fun:g_type_init_with_debug_flags
+	fun:syscall_init
+}
+

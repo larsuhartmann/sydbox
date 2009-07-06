@@ -21,3 +21,5 @@ check_sydbox_CFLAGS = \
 		      $(glib_CFLAGS) $(gobject_CFLAGS) $(check_CFLAGS)
 check_sydbox_LDADD = $(glib_LIBS) $(gobject_LIBS) $(check_LIBS)
 
+check-valgrind:
+	$(MAKE) -C progtests check-valgrind

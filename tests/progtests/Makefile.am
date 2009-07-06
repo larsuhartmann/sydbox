@@ -29,3 +29,5 @@ test_lib_bash_SOURCES= test-lib.bash.in
 test-lib.bash: test-lib.bash.in
 	$(SED) -e "s:@TOP_BUILDDIR@:$(top_builddir):" $< > $@
 
+check-valgrind:
+	SYDBOX_RUN_UNDER_VALGRIND=1 $(MAKE) check
