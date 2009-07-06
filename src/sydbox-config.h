@@ -36,6 +36,8 @@
 #define ENV_NET         "SANDBOX_NET"
 #define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
 #define ENV_NO_CONFIG   "SANDBOX_NO_CONFIG"
+#define ENV_LOCK        "SANDBOX_LOCK"
+#define ENV_WAIT_ALL    "SANDBOX_WAIT_ALL"
 
 bool
 sydbox_config_load (const gchar * const config);

@@ -219,44 +219,52 @@ sydbox_config_load (const gchar * const file)
     }
 
     // Get main.lock
-    config->disallow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
-    if (!config->disallow_magic_commands && config_error) {
-        switch (config_error->code) {
-            case G_KEY_FILE_ERROR_INVALID_VALUE:
-                g_printerr("main.lock not a boolean: %s", config_error->message);
-                g_error_free(config_error);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return false;
-            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                g_error_free(config_error);
-                config_error = NULL;
-                config->disallow_magic_commands = false;
-                break;
-            default:
-                g_assert_not_reached();
-                break;
+    if (g_getenv(ENV_LOCK))
+        config->disallow_magic_commands = true;
+    else {
+        config->disallow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
+        if (!config->disallow_magic_commands && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("main.lock not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->disallow_magic_commands = false;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
         }
     }
 
     // Get main.wait_all
-    config->wait_all = g_key_file_get_boolean(config_fd, "main", "wait_all", &config_error);
-    if (!config->wait_all && config_error) {
-        switch (config_error->code) {
-            case G_KEY_FILE_ERROR_INVALID_VALUE:
-                g_printerr("main.wait_all not a boolean: %s", config_error->message);
-                g_error_free(config_error);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return false;
-            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                g_error_free(config_error);
-                config_error = NULL;
-                config->wait_all = false;
-                break;
-            default:
-                g_assert_not_reached();
-                break;
+    if (g_getenv(ENV_WAIT_ALL))
+        config->wait_all = true;
+    else {
+        config->wait_all = g_key_file_get_boolean(config_fd, "main", "wait_all", &config_error);
+        if (!config->wait_all && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("main.wait_all not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->wait_all = false;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
         }
     }
 
