@@ -16,13 +16,16 @@ export TZ=UTC
 
 unset CDPATH
 unset PWD
-unset SANDBOX_PHASE
 unset SANDBOX_WRITE
 unset SANDBOX_PREDICT
+unset SANDBOX_EXEC_ALLOW
+unset SANDBOX_EXEC
 unset SANDBOX_NET
 unset SANDBOX_CONFIG
 unset SANDBOX_NO_COLOUR
 unset SANDBOX_LOG
+unset SANDBOX_LOCK
+unset SANDBOX_WAIT_ALL
 
 # Colour
 if [[ "${TERM}" != "dumb" && -t 1 ]]; then
