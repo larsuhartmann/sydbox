@@ -8,10 +8,14 @@
 
 #include <check.h>
 
+#include "../src/sydbox-config.h"
 #include "check_sydbox.h"
 
 int main(void) {
     int number_failed;
+
+    setenv("SANDBOX_NO_CONFIG", "1", 1);
+    sydbox_config_load(NULL);
 
     /* Add suites */
     SRunner *sr = srunner_create(sydbox_utils_suite_create());

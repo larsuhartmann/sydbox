@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
+ * Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
  *
  * This file is part of the sydbox sandbox tool. sydbox is free software;
  * you can redistribute it and/or modify it under the terms of the GNU General
@@ -17,6 +18,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdlib.h>
 #include <glib.h>
 #include <children.h>
 #include <sydbox-config.h>
@@ -89,6 +91,9 @@ no_log (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message,
 int
 main (int argc, char **argv)
 {
+    setenv("SANDBOX_NO_CONFIG", "1", 1);
+    sydbox_config_load(NULL);
+
     g_test_init (&argc, &argv, NULL);
 
     g_log_set_default_handler (no_log, NULL);
