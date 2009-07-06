@@ -33,7 +33,6 @@ sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)
     va_list args;
     time_t now = time (NULL);
 
-    va_start (args, fmt);
     g_fprintf (stderr, PACKAGE "@%lu: %sAccess Violation!%s\n", now,
                sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",
                sydbox_config_get_colourise_output () ? ANSI_NORMAL : "");
@@ -45,9 +44,12 @@ sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)
     g_fprintf (stderr, PACKAGE "@%lu: %sReason: %s", now,
                sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",
                sydbox_config_get_colourise_output () ? ANSI_DARK_MAGENTA : "");
+
+    va_start (args, fmt);
     g_vfprintf (stderr, fmt, args);
-    g_fprintf (stderr, "%s\n", sydbox_config_get_colourise_output () ? ANSI_NORMAL : "");
     va_end (args);
+
+    g_fprintf (stderr, "%s\n", sydbox_config_get_colourise_output () ? ANSI_NORMAL : "");
 }
 
 gchar *
