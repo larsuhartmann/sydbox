@@ -56,20 +56,12 @@ sydbox_config_load (const gchar * const file)
 
     g_return_val_if_fail(!config, true);
 
-    // Figure out the path to the configuration file
-    if (file)
-        config_file = g_strdup (file);
-    else if (g_getenv (ENV_CONFIG))
-        config_file = g_strdup (g_getenv (ENV_CONFIG));
-    else
-        config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
-
     // Initialize config structure
     config = g_new0 (struct sydbox_config, 1);
 
     if (g_getenv(ENV_NO_CONFIG)) {
-        /* ENV_NO_CONFIG set, set the defaults and return without parsing the
-         * configuration file.
+        /* ENV_NO_CONFIG set, set the defaults,
+         * and return without parsing the configuration file.
          */
         config->colourise_output = true;
         config->verbosity = 1;
@@ -81,6 +73,14 @@ sydbox_config_load (const gchar * const file)
         config->allow_proc_pid = true;
         return true;
     }
+
+    // Figure out the path to the configuration file
+    if (file)
+        config_file = g_strdup (file);
+    else if (g_getenv (ENV_CONFIG))
+        config_file = g_strdup (g_getenv (ENV_CONFIG));
+    else
+        config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
 
     // Initialize key file
     config_fd = g_key_file_new();
