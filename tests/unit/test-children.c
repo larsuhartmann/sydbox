@@ -1,4 +1,4 @@
-/* vim: set et ts=4 sts=4 sw=4 fdm=syntax */
+/* vim: set et ts=4 sts=4 sw=4 fdm=syntax : */
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
@@ -91,7 +91,7 @@ no_log (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message,
 int
 main (int argc, char **argv)
 {
-    setenv("SANDBOX_NO_CONFIG", "1", 1);
+    setenv(ENV_NO_CONFIG, "1", 1);
     sydbox_config_load(NULL);
 
     g_test_init (&argc, &argv, NULL);

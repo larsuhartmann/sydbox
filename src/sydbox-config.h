@@ -26,6 +26,17 @@
 
 #include <glib.h>
 
+// Environment variables
+#define ENV_LOG         "SANDBOX_LOG"
+#define ENV_CONFIG      "SANDBOX_CONFIG"
+#define ENV_WRITE       "SANDBOX_WRITE"
+#define ENV_PREDICT     "SANDBOX_PREDICT"
+#define ENV_EXEC_ALLOW  "SANDBOX_EXEC_ALLOW"
+#define ENV_EXEC        "SANDBOX_EXEC"
+#define ENV_NET         "SANDBOX_NET"
+#define ENV_NO_COLOUR   "SANDBOX_NO_COLOUR"
+#define ENV_NO_CONFIG   "SANDBOX_NO_CONFIG"
+
 bool
 sydbox_config_load (const gchar * const config);
 

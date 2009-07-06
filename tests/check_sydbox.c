@@ -14,7 +14,7 @@
 int main(void) {
     int number_failed;
 
-    setenv("SANDBOX_NO_CONFIG", "1", 1);
+    setenv(ENV_NO_CONFIG, "1", 1);
     sydbox_config_load(NULL);
 
     /* Add suites */
