@@ -48,33 +48,37 @@ command line parameters.
 *--dump*::
     Dump configuration and exit
 
-*-L*::
-*--lock*::
-    Disallow magic commands
+*-0::
+*--log-level*::
+    Logging verbosity
 
 *-l*::
 *--log-file*::
     Path to the log file
 
-*-0::
-*--log-level*::
-    Logging verbosity
-
 *-C*::
 *--no-colour*::
     Disallow colouring of messages
 
-*-e*::
-*--exec*::
-    Enable execve(2) sandboxing
-
-*-n*::
-*--net*::
-    Enable network sandboxing
-
 *-p*::
 *--paranoid*::
     Enable paranoid mode (EXPERIMENTAL)
+
+*-L*::
+*--lock*::
+    Disallow magic commands
+
+*-E*::
+*--exec*::
+    Enable execve(2) sandboxing
+
+*-N*::
+*--net*::
+    Enable network sandboxing
+
+*-W*::
+*--wait-all*::
+    Wait for all children to exit before exiting
 
 ENVIRONMENT VARIABLES
 ---------------------
@@ -93,7 +97,8 @@ expected to be a colon delimited list of paths.
 SANDBOX_EXEC
 ~~~~~~~~~~~~
 This variable controls the behaviour of sydbox with regard to execve(2) access.
-If it is set, sydbox will sandbox execve(2) connections.
+If it is set, sydbox will sandbox execve(2) connections. This is equivalent to
+*-E* option.
 
 SANDBOX_EXEC_ALLOW
 ~~~~~~~~~~~~~~~~~~
@@ -104,23 +109,34 @@ sandboxing is on.
 SANDBOX_NET
 ~~~~~~~~~~~
 This variable controls the behaviour of sydbox with regards to network access.
-If it is set, sydbox will sandbox network connections.
+If it is set, sydbox will sandbox network connections. This is equivalent to
+*-N* option.
 
 SANDBOX_CONFIG
 ~~~~~~~~~~~~~~
 This variable specifies the configuration file to be used by sydbox. This is
-equivalent to the -c option.
+equivalent to the *-c* option.
 
 SANDBOX_NO_COLOUR
 ~~~~~~~~~~~~~~~~~
 This variable controls the behaviour of sydbox with regards to colourized
 output. If it is set, sydbox's output will not be coloured. This is equivalent
-to the -C option.
+to the *-C* option.
 
 SANDBOX_LOG
 ~~~~~~~~~~~
 This variable specifies the log file to be used by sydbox. This is equivalent to
-the -l option.
+the *-l* option.
+
+SANDBOX_LOCK
+~~~~~~~~~~~~
+If this variable is set, sydbox will disallow magic commands. This is equivalent
+to *-L* option.
+
+SANDBOX_WAIT_ALL
+~~~~~~~~~~~~~~~~
+If this variable is set, sydbox will wait for all children to exit before
+exiting. This is equivalent to *-W* option.
 
 PARANOID MODE
 -------------
