@@ -89,8 +89,11 @@ sydbox_config_load (const gchar * const file)
         g_error_free(config_error);
         g_key_file_free(config_fd);
         g_free(config);
+        g_free(config_file);
         return false;
     }
+    else
+        g_free(config_file);
 
     // Get main.log_file
     if (g_getenv(ENV_LOG))
@@ -305,7 +308,6 @@ sydbox_config_load (const gchar * const file)
 
     // Cleanup and return
     g_key_file_free(config_fd);
-    g_free(config_file);
     return true;
 }
 
