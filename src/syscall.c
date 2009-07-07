@@ -162,7 +162,8 @@ static const char *sname;
 /* Look up the system call name in sysnames array.
  * Return name if its found, UNKNOWN_SYSCALL otherwise.
  */
-static inline const char *syscall_get_name(int no) {
+static inline const char *syscall_get_name(int no)
+{
     for (int i = 0; sysnames[i].name != NULL; i++) {
         if (sysnames[i].no == no)
             return sysnames[i].name;
@@ -934,7 +935,8 @@ static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
-static void systemcall_class_init(SystemCallClass *cls) {
+static void systemcall_class_init(SystemCallClass *cls)
+{
     GParamSpec *no, *flags;
     GObjectClass *g_object_cls;
 
@@ -992,7 +994,8 @@ static void systemcall_class_init(SystemCallClass *cls) {
 }
 
 
-GType systemcall_get_type(void) {
+GType systemcall_get_type(void)
+{
     static GType systemcall_type = 0;
 
     if (0 == systemcall_type) {
@@ -1018,7 +1021,8 @@ GType systemcall_get_type(void) {
     return systemcall_type;
 }
 
-void syscall_init(void) {
+void syscall_init(void)
+{
     static bool initialized = false;
     if (initialized)
         return;
@@ -1039,7 +1043,8 @@ void syscall_init(void) {
     initialized = true;
 }
 
-void syscall_free(void) {
+void syscall_free(void)
+{
     g_object_unref(SystemCallHandler);
     SystemCallHandler = NULL;
 }
@@ -1047,7 +1052,8 @@ void syscall_free(void) {
 /* Lookup a handler for the system call in syscalls array.
  * Return the handler if found, NULL otherwise.
  */
-SystemCall *syscall_get_handler(int no) {
+SystemCall *syscall_get_handler(int no)
+{
     for (unsigned int i = 0; -1 != syscalls[i].no; i++) {
         if (syscalls[i].no == no) {
             SystemCallHandler->no = syscalls[i].no;
@@ -1060,7 +1066,8 @@ SystemCall *syscall_get_handler(int no) {
 
 /* Main syscall handler
  */
-int syscall_handle(context_t *ctx, struct tchild *child) {
+int syscall_handle(context_t *ctx, struct tchild *child)
+{
     long sno;
     struct checkdata data;
     SystemCall *handler;
