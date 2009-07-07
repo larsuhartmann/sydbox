@@ -144,7 +144,11 @@ static const struct syscall_name {
 {-1,    NULL}
 };
 
-#define UNKNOWN_SYSCALL     "unknown"
+#define UNKNOWN_SYSCALL         "unknown"
+
+#define BAD_SYSCALL             0xbadca11
+#define IS_BAD_SYSCALL(_sno)    (BAD_SYSCALL == (_sno))
+#define IS_CHDIR(_sno)          (__NR_chdir == (_sno) || __NR_fchdir == (_sno))
 
 #define MODE_STRING(flags)                                                      \
     ((flags) & ACCESS_MODE) ? "O_WR" :                                          \
@@ -1064,7 +1068,7 @@ SystemCall *syscall_get_handler(int no)
     return NULL;
 }
 
-/* 0xbadca11 handler for system calls.
+/* BAD_SYSCALL handler for system calls.
  * This function restores real call number for the denied system call and sets
  * return code.
  * Returns nonzero if child is dead, zero otherwise.
@@ -1185,10 +1189,10 @@ int syscall_handle(context_t *ctx, struct tchild *child)
     }
 
     /* Get the name of the syscall for logging
-     * If system call no is 0xbadca11, this is a faked system call and the real
+     * If system call no is BAD_SYSCALL, this is a faked system call and the real
      * system call number is stored in child->sno.
      */
-#define SYSCALL_NAME(_child, _sno) (0xbadca11 == sno) ? syscall_get_name((_child)->sno) : syscall_get_name(_sno)
+#define SYSCALL_NAME(_child, _sno) IS_BAD_SYSCALL(_sno) ? syscall_get_name((_child)->sno) : syscall_get_name(_sno)
     if (2 < sydbox_config_get_verbosity())
         sname = SYSCALL_NAME(child, sno);
     else
@@ -1218,7 +1222,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                 case RS_DENY:
                     g_debug("denying access to system call %lu(%s)", sno, sname);
                     child->sno = sno;
-                    if (0 > trace_set_syscall(child->pid, 0xbadca11)) {
+                    if (0 > trace_set_syscall(child->pid, BAD_SYSCALL)) {
                         if (G_UNLIKELY(ESRCH != errno)) {
                             g_critical("failed to set system call: %s", g_strerror(errno));
                             g_printerr("failed to set system call: %s", g_strerror(errno));
@@ -1248,13 +1252,13 @@ int syscall_handle(context_t *ctx, struct tchild *child)
     else { // Exiting sytem call
         g_debug_trace("child %i is exiting system call %lu(%s)", child->pid, sno, sname);
 
-        if (0xbadca11 == sno) {
+        if (IS_BAD_SYSCALL(sno)) {
             /* Child is exiting a denied system call.
              */
             if (0 > syscall_handle_badcall(child))
                 return context_remove_child(ctx, child->pid);
         }
-        else if (__NR_chdir == sno || __NR_fchdir == sno) {
+        else if (IS_CHDIR(sno)) {
             /* Child is exiting a system call that may have changed its current
              * working directory. Update current working directory.
              */
