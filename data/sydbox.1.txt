@@ -68,12 +68,16 @@ command line parameters.
 *--lock*::
     Disallow magic commands
 
+*-P*::
+*--disable-sandbox-path*::
+    Disable path sandboxing
+
 *-E*::
-*--exec*::
+*--sandbox-exec*::
     Enable execve(2) sandboxing
 
 *-N*::
-*--net*::
+*--sandbox-network*::
     Enable network sandboxing
 
 *-W*::
@@ -93,6 +97,11 @@ SANDBOX_PREDICT
 ~~~~~~~~~~~~~~~
 This variable specifies the paths that are predicted to be written to. It is
 expected to be a colon delimited list of paths.
+
+SANDBOX_DISABLE_PATH
+~~~~~~~~~~~~~~~~~~~~
+If set, this variable disables path sandboxing. This is equivalent to the *-P*
+option.
 
 SANDBOX_EXEC
 ~~~~~~~~~~~~
@@ -197,3 +206,4 @@ Copyright (C) 2009 Saleem Abdulrasool <compnerd at compnerd dot org>
 
 Free use of this software is granted under the terms of the GNU General Public
 License (GPL).
+
