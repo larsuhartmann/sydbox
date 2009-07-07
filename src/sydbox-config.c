@@ -147,56 +147,6 @@ sydbox_config_load (const gchar * const file)
         }
     }
 
-    // Get main.exec
-    if (g_getenv(ENV_EXEC))
-        config->sandbox_exec = true;
-    else {
-        config->sandbox_exec = g_key_file_get_boolean(config_fd, "main", "exec", &config_error);
-        if (!config->sandbox_exec && config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("main.exec not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->sandbox_exec = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
-        }
-    }
-
-    // Get main.net
-    if (g_getenv(ENV_NET))
-        config->sandbox_network = true;
-    else {
-        config->sandbox_network = g_key_file_get_boolean(config_fd, "main", "net", &config_error);
-        if (!config->sandbox_network && config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("main.net not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->sandbox_network = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
-        }
-    }
-
     // Get main.paranoid
     config->paranoid_mode_enabled = g_key_file_get_boolean(config_fd, "main", "paranoid", &config_error);
     if (!config->paranoid_mode_enabled && config_error) {
@@ -286,6 +236,56 @@ sydbox_config_load (const gchar * const file)
             default:
                 g_assert_not_reached();
                 break;
+        }
+    }
+
+    // Get sandbox.exec
+    if (g_getenv(ENV_EXEC))
+        config->sandbox_exec = true;
+    else {
+        config->sandbox_exec = g_key_file_get_boolean(config_fd, "sandbox", "exec", &config_error);
+        if (!config->sandbox_exec && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("sandbox.exec not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->sandbox_exec = false;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
+        }
+    }
+
+    // Get sandbox.net
+    if (g_getenv(ENV_NET))
+        config->sandbox_network = true;
+    else {
+        config->sandbox_network = g_key_file_get_boolean(config_fd, "sandbox", "network", &config_error);
+        if (!config->sandbox_network && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("sandbox.network not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->sandbox_network = false;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
         }
     }
 
