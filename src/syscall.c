@@ -1064,10 +1064,109 @@ SystemCall *syscall_get_handler(int no)
     return NULL;
 }
 
+/* 0xbadca11 handler for system calls.
+ * This function restores real call number for the denied system call and sets
+ * return code.
+ * Returns nonzero if child is dead, zero otherwise.
+ */
+static int syscall_handle_badcall(context_t *ctx, struct tchild *child)
+{
+    g_debug("restoring real call number for denied system call %lu(%s)", child->sno, sname);
+    // Restore real call number and return our error code
+    if (0 > trace_set_syscall(child->pid, child->sno)) {
+        if (G_UNLIKELY(ESRCH != errno)) {
+            /* Error setting system call using ptrace()
+             * child is still alive, hence the error is fatal.
+             */
+            g_printerr("failed to restore system call: %s", g_strerror (errno));
+            exit(-1);
+        }
+        // Child is dead, remove it.
+        return context_remove_child(ctx, child->pid);
+    }
+    if (0 > trace_set_return(child->pid, child->retval)) {
+        if (G_UNLIKELY(ESRCH != errno)) {
+            /* Error setting return code using ptrace()
+             * child is still alive, hence the error is fatal.
+             */
+            g_printerr("failed to set return code: %s", g_strerror(errno));
+            exit(-1);
+        }
+        // Child is dead, remove it.
+        return context_remove_child(ctx, child->pid);
+    }
+    return 0;
+}
+
+/* chdir(2) handler for system calls.
+ * This is only called when child is exiting chdir() or fchdir() system calls.
+ * Returns nonzero if child is dead, zero otherwise.
+ */
+static int syscall_handle_chdir(context_t *ctx, struct tchild *child)
+{
+    long retval;
+
+    if (0 > trace_get_return(child->pid, &retval)) {
+        if (G_UNLIKELY(ESRCH != errno)) {
+            /* Error getting return code using ptrace()
+             * child is still alive, hence the error is fatal.
+             */
+            g_printerr("failed to get return code: %s", g_strerror (errno));
+            exit(-1);
+        }
+        // Child is dead, remove it.
+        return context_remove_child(ctx, child->pid);
+    }
+    if (0 == retval) {
+        /* Child has successfully changed directory,
+         * update current working directory.
+         */
+        char *newcwd = pgetcwd(child->pid);
+        if (NULL == newcwd) {
+            /* Failed to get current working directory of child.
+             * Set errno of the child.
+             * FIXME: We should probably die here as well, because the
+             * child has successfully changed directory and setting
+             * errno doesn't change that fact.
+             */
+            retval = -errno;
+            g_debug("pgetcwd() failed: %s", g_strerror(errno));
+            if (0 > trace_set_return(child->pid, retval)) {
+                if (G_UNLIKELY(ESRCH != errno)) {
+                    /* Error setting return code using ptrace()
+                     * child is still alive, hence the error is fatal.
+                     */
+                    g_printerr("failed to set return code: %s", g_strerror (errno));
+                    exit(-1);
+                }
+                // Child is dead, remove it.
+                return context_remove_child(ctx, child->pid);
+            }
+        }
+        else {
+            /* Successfully determined the new current working
+             * directory of child. Update context.
+             */
+            if (NULL != child->cwd)
+                g_free(child->cwd);
+            child->cwd = newcwd;
+            g_info("child %i has changed directory to '%s'", child->pid, child->cwd);
+        }
+    }
+    else {
+        /* Child failed to change current working directory,
+         * nothing to do.
+         */
+        g_debug("child %i failed to change directory: %s", child->pid, g_strerror(-retval));
+    }
+    return 0;
+}
+
 /* Main syscall handler
  */
 int syscall_handle(context_t *ctx, struct tchild *child)
 {
+    int ret;
     long sno;
     struct checkdata data;
     SystemCall *handler;
@@ -1151,91 +1250,20 @@ int syscall_handle(context_t *ctx, struct tchild *child)
         g_debug_trace("child %i is exiting system call %lu(%s)", child->pid, sno, sname);
 
         if (0xbadca11 == sno) {
-            g_debug("restoring real call number for denied system call %lu(%s)", child->sno, sname);
-            // Restore real call number and return our error code
-            if (0 > trace_set_syscall(child->pid, child->sno)) {
-                if (G_UNLIKELY(ESRCH != errno)) {
-                    /* Error setting system call using ptrace()
-                     * child is still alive, hence the error is fatal.
-                     */
-                    g_printerr("failed to restore system call: %s", g_strerror (errno));
-                    exit(-1);
-                }
-                // Child is dead, remove it.
-                return context_remove_child(ctx, child->pid);
-            }
-            if (0 > trace_set_return(child->pid, child->retval)) {
-                if (G_UNLIKELY(ESRCH != errno)) {
-                    /* Error setting return code using ptrace()
-                     * child is still alive, hence the error is fatal.
-                     */
-                    g_printerr("failed to set return code: %s", g_strerror(errno));
-                    exit(-1);
-                }
-                // Child is dead, remove it.
-                return context_remove_child(ctx, child->pid);
-            }
+            /* Child is exiting a denied system call.
+             */
+            ret = syscall_handle_badcall(ctx, child);
+            if (0 != ret)
+                return ret;
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
             /* Child is exiting a system call that may have changed its current
              * working directory. Update current working directory.
              */
-            long retval;
-            if (0 > trace_get_return(child->pid, &retval)) {
-                if (G_UNLIKELY(ESRCH != errno)) {
-                    /* Error getting return code using ptrace()
-                     * child is still alive, hence the error is fatal.
-                     */
-                    g_printerr("failed to get return code: %s", g_strerror (errno));
-                    exit(-1);
-                }
-                // Child is dead, remove it.
-                return context_remove_child(ctx, child->pid);
-            }
-            if (0 == retval) {
-                /* Child has successfully changed directory,
-                 * update current working directory.
-                 */
-                char *newcwd = pgetcwd(child->pid);
-                if (NULL == newcwd) {
-                    /* Failed to get current working directory of child.
-                     * Set errno of the child.
-                     * FIXME: We should probably die here as well, because the
-                     * child has successfully changed directory and setting
-                     * errno doesn't change that fact.
-                     */
-                    retval = -errno;
-                    g_debug("pgetcwd() failed: %s", g_strerror(errno));
-                    if (0 > trace_set_return(child->pid, retval)) {
-                        if (G_UNLIKELY(ESRCH != errno)) {
-                            /* Error setting return code using ptrace()
-                             * child is still alive, hence the error is fatal.
-                             */
-                            g_printerr("failed to set return code: %s", g_strerror (errno));
-                            exit(-1);
-                        }
-                        // Child is dead, remove it.
-                        return context_remove_child(ctx, child->pid);
-                    }
-                }
-                else {
-                    /* Successfully determined the new current working
-                     * directory of child. Update context.
-                     */
-                    if (NULL != child->cwd)
-                        g_free (child->cwd);
-                    child->cwd = newcwd;
-                    g_info ("child %i has changed directory to '%s'", child->pid, child->cwd);
-                }
-            }
-            else {
-                /* Child failed to change current working directory,
-                 * nothing to do.
-                 */
-                g_debug("child %i failed to change directory: %s", child->pid, g_strerror(-retval));
-            }
+            ret = syscall_handle_chdir(ctx, child);
+            if (0 != ret)
+                return ret;
         }
-
     }
     child->flags ^= TCHILD_INSYSCALL;
     return 0;
