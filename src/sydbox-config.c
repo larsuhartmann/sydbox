@@ -97,33 +97,6 @@ sydbox_config_load (const gchar * const file)
     else
         g_free(config_file);
 
-    // Get main.log_file
-    if (g_getenv(ENV_LOG))
-        config->logfile = g_strdup(g_getenv(ENV_LOG));
-    else
-        config->logfile = g_key_file_get_string(config_fd, "main", "log_file", NULL);
-
-    // Get main.log_level
-    config->verbosity = g_key_file_get_integer(config_fd, "main", "log_level", &config_error);
-    if (0 == config->verbosity) {
-        switch (config_error->code) {
-            case G_KEY_FILE_ERROR_INVALID_VALUE:
-                g_printerr("main.log_level not an integer: %s", config_error->message);
-                g_error_free(config_error);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return FALSE;
-            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                g_error_free(config_error);
-                config_error = NULL;
-                config->verbosity = 1;
-                break;
-            default:
-                g_assert_not_reached();
-                break;
-        }
-    }
-
     // Get main.colour
     if (g_getenv(ENV_NO_COLOUR))
         config->colourise_output = false;
@@ -234,6 +207,33 @@ sydbox_config_load (const gchar * const file)
                 g_error_free(config_error);
                 config_error = NULL;
                 config->allow_proc_pid = true;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
+    // Get log.file
+    if (g_getenv(ENV_LOG))
+        config->logfile = g_strdup(g_getenv(ENV_LOG));
+    else
+        config->logfile = g_key_file_get_string(config_fd, "log", "file", NULL);
+
+    // Get log.level
+    config->verbosity = g_key_file_get_integer(config_fd, "log", "level", &config_error);
+    if (0 == config->verbosity) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("log.level not an integer: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return FALSE;
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->verbosity = 1;
                 break;
             default:
                 g_assert_not_reached();
