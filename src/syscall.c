@@ -310,7 +310,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, 3, data))
             return;
     }
-    if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
+    if (!ctx->before_initial_execve && child->sandbox->exec && self->flags & EXEC_CALL) {
         if (!systemcall_get_path(child->pid, 0, data))
             return;
     }
