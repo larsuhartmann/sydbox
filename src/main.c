@@ -79,8 +79,8 @@ static gchar *logfile;
 static gchar *config_file;
 
 static bool dump;
-static bool exec;
-static bool net;
+static bool sandbox_exec;
+static bool sandbox_net;
 static bool lock;
 static bool colour;
 static bool version;
@@ -105,9 +105,9 @@ static GOptionEntry entries[] =
         "Paranoid mode (EXPERIMENTAL)",   NULL },
     { "lock",               'L', 0, G_OPTION_ARG_NONE,                         &lock,
         "Disallow magic commands",        NULL },
-    { "sandbox-exec",       'E', 0, G_OPTION_ARG_NONE,                         &exec,
+    { "sandbox-exec",       'E', 0, G_OPTION_ARG_NONE,                         &sandbox_exec,
         "Enable execve(2) sandboxing",    NULL },
-    { "sandbox-network",    'N', 0, G_OPTION_ARG_NONE,                         &net,
+    { "sandbox-network",    'N', 0, G_OPTION_ARG_NONE,                         &sandbox_net,
         "Enable network sandboxing",      NULL },
     { "wait-all",           'W', 0, G_OPTION_ARG_NONE,                         &wait_all,
         "Wait for all children to exit before exiting", NULL},
@@ -302,22 +302,22 @@ sydbox_internal_main (int argc, char **argv)
     sydbox_config_update_from_environment ();
 
     if (colour)
-        sydbox_config_set_colourise_output (TRUE);
+        sydbox_config_set_colourise_output(true);
 
-    if (exec)
-        sydbox_config_set_sandbox_exec(TRUE);
+    if (sandbox_exec)
+        sydbox_config_set_sandbox_exec(true);
 
-    if (net)
-        sydbox_config_set_sandbox_network(TRUE);
+    if (sandbox_net)
+        sydbox_config_set_sandbox_network(true);
 
     if (lock)
-        sydbox_config_set_disallow_magic_commands (TRUE);
+        sydbox_config_set_disallow_magic_commands(true);
 
     if (wait_all)
-        sydbox_config_set_wait_all (TRUE);
+        sydbox_config_set_wait_all(true);
 
     if (paranoid)
-        sydbox_config_set_paranoid_mode_enabled (TRUE);
+        sydbox_config_set_paranoid_mode_enabled(true);
 
     if (dump) {
         sydbox_config_write_to_stderr ();
