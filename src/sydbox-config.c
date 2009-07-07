@@ -33,6 +33,7 @@ struct sydbox_config
 
     gint verbosity;
 
+    bool sandbox_path;
     bool sandbox_exec;
     bool sandbox_network;
     bool colourise_output;
@@ -65,6 +66,7 @@ sydbox_config_load (const gchar * const file)
          */
         config->colourise_output = true;
         config->verbosity = 1;
+        config->sandbox_path = true;
         config->sandbox_network = false;
         config->sandbox_exec = false;
         config->disallow_magic_commands = false;
@@ -239,6 +241,31 @@ sydbox_config_load (const gchar * const file)
         }
     }
 
+    // Get sandbox.path
+    if (g_getenv(ENV_DISABLE_PATH))
+        config->sandbox_path = false;
+    else {
+        config->sandbox_path = g_key_file_get_boolean(config_fd, "sandbox", "path", &config_error);
+        if (!config->sandbox_path && config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("sandbox.path not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->sandbox_path = true;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
+        }
+    }
+
     // Get sandbox.exec
     if (g_getenv(ENV_EXEC))
         config->sandbox_exec = true;
@@ -348,6 +375,7 @@ sydbox_config_write_to_stderr (void)
     g_fprintf (stderr, "lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
     g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log_level = %d\n", config->verbosity);
+    g_fprintf (stderr, "path sandboxing = %s\n", config->sandbox_path ? "yes" : "no");
     g_fprintf (stderr, "execve(2) sandboxing = %s\n", config->sandbox_exec ? "yes" : "no");
     g_fprintf (stderr, "network sandboxing = %s\n", config->sandbox_network ? "yes" : "no");
     g_fprintf (stderr, "wait for all children = %s\n", config->wait_all ? "yes" : "no");
@@ -387,6 +415,18 @@ void
 sydbox_config_set_verbosity (gint verbosity)
 {
     config->verbosity = verbosity;
+}
+
+bool
+sydbox_config_get_sandbox_path (void)
+{
+    return config->sandbox_path;
+}
+
+void
+sydbox_config_set_sandbox_path (bool on)
+{
+    config->sandbox_path = on;
 }
 
 bool

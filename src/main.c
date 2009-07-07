@@ -79,6 +79,7 @@ static gchar *logfile;
 static gchar *config_file;
 
 static bool dump;
+static bool disable_sandbox_path;
 static bool sandbox_exec;
 static bool sandbox_net;
 static bool lock;
@@ -89,27 +90,29 @@ static bool wait_all;
 
 static GOptionEntry entries[] =
 {
-    { "version",            'V', 0, G_OPTION_ARG_NONE,                         &version,
+    { "version",                'V', 0, G_OPTION_ARG_NONE,                         &version,
         "Show version information",       NULL },
-    { "config",             'c', 0, G_OPTION_ARG_FILENAME,                     &config_file,
+    { "config",                 'c', 0, G_OPTION_ARG_FILENAME,                     &config_file,
         "Path to the configuration file", NULL },
-    { "dump",               'D', 0, G_OPTION_ARG_NONE,                         &dump,
+    { "dump",                   'D', 0, G_OPTION_ARG_NONE,                         &dump,
         "Dump configuration and exit",    NULL },
-    { "log-level",          '0', 0, G_OPTION_ARG_INT,                          &verbosity,
+    { "log-level",              '0', 0, G_OPTION_ARG_INT,                          &verbosity,
         "Logging verbosity",              NULL },
-    { "log-file",           'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,
+    { "log-file",               'l', 0, G_OPTION_ARG_FILENAME,                     &logfile,
         "Path to the log file",           NULL },
-    { "no-colour",          'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,
+    { "no-colour",              'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,
         "Disable colouring of messages",  NULL },
-    { "paranoid",           'p', 0, G_OPTION_ARG_NONE,                         &paranoid,
+    { "paranoid",               'p', 0, G_OPTION_ARG_NONE,                         &paranoid,
         "Paranoid mode (EXPERIMENTAL)",   NULL },
-    { "lock",               'L', 0, G_OPTION_ARG_NONE,                         &lock,
+    { "lock",                   'L', 0, G_OPTION_ARG_NONE,                         &lock,
         "Disallow magic commands",        NULL },
-    { "sandbox-exec",       'E', 0, G_OPTION_ARG_NONE,                         &sandbox_exec,
+    { "disable-sandbox-path",   'P', 0, G_OPTION_ARG_NONE,                         &disable_sandbox_path,
+        "Disable path sandboxing",        NULL },
+    { "sandbox-exec",           'E', 0, G_OPTION_ARG_NONE,                         &sandbox_exec,
         "Enable execve(2) sandboxing",    NULL },
-    { "sandbox-network",    'N', 0, G_OPTION_ARG_NONE,                         &sandbox_net,
+    { "sandbox-network",        'N', 0, G_OPTION_ARG_NONE,                         &sandbox_net,
         "Enable network sandboxing",      NULL },
-    { "wait-all",           'W', 0, G_OPTION_ARG_NONE,                         &wait_all,
+    { "wait-all",               'W', 0, G_OPTION_ARG_NONE,                         &wait_all,
         "Wait for all children to exit before exiting", NULL},
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
@@ -243,6 +246,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
+    eldest->sandbox->on = sydbox_config_get_sandbox_path();
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
     eldest->sandbox->net = sydbox_config_get_sandbox_network();
     eldest->sandbox->lock = sydbox_config_get_disallow_magic_commands() ? LOCK_SET : LOCK_UNSET;
@@ -303,6 +307,9 @@ sydbox_internal_main (int argc, char **argv)
 
     if (colour)
         sydbox_config_set_colourise_output(true);
+
+    if (disable_sandbox_path)
+        sydbox_config_set_sandbox_path(false);
 
     if (sandbox_exec)
         sydbox_config_set_sandbox_exec(true);
