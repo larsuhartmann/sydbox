@@ -1069,7 +1069,7 @@ SystemCall *syscall_get_handler(int no)
  * return code.
  * Returns nonzero if child is dead, zero otherwise.
  */
-static int syscall_handle_badcall(context_t *ctx, struct tchild *child)
+static int syscall_handle_badcall(struct tchild *child)
 {
     g_debug("restoring real call number for denied system call %lu(%s)", child->sno, sname);
     // Restore real call number and return our error code
@@ -1081,8 +1081,8 @@ static int syscall_handle_badcall(context_t *ctx, struct tchild *child)
             g_printerr("failed to restore system call: %s", g_strerror (errno));
             exit(-1);
         }
-        // Child is dead, remove it.
-        return context_remove_child(ctx, child->pid);
+        // Child is dead.
+        return -1;
     }
     if (0 > trace_set_return(child->pid, child->retval)) {
         if (G_UNLIKELY(ESRCH != errno)) {
@@ -1092,8 +1092,8 @@ static int syscall_handle_badcall(context_t *ctx, struct tchild *child)
             g_printerr("failed to set return code: %s", g_strerror(errno));
             exit(-1);
         }
-        // Child is dead, remove it.
-        return context_remove_child(ctx, child->pid);
+        // Child is dead.
+        return -1;
     }
     return 0;
 }
@@ -1102,7 +1102,7 @@ static int syscall_handle_badcall(context_t *ctx, struct tchild *child)
  * This is only called when child is exiting chdir() or fchdir() system calls.
  * Returns nonzero if child is dead, zero otherwise.
  */
-static int syscall_handle_chdir(context_t *ctx, struct tchild *child)
+static int syscall_handle_chdir(struct tchild *child)
 {
     long retval;
 
@@ -1114,8 +1114,8 @@ static int syscall_handle_chdir(context_t *ctx, struct tchild *child)
             g_printerr("failed to get return code: %s", g_strerror (errno));
             exit(-1);
         }
-        // Child is dead, remove it.
-        return context_remove_child(ctx, child->pid);
+        // Child is dead.
+        return -1;
     }
     if (0 == retval) {
         /* Child has successfully changed directory,
@@ -1139,8 +1139,8 @@ static int syscall_handle_chdir(context_t *ctx, struct tchild *child)
                     g_printerr("failed to set return code: %s", g_strerror (errno));
                     exit(-1);
                 }
-                // Child is dead, remove it.
-                return context_remove_child(ctx, child->pid);
+                // Child is dead.
+                return -1;
             }
         }
         else {
@@ -1166,7 +1166,6 @@ static int syscall_handle_chdir(context_t *ctx, struct tchild *child)
  */
 int syscall_handle(context_t *ctx, struct tchild *child)
 {
-    int ret;
     long sno;
     struct checkdata data;
     SystemCall *handler;
@@ -1252,17 +1251,15 @@ int syscall_handle(context_t *ctx, struct tchild *child)
         if (0xbadca11 == sno) {
             /* Child is exiting a denied system call.
              */
-            ret = syscall_handle_badcall(ctx, child);
-            if (0 != ret)
-                return ret;
+            if (0 > syscall_handle_badcall(child))
+                return context_remove_child(ctx, child->pid);
         }
         else if (__NR_chdir == sno || __NR_fchdir == sno) {
             /* Child is exiting a system call that may have changed its current
              * working directory. Update current working directory.
              */
-            ret = syscall_handle_chdir(ctx, child);
-            if (0 != ret)
-                return ret;
+            if (0 > syscall_handle_chdir(child))
+                return context_remove_child(ctx, child->pid);
         }
     }
     child->flags ^= TCHILD_INSYSCALL;
