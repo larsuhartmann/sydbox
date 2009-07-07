@@ -473,19 +473,19 @@ sydbox_config_set_paranoid_mode_enabled (bool enabled)
     config->paranoid_mode_enabled = enabled;
 }
 
-const GSList *
+GSList *
 sydbox_config_get_write_prefixes (void)
 {
     return config->write_prefixes;
 }
 
-const GSList *
+GSList *
 sydbox_config_get_predict_prefixes (void)
 {
     return config->predict_prefixes;
 }
 
-const GSList *
+GSList *
 sydbox_config_get_exec_prefixes (void)
 {
     return config->exec_prefixes;

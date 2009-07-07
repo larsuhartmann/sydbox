@@ -102,13 +102,13 @@ sydbox_config_get_paranoid_mode_enabled (void);
 void
 sydbox_config_set_paranoid_mode_enabled (bool enabled);
 
-const GSList *
+GSList *
 sydbox_config_get_write_prefixes (void);
 
-const GSList *
+GSList *
 sydbox_config_get_predict_prefixes (void);
 
-const GSList *
+GSList *
 sydbox_config_get_exec_prefixes (void);
 
 #endif
