@@ -371,21 +371,21 @@ print_slist_entry (gpointer data, gpointer userdata G_GNUC_UNUSED)
 void
 sydbox_config_write_to_stderr (void)
 {
-    g_fprintf (stderr, "colour = %s\n", config->colourise_output ? "yes" : "no");
-    g_fprintf (stderr, "lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
-    g_fprintf (stderr, "log_file = %s\n", config->logfile ? config->logfile : "stderr");
-    g_fprintf (stderr, "log_level = %d\n", config->verbosity);
-    g_fprintf (stderr, "path sandboxing = %s\n", config->sandbox_path ? "yes" : "no");
-    g_fprintf (stderr, "execve(2) sandboxing = %s\n", config->sandbox_exec ? "yes" : "no");
-    g_fprintf (stderr, "network sandboxing = %s\n", config->sandbox_network ? "yes" : "no");
-    g_fprintf (stderr, "wait for all children = %s\n", config->wait_all ? "yes" : "no");
-    g_fprintf (stderr, "allow /proc/PID = %s\n", config->allow_proc_pid ? "yes" : "no");
-    g_fprintf (stderr, "paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
-    g_fprintf (stderr, "allowed write prefixes:\n");
+    g_fprintf (stderr, "main.colour = %s\n", config->colourise_output ? "on" : "off");
+    g_fprintf (stderr, "main.lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
+    g_fprintf (stderr, "main.paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
+    g_fprintf (stderr, "main.wait_all = %s\n", config->wait_all ? "yes" : "no");
+    g_fprintf (stderr, "main.allow_proc_pid = %s\n", config->allow_proc_pid ? "yes" : "no");
+    g_fprintf (stderr, "log.file = %s\n", config->logfile ? config->logfile : "stderr");
+    g_fprintf (stderr, "log.level = %d\n", config->verbosity);
+    g_fprintf (stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
+    g_fprintf (stderr, "sandbox.exec = %s\n", config->sandbox_exec ? "yes" : "no");
+    g_fprintf (stderr, "sandbox.network = %s\n", config->sandbox_network ? "yes" : "no");
+    g_fprintf (stderr, "prefix.write:\n");
     g_slist_foreach (config->write_prefixes, print_slist_entry, NULL);
-    g_fprintf (stderr, "predicted write prefixes:\n");
+    g_fprintf (stderr, "prefix.predict:\n");
     g_slist_foreach (config->predict_prefixes, print_slist_entry, NULL);
-    g_fprintf (stderr, "exec allowed prefixes:\n");
+    g_fprintf (stderr, "prefix.exec\n");
     g_slist_foreach (config->exec_prefixes, print_slist_entry, NULL);
 }
 
