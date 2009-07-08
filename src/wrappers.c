@@ -67,12 +67,12 @@
 
 #include <glib.h>
 
+#include "path.h"
+#include "wrappers.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
-#include "path.h"
-#include "wrappers.h"
 
 #ifndef __set_errno
 # define __set_errno(v) errno = (v)
