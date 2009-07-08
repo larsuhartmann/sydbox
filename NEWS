@@ -5,6 +5,18 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta8:
+    * Exit when eldest child exits and add a command line flag --wait-all to
+      wait for all children before exiting.
+    * Fix /proc/self substitution.
+    * Add configuration file variable main.allow_proc_pid and allow /proc/PID
+      depending on that variable. This defaults to true because allowing
+      /proc/PID is required for some programs to work reliably.
+    * Path sandboxing can now be disabled using the configuration file or
+      --disable-sandbox-path command line option. Previously this was only
+      possible using /dev/sydbox/{on,off} magic commands.
+    * Configuration file changes, make sure to merge your configuration file.
+
 0.1_beta7:
     * Fix magic stat problems on x86
     * Fix segfaults caused by wrong handling of the list of children.
