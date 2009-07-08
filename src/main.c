@@ -38,10 +38,13 @@
 #include "loop.h"
 #include "path.h"
 #include "trace.h"
-#include "config.h"
 #include "children.h"
 #include "syscall.h"
 #include "wrappers.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /* pink floyd */
 #define PINK_FLOYD  "       ..uu.                               \n" \

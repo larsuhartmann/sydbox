@@ -51,9 +51,12 @@
 #include <glib.h>
 
 #include "trace.h"
-#include "config.h"
 #include "syscall.h"
 #include "sydbox-log.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
 #define MAX_ARGS        6

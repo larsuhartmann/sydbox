@@ -22,10 +22,13 @@
 
 #include <glib/gstdio.h>
 
-#include "config.h"
 #include "sydbox-log.h"
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 void
 sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)
