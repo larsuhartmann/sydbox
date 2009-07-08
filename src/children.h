@@ -40,9 +40,9 @@ enum lock_status
 
 struct tdata
 {
-   bool on;                     // Whether sydbox is on for the child.
-   bool net;                    // Whether child is allowed to access network.
-   bool exec;                   // Whether execve() calls are sandboxed for child.
+   bool path;                   // Whether path sandboxing is enabled for child.
+   bool exec;                   // Whether execve(2) sandboxing is enabled for child.
+   bool network;                // Whether network sandboxing is enabled for child.
    int lock;                    // Whether magic commands are locked for the child.
    GSList *write_prefixes;
    GSList *predict_prefixes;

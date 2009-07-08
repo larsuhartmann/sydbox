@@ -45,10 +45,10 @@ void tchild_new(GSList **children, pid_t pid) {
     child->cwd = NULL;
     child->inherited = false;
     child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
-    child->sandbox->on = true;
-    child->sandbox->lock = LOCK_UNSET;
+    child->sandbox->path = true;
     child->sandbox->exec = false;
-    child->sandbox->net = false;
+    child->sandbox->network = false;
+    child->sandbox->lock = LOCK_UNSET;
     child->sandbox->write_prefixes = NULL;
     child->sandbox->predict_prefixes = NULL;
     child->sandbox->exec_prefixes = NULL;
@@ -78,10 +78,10 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
         child->cwd = g_strdup(parent->cwd);
     }
 
-    child->sandbox->on = parent->sandbox->on;
-    child->sandbox->lock = parent->sandbox->lock;
+    child->sandbox->path = parent->sandbox->path;
     child->sandbox->exec = parent->sandbox->exec;
-    child->sandbox->net = parent->sandbox->net;
+    child->sandbox->network = parent->sandbox->network;
+    child->sandbox->lock = parent->sandbox->lock;
     // Copy path lists
     walk = parent->sandbox->write_prefixes;
     while (NULL != walk) {

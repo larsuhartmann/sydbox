@@ -249,9 +249,9 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
-    eldest->sandbox->on = sydbox_config_get_sandbox_path();
+    eldest->sandbox->path = sydbox_config_get_sandbox_path();
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
-    eldest->sandbox->net = sydbox_config_get_sandbox_network();
+    eldest->sandbox->network = sydbox_config_get_sandbox_network();
     eldest->sandbox->lock = sydbox_config_get_disallow_magic_commands() ? LOCK_SET : LOCK_UNSET;
     eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes();
     eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes();

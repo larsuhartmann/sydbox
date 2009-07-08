@@ -393,19 +393,18 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     g_debug ("checking if open(\"%s\", ...) is magic", path);
     if (G_UNLIKELY(path_magic_on(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->on = true;
-        g_info ("sandbox status of child %i is now on", child->pid);
+        child->sandbox->path = true;
+        g_info ("path sandboxing is now enabled for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_off(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->on = false;
-        g_info ("sandbox status of child %i is now off", child->pid);
+        child->sandbox->path = false;
+        g_info ("path sandboxing is now disabled for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_toggle(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->on = !(child->sandbox->on);
-        g_info ("sandbox status of child %i is now %s",
-                child->pid, child->sandbox->on ? "on" : "off");
+        child->sandbox->path = !(child->sandbox->path);
+        g_info ("path sandboxing is now %sabled for child %i", child->sandbox->path ? "en" : "dis", child->pid);
     }
     else if (G_UNLIKELY(path_magic_lock(path))) {
         data->result = RS_MAGIC;
@@ -451,12 +450,12 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     else if (G_UNLIKELY(path_magic_sandbox_exec(path))) {
         data->result = RS_MAGIC;
         child->sandbox->exec = true;
-        g_info("execve() calls are now sandboxed for child %i", child->pid);
+        g_info("execve(2) sandboxing is now enabled for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_unsandbox_exec(path))) {
         data->result = RS_MAGIC;
         child->sandbox->exec = false;
-        g_info("execve() calls are now not sandboxed for child %i", child->pid);
+        g_info("execve(2) sandboxing is now disabled for child %i", child->pid);
     }
 
     if (G_UNLIKELY(RS_MAGIC == data->result)) {
@@ -485,7 +484,7 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     g_debug("checking if stat(\"%s\") is magic", path);
-    if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->on || !path_magic_enabled(path)))) {
+    if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path)))) {
         g_debug("stat(\"%s\") is magic, faking stat buffer", path);
         if (G_UNLIKELY(0 > trace_fake_stat(child->pid))) {
             data->result = RS_ERROR;
@@ -547,7 +546,7 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
  * If data->result isn't RS_ALLOW, which means an error has occured in a
  * previous callback or a decision has been made, it does nothing and simply
  * returns.
- * If child->sandbox->on is FALSE it does nothing and simply returns.
+ * If child->sandbox->path is false it does nothing and simply returns.
  * If everything was successful this function sets data->resolve to a boolean
  * which gives information about whether the symlinks should be resolved.
  * On failure this function sets data->result to RS_ERROR and data->save_errno
@@ -561,7 +560,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
 
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (G_UNLIKELY(!child->sandbox->on))
+    else if (G_UNLIKELY(!child->sandbox->path))
         return;
 
     g_debug("deciding whether we should resolve symlinks for system call %d(%s), child %i",
@@ -695,7 +694,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
  * If data->result isn't RS_ALLOW, which means an error has occured in a
  * previous callback or a decision has been made, it does nothing and simply
  * returns.
- * If child->sandbox->on is FALSE it does nothing and simply returns.
+ * If child->sandbox->path is FALSE it does nothing and simply returns.
  */
 static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
                                     gpointer child_ptr, gpointer data_ptr)
@@ -706,7 +705,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
 
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (G_UNLIKELY(!child->sandbox->on))
+    else if (G_UNLIKELY(!child->sandbox->path))
         return;
 
     g_debug("canonicalizing paths for system call %d(%s), child %i", self->no, sname, child->pid);
@@ -871,7 +870,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
 
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (G_UNLIKELY(!child->sandbox->on))
+    else if (G_UNLIKELY(!child->sandbox->path))
         return;
 
     if (self->flags & CHECK_PATH) {
@@ -899,7 +898,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
-    if (self->flags & NET_CALL && child->sandbox->net) {
+    if (child->sandbox->network && self->flags & NET_CALL) {
 #if defined(__NR_socketcall)
         sydbox_access_violation (child->pid, "socketcall()");
 #elif defined(__NR_socket)
