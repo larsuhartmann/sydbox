@@ -1240,6 +1240,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                     if (G_UNLIKELY(ESRCH != errno)) {
                         g_printerr("error while checking system call %lu(%s) for access: %s",
                                 sno, SYSCALL_NAME(child, sno), g_strerror(errno));
+#undef SYSCALL_NAME
                         exit(-1);
                     }
                     return context_remove_child(ctx, child->pid);
