@@ -45,10 +45,10 @@ void tchild_new(GSList **children, pid_t pid) {
     child->cwd = NULL;
     child->inherited = false;
     child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
-    child->sandbox->on = 1;
+    child->sandbox->on = true;
     child->sandbox->lock = LOCK_UNSET;
-    child->sandbox->exec = 0;
-    child->sandbox->net = 0;
+    child->sandbox->exec = false;
+    child->sandbox->net = false;
     child->sandbox->write_prefixes = NULL;
     child->sandbox->predict_prefixes = NULL;
     child->sandbox->exec_prefixes = NULL;

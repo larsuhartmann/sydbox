@@ -393,12 +393,12 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     g_debug ("checking if open(\"%s\", ...) is magic", path);
     if (G_UNLIKELY(path_magic_on(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->on = 1;
+        child->sandbox->on = true;
         g_info ("sandbox status of child %i is now on", child->pid);
     }
     else if (G_UNLIKELY(path_magic_off(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->on = 0;
+        child->sandbox->on = false;
         g_info ("sandbox status of child %i is now off", child->pid);
     }
     else if (G_UNLIKELY(path_magic_toggle(path))) {
@@ -450,12 +450,12 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     }
     else if (G_UNLIKELY(path_magic_sandbox_exec(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->exec = 1;
+        child->sandbox->exec = true;
         g_info("execve() calls are now sandboxed for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_unsandbox_exec(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->exec = 0;
+        child->sandbox->exec = false;
         g_info("execve() calls are now not sandboxed for child %i", child->pid);
     }
 

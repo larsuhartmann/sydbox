@@ -33,17 +33,17 @@
 /* per process tracking data */
 enum lock_status
 {
-   LOCK_SET,                           /* magic commands are locked */
-   LOCK_UNSET,                         /* magic commands are unlocked */
-   LOCK_PENDING,                       /* magic commands will be locked when an execve() is encountered */
+   LOCK_SET,        // Magic commands are locked.
+   LOCK_UNSET,      // Magic commands are unlocked.
+   LOCK_PENDING,    // Magic commands will be locked when an execve() is encountered.
 };
 
 struct tdata
 {
-   int on;                             /* whether sydbox is on for the child */
-   int lock;                           /* whether magic commands are locked for the child */
-   int net;                            /* whether child is allowed to access network */
-   int exec;                           /* whether execve() calls are sandboxed for child */
+   bool on;                     // Whether sydbox is on for the child.
+   bool net;                    // Whether child is allowed to access network.
+   bool exec;                   // Whether execve() calls are sandboxed for child.
+   int lock;                    // Whether magic commands are locked for the child.
    GSList *write_prefixes;
    GSList *predict_prefixes;
    GSList *exec_prefixes;
