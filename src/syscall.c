@@ -560,13 +560,15 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
 
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (G_UNLIKELY(!child->sandbox->path))
+    else if (child->sandbox->exec && self->flags & EXEC_CALL)
+        data->resolve = true;
+    else if (!child->sandbox->path)
         return;
 
     g_debug("deciding whether we should resolve symlinks for system call %d(%s), child %i",
             self->no, sname, child->pid);
     if (self->flags & DONT_RESOLV)
-        data->resolve = FALSE;
+        data->resolve = false;
     else if (self->flags & IF_AT_SYMLINK_FOLLOW4) {
         long symflags;
         if (G_UNLIKELY(0 > trace_get_arg(child->pid, 4, &symflags))) {
@@ -578,7 +580,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                 g_warning("failed to get argument 4: %s", g_strerror(errno));
             return;
         }
-        data->resolve = symflags & AT_SYMLINK_FOLLOW ? TRUE : FALSE;
+        data->resolve = symflags & AT_SYMLINK_FOLLOW ? true : false;
     }
     else if (self->flags & IF_AT_SYMLINK_NOFOLLOW3 || self->flags & IF_AT_SYMLINK_NOFOLLOW4) {
         long symflags;
@@ -592,7 +594,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                 g_warning("failed to get argument %d: %s", arg, g_strerror(errno));
             return;
         }
-        data->resolve = symflags & AT_SYMLINK_NOFOLLOW ? FALSE : TRUE;
+        data->resolve = symflags & AT_SYMLINK_NOFOLLOW ? false : true;
     }
     else if (self->flags & IF_AT_REMOVEDIR2) {
         long rmflags;
@@ -605,10 +607,10 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                 g_warning("failed to get argument 2: %s", g_strerror(errno));
             return;
         }
-        data->resolve = rmflags & AT_REMOVEDIR ? TRUE : FALSE;
+        data->resolve = rmflags & AT_REMOVEDIR ? true : false;
     }
     else
-        data->resolve = TRUE;
+        data->resolve = true;
     g_debug("decided %sto resolve symlinks for system call %d(%s), child %i",
             data->resolve ? "" : "not ", self->no, sname, child->pid);
 }
@@ -694,7 +696,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
  * If data->result isn't RS_ALLOW, which means an error has occured in a
  * previous callback or a decision has been made, it does nothing and simply
  * returns.
- * If child->sandbox->path is FALSE it does nothing and simply returns.
+ * If child->sandbox->path is false it does nothing and simply returns.
  */
 static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
                                     gpointer child_ptr, gpointer data_ptr)
@@ -705,11 +707,19 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
 
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (G_UNLIKELY(!child->sandbox->path))
+
+    if (!ctx->before_initial_execve && child->sandbox->exec && self->flags & EXEC_CALL) {
+        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
+                self->no, sname, child->pid);
+        data->rpathlist[0] = systemcall_resolvepath(self, child, 0, TRUE, data);
+        if (NULL == data->rpathlist[0])
+            return;
+        else
+            g_debug("canonicalized `%s' to `%s'", data->pathlist[0], data->rpathlist[0]);
+    }
+
+    if (!child->sandbox->path)
         return;
-
-    g_debug("canonicalizing paths for system call %d(%s), child %i", self->no, sname, child->pid);
-
     if (self->flags & CHECK_PATH) {
         g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
                 self->no, sname, child->pid);
@@ -754,15 +764,6 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
             return;
         else
             g_debug("canonicalized `%s' to `%s'", data->pathlist[3], data->rpathlist[3]);
-    }
-    if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
-        g_debug("canonicalizing `%s' for system call %d(%s), child %i", data->pathlist[0],
-                self->no, sname, child->pid);
-        data->rpathlist[0] = systemcall_resolvepath(self, child, 0, TRUE, data);
-        if (NULL == data->rpathlist[0])
-            return;
-        else
-            g_debug("canonicalized `%s' to `%s'", data->pathlist[0], data->rpathlist[0]);
     }
 }
 
@@ -870,9 +871,30 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
 
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
-    else if (G_UNLIKELY(!child->sandbox->path))
-        return;
 
+    if (child->sandbox->network && self->flags & NET_CALL) {
+#if defined(__NR_socketcall)
+        sydbox_access_violation (child->pid, "socketcall()");
+#elif defined(__NR_socket)
+        sydbox_access_violation (child->pid, "socket()");
+#endif
+        data->result = RS_DENY;
+        child->retval = -EACCES;
+        return;
+    }
+    if (!ctx->before_initial_execve && child->sandbox->exec && self->flags & EXEC_CALL) {
+        g_debug("checking `%s' for exec access", data->rpathlist[0]);
+        int allow_exec = pathlist_check(child->sandbox->exec_prefixes, data->rpathlist[0]);
+        if (!allow_exec) {
+            sydbox_access_violation(child->pid, "execve(\"%s\", argv[], envp[])", data->rpathlist[0]);
+            data->result = RS_DENY;
+            child->retval = -EACCES;
+        }
+        return;
+    }
+
+    if (!child->sandbox->path)
+        return;
     if (self->flags & CHECK_PATH) {
         systemcall_check_path(self, ctx, child, 0, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
@@ -897,24 +919,6 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         systemcall_check_path(self, ctx, child, 3, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
-    }
-    if (child->sandbox->network && self->flags & NET_CALL) {
-#if defined(__NR_socketcall)
-        sydbox_access_violation (child->pid, "socketcall()");
-#elif defined(__NR_socket)
-        sydbox_access_violation (child->pid, "socket()");
-#endif
-        data->result = RS_DENY;
-        child->retval = -EACCES;
-    }
-    if (!ctx->before_initial_execve && self->flags & EXEC_CALL && child->sandbox->exec) {
-        g_debug("checking `%s' for exec access", data->rpathlist[0]);
-        int allow_exec = pathlist_check(child->sandbox->exec_prefixes, data->rpathlist[0]);
-        if (!allow_exec) {
-            sydbox_access_violation(child->pid, "execve(\"%s\", argv[], envp[])", data->rpathlist[0]);
-            data->result = RS_DENY;
-            child->retval = -EACCES;
-        }
     }
 }
 
