@@ -115,6 +115,11 @@ dnl {{{ Check functions
 AC_CHECK_FUNCS([fchdir])
 dnl }}}
 
+dnl {{{ Check types
+AC_CHECK_TYPES([struct pt_all_user_regs, struct ia64_fpreg],,,
+			   [#include <sys/ptrace.h>])
+dnl }}}
+
 dnl {{{ Check whether getcwd(NULL, 0) allocates memory for result
 AC_MSG_CHECKING([whether getcwd(NULL, 0) allocates memory for result])
 AC_CACHE_VAL([ac_cv_func_getcwd_null])
