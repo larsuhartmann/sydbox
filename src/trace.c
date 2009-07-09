@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/reg.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -55,6 +54,10 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#ifdef HAVE_SYS_REG_H
+#include <sys/reg.h>
+#endif // HAVE_SYS_REG_H
 
 #include <sys/ptrace.h>
 /* We need additional hackery on IA64 to include linux/ptrace.h to avoid
