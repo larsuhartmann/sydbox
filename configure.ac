@@ -95,6 +95,10 @@ x86?64*)
 	arch=x86_64
 	AC_DEFINE([X86_64], 1, [Define for the AMD x86-64 architecture.])
 	;;
+ia64)
+	arch=ia64
+	AC_DEFINE([IA64], 1, [Define for the IA64 architecture.])
+	;;
 *)
 	AC_MSG_RESULT([NO!])
 	AC_MSG_ERROR([architecture $host_cpu is not supported by sydbox])
