@@ -45,8 +45,6 @@
 #include <sys/reg.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/ptrace.h>
-#include <linux/ptrace.h>
 
 #include <glib.h>
 
@@ -57,6 +55,22 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <sys/ptrace.h>
+/* We need additional hackery on IA64 to include linux/ptrace.h to avoid
+ * redefinition errors.
+ */
+#if defined(IA64)
+#ifdef HAVE_STRUCT_IA64_FPREG
+#define ia64_fpreg XXX_ia64_fpreg
+#endif // HAVE_STRUCT_IA64_FPREG
+#ifdef HAVE_STRUCT_PT_ALL_USER_REGS
+#define pt_all_user_regs XXX_pt_all_user_regs
+#endif // HAVE_STRUCT_PT_ALL_USER_REGS
+#include <linux/ptrace.h>
+#undef ia64_fpreg
+#undef pt_all_user_regs
+#endif // defined(IA64)
 
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
 #define MAX_ARGS        6
