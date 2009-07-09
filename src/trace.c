@@ -87,9 +87,9 @@ static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 
 static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 8 * R8, 8 * R9};
 #elif defined(IA64)
 #include <asm/ptrace_offsets.h>
-#define ORIG_ACCUM      (8 * PT_R15)
-#define ACCUM           (8 * PT_R8)
-static const long syscall_args[MAX_ARGS] = {8 * PT_R9, 8 * PT_R10, 8 * PT_R11, 8 * PT_R16, 8 * PT_R17, 8 * PT_R18};
+#define ORIG_ACCUM      (PT_R15)
+#define ACCUM           (PT_R8)
+static const long syscall_args[MAX_ARGS] = {PT_R9, PT_R10, PT_R11, PT_R16, PT_R17, PT_R18};
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
