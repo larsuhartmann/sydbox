@@ -123,7 +123,7 @@ static int trace_ia64_peek(pid_t pid, int narg, long *res)
     sol = (cfm >> 7) & 0x7f;
     out0 = ia64_rse_skip_regs((unsigned long *) rbs_end, -sof + sol);
 
-    return umoven(pid, (unsigned long) ia64_rse_skip_regs(out0, narg), sizeof(long), (char *) res);
+    return umoven(pid, (unsigned long) ia64_rse_skip_regs(out0, narg), (char *) res, sizeof(long));
 }
 #endif
 
