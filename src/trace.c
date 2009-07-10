@@ -264,6 +264,12 @@ static int trace_peek(pid_t pid, long off, long *res) {
         errno = save_errno;
         return -1;
     }
+
+#if defined(IA64)
+    /* Truncate away IVE sign-extension. */
+    val &= 0xffffffff;
+#endif
+
     *res = val;
     return 0;
 }
