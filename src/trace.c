@@ -75,21 +75,61 @@
 #undef pt_all_user_regs
 #endif // defined(IA64)
 
+static int trace_peek(pid_t pid, long off, long *res) {
+    long val;
+
+    errno = 0;
+    val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
+    if (G_UNLIKELY(-1 == val && 0 != errno)) {
+        int save_errno = errno;
+        g_info ("ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s", pid, off, strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    *res = val;
+    return 0;
+}
+
 #define ADDR_MUL        ((64 == __WORDSIZE) ? 8 : 4)
 #define MAX_ARGS        6
 #if defined(I386)
 #define ORIG_ACCUM      (4 * ORIG_EAX)
 #define ACCUM           (4 * EAX)
 static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 4 * EDI, 4 * EBP};
+static inline long trace_get_reg(pid_t pid G_GNUC_UNUSED, int narg)
+{
+    return syscall_args[narg];
+}
 #elif defined(X86_64)
 #define ORIG_ACCUM      (8 * ORIG_RAX)
 #define ACCUM           (8 * RAX)
 static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 8 * R8, 8 * R9};
+static inline long trace_get_reg(pid_t pid G_GNUC_UNUSED, int narg)
+{
+    return syscall_args[narg];
+}
 #elif defined(IA64)
 #include <asm/ptrace_offsets.h>
+#include <asm/rse.h>
 #define ORIG_ACCUM      (PT_R15)
 #define ACCUM           (PT_R8)
-static const long syscall_args[MAX_ARGS] = {PT_R11, PT_R9, PT_R10, PT_R14, PT_R15, PT_R13};
+static inline long trace_get_reg(pid_t pid, int narg)
+{
+    unsigned long *out0, cfm, sof, sol;
+    long rbs_end;
+
+    if (0 > trace_peek(pid, PT_RBS_END, &rbs_end))
+        return -1;
+    if (0 > trace_peek(pid, PT_CFM, (long *) cfm))
+        return -1;
+
+    sof = (cfm >> 0) & 0x7f;
+    sol = (cfm >> 7) & 0x7f;
+    out0 = ia64_rse_skip_regs((unsigned long *) rbs_end, -sof + sol);
+
+    return ia64_rse_skip_regs(out0, narg);
+}
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
@@ -253,31 +293,10 @@ int trace_geteventmsg(pid_t pid, void *data) {
     return 0;
 }
 
-static int trace_peek(pid_t pid, long off, long *res) {
-    long val;
-
-    errno = 0;
-    val = ptrace(PTRACE_PEEKUSER, pid, off, NULL);
-    if (G_UNLIKELY(-1 == val && 0 != errno)) {
-        int save_errno = errno;
-        g_info ("ptrace(PTRACE_PEEKUSER,%d,%lu,NULL) failed: %s", pid, off, strerror(errno));
-        errno = save_errno;
-        return -1;
-    }
-
-#if defined(IA64)
-    /* Truncate away IVE sign-extension. */
-    val &= 0xffffffff;
-#endif
-
-    *res = val;
-    return 0;
-}
-
 int trace_get_arg(pid_t pid, int arg, long *res) {
     assert(arg >= 0 && arg < MAX_ARGS);
 
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], res))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, trace_get_reg(pid, arg), res))) {
         int save_errno = errno;
         g_info ("failed to get argument %d for child %i: %s", arg, pid, strerror(errno));
         errno = save_errno;
@@ -289,7 +308,7 @@ int trace_get_arg(pid_t pid, int arg, long *res) {
 int trace_set_arg(pid_t pid, int arg, long val) {
     assert(arg >= 0 && arg < MAX_ARGS);
 
-    if (G_UNLIKELY(0 > ptrace(PTRACE_POKEUSER, pid, syscall_args[arg], val))) {
+    if (G_UNLIKELY(0 > ptrace(PTRACE_POKEUSER, pid, trace_get_reg(pid, arg), val))) {
         int save_errno = errno;
         g_info ("failed to set argument %d to %ld for child %i: %s",
                 arg, val, pid, g_strerror (errno));
@@ -344,7 +363,7 @@ char *trace_get_string(pid_t pid, int arg) {
     long addr = 0;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], &addr))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, trace_get_reg(pid, arg), &addr))) {
         save_errno = errno;
         g_info ("failed to get address of argument %d: %s", arg, g_strerror (errno));
         errno = save_errno;
@@ -377,7 +396,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     } u;
 
     assert(arg >= 0 && arg < MAX_ARGS);
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], &addr))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, trace_get_reg(pid, arg), &addr))) {
         save_errno = errno;
         g_info ("failed to get address of argument %d for child %i: %s", arg, pid, g_strerror (errno));
         errno = save_errno;
@@ -429,7 +448,7 @@ int trace_fake_stat(pid_t pid) {
     } u;
     struct stat fakebuf;
 
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[1], &addr))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, trace_get_reg(pid, 1), &addr))) {
         save_errno = errno;
         g_info ("failed to get address of argument 1 for child %i: %s", pid, g_strerror (errno));
         errno = save_errno;
