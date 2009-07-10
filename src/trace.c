@@ -89,7 +89,7 @@ static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 
 #include <asm/ptrace_offsets.h>
 #define ORIG_ACCUM      (PT_R15)
 #define ACCUM           (PT_R8)
-static const long syscall_args[MAX_ARGS] = {PT_R9, PT_R10, PT_R11, PT_R16, PT_R17, PT_R18};
+static const long syscall_args[MAX_ARGS] = {PT_R11, PT_R9, PT_R10, PT_R14, PT_R15, PT_R13};
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
