@@ -128,7 +128,7 @@ static inline long trace_get_reg(pid_t pid, int narg)
     sol = (cfm >> 7) & 0x7f;
     out0 = ia64_rse_skip_regs((unsigned long *) rbs_end, -sof + sol);
 
-    return ia64_rse_skip_regs(out0, narg);
+    return (unsigned long) ia64_rse_skip_regs(out0, narg);
 }
 #endif
 
