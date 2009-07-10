@@ -105,7 +105,7 @@ static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 
 #include <asm/ptrace_offsets.h>
 #include <asm/rse.h>
 #define ORIG_ACCUM      (PT_R15)
-#define ACCUM           (PT_R8)
+#define ACCUM           (PT_R10)
 static int trace_ia64_peek(pid_t pid, int narg, long *res)
 {
     unsigned long *out0, cfm, sof, sol;
