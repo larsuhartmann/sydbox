@@ -121,7 +121,7 @@ static inline long trace_get_reg(pid_t pid, int narg)
 
     if (0 > trace_peek(pid, PT_AR_BSP, &rbs_end))
         return -1;
-    if (0 > trace_peek(pid, PT_CFM, (long *) cfm))
+    if (0 > trace_peek(pid, PT_CFM, (long *) &cfm))
         return -1;
 
     sof = (cfm >> 0) & 0x7f;
