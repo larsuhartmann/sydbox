@@ -120,6 +120,9 @@ static const struct syscall_def {
 #if defined(__NR_utime)
     {__NR_utime,        CHECK_PATH},
 #endif
+#if defined(__NR_utimes)
+    {__NR_utimes,       CHECK_PATH},
+#endif
     {__NR_unlink,       CHECK_PATH | DONT_RESOLV},
     {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
     {__NR_mkdirat,      CHECK_PATH_AT | MUST_CREAT_AT},
