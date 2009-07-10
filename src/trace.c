@@ -75,6 +75,9 @@
 #undef pt_all_user_regs
 #endif // defined(IA64)
 
+static int umoven(pid_t pid, long addr, char *dest, size_t len);
+static int umovestr(pid_t pid, long addr, char *dest, size_t len);
+
 static int trace_peek(pid_t pid, long off, long *res) {
     long val;
 
@@ -120,12 +123,65 @@ static int trace_ia64_peek(pid_t pid, int narg, long *res)
     sol = (cfm >> 7) & 0x7f;
     out0 = ia64_rse_skip_regs((unsigned long *) rbs_end, -sof + sol);
 
-    *res = (unsigned long) ia64_rse_skip_regs(out0, narg);
-    return 0;
+    return umoven(pid, (unsigned long) ia64_rse_skip_regs(out0, narg), sizeof(long), (char *) res);
 }
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
+static int umoven(pid_t pid, long addr, char *dest, size_t len) {
+    int n, m, save_errno;
+    int started = 0;
+    union {
+        long val;
+        char x[sizeof(long)];
+    } u;
+
+    if (addr & (sizeof(long) -1)) {
+        // addr not a multiple of sizeof(long)
+        n = addr - (addr & -sizeof(long)); // residue
+        addr &= -sizeof(long); // residue
+        errno = 0;
+        u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
+        if (G_UNLIKELY(0 != errno)) {
+            if (G_LIKELY(started && (EPERM == errno || EIO == errno))) {
+                // Ran into end of memory - stupid "printpath"
+                return 0;
+            }
+            // But if not started, we had a bogus address
+            if (G_UNLIKELY(0 != addr && EIO != errno)) {
+                save_errno = errno;
+                g_info ("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, g_strerror (errno));
+                errno = save_errno;
+            }
+            return -1;
+        }
+        started = 1;
+        memcpy(dest, &u.x[n], m = MIN(sizeof(long) - n, len));
+        addr += sizeof(long), dest += m, len -= m;
+    }
+    while (len > 0) {
+        errno = 0;
+        u.val = ptrace(PTRACE_PEEKDATA, pid, (char *) addr, NULL);
+        if (G_UNLIKELY(0 != errno)) {
+            if (G_LIKELY(started && (EPERM == errno || EIO == errno))) {
+                // Ran into end of memory - stupid "printpath"
+                return 0;
+            }
+            // But if not started, we had a bogus address
+            if (G_UNLIKELY(0 != addr && EIO != errno)) {
+                save_errno = errno;
+                g_info ("ptrace(PTRACE_PEEKDATA,%i,%ld,NULL) failed: %s", pid, addr, g_strerror (errno));
+                errno = save_errno;
+            }
+            return -1;
+        }
+        started = 1;
+        memcpy(dest, u.x, m = MIN(sizeof(long), len));
+        addr += sizeof(long), dest += m, len -= m;
+    }
+    return 0;
+}
+
 static int umovestr(pid_t pid, long addr, char *dest, size_t len) {
     int n, m, save_errno;
     int started = 0;
