@@ -533,7 +533,11 @@ int trace_fake_stat(pid_t pid) {
     m = sizeof(struct stat) / sizeof(long);
     while (n < m) {
         memcpy(u.x, fakeptr, sizeof(long));
+#if defined(IA64)
+        if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n, u.val)) {
+#else
         if (0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val)) {
+#endif
             save_errno = errno;
             g_info ("failed to set argument 1 to %p for child %i: %s", (void *) fakeptr, pid, g_strerror (errno));
             errno = save_errno;
@@ -546,7 +550,11 @@ int trace_fake_stat(pid_t pid) {
     m = sizeof(struct stat) % sizeof(long);
     if (0 != m) {
         memcpy(u.x, fakeptr, m);
+#if defined(IA64)
+        if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n, u.val))) {
+#else
         if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val))) {
+#endif
             save_errno = errno;
             g_info ("failed to set argument 1 to %p for child %i: %s", (void *) fakeptr, pid, g_strerror (errno));
             errno = save_errno;
