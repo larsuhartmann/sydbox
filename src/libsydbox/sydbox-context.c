@@ -18,10 +18,15 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <sys/types.h>
+
+#include <glib.h>
+
 #include "sydbox-context.h"
 
 struct _SydboxContext
 {
+    // Public
     gboolean sandbox_path;
     gboolean sandbox_execve;
     gboolean sandbox_network;
@@ -29,6 +34,11 @@ struct _SydboxContext
     GSList *write_prefixes;
     GSList *predict_prefixes;
     GSList *execve_prefixes;
+
+    // Internal
+    pid_t eldest;                   // first child's pid is kept to determine return code.
+    gboolean before_initial_execve; // first execve() is noted here for execve(2) sandboxing.
+    GSList *children;               // list of children.
 };
 
 SydboxContext *
