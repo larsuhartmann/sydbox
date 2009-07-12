@@ -22,10 +22,13 @@
 
 struct _SydboxContext
 {
+    gboolean sandbox_path;
+    gboolean sandbox_execve;
     gboolean sandbox_network;
 
     GSList *write_prefixes;
     GSList *predict_prefixes;
+    GSList *execve_prefixes;
 };
 
 SydboxContext *
@@ -38,6 +41,30 @@ void
 sydbox_context_destroy (SydboxContext *ctx)
 {
     g_free (ctx);
+}
+
+gboolean
+sydbox_context_get_sandbox_path (const SydboxContext * const ctx)
+{
+    return ctx->sandbox_path;
+}
+
+void
+sydbox_context_set_sandbox_path (SydboxContext * const ctx, gboolean enabled)
+{
+    ctx->sandbox_path = enabled;
+}
+
+gboolean
+sydbox_context_get_sandbox_execve (const SydboxContext * const ctx)
+{
+    return ctx->sandbox_execve;
+}
+
+void
+sydbox_context_set_sandbox_execve (SydboxContext * const ctx, gboolean enabled)
+{
+    ctx->sandbox_execve = enabled;
 }
 
 gboolean
@@ -90,13 +117,37 @@ sydbox_context_set_predict_prefixes (SydboxContext * const ctx,
     const GSList *entry;
 
     if (ctx->predict_prefixes)
+        g_slist_free (ctx->predict_prefixes);
+
+    for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
+        prefix = (gchar *) entry->data;
+        g_assert(NULL != prefix);
+        g_assert('/' == prefix[0]);
+        ctx->predict_prefixes = g_slist_append(ctx->predict_prefixes, g_strdup(prefix));
+    }
+}
+
+const GSList *
+sydbox_context_get_execve_prefixes (const SydboxContext * const ctx)
+{
+    return ctx->execve_prefixes;
+}
+
+void
+sydbox_context_set_execve_prefixes (SydboxContext * const ctx,
+                                    const GSList * const prefixes)
+{
+    gchar *prefix;
+    const GSList *entry;
+
+    if (ctx->predict_prefixes)
         g_slist_free (ctx->write_prefixes);
 
     for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
         prefix = (gchar *) entry->data;
         g_assert(NULL != prefix);
         g_assert('/' == prefix[0]);
-        ctx->write_prefixes = g_slist_append(ctx->write_prefixes, g_strdup(prefix));
+        ctx->execve_prefixes = g_slist_append(ctx->execve_prefixes, g_strdup(prefix));
     }
 }
 

@@ -36,6 +36,18 @@ void
 sydbox_context_destroy (SydboxContext *ctx);
 
 gboolean
+sydbox_context_get_sandbox_path (const SydboxContext * const ctx);
+
+void
+sydbox_context_set_sandbox_path (SydboxContext * const ctx, gboolean enabled);
+
+gboolean
+sydbox_context_get_sandbox_execve (const SydboxContext * const ctx);
+
+void
+sydbox_context_set_sandbox_execve (SydboxContext * const ctx, gboolean enabled);
+
+gboolean
 sydbox_context_get_sandbox_network (const SydboxContext * const ctx);
 
 void
@@ -54,6 +66,14 @@ sydbox_context_get_predict_prefixes (const SydboxContext * const ctx);
 void
 sydbox_context_set_predict_prefixes (SydboxContext * const ctx,
                                      const GSList * const prefixes);
+
+const GSList *
+sydbox_context_get_execve_prefixes (const SydboxContext * const ctx);
+
+void
+sydbox_context_set_execve_prefixes (SydboxContext * const ctx,
+                                    const GSList * const prefixes);
+
 
 G_END_DECLS
 
