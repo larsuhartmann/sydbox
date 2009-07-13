@@ -44,7 +44,11 @@ struct _SydboxContext
 SydboxContext *
 sydbox_context_create (void)
 {
-    return g_try_new0 (SydboxContext, 1);
+    SydboxContext *ctx = g_try_new0(SydboxContext, 1);
+    if (NULL == ctx)
+        return NULL;
+    ctx->before_initial_execve = TRUE;
+    return ctx;
 }
 
 void
