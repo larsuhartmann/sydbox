@@ -150,8 +150,8 @@ sydbox_context_set_execve_prefixes (SydboxContext * const ctx,
     gchar *prefix;
     const GSList *entry;
 
-    if (ctx->predict_prefixes)
-        g_slist_free (ctx->write_prefixes);
+    if (ctx->execve_prefixes)
+        g_slist_free (ctx->execve_prefixes);
 
     for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
         prefix = (gchar *) entry->data;
