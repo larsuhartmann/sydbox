@@ -256,11 +256,11 @@ static bool systemcall_get_path(pid_t pid, int personality, int narg, struct che
  * information about dirfd. This string should be freed after use.
  */
 static bool systemcall_get_dirfd(SystemCall *self,
-                                 context_t *ctx, struct tchild *child,
+                                 struct tchild *child,
                                  int narg, struct checkdata *data)
 {
     long dfd;
-    if (G_UNLIKELY(0 > trace_get_arg(child->pid, ctx->personality, narg, &dfd))) {
+    if (G_UNLIKELY(0 > trace_get_arg(child->pid, child->personality, narg, &dfd))) {
         data->result = RS_ERROR;
         data->save_errno = errno;
         if (ESRCH == errno)
@@ -297,33 +297,33 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
 
     g_debug("starting check for system call %d(%s), child %i", self->no, sname, child->pid);
     if (self->flags & CHECK_PATH || self->flags & MAGIC_STAT) {
-        if (!systemcall_get_path(child->pid, ctx->personality, 0, data))
+        if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
     if (self->flags & CHECK_PATH2) {
-        if (!systemcall_get_path(child->pid, ctx->personality, 1, data))
+        if (!systemcall_get_path(child->pid, child->personality, 1, data))
             return;
     }
     if (self->flags & CHECK_PATH_AT) {
-        if (!systemcall_get_dirfd(self, ctx, child, 0, data))
+        if (!systemcall_get_dirfd(self, child, 0, data))
             return;
-        if (!systemcall_get_path(child->pid, ctx->personality, 1, data))
+        if (!systemcall_get_path(child->pid, child->personality, 1, data))
             return;
     }
     if (self->flags & CHECK_PATH_AT1) {
-        if (!systemcall_get_dirfd(self, ctx, child, 1, data))
+        if (!systemcall_get_dirfd(self, child, 1, data))
             return;
-        if (!systemcall_get_path(child->pid, ctx->personality, 2, data))
+        if (!systemcall_get_path(child->pid, child->personality, 2, data))
             return;
     }
     if (self->flags & CHECK_PATH_AT2) {
-        if (!systemcall_get_dirfd(self, ctx, child, 2, data))
+        if (!systemcall_get_dirfd(self, child, 2, data))
             return;
-        if (!systemcall_get_path(child->pid, ctx->personality, 3, data))
+        if (!systemcall_get_path(child->pid, child->personality, 3, data))
             return;
     }
     if (!ctx->before_initial_execve && child->sandbox->exec && self->flags & EXEC_CALL) {
-        if (!systemcall_get_path(child->pid, ctx->personality, 0, data))
+        if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
 }
@@ -342,10 +342,9 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
  * If the flag doesn't have W_OK set for system call access or accessat it
  * sets data->result to RS_NOWRITE and returns.
  */
-static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_flags(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                              gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
@@ -357,7 +356,7 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
 
     if (self->flags & OPEN_MODE || self->flags & OPEN_MODE_AT) {
         int arg = self->flags & OPEN_MODE ? 1 : 2;
-        if (G_UNLIKELY(0 > trace_get_arg(child->pid, ctx->personality, arg, &(data->open_flags)))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, child->personality, arg, &(data->open_flags)))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -371,7 +370,7 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
     }
     else {
         int arg = self->flags & ACCESS_MODE ? 1 : 2;
-        if (G_UNLIKELY(0 > trace_get_arg(child->pid, ctx->personality, arg, &(data->access_flags)))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, child->personality, arg, &(data->access_flags)))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -392,7 +391,7 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr,
  * RS_ERROR and data->save_errno to errno.
  * If the open() call isn't magic this function does nothing.
  */
-static void systemcall_magic_open(context_t *ctx, struct tchild *child, struct checkdata *data)
+static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     const char *rpath;
@@ -468,7 +467,7 @@ static void systemcall_magic_open(context_t *ctx, struct tchild *child, struct c
 
     if (G_UNLIKELY(RS_MAGIC == data->result)) {
         g_debug("changing path to /dev/null");
-        if (G_UNLIKELY(0 > trace_set_string(child->pid, ctx->personality, 0, "/dev/null", 10))) {
+        if (G_UNLIKELY(0 > trace_set_string(child->pid, child->personality, 0, "/dev/null", 10))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -488,13 +487,13 @@ static void systemcall_magic_open(context_t *ctx, struct tchild *child, struct c
  * data->save_errno to errno.
  * If the stat() caill isn't magic, this function does nothing.
  */
-static void systemcall_magic_stat(context_t *ctx, struct tchild *child, struct checkdata *data)
+static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     g_debug("checking if stat(\"%s\") is magic", path);
     if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path)))) {
         g_debug("stat(\"%s\") is magic, faking stat buffer", path);
-        if (G_UNLIKELY(0 > trace_fake_stat(child->pid, ctx->personality))) {
+        if (G_UNLIKELY(0 > trace_fake_stat(child->pid, child->personality))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -523,10 +522,9 @@ static void systemcall_magic_stat(context_t *ctx, struct tchild *child, struct c
  * Otherwise it calls systemcall_magic_open() for open() and
  * systemcall_magic_stat() for stat().
  */
-static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                              gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
@@ -545,9 +543,9 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
 #endif
 
     if (__NR_open == self->no)
-        systemcall_magic_open(ctx, child, data);
+        systemcall_magic_open(child, data);
     else
-        systemcall_magic_stat(ctx, child, data);
+        systemcall_magic_stat(child, data);
 }
 
 /* Fourth callback for systemcall handler.
@@ -561,10 +559,9 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr,
  * On failure this function sets data->result to RS_ERROR and data->save_errno
  * to errno.
  */
-static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
+static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                                gpointer child_ptr, gpointer data_ptr)
 {
-    context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
 
@@ -581,7 +578,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
         data->resolve = false;
     else if (self->flags & IF_AT_SYMLINK_FOLLOW4) {
         long symflags;
-        if (G_UNLIKELY(0 > trace_get_arg(child->pid, ctx->personality, 4, &symflags))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, child->personality, 4, &symflags))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -595,7 +592,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     else if (self->flags & IF_AT_SYMLINK_NOFOLLOW3 || self->flags & IF_AT_SYMLINK_NOFOLLOW4) {
         long symflags;
         int arg = self->flags & IF_AT_SYMLINK_NOFOLLOW3 ? 3 : 4;
-        if (G_UNLIKELY(0 > trace_get_arg(child->pid, ctx->personality, arg, &symflags))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, child->personality, arg, &symflags))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -608,7 +605,7 @@ static void systemcall_resolve(SystemCall *self, gpointer ctx_ptr,
     }
     else if (self->flags & IF_AT_REMOVEDIR2) {
         long rmflags;
-        if (G_UNLIKELY(0 > trace_get_arg(child->pid, ctx->personality, 2, &rmflags))) {
+        if (G_UNLIKELY(0 > trace_get_arg(child->pid, child->personality, 2, &rmflags))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -778,7 +775,7 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
 }
 
 static void systemcall_check_path(SystemCall *self,
-                                  context_t *ctx, struct tchild *child,
+                                  struct tchild *child,
                                   int narg, struct checkdata *data)
 {
     char *path = data->rpathlist[narg];
@@ -840,7 +837,7 @@ static void systemcall_check_path(SystemCall *self,
         if (self->flags & RETURNS_FD) {
             g_debug("system call %d(%s) returns fd and its argument is under a predict path", self->no, sname);
             g_debug("changing the path argument to /dev/null");
-            if (0 > trace_set_string(child->pid, ctx->personality, narg, "/dev/null", 10)) {
+            if (0 > trace_set_string(child->pid, child->personality, narg, "/dev/null", 10)) {
                 data->result = RS_ERROR;
                 data->save_errno = errno;
                 if (ESRCH == errno)
@@ -861,7 +858,7 @@ static void systemcall_check_path(SystemCall *self,
          */
         g_debug ("paranoia! system call %d(%s) resolves symlinks, substituting path with resolved path",
                 self->no, sname);
-        if (G_UNLIKELY(0 > trace_set_string(child->pid, ctx->personality, narg, path, strlen(path) + 1))) {
+        if (G_UNLIKELY(0 > trace_set_string(child->pid, child->personality, narg, path, strlen(path) + 1))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -906,27 +903,27 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     if (!child->sandbox->path)
         return;
     if (self->flags & CHECK_PATH) {
-        systemcall_check_path(self, ctx, child, 0, data);
+        systemcall_check_path(self, child, 0, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
     if (self->flags & CHECK_PATH2) {
-        systemcall_check_path(self, ctx, child, 1, data);
+        systemcall_check_path(self, child, 1, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
     if (self->flags & CHECK_PATH_AT) {
-        systemcall_check_path(self, ctx, child, 1, data);
+        systemcall_check_path(self, child, 1, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
     if (self->flags & CHECK_PATH_AT1) {
-        systemcall_check_path(self, ctx, child, 2, data);
+        systemcall_check_path(self, child, 2, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }
     if (self->flags & CHECK_PATH_AT2) {
-        systemcall_check_path(self, ctx, child, 3, data);
+        systemcall_check_path(self, child, 3, data);
         if (RS_ERROR == data->result || RS_DENY == data->result)
             return;
     }

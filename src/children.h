@@ -33,31 +33,32 @@
 /* per process tracking data */
 enum lock_status
 {
-   LOCK_SET,        // Magic commands are locked.
-   LOCK_UNSET,      // Magic commands are unlocked.
-   LOCK_PENDING,    // Magic commands will be locked when an execve() is encountered.
+    LOCK_SET,        // Magic commands are locked.
+    LOCK_UNSET,      // Magic commands are unlocked.
+    LOCK_PENDING,    // Magic commands will be locked when an execve() is encountered.
 };
 
 struct tdata
 {
-   bool path;                   // Whether path sandboxing is enabled for child.
-   bool exec;                   // Whether execve(2) sandboxing is enabled for child.
-   bool network;                // Whether network sandboxing is enabled for child.
-   int lock;                    // Whether magic commands are locked for the child.
-   GSList *write_prefixes;
-   GSList *predict_prefixes;
-   GSList *exec_prefixes;
+    bool path;                   // Whether path sandboxing is enabled for child.
+    bool exec;                   // Whether execve(2) sandboxing is enabled for child.
+    bool network;                // Whether network sandboxing is enabled for child.
+    int lock;                    // Whether magic commands are locked for the child.
+    GSList *write_prefixes;
+    GSList *predict_prefixes;
+    GSList *exec_prefixes;
 };
 
 struct tchild
 {
-   int flags;               // TCHILD_ flags
-   pid_t pid;               // Process ID of the child.
-   char *cwd;               // Child's current working directory.
-   unsigned long sno;       // Original syscall no when a system call is faked.
-   long retval;             // Faked syscall will return this value.
-   bool inherited;          // true if the child has inherited sandbox data from her parent.
-   struct tdata *sandbox;   // Sandbox data */
+    int personality;         // Personality (0 = 32bit, 1 = 64bit etc.)
+    int flags;               // TCHILD_ flags
+    pid_t pid;               // Process ID of the child.
+    char *cwd;               // Child's current working directory.
+    unsigned long sno;       // Original syscall no when a system call is faked.
+    long retval;             // Faked syscall will return this value.
+    bool inherited;          // true if the child has inherited sandbox data from her parent.
+    struct tdata *sandbox;   // Sandbox data */
 };
 
 void

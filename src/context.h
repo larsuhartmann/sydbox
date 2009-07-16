@@ -28,7 +28,6 @@
 
 typedef struct
 {
-    int personality;            // supported personality (0 = 32bit, 1 = 64bit etc.)
     pid_t eldest;               // first child's pid is kept to determine return code.
     bool before_initial_execve; // first execve() is noted here for execve(2) sandboxing.
     GSList *children;           // list of children
