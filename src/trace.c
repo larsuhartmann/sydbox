@@ -99,11 +99,36 @@ static int trace_peek(pid_t pid, long off, long *res) {
 #if defined(I386)
 #define ORIG_ACCUM      (4 * ORIG_EAX)
 #define ACCUM           (4 * EAX)
-static const long syscall_args[MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 4 * EDI, 4 * EBP};
+static const long syscall_args[1][MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 4 * EDI, 4 * EBP};
 #elif defined(X86_64)
 #define ORIG_ACCUM      (8 * ORIG_RAX)
 #define ACCUM           (8 * RAX)
-static const long syscall_args[MAX_ARGS] = {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 8 * R8, 8 * R9};
+static const long syscall_args[2][MAX_ARGS] = {
+    {8 * RBX, 8 * RCX, 8 * RDX, 8 * RSI, 8 * RDI, 8 * RBP},
+    {8 * RDI, 8 * RSI, 8 * RDX, 8 * R10, 8 * R8, 8 * R9}
+};
+
+int trace_type(pid_t pid)
+{
+    long cs;
+
+    /* Check CS register value,
+     * On x86-64 linux this is:
+     *  0x33    for long mode (64 bit)
+     *  0x23    for compatibility mode (32 bit)
+     */
+    if (0 > trace_peek(pid, 8 * CS, &cs))
+        return -1;
+
+    switch (cs) {
+        case 0x33:
+            return 1;
+        case 0x23:
+            return 0;
+        default:
+            g_assert_not_reached();
+    }
+}
 #elif defined(IA64)
 #include <asm/ptrace_offsets.h>
 #include <asm/rse.h>
@@ -342,13 +367,13 @@ int trace_geteventmsg(pid_t pid, void *data) {
     return 0;
 }
 
-int trace_get_arg(pid_t pid, int arg, long *res) {
+int trace_get_arg(pid_t pid, int personality, int arg, long *res) {
     assert(arg >= 0 && arg < MAX_ARGS);
 
 #if defined(IA64)
     if (G_UNLIKELY(0 > trace_ia64_peek(pid, arg, res))) {
 #else
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], res))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[personality][arg], res))) {
 #endif // defined(IA64)
         int save_errno = errno;
         g_info ("failed to get argument %d for child %i: %s", arg, pid, strerror(errno));
@@ -434,7 +459,7 @@ int trace_set_return(pid_t pid, long val) {
     return 0;
 }
 
-char *trace_get_string(pid_t pid, int arg) {
+char *trace_get_string(pid_t pid, int personality, int arg) {
     int save_errno;
     long addr = 0;
 
@@ -442,7 +467,7 @@ char *trace_get_string(pid_t pid, int arg) {
 #if defined(IA64)
     if (G_UNLIKELY(0 > trace_ia64_peek(pid, arg, &addr))) {
 #else
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], &addr))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[personality][arg], &addr))) {
 #endif // defined(IA64)
         save_errno = errno;
         g_info ("failed to get address of argument %d: %s", arg, g_strerror (errno));
@@ -467,7 +492,7 @@ char *trace_get_string(pid_t pid, int arg) {
     return buf;
 }
 
-int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
+int trace_set_string(pid_t pid, int personality, int arg, const char *src, size_t len) {
     int n, m, save_errno;
     long addr = 0;
     union {
@@ -480,7 +505,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
 #if defined(IA64)
     if (G_UNLIKELY(0 > trace_ia64_peek(pid, arg, &addr))) {
 #else
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[arg], &addr))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[personality][arg], &addr))) {
 #endif // defined(IA64)
         save_errno = errno;
         g_info ("failed to get address of argument %d for child %i: %s", arg, pid, g_strerror (errno));
@@ -524,7 +549,7 @@ int trace_set_string(pid_t pid, int arg, const char *src, size_t len) {
     return 0;
 }
 
-int trace_fake_stat(pid_t pid) {
+int trace_fake_stat(pid_t pid, int personality) {
     int n, m, save_errno;
     long addr = 0;
     union {
@@ -536,7 +561,7 @@ int trace_fake_stat(pid_t pid) {
 #if defined(IA64)
     if (G_UNLIKELY(0 > trace_ia64_peek(pid, 1, &addr))) {
 #else
-    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[1], &addr))) {
+    if (G_UNLIKELY(0 > trace_peek(pid, syscall_args[personality][1], &addr))) {
 #endif // defined(IA64)
         save_errno = errno;
         g_info ("failed to get address of argument 1 for child %i: %s", pid, g_strerror (errno));

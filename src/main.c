@@ -247,6 +247,21 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     }
 
     tchild_new (&(ctx->children), pid);
+#if defined(I386)
+    ctx->personality = 0;
+#elif defined(X86_64)
+    ctx->personality = trace_type(pid);
+    if (0 > ctx->personality) {
+        g_printerr("failed to determine personality: %s", g_strerror(errno));
+        exit(-1);
+    }
+#elif defined(IA64)
+    /* TODO: Add 32bit support for IA64 */
+    ctx->personality = 0;
+#endif
+    const char *names[2] = {"32 bit", "64 bit"};
+    g_info("child %i runs in %s mode", pid, names[ctx->personality]);
+
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
     eldest->sandbox->path = sydbox_config_get_sandbox_path();
