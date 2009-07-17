@@ -29,7 +29,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <asm/unistd.h>
 
 #include <glib.h>
 #include <glib-object.h>
@@ -45,117 +44,15 @@
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
 
+#include "flags.h"
+#include "dispatch.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-// System call dispatch flags
-#define RETURNS_FD              (1 << 0)  // The function returns a file descriptor
-#define OPEN_MODE               (1 << 1)  // Check the mode argument of open()
-#define OPEN_MODE_AT            (1 << 2)  // Check the mode argument of openat()
-#define ACCESS_MODE             (1 << 3)  // Check the mode argument of access()
-#define ACCESS_MODE_AT          (1 << 4)  // Check the mode argument of faccessat()
-#define CHECK_PATH              (1 << 5)  // First argument should be a valid path
-#define CHECK_PATH2             (1 << 6)  // Second argument should be a valid path
-#define CHECK_PATH_AT           (1 << 7)  // CHECK_PATH for at suffixed functions
-#define CHECK_PATH_AT1          (1 << 8)  // CHECK_PATH2 for symlinkat()
-#define CHECK_PATH_AT2          (1 << 9)  // CHECK_PATH2 for at suffixed functions
-#define DONT_RESOLV             (1 << 10) // Don't resolve symlinks
-#define IF_AT_SYMLINK_FOLLOW4   (1 << 11) // Resolving path depends on AT_SYMLINK_FOLLOW (4th argument)
-#define IF_AT_SYMLINK_NOFOLLOW3 (1 << 12) // Resolving path depends on AT_SYMLINK_NOFOLLOW (3th argument)
-#define IF_AT_SYMLINK_NOFOLLOW4 (1 << 13) // Resolving path depends on AT_SYMLINK_NOFOLLOW (4th argument)
-#define IF_AT_REMOVEDIR2        (1 << 14) // Resolving path depends on AT_REMOVEDIR (2nd argument)
-#define CAN_CREAT               (1 << 15) // The system call can create the first path if it doesn't exist
-#define CAN_CREAT2              (1 << 16) // The system call can create the second path if it doesn't exist
-#define CAN_CREAT_AT            (1 << 17) // CAN_CREAT for at suffixed functions
-#define CAN_CREAT_AT2           (1 << 18) // CAN_CREAT_AT2 for at suffixed functions
-#define MUST_CREAT              (1 << 19) // The system call _must_ create the first path, fails otherwise
-#define MUST_CREAT2             (1 << 20) // The system call _must_ create the second path, fails otherwise
-#define MUST_CREAT_AT           (1 << 21) // MUST_CREAT for at suffixed functions
-#define MUST_CREAT_AT1          (1 << 22) // MUST_CREAT2 for symlinkat()
-#define MUST_CREAT_AT2          (1 << 23) // MUST_CREAT2 for at suffixed functions
-#define MAGIC_OPEN              (1 << 24) // Check if the open() call is magic
-#define MAGIC_STAT              (1 << 25) // Check if the stat() call is magic
-#define NET_CALL                (1 << 26) // Allowing the system call depends on the net flag
-#define EXEC_CALL               (1 << 27) // Allowing the system call depends on the exec flag
-
-// System call dispatch table
-static const struct syscall_def {
-    int no;
-    int flags;
-} syscalls[] = {
-    {__NR_chmod,        CHECK_PATH},
-    {__NR_chown,        CHECK_PATH},
-#if defined(__NR_chown32)
-    {__NR_chown32,      CHECK_PATH},
-#endif
-    {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
-    {__NR_creat,        CHECK_PATH | CAN_CREAT | RETURNS_FD},
-    {__NR_stat,         MAGIC_STAT},
-#if defined(__NR_stat64)
-    {__NR_stat64,       MAGIC_STAT},
-#endif
-    {__NR_lchown,       CHECK_PATH | DONT_RESOLV},
-#if defined(__NR_lchown32)
-    {__NR_lchown32,     CHECK_PATH | DONT_RESOLV},
-#endif
-    {__NR_link,         CHECK_PATH | CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV},
-    {__NR_mkdir,        CHECK_PATH | MUST_CREAT},
-    {__NR_mknod,        CHECK_PATH | MUST_CREAT},
-    {__NR_access,       CHECK_PATH | ACCESS_MODE},
-    {__NR_rename,       CHECK_PATH | CHECK_PATH2 | CAN_CREAT2 | DONT_RESOLV},
-    {__NR_rmdir,        CHECK_PATH},
-    {__NR_symlink,      CHECK_PATH2 | MUST_CREAT2 | DONT_RESOLV},
-    {__NR_truncate,     CHECK_PATH},
-#if defined(__NR_truncate64)
-    {__NR_truncate64,   CHECK_PATH},
-#endif
-    {__NR_mount,        CHECK_PATH2},
-#if defined(__NR_umount)
-    {__NR_umount,       CHECK_PATH},
-#endif
-#if defined(__NR_umount2)
-    {__NR_umount2,      CHECK_PATH},
-#endif
-#if defined(__NR_utime)
-    {__NR_utime,        CHECK_PATH},
-#endif
-#if defined(__NR_utimes)
-    {__NR_utimes,       CHECK_PATH},
-#endif
-    {__NR_unlink,       CHECK_PATH | DONT_RESOLV},
-    {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
-    {__NR_mkdirat,      CHECK_PATH_AT | MUST_CREAT_AT},
-    {__NR_mknodat,      CHECK_PATH_AT | MUST_CREAT_AT},
-    {__NR_fchownat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW4},
-    {__NR_unlinkat,     CHECK_PATH_AT | IF_AT_REMOVEDIR2},
-    {__NR_renameat,     CHECK_PATH_AT | CHECK_PATH_AT2 | CAN_CREAT_AT2 | DONT_RESOLV},
-    {__NR_linkat,       CHECK_PATH_AT | CHECK_PATH_AT2 | MUST_CREAT_AT2 | IF_AT_SYMLINK_FOLLOW4},
-    {__NR_symlinkat,    CHECK_PATH_AT1 | MUST_CREAT_AT1 | DONT_RESOLV},
-    {__NR_fchmodat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3},
-    {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
-#if defined(__NR_socketcall)
-    {__NR_socketcall,   NET_CALL},
-#elif defined(__NR_socket)
-    {__NR_socket,       NET_CALL},
-#endif
-    {__NR_execve,       EXEC_CALL},
-    {-1,                -1},
-};
-
-static const struct syscall_name {
-    int no;
-    const char *name;
-} sysnames[] = {
-#include "syscallent.h"
-{-1,    NULL}
-};
-
-#define UNKNOWN_SYSCALL         "unknown"
-
 #define BAD_SYSCALL             0xbadca11
 #define IS_BAD_SYSCALL(_sno)    (BAD_SYSCALL == (_sno))
-#define IS_CHDIR(_sno)          (__NR_chdir == (_sno) || __NR_fchdir == (_sno))
 
 #define MODE_STRING(flags)                                                      \
     ((flags) & ACCESS_MODE) ? "O_WR" :                                          \
@@ -169,18 +66,6 @@ enum {
 
 static SystemCall *SystemCallHandler;
 static const char *sname;
-
-/* Look up the system call name in sysnames array.
- * Return name if its found, UNKNOWN_SYSCALL otherwise.
- */
-static inline const char *syscall_get_name(int no)
-{
-    for (int i = 0; sysnames[i].name != NULL; i++) {
-        if (sysnames[i].no == no)
-            return sysnames[i].name;
-    }
-    return UNKNOWN_SYSCALL;
-}
 
 static void systemcall_set_property(GObject *obj,
                                     guint prop_id,
@@ -534,15 +419,10 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
         g_debug("Lock is set for child %i, skipping magic checks", child->pid);
         return;
     }
-#if defined(__NR_stat64)
-    else if (G_LIKELY(__NR_open != self->no && __NR_stat != self->no && __NR_stat64 != self->no))
+    else if (!(self->flags & MAGIC_OPEN || self->flags & MAGIC_STAT))
         return;
-#else
-    else if (G_LIKELY(__NR_open != self->no && __NR_stat != self->no))
-        return;
-#endif
 
-    if (__NR_open == self->no)
+    if (self->flags & MAGIC_OPEN)
         systemcall_magic_open(child, data);
     else
         systemcall_magic_stat(child, data);
@@ -808,23 +688,19 @@ static void systemcall_check_path(SystemCall *self,
         switch (narg) {
             case 0:
                 sydbox_access_violation(child->pid, "%s(\"%s\", %s)",
-                                        sname ? sname : syscall_get_name (self->no),
-                                        path, MODE_STRING(self->flags));
+                                        sname, path, MODE_STRING(self->flags));
                 break;
             case 1:
                 sydbox_access_violation(child->pid, "%s(?, \"%s\", %s)",
-                                        sname ? sname : syscall_get_name (self->no),
-                                        path, MODE_STRING(self->flags));
+                                        sname, path, MODE_STRING(self->flags));
                 break;
             case 2:
                 sydbox_access_violation(child->pid, "%s(?, ?, \"%s\", %s)",
-                                        sname ? sname : syscall_get_name (self->no),
-                                        path, MODE_STRING(self->flags));
+                                        sname, path, MODE_STRING(self->flags));
                 break;
             case 3:
                 sydbox_access_violation(child->pid, "%s(?, ?, ?, \"%s\", %s)",
-                                        sname ? sname : syscall_get_name (self->no),
-                                        path, MODE_STRING(self->flags));
+                                        sname, path, MODE_STRING(self->flags));
                 break;
             default:
                 g_assert_not_reached ();
@@ -880,11 +756,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         return;
 
     if (child->sandbox->network && self->flags & NET_CALL) {
-#if defined(__NR_socketcall)
-        sydbox_access_violation (child->pid, "socketcall()");
-#elif defined(__NR_socket)
-        sydbox_access_violation (child->pid, "socket()");
-#endif
+        sydbox_access_violation(child->pid, "%s()", sname);
         data->result = RS_DENY;
         child->retval = -EACCES;
         return;
@@ -1063,19 +935,19 @@ void syscall_free(void)
     SystemCallHandler = NULL;
 }
 
-/* Lookup a handler for the system call in syscalls array.
+/* Lookup a handler for the system call.
  * Return the handler if found, NULL otherwise.
  */
-SystemCall *syscall_get_handler(int no)
+SystemCall *syscall_get_handler(int personality, int no)
 {
-    for (unsigned int i = 0; -1 != syscalls[i].no; i++) {
-        if (syscalls[i].no == no) {
-            SystemCallHandler->no = syscalls[i].no;
-            SystemCallHandler->flags = syscalls[i].flags;
-            return SystemCallHandler;
-        }
-    }
-    return NULL;
+    int flags;
+
+    flags = dispatch_flags(personality, no);
+    if (-1 == flags)
+        return NULL;
+    SystemCallHandler->no = no;
+    SystemCallHandler->flags = flags;
+    return SystemCallHandler;
 }
 
 /* BAD_SYSCALL handler for system calls.
@@ -1202,18 +1074,14 @@ int syscall_handle(context_t *ctx, struct tchild *child)
      * If system call no is BAD_SYSCALL, this is a faked system call and the real
      * system call number is stored in child->sno.
      */
-#define SYSCALL_NAME(_child, _sno) IS_BAD_SYSCALL(_sno) ? syscall_get_name((_child)->sno) : syscall_get_name(_sno)
-    if (2 < sydbox_config_get_verbosity())
-        sname = SYSCALL_NAME(child, sno);
-    else
-        sname = NULL;
+    sname = dispatch_name(child->personality, IS_BAD_SYSCALL(sno) ? child->sno : (unsigned long) sno);
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         g_debug_trace("child %i is entering system call %lu(%s)", child->pid, sno, sname);
 
         /* Get handler for the system call
          */
-        handler = syscall_get_handler(sno);
+        handler = syscall_get_handler(child->personality, sno);
         if (NULL == handler) {
             /* There's no handler for this system call.
              * Safe system call, allow access.
@@ -1249,8 +1117,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                 case RS_ERROR:
                     if (G_UNLIKELY(ESRCH != errno)) {
                         g_printerr("error while checking system call %lu(%s) for access: %s",
-                                sno, SYSCALL_NAME(child, sno), g_strerror(errno));
-#undef SYSCALL_NAME
+                                sno, sname, g_strerror(errno));
                         exit(-1);
                     }
                     return context_remove_child(ctx, child->pid);
@@ -1269,7 +1136,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
             if (0 > syscall_handle_badcall(child))
                 return context_remove_child(ctx, child->pid);
         }
-        else if (IS_CHDIR(sno)) {
+        else if (dispatch_chdir(child->personality, sno)) {
             /* Child is exiting a system call that may have changed its current
              * working directory. Update current working directory.
              */

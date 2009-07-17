@@ -35,6 +35,8 @@ data/sydbox.1
 data/sydbox.1.xml
 src/sydbox
 src/syscallent.h
+src/syscallent32.h
+src/syscallent64.h
 src/syscall_marshaller.c
 src/syscall_marshaller.h
 tests/check_sydbox
