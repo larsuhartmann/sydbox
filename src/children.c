@@ -31,7 +31,6 @@
 #include "children.h"
 #include "sydbox-log.h"
 #include "sydbox-config.h"
-#include "trace.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,22 +39,9 @@
 void tchild_new(GSList **children, pid_t pid) {
     gchar *proc_pid;
     struct tchild *child;
-    const char *pnames[2] = {"32 bit", "64 bit"};
 
     g_debug("new child %i", pid);
     child = (struct tchild *) g_malloc (sizeof(struct tchild));
-#if defined(I386) || defined(IA64)
-    child->personality = 0;
-#elif defined(X86_64)
-    child->personality = trace_type(pid);
-    if (0 > child->personality) {
-        g_printerr("failed to determine personality for child %i: %s", pid, g_strerror(errno));
-        exit(-1);
-    }
-#else
-#error unsupported architecture
-#endif
-    g_debug("child %i runs in %s mode", pid, pnames[child->personality]);
     child->flags = TCHILD_NEEDSETUP;
     child->pid = pid;
     child->sno = 0xbadca11;
@@ -96,6 +82,7 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
         child->cwd = g_strdup(parent->cwd);
     }
 
+    child->personality = parent->personality;
     child->sandbox->path = parent->sandbox->path;
     child->sandbox->exec = parent->sandbox->exec;
     child->sandbox->network = parent->sandbox->network;

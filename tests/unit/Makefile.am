@@ -8,8 +8,7 @@ UNIT_TESTS = sydbox-utils children path
 libsydbox_SOURCES = $(top_srcdir)/src/sydbox-utils.c  \
 		    $(top_srcdir)/src/sydbox-config.c \
 		    $(top_srcdir)/src/path.c          \
-		    $(top_srcdir)/src/children.c \
-		    $(top_srcdir)/src/trace.c
+		    $(top_srcdir)/src/children.c
 AM_CFLAGS += -DSYSCONFDIR="\"$(sysconfdir)\"" -I$(top_srcdir)/src
 # }}}
 
