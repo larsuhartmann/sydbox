@@ -504,7 +504,14 @@ char *trace_get_string(pid_t pid,
     return buf;
 }
 
-int trace_set_string(pid_t pid, int personality, int arg, const char *src, size_t len) {
+int trace_set_string(pid_t pid,
+#if defined(IA64)
+        int personality G_GNUC_UNUSED,
+#else
+        int personality,
+#endif // defined(IA64)
+        int arg, const char *src, size_t len)
+{
     int n, m, save_errno;
     long addr = 0;
     union {
