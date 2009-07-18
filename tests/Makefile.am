@@ -12,6 +12,17 @@ check_sydbox_SOURCES = check_children.c check_path.c check_trace.c \
 		       $(top_builddir)/src/proc.c \
 		       $(top_builddir)/src/sydbox-log.c $(top_builddir)/src/sydbox-config.c \
 		       $(top_builddir)/src/sydbox-utils.c
+# dispatch.c
+check_sydbox_SOURCES+= $(top_builddir)/src/dispatch.h $(top_builddir)/src/dispatch-table.h
+if I386
+check_sydbox_SOURCES+= $(top_builddir)/src/dispatch.c
+endif
+if X86_64
+check_sydbox_SOURCES+= $(top_builddir)/src/dispatch32.c $(top_builddir)/src/dispatch64.c
+endif
+if IA64
+check_sydbox_SOURCES+= $(top_builddir)/src/dispatch.c
+endif
 nodist_check_sydbox_SOURCES= $(top_builddir)/src/syscall_marshaller.c
 
 check_sydbox_CFLAGS = \
