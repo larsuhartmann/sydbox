@@ -44,7 +44,7 @@ void tchild_new(GSList **children, pid_t pid) {
 
     g_debug("new child %i", pid);
     child = (struct tchild *) g_malloc (sizeof(struct tchild));
-#if defined(I386)
+#if defined(I386) || defined(IA64)
     child->personality = 0;
 #elif defined(X86_64)
     child->personality = trace_type(pid);
@@ -52,9 +52,6 @@ void tchild_new(GSList **children, pid_t pid) {
         g_printerr("failed to determine personality for child %i: %s", pid, g_strerror(errno));
         exit(-1);
     }
-#elif defined(IA64)
-    // TODO: Add support for personalities on IA64.
-    child->personality = 0;
 #else
 #error unsupported architecture
 #endif
