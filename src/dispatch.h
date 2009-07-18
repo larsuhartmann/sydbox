@@ -29,11 +29,11 @@
 #define IS_CHDIR(_sno)      (__NR_chdir == (_sno) || __NR_fchdir == (_sno))
 #define UNKNOWN_SYSCALL     "unknown"
 
-#if defined(I386)
+#if defined(I386) || defined(IA64)
 int dispatch_flags(int personality, int sno);
 const char *dispatch_name(int personality, int sno);
 bool dispatch_chdir(int personality, int sno);
-#elif defined(X86_64) || defined(IA64)
+#elif defined(X86_64)
 int dispatch_flags32(int sno);
 int dispatch_flags64(int sno);
 const char *dispatch_name32(int sno);
