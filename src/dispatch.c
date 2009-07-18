@@ -28,7 +28,7 @@
 static const struct syscall_name {
     int no;
     const char *name;
-} sysnames[]  {
+} sysnames[] = {
 #include "syscallent.h"
     {-1,    NULL}
 };
@@ -44,7 +44,7 @@ int dispatch_flags(int personality G_GNUC_UNUSED, int sno)
 
 const char *dispatch_name(int personality G_GNUC_UNUSED, int sno)
 {
-    for (unsigned int i = 0; NULL != syscalls[i].name; i++) {
+    for (unsigned int i = 0; NULL != sysnames[i].name; i++) {
         if (sysnames[i].no == sno)
             return sysnames[i].name;
     }
