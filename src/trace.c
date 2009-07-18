@@ -367,7 +367,13 @@ int trace_geteventmsg(pid_t pid, void *data) {
     return 0;
 }
 
-int trace_get_arg(pid_t pid, int personality, int arg, long *res) {
+int trace_get_arg(pid_t pid,
+#if defined(IA64)
+        int personality G_GNUC_UNUSED,
+#else
+        int personality,
+#endif // defined(IA64)
+        int arg, long *res) {
     assert(arg >= 0 && arg < MAX_ARGS);
 
 #if defined(IA64)
@@ -459,7 +465,13 @@ int trace_set_return(pid_t pid, long val) {
     return 0;
 }
 
-char *trace_get_string(pid_t pid, int personality, int arg) {
+char *trace_get_string(pid_t pid,
+#if defined(IA64)
+        int personality G_GNUC_UNUSED,
+#else
+        int personality,
+#endif // defined(IA64)
+        int arg) {
     int save_errno;
     long addr = 0;
 
@@ -549,7 +561,14 @@ int trace_set_string(pid_t pid, int personality, int arg, const char *src, size_
     return 0;
 }
 
-int trace_fake_stat(pid_t pid, int personality) {
+int trace_fake_stat(pid_t pid,
+#if defined(IA64)
+        int personality G_GNUC_UNUSED
+#else
+        int personality
+#endif // defined(IA64)
+)
+{
     int n, m, save_errno;
     long addr = 0;
     union {
