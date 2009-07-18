@@ -133,7 +133,9 @@ int trace_loop(context_t *ctx) {
     unsigned int event;
     pid_t pid;
     struct tchild *child;
+#if defined(X86_64)
     const char *pnames[2] = {"32 bit", "64 bit"};
+#endif // defined(X86_64)
 
     ret = EXIT_SUCCESS;
     while (NULL != ctx->children) {
