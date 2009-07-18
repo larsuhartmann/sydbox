@@ -21,7 +21,7 @@ if X86_64
 sydbox_SOURCES+= dispatch32.c dispatch64.c
 endif
 if IA64
-sydbox_SOURCES+= dispatch32.c dispatch64.c
+sydbox_SOURCES+= dispatch.c
 endif
 
 nodist_sydbox_SOURCES= syscall_marshaller.h syscall_marshaller.c
