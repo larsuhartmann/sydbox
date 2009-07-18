@@ -153,7 +153,11 @@ static int trace_ia64_peek(pid_t pid, int narg, long *res)
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
-static int umoven(pid_t pid, long addr, char *dest, size_t len) {
+#if ! defined(IA64)
+G_GNUC_UNUSED
+#endif // ! defined(IA64)
+static int umoven(pid_t pid, long addr, char *dest, size_t len)
+{
     int n, m, save_errno;
     int started = 0;
     union {
