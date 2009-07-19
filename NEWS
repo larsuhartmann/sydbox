@@ -5,6 +5,12 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta9:
+    * Fix execve(2) and network sandboxing checks when path sandboxing is
+      disabled.
+    * Ported to IA64, now IA64 is a supported architecture. (thanks to Ingmar and ahf)
+    * Support for tracing 32 bit binaries on x86_64 systems.
+
 0.1_beta8:
     * Exit when eldest child exits and add a command line flag --wait-all to
       wait for all children before exiting.
