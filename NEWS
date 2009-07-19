@@ -5,6 +5,9 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_beta10:
+    * Fix build failures due to bad packaging, iow i fail.
+
 0.1_beta9:
     * Fix execve(2) and network sandboxing checks when path sandboxing is
       disabled.
