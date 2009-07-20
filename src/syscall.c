@@ -964,7 +964,8 @@ static int syscall_handle_badcall(struct tchild *child)
             /* Error setting system call using ptrace()
              * child is still alive, hence the error is fatal.
              */
-            g_printerr("failed to restore system call: %s", g_strerror (errno));
+            g_critical("failed to restore system call: %s", g_strerror(errno));
+            g_printerr("failed to restore system call: %s", g_strerror(errno));
             exit(-1);
         }
         // Child is dead.
@@ -975,6 +976,7 @@ static int syscall_handle_badcall(struct tchild *child)
             /* Error setting return code using ptrace()
              * child is still alive, hence the error is fatal.
              */
+            g_critical("failed to set return code: %s", g_strerror(errno));
             g_printerr("failed to set return code: %s", g_strerror(errno));
             exit(-1);
         }
@@ -997,7 +999,8 @@ static int syscall_handle_chdir(struct tchild *child)
             /* Error getting return code using ptrace()
              * child is still alive, hence the error is fatal.
              */
-            g_printerr("failed to get return code: %s", g_strerror (errno));
+            g_critical("failed to get return code: %s", g_strerror(errno));
+            g_printerr("failed to get return code: %s", g_strerror(errno));
             exit(-1);
         }
         // Child is dead.
@@ -1022,7 +1025,8 @@ static int syscall_handle_chdir(struct tchild *child)
                     /* Error setting return code using ptrace()
                      * child is still alive, hence the error is fatal.
                      */
-                    g_printerr("failed to set return code: %s", g_strerror (errno));
+                    g_critical("failed to set return code: %s", g_strerror(errno));
+                    g_printerr("failed to set return code: %s", g_strerror(errno));
                     exit(-1);
                 }
                 // Child is dead.
@@ -1116,6 +1120,8 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                     break;
                 case RS_ERROR:
                     if (G_UNLIKELY(ESRCH != errno)) {
+                        g_critical("error while checking system call %lu(%s) for access: %s",
+                                sno, sname, g_strerror(errno));
                         g_printerr("error while checking system call %lu(%s) for access: %s",
                                 sno, sname, g_strerror(errno));
                         exit(-1);
