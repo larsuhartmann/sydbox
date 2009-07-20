@@ -70,10 +70,10 @@ sydbox_log_output (const gchar *log_domain,
     }
 
 
-    output = g_strdup_printf ("%s (%s%lu@%lu) %s: %s\n",
+    output = g_strdup_printf ("%s (%s%i@%lu) %s: %s\n",
                               log_domain ? log_domain : "**",
                               fd ? "" : PACKAGE":",
-                              (gulong) getpid(), (gulong) time(NULL),
+                              getpid(), (gulong) time(NULL),
                               prefix, message);
 
     g_fprintf (fd ? fd : stderr, "%s", output);
