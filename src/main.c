@@ -237,14 +237,16 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     /* wait for SIGSTOP */
     wait (&status);
     if (WIFEXITED (status)) {
-        g_printerr ("wtf? child died before sending SIGSTOP");
-        exit (WEXITSTATUS (status));
+        g_critical("wtf? child died before sending SIGSTOP");
+        g_printerr("wtf? child died before sending SIGSTOP");
+        exit(WEXITSTATUS(status));
     }
-    g_assert (WIFSTOPPED (status) && SIGSTOP == WSTOPSIG (status));
+    g_assert(WIFSTOPPED(status) && SIGSTOP == WSTOPSIG(status));
 
-    if (trace_setup (pid) < 0) {
-        g_printerr ("failed to setup tracing options: %s", g_strerror (errno));
-        exit (-1);
+    if (0 > trace_setup(pid)) {
+        g_critical("failed to setup tracing options: %s", g_strerror(errno));
+        g_printerr("failed to setup tracing options: %s", g_strerror(errno));
+        exit(-1);
     }
 
     tchild_new (&(ctx->children), pid);
@@ -278,11 +280,12 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     }
     eldest->inherited = true;
 
-    g_info ("child %lu is ready to go, resuming", (gulong) pid);
-    if (trace_syscall (pid, 0) < 0) {
-        trace_kill (pid);
-        g_printerr ("failed to resume eldest child %lu: %s", (gulong) pid, g_strerror (errno));
-        exit (-1);
+    g_info ("child %i is ready to go, resuming", pid);
+    if (0 > trace_syscall(pid, 0)) {
+        trace_kill(pid);
+        g_critical("failed to resume eldest child %i: %s", pid, g_strerror(errno));
+        g_printerr("failed to resume eldest child %i: %s", pid, g_strerror(errno));
+        exit(-1);
     }
 
     g_info ("entering loop");
