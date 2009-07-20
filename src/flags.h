@@ -39,7 +39,7 @@
 #define CAN_CREAT               (1 << 15) // The system call can create the first path if it doesn't exist
 #define CAN_CREAT2              (1 << 16) // The system call can create the second path if it doesn't exist
 #define CAN_CREAT_AT            (1 << 17) // CAN_CREAT for at suffixed functions
-#define CAN_CREAT_AT2           (1 << 18) // CAN_CREAT_AT2 for at suffixed functions
+#define CAN_CREAT_AT2           (1 << 18) // CAN_CREAT2 for at suffixed functions
 #define MUST_CREAT              (1 << 19) // The system call _must_ create the first path, fails otherwise
 #define MUST_CREAT2             (1 << 20) // The system call _must_ create the second path, fails otherwise
 #define MUST_CREAT_AT           (1 << 21) // MUST_CREAT for at suffixed functions
