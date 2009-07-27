@@ -51,7 +51,7 @@ struct sydbox_config
 bool
 sydbox_config_load (const gchar * const file)
 {
-    gchar *config_file;
+    const gchar *config_file;
     GKeyFile *config_fd;
     GError *config_error = NULL;
 
@@ -78,11 +78,11 @@ sydbox_config_load (const gchar * const file)
 
     // Figure out the path to the configuration file
     if (file)
-        config_file = g_strdup (file);
-    else if (g_getenv (ENV_CONFIG))
-        config_file = g_strdup (g_getenv (ENV_CONFIG));
+        config_file = file;
+    else if (g_getenv(ENV_CONFIG))
+        config_file = g_getenv(ENV_CONFIG);
     else
-        config_file = g_strdup (SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
+        config_file = SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf";
 
     // Initialize key file
     config_fd = g_key_file_new();
@@ -91,11 +91,8 @@ sydbox_config_load (const gchar * const file)
         g_error_free(config_error);
         g_key_file_free(config_fd);
         g_free(config);
-        g_free(config_file);
         return false;
     }
-    else
-        g_free(config_file);
 
     // Get main.colour
     if (g_getenv(ENV_NO_COLOUR))
