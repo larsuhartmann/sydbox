@@ -32,6 +32,7 @@
 #if defined(I386) || defined(IA64)
 int dispatch_flags(int personality, int sno);
 const char *dispatch_name(int personality, int sno);
+const char *dispatch_mode(int personality);
 bool dispatch_chdir(int personality, int sno);
 #elif defined(X86_64)
 int dispatch_flags32(int sno);
@@ -45,6 +46,8 @@ bool dispatch_chdir64(int sno);
     ((personality) == 0) ? dispatch_flags32((sno)) : dispatch_flags64((sno))
 #define dispatch_name(personality, sno) \
     ((personality) == 0) ? dispatch_name32((sno)) : dispatch_name64((sno))
+#define dispatch_mode(personality) \
+    ((personality) == 0) ? "32 bit" : "64 bit"
 #define dispatch_chdir(personality, sno) \
     ((personality) == 0) ? dispatch_chdir32((sno)) : dispatch_chdir64((sno))
 

@@ -28,6 +28,7 @@
 
 #include <glib.h>
 
+#include "dispatch.h"
 #include "loop.h"
 #include "proc.h"
 #include "trace.h"
@@ -133,9 +134,6 @@ int trace_loop(context_t *ctx) {
     unsigned int event;
     pid_t pid;
     struct tchild *child;
-#if defined(X86_64)
-    const char *pnames[2] = {"32 bit", "64 bit"};
-#endif // defined(X86_64)
 
     ret = EXIT_SUCCESS;
     while (NULL != ctx->children) {
@@ -212,7 +210,7 @@ int trace_loop(context_t *ctx) {
                     g_printerr("failed to determine personality of child %i: %s", child->pid, g_strerror(errno));
                     exit(-1);
                 }
-                g_debug("updated child %i's personality to %s mode", child->pid, pnames[child->personality]);
+                g_debug("updated child %i's personality to %s mode", child->pid, dispatch_mode(child->personality));
 #endif // defined(X86_64)
                 ret = xsyscall(ctx, child);
                 if (0 != ret)

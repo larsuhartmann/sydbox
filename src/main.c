@@ -35,6 +35,7 @@
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
 
+#include "dispatch.h"
 #include "loop.h"
 #include "path.h"
 #include "trace.h"
@@ -214,7 +215,6 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     int status, retval;
     struct sigaction new_action, old_action;
     struct tchild *eldest;
-    const char *pnames[] = {"32 bit", "64 bit"};
 
     new_action.sa_handler = sig_cleanup;
     sigemptyset (&new_action.sa_mask);
@@ -264,7 +264,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
 #else
 #error unsupported architecture
 #endif
-    g_debug("eldest child %i runs in %s mode", eldest->pid, pnames[eldest->personality]);
+    g_debug("eldest child %i runs in %s mode", eldest->pid, dispatch_mode(eldest->personality));
     eldest->sandbox->path = sydbox_config_get_sandbox_path();
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
     eldest->sandbox->network = sydbox_config_get_sandbox_network();

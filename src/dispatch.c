@@ -25,6 +25,10 @@
 #include "dispatch.h"
 #include "dispatch-table.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 static const struct syscall_name {
     int no;
     const char *name;
@@ -49,6 +53,19 @@ const char *dispatch_name(int personality G_GNUC_UNUSED, int sno)
             return sysnames[i].name;
     }
     return UNKNOWN_SYSCALL;
+}
+
+inline const char *dispatch_mode(int personality G_GNUC_UNUSED)
+{
+    const char *mode;
+#if defined(I386)
+    mode = "32 bit";
+#elif defined(IA64)
+    mode = "64 bit";
+#else
+#error unsupported architecture
+#endif
+    return mode;
 }
 
 bool dispatch_chdir(int personality G_GNUC_UNUSED, int sno)
