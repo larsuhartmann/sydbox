@@ -121,7 +121,7 @@ static bool systemcall_get_path(pid_t pid, int personality, int narg, struct che
     if (G_UNLIKELY(NULL == data->pathlist[narg])) {
         data->result = RS_ERROR;
         data->save_errno = errno;
-        if (ESRCH == errno)
+        if (ESRCH == errno || EIO == errno || EFAULT == errno)
             g_debug("failed to grab string from argument %d: %s", narg, g_strerror(errno));
         else
             g_warning("failed to grab string from argument %d: %s", narg, g_strerror(errno));
@@ -1101,6 +1101,17 @@ int syscall_handle(context_t *ctx, struct tchild *child)
 
             /* Check result */
             switch(data.result) {
+                case RS_ERROR:
+                    if (ESRCH == errno)
+                        return context_remove_child(ctx, child->pid);
+                    else if (EIO != errno || EFAULT != errno) {
+                        g_critical("error while checking system call %lu(%s) for access: %s",
+                                sno, sname, g_strerror(errno));
+                        g_printerr("error while checking system call %lu(%s) for access: %s",
+                                sno, sname, g_strerror(errno));
+                        exit(-1);
+                    }
+                    /* fall through */
                 case RS_DENY:
                     g_debug("denying access to system call %lu(%s)", sno, sname);
                     child->sno = sno;
@@ -1118,15 +1129,6 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                 case RS_MAGIC:
                     g_debug_trace("allowing access to system call %lu(%s)", sno, sname);
                     break;
-                case RS_ERROR:
-                    if (G_UNLIKELY(ESRCH != errno)) {
-                        g_critical("error while checking system call %lu(%s) for access: %s",
-                                sno, sname, g_strerror(errno));
-                        g_printerr("error while checking system call %lu(%s) for access: %s",
-                                sno, sname, g_strerror(errno));
-                        exit(-1);
-                    }
-                    return context_remove_child(ctx, child->pid);
                 default:
                     g_assert_not_reached();
                     break;
