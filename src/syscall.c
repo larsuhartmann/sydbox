@@ -55,7 +55,6 @@
 #define IS_BAD_SYSCALL(_sno)    (BAD_SYSCALL == (_sno))
 
 #define MODE_STRING(flags)                                                      \
-    ((flags) & ACCESS_MODE) ? "O_WR" :                                          \
     ((flags) & OPEN_MODE || (flags) & OPEN_MODE_AT) ? "O_WRONLY/O_RDWR" : "..."
 
 enum {
@@ -685,6 +684,14 @@ static void systemcall_check_path(SystemCall *self,
         }
         child->retval = -EPERM;
 
+        /* Don't raise access violations for access(2) system call.
+         * Silently deny it instead.
+         */
+        if (self->flags & ACCESS_MODE) {
+            data->result = RS_DENY;
+            return;
+        }
+
         switch (narg) {
             case 0:
                 sydbox_access_violation(child->pid, "%s(\"%s\", %s)",
@@ -706,7 +713,6 @@ static void systemcall_check_path(SystemCall *self,
                 g_assert_not_reached ();
                 break;
         }
-
         data->result = RS_DENY;
     }
     else if (!allow_write && allow_predict) {
