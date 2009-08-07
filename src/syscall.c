@@ -1110,7 +1110,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                 case RS_ERROR:
                     if (ESRCH == errno)
                         return context_remove_child(ctx, child->pid);
-                    else if (EIO != errno || EFAULT != errno) {
+                    else if (EIO != errno && EFAULT != errno) {
                         g_critical("error while checking system call %lu(%s) for access: %s",
                                 sno, sname, g_strerror(errno));
                         g_printerr("error while checking system call %lu(%s) for access: %s",
