@@ -29,7 +29,7 @@ title: Sydbox the other sandbox
 
     $ sudo sed -i -e 's/sydbox/sandbox/g' /usr/share/paludis/eapis/exheres-0.conf
 
-- If something goes wrong **PALUDIS_DO_NOTHING_SANDBOXY** is your friend.
+- If something goes wrong **PALUDIS\_DO\_NOTHING\_SANDBOXY** is your friend.
 
 # Bugs/Support #
 
