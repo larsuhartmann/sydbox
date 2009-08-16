@@ -3,7 +3,7 @@ layout: default
 title: Sydbox the other sandbox
 ---
 
-# About #
+## About ##
 
 - [Ptrace](http://linux.die.net/man/2/ptrace) based sandbox implementation.
 - Intercepts system calls and checks for allowed filesystem prefixes, denies them when checks fail.
@@ -13,11 +13,11 @@ title: Sydbox the other sandbox
   [strace](http://sourceforge.net/projects/strace).
 - Distributed under the terms of the [GPL2](http://www.gnu.org/licenses/gpl-2.0.html).
 
-# Why #
+## Why ##
 
 - Gentoo's sandbox sucks for several reasons, Exherbo needs a better one.
 
-# Testing #
+## Testing ##
 
 - Grab [sys-apps/sydbox](http://git.exherbo.org/summer/packages/sys-apps/sydbox/) from
   [::alip-misc](http://git.exherbo.org/summer/repositories/alip-misc/).
@@ -31,11 +31,11 @@ title: Sydbox the other sandbox
 
 - If something goes wrong **PALUDIS\_DO\_NOTHING\_SANDBOXY** is your friend.
 
-# Bugs/Support #
+## Bugs/Support ##
 
 - Join our channel [#sydbox](irc://irc.freenode.net/sydbox) on [freenode](http://freenode.net/).
 
-# Contribute #
+## Contribute ##
 
 - Clone [git://github.com/alip/sydbox.git](git://github.com/alip/sydbox.git).
 - Read [TODO](http://github.com/alip/sydbox/blob/master/TODO.mkd) and see open [bugs](http://bit.ly/MzeIv).
