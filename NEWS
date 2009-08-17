@@ -5,6 +5,11 @@ This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
 
+0.1_rc1:
+    * Don't die when ptrace() fails with EIO, fixes #213.
+    * Don't barf if configuration file doesn't exist.
+    * Fix segfaults due to using log functions in signal handler.
+
 0.1_beta10:
     * Fix build failures due to bad packaging, iow i fail.
 
