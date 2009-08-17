@@ -1,4 +1,4 @@
-/* vim: set et ts=4 sts=4 sw=4 fdm=syntax */
+/* vim: set et ts=4 sts=4 sw=4 fdm=syntax : */
 
 /*
  * Copyright (c) 2009 Saleem Abdulrasool <compnerd@compnerd.org>
