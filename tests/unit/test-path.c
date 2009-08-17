@@ -111,7 +111,7 @@ test5 (void)
 static void
 test6 (void)
 {
-    g_assert (pathlist_init (NULL, NULL) == NULL);
+    g_assert(pathlist_init(NULL, NULL) == 0);
 }
 
 static void
