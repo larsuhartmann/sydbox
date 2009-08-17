@@ -145,7 +145,6 @@ static void cleanup(void) {
 
 static void sig_cleanup(int signum) {
     struct sigaction action;
-    g_warning ("received signal %d, calling cleanup()", signum);
     cleanup();
     sigaction(signum, NULL, &action);
     action.sa_handler = SIG_DFL;
