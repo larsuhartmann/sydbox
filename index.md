@@ -17,20 +17,6 @@ title: Sydbox the other sandbox
 
 - Gentoo's sandbox sucks for several reasons, Exherbo needs a better one.
 
-## Testing ##
-
-- Grab [sys-apps/sydbox](http://git.exherbo.org/summer/packages/sys-apps/sydbox/) from
-  [::alip-misc](http://git.exherbo.org/summer/repositories/alip-misc/).
-- Switch to sydbox with:
-
-    $ sudo sed -i -e 's/sandbox/sydbox/g' /usr/share/paludis/eapis/exheres-0.conf
-
-- To switch back:
-
-    $ sudo sed -i -e 's/sydbox/sandbox/g' /usr/share/paludis/eapis/exheres-0.conf
-
-- If something goes wrong **PALUDIS\_DO\_NOTHING\_SANDBOXY** is your friend.
-
 ## Bugs/Support ##
 
 - Join our channel [#sydbox](irc://irc.freenode.net/sydbox) on [freenode](http://freenode.net/).
