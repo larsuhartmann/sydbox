@@ -15,7 +15,8 @@ title: Sydbox the other sandbox
 
 ## Why ##
 
-- Gentoo's sandbox sucks for several reasons, Exherbo needs a better one.
+- [Gentoo](http://www.gentoo.org)'s sandbox sucks for several reasons,
+  [Exherbo](http://www.exherbo.org) needs a better one.
 
 ## Bugs/Support ##
 
