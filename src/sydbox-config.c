@@ -48,6 +48,21 @@ struct sydbox_config
 } *config;
 
 
+static void sydbox_config_set_defaults(void)
+{
+    g_assert(config != NULL);
+
+    config->colourise_output = true;
+    config->verbosity = 1;
+    config->sandbox_path = true;
+    config->sandbox_network = false;
+    config->sandbox_exec = false;
+    config->disallow_magic_commands = false;
+    config->paranoid_mode_enabled = false;
+    config->wait_all = false;
+    config->allow_proc_pid = true;
+}
+
 bool
 sydbox_config_load (const gchar * const file)
 {
@@ -64,15 +79,7 @@ sydbox_config_load (const gchar * const file)
         /* ENV_NO_CONFIG set, set the defaults,
          * and return without parsing the configuration file.
          */
-        config->colourise_output = true;
-        config->verbosity = 1;
-        config->sandbox_path = true;
-        config->sandbox_network = false;
-        config->sandbox_exec = false;
-        config->disallow_magic_commands = false;
-        config->paranoid_mode_enabled = false;
-        config->wait_all = false;
-        config->allow_proc_pid = true;
+        sydbox_config_set_defaults();
         return true;
     }
 
@@ -87,11 +94,22 @@ sydbox_config_load (const gchar * const file)
     // Initialize key file
     config_fd = g_key_file_new();
     if (!g_key_file_load_from_file(config_fd, config_file, G_KEY_FILE_NONE, &config_error)) {
-        g_printerr("failed to parse config file: %s\n", config_error->message);
-        g_error_free(config_error);
-        g_key_file_free(config_fd);
-        g_free(config);
-        return false;
+        switch (config_error->code) {
+            case G_FILE_ERROR_NOENT:
+                /* Configuration file not found!
+                 * Set the defaults and return true.
+                 */
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                sydbox_config_set_defaults();
+                return true;
+            default:
+                g_printerr("failed to parse config file: %s\n", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+        }
     }
 
     // Get main.colour
