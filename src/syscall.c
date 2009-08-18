@@ -19,7 +19,11 @@
 
 #ifndef _ATFILE_SOURCE
 #define _ATFILE_SOURCE
-#endif
+#endif // !_ATFILE_SOURCE
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
 
 #include <errno.h>
 #include <fcntl.h>
@@ -46,10 +50,6 @@
 
 #include "flags.h"
 #include "dispatch.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #define BAD_SYSCALL             0xbadca11
 #define IS_BAD_SYSCALL(_sno)    (BAD_SYSCALL == (_sno))

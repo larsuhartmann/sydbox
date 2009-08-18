@@ -17,6 +17,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include "sydbox-log.h"
 #include "sydbox-config.h"
 
@@ -25,10 +29,6 @@
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 static FILE *fd;
 static bool initialized;

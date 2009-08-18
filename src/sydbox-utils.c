@@ -17,6 +17,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include <stdbool.h>
 #include <string.h>
 
@@ -25,10 +29,6 @@
 #include "sydbox-log.h"
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 void
 sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)

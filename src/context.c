@@ -17,6 +17,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -27,10 +31,6 @@
 #include "context.h"
 #include "wrappers.h"
 #include "sydbox-log.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif // HAVE_CONFIG_H
 
 context_t *
 context_new (void)

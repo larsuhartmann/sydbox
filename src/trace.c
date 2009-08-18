@@ -36,6 +36,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -50,10 +54,6 @@
 #include "trace.h"
 #include "syscall.h"
 #include "sydbox-log.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>

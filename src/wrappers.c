@@ -45,8 +45,12 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
+#define _GNU_SOURCE 1
+#endif // !_GNU_SOURCE
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
 
 #include <assert.h>
 #include <errno.h>
@@ -69,10 +73,6 @@
 
 #include "path.h"
 #include "wrappers.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #ifndef __set_errno
 # define __set_errno(v) errno = (v)

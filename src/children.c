@@ -19,6 +19,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -31,10 +35,6 @@
 #include "children.h"
 #include "sydbox-log.h"
 #include "sydbox-config.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif // HAVE_CONFIG_H
 
 void tchild_new(GSList **children, pid_t pid) {
     gchar *proc_pid;

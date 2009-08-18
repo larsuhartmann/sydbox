@@ -18,6 +18,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
@@ -42,10 +46,6 @@
 #include "children.h"
 #include "syscall.h"
 #include "wrappers.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 /* pink floyd */
 #define PINK_FLOYD  "       ..uu.                               \n" \

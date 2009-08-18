@@ -17,6 +17,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include <stdbool.h>
 #include <asm/unistd.h>
 
@@ -24,10 +28,6 @@
 
 #include "dispatch.h"
 #include "dispatch-table.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif // HAVE_CONFIG_H
 
 static const struct syscall_name {
     int no;
