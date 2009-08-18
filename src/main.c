@@ -251,7 +251,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
-#if defined(I386) || defined(IA64)
+#if defined(I386) || defined(IA64) || defined(POWERPC)
     eldest->personality = 0;
 #elif defined(X86_64)
     eldest->personality = trace_type(pid);
