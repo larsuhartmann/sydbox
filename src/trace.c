@@ -150,6 +150,11 @@ static int trace_ia64_peek(pid_t pid, int narg, long *res)
 
     return umoven(pid, (unsigned long) ia64_rse_skip_regs(out0, narg), (char *) res, sizeof(long));
 }
+#elif defined(POWERPC)
+#define ORIG_ACCUM  (sizeof(unsigned long) * PT_R0)
+#define ACCUM       (sizeof(unsigned long) * PT_R3)
+#define ACCUM_FLAGS (sizeof(unsigned long) * PT_CCR)
+#define SO_MASK     0x10000000
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
@@ -435,6 +440,21 @@ int trace_get_return(pid_t pid, long *res) {
         errno = save_errno;
         return -1;
     }
+#if defined(POWERPC)
+    long flags;
+
+    if (G_UNLIKELY(0 > trace_peek(pid, ACCUM_FLAGS, &flags))) {
+        int save_errno = errno;
+        g_info("failed to get return flags for child %i: %s", pid, g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    if (flags & SO_MASK) {
+        *res = -(*res);
+    }
+#endif // defined(POWERPC)
+
     return 0;
 }
 
