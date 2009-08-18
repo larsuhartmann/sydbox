@@ -99,6 +99,10 @@ ia64)
 	arch=ia64
 	AC_DEFINE([IA64], 1, [Define for the IA64 architecture.])
 	;;
+powerpc64)
+	arch=ppc64
+	AC_DEFINE([PPC64], 1, [Define for the PPC64 architecture.])
+	;;
 *)
 	AC_MSG_RESULT([NO!])
 	AC_MSG_ERROR([architecture $host_cpu is not supported by sydbox])
@@ -108,6 +112,7 @@ AC_MSG_RESULT($arch)
 AM_CONDITIONAL(I386, test x"$arch" = x"i386")
 AM_CONDITIONAL(X86_64, test x"$arch" = x"x86_64")
 AM_CONDITIONAL(IA64, test x"$arch" = x"ia64")
+AM_CONDITIONAL(PPC64, test x"$arch" = x"ppc64")
 AM_CONDITIONAL(P1, test x"$arch" = x"i386" -o x"$arch" = x"ia64")
 AM_CONDITIONAL(P2, test x"$arch" = x"x86_64")
 dnl }}}
