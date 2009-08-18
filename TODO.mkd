@@ -1,11 +1,31 @@
 ## Sydbox TODO list ##
 
   - Libification, compnerd started this in [libsydbox](http://github.com/alip/sydbox/tree/libsydbox) branch.
-  - Port it to different architectures. Currently we support x86, x86_64, ia64 and ppc64.
-  - Proper network support. This includes denying only non-local connections etc.
-  - Write more tests. We could always use more unit and/or program tests.
 
-### PowerPC ###
+### Unit tests ###
+  - We could always use more unit and/or program tests
+  - Move checks written in [check](http://check.sourceforge.net/) to
+    [glib](http://library.gnome.org/devel/glib/unstable/glib-Testing.html)
+    so we can ditch the [dev-libs/check](http://git.exherbo.org/summer/packages/dev-libs/check/) dependency.
 
-  - This architecture support is rather new and needs testing.
+### Network support ###
+  - Denying only non-local connections.
+  - Denying by IP address.
+
+### Porting ###
+  - Port it to different architectures, currently we support:
+    * [x86](http://en.wikipedia.org/wiki/X86): stable.
+    * [x86\_64](http://en.wikipedia.org/wiki/X86_64): stable.
+    * [ia64](http://en.wikipedia.org/wiki/Ia64): new, needs testing.
+    * [ppc64](http://en.wikipedia.org/wiki/Ppc64): new, needs testing.
+
+### Logo ###
+  - We need a logo for sydbox. Ideas include:
+    * The cover of
+      [dark side](http://en.wikipedia.org/wiki/The_Dark_Side_of_the_Moon),
+      except with some representation of a box substituted for the prism. (spbecker)
+    * The burning guy from
+      [wish you were here](http://en.wikipedia.org/wiki/Wish_You_Were_Here_%28Pink_Floyd_album%29)
+      holding a box. (spbecker)
+    * **Wish you were here** arguably fits better to the name. (arkanoid)
 
