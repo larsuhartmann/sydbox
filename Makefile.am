@@ -3,7 +3,7 @@ MAINTAINERCLEANFILES= Makefile.in configure aclocal.m4 \
 		      config.h config.h.in INSTALL
 ACLOCAL_AMFLAGS= -I m4
 AUTOMAKE_OPTIONS= dist-bzip2 no-dist-gzip std-options foreign
-EXTRA_DIST= autogen.sh README.mkd TODO.mkd conf/sydbox.conf
+EXTRA_DIST= autogen.sh README.mkd TODO.mkd
 SUBDIRS = src data . tests
 
 check-valgrind:
@@ -18,3 +18,4 @@ checksum: dist
 upload:
 	@echo "UPLOAD $(PACKAGE)-$(VERSION).tar.bz2*"
 	scp $(PACKAGE)-$(VERSION).tar.bz2* anapnea.net:www/sydbox
+
