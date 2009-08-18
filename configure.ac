@@ -423,8 +423,8 @@ PKG_CHECK_MODULES([gobject], [gobject-2.0 >= $GLIB_REQUIRED],,
 PKG_CHECK_MODULES([check], [check >= $CHECK_REQUIRED])
 dnl }}}
 
-dnl {{{ shave
-SHAVE_INIT([.], [enable])
+dnl {{{ Use AM_SILENT_RULES if present, shave otherwise
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES(yes)], [SHAVE_INIT([.], [enable])])
 dnl }}}
 
 dnl {{{ output
@@ -439,3 +439,4 @@ AC_OUTPUT(
 	tests/unit/Makefile
 	)
 dnl }}}
+
