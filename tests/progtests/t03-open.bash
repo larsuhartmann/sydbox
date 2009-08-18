@@ -69,6 +69,10 @@ end_test
 
 # Tests dealing with too long paths
 tmpfile="$(mkstemp_long)"
+if [[ -z "$tmpfile" ]]; then
+    say skip "failed to create temporary file, skipping test (no perl?)"
+    exit 0
+fi
 
 start_test "t03-open-rdonly-toolong-allow"
 sydbox -- ./t03_open_toolong 0 "$long_dir" "$tmpfile"

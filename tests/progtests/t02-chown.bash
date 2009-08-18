@@ -28,6 +28,10 @@ end_test
 
 # Tests dealing with too long paths
 tmpfile="$(mkstemp_long)"
+if [[ -z "$tmpfile" ]]; then
+    say skip "failed to create temporary file, skipping test (no perl?)"
+    exit 0
+fi
 
 start_test "t02-chown-deny-toolong"
 sydbox -- ./t02_chown_toolong "$long_dir" "$tmpfile"

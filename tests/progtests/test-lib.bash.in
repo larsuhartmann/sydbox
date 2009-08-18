@@ -157,20 +157,11 @@ cleanup() {
 }
 trap 'cleanup' EXIT
 
-find_perl_or_skip() {
-    local p="$(type -P perl 2>/dev/null)"
-    if [[ -z "$p" ]]; then
-        say skip "perl not found, skipping test"
-        exit 0
-    fi
-    echo "$p"
-}
-
 kill_long() {
     local perl
 
     # rm may fail to do it so use perl instead...
-    perl="$(type -P perl 2>/dev/null)"
+    perl="@PERL_PATH@"
     [[ -z "$perl" ]] && return 0
 
     "$perl"                             \
@@ -183,7 +174,11 @@ mkdir_long() {
     local perl
 
     # bash fails to do it so use perl instead...
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    if [[ -z "$perl" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
 
     if ! "$perl"                                                \
         -e 'my $dir = '$long_dir';'                             \
@@ -201,7 +196,11 @@ lstat_long() {
 
     # bash fails to do it so use perl instead
     local fname="$1"
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    if [[ -z "$perl" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
 
     "$perl"                                 \
         -e 'my $dir = '$long_dir';'         \
@@ -229,7 +228,8 @@ mkstemp_long() {
     umask 022
 
     # bash fails to do it so use perl instead...
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    [[ -z "$perl" ]] && exit 0
 
     tempfile=$("$perl"                                                  \
         -e 'use File::Temp qw/ :mktemp  /;'                             \
@@ -240,10 +240,6 @@ mkstemp_long() {
         -e '($fh, $file) = mkstemps("'$template'", "syd") or die "$!";' \
         -e 'close($fh);'                                                \
         -e 'printf($file);')
-    if [[ -z "$tempfile" ]]; then
-        say skip "failed to create temporary file, skipping test"
-        exit 0
-    fi
 
     echo $tempfile
     umask $old_umask
@@ -259,7 +255,11 @@ mkdtemp_long() {
     fi
 
     # bash fails to do it so use perl instead...
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    if [[ -z "$perl" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
 
     if ! "$perl"                                                \
         -e 'use File::Temp qw/ :mktemp  /;'                     \
@@ -280,7 +280,12 @@ perm_long() {
 
     # bash fails to do it so use perl instead...
     fname="$1"
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    if [[ -z "$perl" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
+
     "$perl" \
         -e "use Fcntl ':mode';"                             \
         -e 'my $dir = '$long_dir';'                         \
@@ -297,7 +302,12 @@ read_long() {
 
     # bash fails to do it so use perl instead...
     fname="$1"
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    if [[ -z "$perl" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
+
     if ! "$perl"                                        \
         -e 'my $dir = '$long_dir';'                     \
         -e 'my $data;'                                  \
@@ -321,7 +331,12 @@ write_long() {
     # bash fails to do it so use perl instead...
     fname="$1"
     shift
-    perl="$(find_perl_or_skip)"
+    perl="@PERL_PATH@"
+    if [[ -z "$perl" ]]; then
+        say skip "perl not found, skipping test"
+        exit 0
+    fi
+
     if ! "$perl"                                                \
         -e 'my $dir = '$long_dir';'                             \
         -e 'foreach my $i (1..64) {'                            \

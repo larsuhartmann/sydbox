@@ -40,6 +40,10 @@ end_test
 
 # Tests dealing with too long paths
 tmpfile="$(mkstemp_long)"
+if [[ -z "$tmpfile" ]]; then
+    say skip "failed to create temporary file, skipping test (no perl?)"
+    exit 0
+fi
 
 start_test "t01-chmod-deny-toolong"
 sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
