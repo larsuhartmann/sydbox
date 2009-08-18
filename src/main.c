@@ -199,7 +199,7 @@ sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
         _exit (-1);
     }
 
-    if (strncmp (argv[0], "/bin/bash", 9) == 0)
+    if (strncmp (argv[0], "/bin/sh", 8) == 0)
         g_fprintf (stderr, ANSI_DARK_MAGENTA PINK_FLOYD ANSI_NORMAL);
 
     execvp (argv[0], argv);
@@ -388,28 +388,7 @@ sydbox_internal_main (int argc, char **argv)
         return sydbox_execute_parent (argc, argv, pid);
 }
 
-static int
-sandbox_main (int argc, char **argv)
-{
-    int retval;
-    char **sandbox_argv;
-
-    if (argc < 2) {
-        sandbox_argv = g_malloc0 (2 * sizeof (char *));
-        sandbox_argv[0] = g_strdup ("/bin/bash");
-    } else {
-        sandbox_argv = g_strdupv (&argv[1]);
-    }
-
-    retval = sydbox_internal_main (argc, sandbox_argv);
-
-    g_strfreev (sandbox_argv);
-
-    return retval;
-}
-
-static int
-sydbox_main (int argc, char **argv)
+int main (int argc, char **argv)
 {
     GError *error = NULL;
     GOptionContext *context;
@@ -447,14 +426,5 @@ sydbox_main (int argc, char **argv)
     }
 
     return sydbox_internal_main (argc, argv);
-}
-
-int
-main (int argc, char **argv)
-{
-    if (strncmp (basename (argv[0]), "sandbox", 8) == 0)
-        return sandbox_main (argc, argv);
-
-    return sydbox_main (argc, argv);
 }
 

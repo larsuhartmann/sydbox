@@ -8,8 +8,8 @@
 clean_files+=( "arnold.layne.hard" )
 
 # To make sure links are handled correctly, add see.emily.play to
-# SANDBOX_WRITE as we're creating a hard link to that file.
-export SANDBOX_WRITE="$cwd"/see.emily.play
+# SYDBOX_WRITE as we're creating a hard link to that file.
+export SYDBOX_WRITE="$cwd"/see.emily.play
 
 start_test "t06-link-deny"
 sydbox -- ./t06_link
@@ -19,14 +19,14 @@ fi
 end_test
 
 start_test "t06-link-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t06_link
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t06_link
 if [[ 0 != $? ]]; then
     die "failed to predict link"
 fi
 end_test
 
 start_test "t06-link-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t06_link
+SYDBOX_WRITE="${cwd}" sydbox -- ./t06_link
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -f arnold.layne.hard ]]; then

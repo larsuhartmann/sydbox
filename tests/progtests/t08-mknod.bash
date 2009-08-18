@@ -17,7 +17,7 @@ fi
 end_test
 
 start_test "t08-mknod-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t08_mknod
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t08_mknod
 if [[ 0 != $? ]]; then
     die "failed to predict mknod"
 elif [[ -p arnold.layne.fifo ]]; then
@@ -26,7 +26,7 @@ fi
 end_test
 
 start_test "t08-mknod-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t08_mknod
+SYDBOX_WRITE="${cwd}" sydbox -- ./t08_mknod
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -p arnold.layne.fifo ]]; then
@@ -47,7 +47,7 @@ elif lstat_long "$fname"; then
 fi
 
 start_test "t08-mknod-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
 if [[ 0 != $? ]]; then
     die "failed to predict mknod"
 elif lstat_long "$fname"; then
@@ -55,7 +55,7 @@ elif lstat_long "$fname"; then
 fi
 
 start_test "t08-mknod-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
 if [[ 0 != $? ]]; then
     die "failed to allow mknod"
 elif ! lstat_long "$fname"; then

@@ -17,7 +17,7 @@ fi
 end_test
 
 start_test "t31-fchmodat-predict"
-SANDBOX_PREDICT="$cwd" sydbox -- ./t31_fchmodat
+SYDBOX_PREDICT="$cwd" sydbox -- ./t31_fchmodat
 if [[ 0 != $? ]]; then
     die "failed to predict fchmodat"
 fi
@@ -28,7 +28,7 @@ fi
 end_test
 
 start_test "t31-fchmodat-write"
-SANDBOX_WRITE="$cwd" sydbox -- ./t31_fchmodat
+SYDBOX_WRITE="$cwd" sydbox -- ./t31_fchmodat
 if [[ 0 != $? ]]; then
     die "failed to allow fchmodat"
 fi

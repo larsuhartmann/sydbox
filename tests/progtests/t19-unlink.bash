@@ -15,7 +15,7 @@ fi
 end_test
 
 start_test "t19-unlink-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t19_unlink
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t19_unlink
 if [[ 0 != $? ]]; then
     die "failed to predict unlink"
 elif [[ ! -f arnold.layne ]]; then
@@ -24,7 +24,7 @@ fi
 end_test
 
 start_test "t19-unlink-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t19_unlink
+SYDBOX_WRITE="${cwd}" sydbox -- ./t19_unlink
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ -f arnold.layne ]]; then
@@ -45,7 +45,7 @@ fi
 end_test
 
 start_test "t19-unlink-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t19_unlink_toolong "$long_dir" "$tmpfile"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t19_unlink_toolong "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to predict unlink"
 elif ! lstat_long "$tmpfile"; then
@@ -54,7 +54,7 @@ fi
 end_test
 
 start_test "t19-unlink-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t19_unlink_toolong "$long_dir" "$tmpfile"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t19_unlink_toolong "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif lstat_long "$tmpfile"; then

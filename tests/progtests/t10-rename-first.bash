@@ -17,7 +17,7 @@ fi
 end_test
 
 start_test "t10-rename-first-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t10_rename_first
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t10_rename_first
 if [[ 0 != $? ]]; then
     die "failed to predict rename"
 elif [[ -f lucifer.sam ]]; then
@@ -26,7 +26,7 @@ fi
 end_test
 
 start_test "t10-rename-first-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t10_rename_first
+SYDBOX_WRITE="${cwd}" sydbox -- ./t10_rename_first
 if [[ 0 != $? ]]; then
     die "failed to allow rename"
 elif [[ ! -f lucifer.sam ]]; then

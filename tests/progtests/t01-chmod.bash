@@ -17,7 +17,7 @@ fi
 end_test
 
 start_test "t01-chmod-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t01_chmod
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t01_chmod
 if [[ 0 != $? ]]; then
     die "failed to predict chmod"
 fi
@@ -28,7 +28,7 @@ fi
 end_test
 
 start_test "t01-chmod-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t01_chmod
+SYDBOX_WRITE="${cwd}" sydbox -- ./t01_chmod
 if [[ 0 != $? ]]; then
     die "failed to allow chmod"
 fi
@@ -53,7 +53,7 @@ fi
 end_test
 
 start_test "t01-chmod-predict-toolong"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to predict chmod"
 fi
@@ -67,7 +67,7 @@ fi
 end_test
 
 start_test "t01-chmod-allow-toolong"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t01_chmod_toolong "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to allow chmod"
 fi

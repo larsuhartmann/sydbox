@@ -18,7 +18,7 @@ fi
 end_test
 
 start_test "t07-mkdir-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t07_mkdir
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t07_mkdir
 if [[ 0 != $? ]]; then
     die "failed to predict mkdir"
 elif [[ -d see.emily.play ]]; then
@@ -27,7 +27,7 @@ fi
 end_test
 
 start_test "t07-mkdir-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t07_mkdir
+SYDBOX_WRITE="${cwd}" sydbox -- ./t07_mkdir
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -d see.emily.play ]]; then
@@ -48,7 +48,7 @@ elif lstat_long "$dname"; then
 fi
 
 start_test "t07-mkdir-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
 if [[ 0 != $? ]]; then
     die "failed to predict mkdir"
 elif lstat_long "$dname"; then
@@ -56,7 +56,7 @@ elif lstat_long "$dname"; then
 fi
 
 start_test "t07-mkdir-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
 if [[ 0 != $? ]]; then
     die "failed to allow mkdir"
 elif ! lstat_long "$dname"; then

@@ -8,7 +8,7 @@
 clean_files+=( "arnold.layne.hard" )
 
 start_test "t26-linkat-second-atfdcwd-deny"
-SANDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t26_linkat_second_atfdcwd
+SYDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t26_linkat_second_atfdcwd
 if [[ 0 == $? ]]; then
     die "failed to deny rename"
 elif [[ -f arnold.layne.hard ]]; then
@@ -17,7 +17,7 @@ fi
 end_test
 
 start_test "t26-linkat-second-atfdcwd-predict"
-SANDBOX_WRITE="${cwd}/see.emily.play" SANDBOX_PREDICT="${cwd}" sydbox -- ./t26_linkat_second_atfdcwd
+SYDBOX_WRITE="${cwd}/see.emily.play" SYDBOX_PREDICT="${cwd}" sydbox -- ./t26_linkat_second_atfdcwd
 if [[ 0 != $? ]]; then
     die "failed to predict rename"
 elif [[ -f arnold.layne.hard ]]; then
@@ -26,7 +26,7 @@ fi
 end_test
 
 start_test "t26-linkat-second-atfdcwd-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t26_linkat_second_atfdcwd
+SYDBOX_WRITE="${cwd}" sydbox -- ./t26_linkat_second_atfdcwd
 if [[ 0 != $? ]]; then
     die "failed to allow linkat"
 elif [[ ! -f arnold.layne.hard ]]; then

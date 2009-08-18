@@ -16,16 +16,16 @@ export TZ=UTC
 
 unset CDPATH
 unset PWD
-unset SANDBOX_WRITE
-unset SANDBOX_PREDICT
-unset SANDBOX_EXEC_ALLOW
-unset SANDBOX_EXEC
-unset SANDBOX_NET
-unset SANDBOX_CONFIG
-unset SANDBOX_NO_COLOUR
-unset SANDBOX_LOG
-unset SANDBOX_LOCK
-unset SANDBOX_WAIT_ALL
+unset SYDBOX_WRITE
+unset SYDBOX_PREDICT
+unset SYDBOX_EXEC_ALLOW
+unset SYDBOX_EXEC
+unset SYDBOX_NET
+unset SYDBOX_CONFIG
+unset SYDBOX_NO_COLOUR
+unset SYDBOX_LOG
+unset SYDBOX_LOCK
+unset SYDBOX_WAIT_ALL
 
 # Colour
 if [[ "${TERM}" != "dumb" && -t 1 ]]; then
@@ -41,12 +41,12 @@ sydbox() {
     local vdir
     if [[ -n "$SYDBOX_RUN_UNDER_VALGRIND" ]]; then
         vdir="@TOP_BUILDDIR@/tests/valgrind"
-        SYDBOX_VALGRIND="$vdir" SANDBOX_NO_CONFIG=1 \
+        SYDBOX_VALGRIND="$vdir" SYDBOX_NO_CONFIG=1 \
             "$vdir"/valgrind.sh \
-            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SANDBOX_LOG" "$@"
+            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SYDBOX_LOG" "$@"
     else
-        SANDBOX_NO_CONFIG=1 \
-            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SANDBOX_LOG" "$@"
+        SYDBOX_NO_CONFIG=1 \
+            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SYDBOX_LOG" "$@"
     fi
 }
 
@@ -72,19 +72,19 @@ fi
 
 die() {
     say error "Reason: $@"
-    say error "Log: ${SANDBOX_LOG}"
-    echo ">>> Testcase failed: $@" >> "${SANDBOX_LOG}"
+    say error "Log: ${SYDBOX_LOG}"
+    echo ">>> Testcase failed: $@" >> "${SYDBOX_LOG}"
     remove_log=false
     exit 1
 }
 
 start_test() {
     say info "$@"
-    echo ">>> Starting testcase $@" >> "${SANDBOX_LOG}"
+    echo ">>> Starting testcase $@" >> "${SYDBOX_LOG}"
 }
 
 end_test() {
-    echo ">>> Finished testcase" >> "${SANDBOX_LOG}"
+    echo ">>> Finished testcase" >> "${SYDBOX_LOG}"
 }
 
 # Global variables
@@ -96,7 +96,7 @@ toolong_dir="$(
         [[ $i != 64 ]] && printf /
     done)"
 
-SANDBOX_LOG="${cwd}/sydbox-$$.log"
+SYDBOX_LOG="${cwd}/sydbox-$$.log"
 remove_log=true
 
 # Files created automatically by test-lib.bash:
@@ -114,7 +114,7 @@ if [[ -z "$no_create_files" ]]; then
     old_umask=$(umask)
     umask 022
 
-    if ! touch arnold.layne >>"${SANDBOX_LOG}" 2>&1; then
+    if ! touch arnold.layne >>"${SYDBOX_LOG}" 2>&1; then
         die "touch arnold.layne"
     elif [[ ! -f arnold.layne ]]; then
         die "touch arnold.layne (no file)"
@@ -122,7 +122,7 @@ if [[ -z "$no_create_files" ]]; then
         clean_files+=( "arnold.layne" )
     fi
 
-    if ! mkdir see.emily.play >>"${SANDBOX_LOG}" 2>&1; then
+    if ! mkdir see.emily.play >>"${SYDBOX_LOG}" 2>&1; then
         die "mkdir see.emily.play"
     elif [[ ! -d see.emily.play ]]; then
         die "mkdir see.emily.play (no file)"
@@ -130,7 +130,7 @@ if [[ -z "$no_create_files" ]]; then
         clean_files+=( "see.emily.play" )
     fi
 
-    if ! touch see.emily.play/gnome >>"${SANDBOX_LOG}" 2>&1; then
+    if ! touch see.emily.play/gnome >>"${SYDBOX_LOG}" 2>&1; then
         die "touch see.emily.play/gnome"
     elif [[ ! -f see.emily.play/gnome ]]; then
         die "touch see.emily.play/gnome (no file)"
@@ -138,7 +138,7 @@ if [[ -z "$no_create_files" ]]; then
         clean_files+=( "see.emily.play/gnome" )
     fi
 
-    if ! ln -s see.emily.play/gnome its.not.the.same >>"${SANDBOX_LOG}" 2>&1; then
+    if ! ln -s see.emily.play/gnome its.not.the.same >>"${SYDBOX_LOG}" 2>&1; then
         die "ln -s see.emily.play/gnome its.not.the.same"
     elif [[ ! -h its.not.the.same ]]; then
         die "ln -s see.emily.play/gnome its.not.the.same (no symbolic link)"
@@ -148,12 +148,12 @@ if [[ -z "$no_create_files" ]]; then
 fi
 
 cleanup() {
-    echo "Cleaning up:" >>"${SANDBOX_LOG}"
-    echo "  rm -fr ${clean_files[@]}" >>"${SANDBOX_LOG}"
-    rm -fr "${clean_files[@]}" >>${SANDBOX_LOG} 2>&1
-    echo "  rm -fr LONG_DIR" >>"${SANDBOX_LOG}"
-    kill_long >>"${SANDBOX_LOG}" 2>&1
-    $remove_log && rm -f "${SANDBOX_LOG}" 2>&1
+    echo "Cleaning up:" >>"${SYDBOX_LOG}"
+    echo "  rm -fr ${clean_files[@]}" >>"${SYDBOX_LOG}"
+    rm -fr "${clean_files[@]}" >>${SYDBOX_LOG} 2>&1
+    echo "  rm -fr LONG_DIR" >>"${SYDBOX_LOG}"
+    kill_long >>"${SYDBOX_LOG}" 2>&1
+    $remove_log && rm -f "${SYDBOX_LOG}" 2>&1
 }
 trap 'cleanup' EXIT
 

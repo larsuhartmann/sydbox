@@ -13,7 +13,7 @@ fi
 end_test
 
 start_test "t18-utime-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t18_utime
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t18_utime
 if [[ 0 != $? ]]; then
     die "failed to predict utime"
 fi

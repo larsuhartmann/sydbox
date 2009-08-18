@@ -7,7 +7,7 @@ no_create_files=1
 . test-lib.bash
 
 clean_files+=( "see.emily.play")
-if ! mkdir see.emily.play >>"${SANDBOX_LOG}" 2>&1; then
+if ! mkdir see.emily.play >>"${SYDBOX_LOG}" 2>&1; then
     die "mkdir see.emily.play"
 elif [[ ! -d see.emily.play ]]; then
     die "mkdir see.emily.play (no file)"
@@ -23,7 +23,7 @@ fi
 end_test
 
 start_test "t12-rmdir-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t12_rmdir
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t12_rmdir
 if [[ 0 != $? ]]; then
     die "failed to predict rmdir"
 elif [[ ! -d see.emily.play ]]; then
@@ -32,7 +32,7 @@ fi
 end_test
 
 start_test "t12-rmdir-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t12_rmdir
+SYDBOX_WRITE="${cwd}" sydbox -- ./t12_rmdir
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ -d see.emily.play ]]; then
@@ -53,7 +53,7 @@ fi
 end_test
 
 start_test "t12-rmdir-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
 if [[ 0 != $? ]]; then
     die "failed to predict rmdir"
 elif ! lstat_long "$tmpdir"; then
@@ -62,7 +62,7 @@ fi
 end_test
 
 start_test "t12-rmdir-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif lstat_long "$tmpdir"; then

@@ -8,7 +8,7 @@
 clean_files+=( "lucifer.sam" )
 
 start_test "t23-renameat-second-deny"
-SANDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t23_renameat_second
+SYDBOX_WRITE="${cwd}/see.emily.play" sydbox -- ./t23_renameat_second
 if [[ 0 == $? ]]; then
     die "failed to deny renameat"
 elif [[ -f lucifer.sam ]]; then
@@ -17,7 +17,7 @@ fi
 end_test
 
 start_test "t23-renameat-second-predict"
-SANDBOX_WRITE="${cwd}/see.emily.play" SANDBOX_PREDICT="${cwd}" sydbox -- ./t23_renameat_second
+SYDBOX_WRITE="${cwd}/see.emily.play" SYDBOX_PREDICT="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then
     die "failed to predict renameat"
 elif [[ -f lucifer.sam ]]; then
@@ -26,7 +26,7 @@ fi
 end_test
 
 start_test "t23-renameat-second-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t23_renameat_second
+SYDBOX_WRITE="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then
     die "failed to allow renameat"
 elif [[ ! -f lucifer.sam ]]; then

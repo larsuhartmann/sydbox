@@ -20,7 +20,7 @@ fi
 end_test
 
 start_test "t03-open-wronly-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t03_open 1
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t03_open 1
 if [[ 0 != $? ]]; then
     die "failed to predict open(\"arnold.layne\", O_WRONLY)"
 fi
@@ -30,7 +30,7 @@ fi
 end_test
 
 start_test "t03-open-wronly-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t03_open 1
+SYDBOX_WRITE="${cwd}" sydbox -- ./t03_open 1
 if [[ 0 != $? ]]; then
     die "failed to allow open(\"arnold.layne\", O_WRONLY)"
 fi
@@ -48,7 +48,7 @@ end_test
 
 :>arnold.layne
 start_test "t03-open-rdwr-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t03_open 2
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t03_open 2
 if [[ 0 != $? ]]; then
     die "failed to predict open(\"arnold.layne\", O_RDWR)"
 fi
@@ -58,7 +58,7 @@ fi
 end_test
 
 start_test "t03-open-rdwr-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t03_open 2
+SYDBOX_WRITE="${cwd}" sydbox -- ./t03_open 2
 if [[ 0 != $? ]]; then
     die "failed to allow open(\"arnold.layne\", O_RDWR)"
 fi
@@ -89,7 +89,7 @@ fi
 end_test
 
 start_test "t03-open-wronly-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t03_open_toolong 1 "$long_dir" "$tmpfile"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t03_open_toolong 1 "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to predict open(\"TOO_LONG_DIR/$tmpfile\", O_WRONLY)"
 fi
@@ -100,7 +100,7 @@ fi
 end_test
 
 start_test "t03-open-wronly-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t03_open_toolong 1 "$long_dir" "$tmpfile"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t03_open_toolong 1 "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to allow open(\"TOO_LONG_DIR/$tmpfile\", O_WRONLY)"
 fi
@@ -122,7 +122,7 @@ rm -fr "$long_dir"
 tmpfile="$(mkstemp_long)"
 
 start_test "t03-open-rdwr-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t03_open_toolong 2 "$long_dir" "$tmpfile"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t03_open_toolong 2 "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to predict open(\"TOO_LONG_DIR/$tmpfile\", O_RDWR)"
 fi
@@ -133,7 +133,7 @@ fi
 end_test
 
 start_test "t03-open-rdwr-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t03_open_toolong 2 "$long_dir" "$tmpfile"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t03_open_toolong 2 "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
     die "failed to allow open(\"TOO_LONG_DIR/$tmpfile\", O_RDWR)"
 fi

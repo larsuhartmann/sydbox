@@ -6,8 +6,8 @@
 . test-lib.bash
 
 # To make sure symbolic links are handled correctly, add see.emily.play to
-# SANDBOX_WRITE as its.not.the.same is a symbolic link to a file in that directory.
-export SANDBOX_WRITE="$cwd"/see.emily.play
+# SYDBOX_WRITE as its.not.the.same is a symbolic link to a file in that directory.
+export SYDBOX_WRITE="$cwd"/see.emily.play
 
 start_test "t05-lchown-deny"
 sydbox -- ./t05_lchown
@@ -17,14 +17,14 @@ fi
 end_test
 
 start_test "t05-lchown-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t05_lchown
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t05_lchown
 if [[ 0 != $? ]]; then
     die "failed to predict lchown"
 fi
 end_test
 
 start_test "t05-lchown-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t05_lchown
+SYDBOX_WRITE="${cwd}" sydbox -- ./t05_lchown
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 fi

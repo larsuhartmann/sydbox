@@ -44,7 +44,7 @@ fi
 end_test
 
 start_test "t14-truncate-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t14_truncate
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t14_truncate
 if [[ 0 != $? ]]; then
     die "failed to predict truncate"
 elif [[ -z "$(<arnold.layne)" ]]; then
@@ -53,7 +53,7 @@ fi
 end_test
 
 start_test "t14-truncate-write"
-SANDBOX_WRITE="${cwd}" sydbox -- ./t14_truncate
+SYDBOX_WRITE="${cwd}" sydbox -- ./t14_truncate
 if [[ 0 != $? ]]; then
     die "failed to allow access"
 elif [[ ! -z "$(<arnold.layne)" ]]; then
@@ -77,7 +77,7 @@ fi
 end_test
 
 start_test "t14-truncate-toolong-predict"
-SANDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
+SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
 if [[ 0 != $? ]]; then
     die "failed to predict truncate"
 fi
@@ -88,7 +88,7 @@ fi
 end_test
 
 start_test "t14-truncate-toolong-write"
-SANDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
+SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
 if [[ 0 != $? ]]; then
     die "failed to allow access"
 fi

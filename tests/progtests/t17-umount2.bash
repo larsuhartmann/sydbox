@@ -13,7 +13,7 @@ fi
 end_test
 
 start_test "t17-umount2-predict"
-SANDBOX_PREDICT="${cwd}" sydbox -- ./t17_umount2
+SYDBOX_PREDICT="${cwd}" sydbox -- ./t17_umount2
 if [[ 0 != $? ]]; then
     die "failed to predict umount2"
 fi

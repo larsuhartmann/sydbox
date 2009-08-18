@@ -8,8 +8,8 @@
 clean_files+=( "jugband.blues" )
 
 # To make sure symbolic links are handled correctly, add see.emily.play to
-# SANDBOX_WRITE as jugband.blues will be a symbolic link to a file in that directory.
-export SANDBOX_WRITE="$cwd"/see.emily.play
+# SYDBOX_WRITE as jugband.blues will be a symbolic link to a file in that directory.
+export SYDBOX_WRITE="$cwd"/see.emily.play
 
 start_test "t28-symlinkat-atfdcwd-deny"
 sydbox -- ./t28_symlinkat_atfdcwd
@@ -21,7 +21,7 @@ fi
 end_test
 
 start_test "t28-symlinkat-atfdcwd-predict"
-SANDBOX_PREDICT="$cwd" sydbox -- ./t28_symlinkat_atfdcwd
+SYDBOX_PREDICT="$cwd" sydbox -- ./t28_symlinkat_atfdcwd
 if [[ 0 != $? ]]; then
     die "failed to predict symlinkat"
 elif [[ -h jugband.blues ]]; then
@@ -30,7 +30,7 @@ fi
 end_test
 
 start_test "t28-symlinkat-atfdcwd-write"
-SANDBOX_WRITE="$cwd" sydbox -- ./t28_symlinkat_atfdcwd
+SYDBOX_WRITE="$cwd" sydbox -- ./t28_symlinkat_atfdcwd
 if [[ 0 != $? ]]; then
     die "write didn't allow access"
 elif [[ ! -h jugband.blues ]]; then

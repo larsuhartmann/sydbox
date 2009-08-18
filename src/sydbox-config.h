@@ -27,26 +27,26 @@
 #include <glib.h>
 
 // Environment variables
-#define ENV_LOG             "SANDBOX_LOG"
-#define ENV_CONFIG          "SANDBOX_CONFIG"
-#define ENV_WRITE           "SANDBOX_WRITE"
-#define ENV_PREDICT         "SANDBOX_PREDICT"
-#define ENV_EXEC_ALLOW      "SANDBOX_EXEC_ALLOW"
-#define ENV_DISABLE_PATH    "SANDBOX_DISABLE_PATH"
-#define ENV_EXEC            "SANDBOX_EXEC"
-#define ENV_NET             "SANDBOX_NET"
-#define ENV_NO_COLOUR       "SANDBOX_NO_COLOUR"
-#define ENV_NO_CONFIG       "SANDBOX_NO_CONFIG"
-#define ENV_LOCK            "SANDBOX_LOCK"
-#define ENV_WAIT_ALL        "SANDBOX_WAIT_ALL"
+#define ENV_LOG             "SYDBOX_LOG"
+#define ENV_CONFIG          "SYDBOX_CONFIG"
+#define ENV_WRITE           "SYDBOX_WRITE"
+#define ENV_PREDICT         "SYDBOX_PREDICT"
+#define ENV_EXEC_ALLOW      "SYDBOX_EXEC_ALLOW"
+#define ENV_DISABLE_PATH    "SYDBOX_DISABLE_PATH"
+#define ENV_EXEC            "SYDBOX_EXEC"
+#define ENV_NET             "SYDBOX_NET"
+#define ENV_NO_COLOUR       "SYDBOX_NO_COLOUR"
+#define ENV_NO_CONFIG       "SYDBOX_NO_CONFIG"
+#define ENV_LOCK            "SYDBOX_LOCK"
+#define ENV_WAIT_ALL        "SYDBOX_WAIT_ALL"
 
 /**
  * sydbox_config_load:
  * @param config: path to the configuration file.
  *
  * Loads the configuration from the file specified by @config.  If @config is
- * %NULL, the environment variable %SANDBOX_CONFIG is consulted.  If
- * %SANDBOX_CONFIG is also unset, the default configuration file is consulte.
+ * %NULL, the environment variable %SYDBOX_CONFIG is consulted.  If
+ * %SYDBOX_CONFIG is also unset, the default configuration file is consulte.
  * Returns %TRUE if the operation succeeds, %FALSE otherwise.
  *
  * Returns: a #gboolean indicating if the config file was loaded successfully
