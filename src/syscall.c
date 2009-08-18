@@ -1062,7 +1062,7 @@ static int syscall_handle_chdir(struct tchild *child)
 /* clone(2) handler for POWERPC because PTRACE_GETEVENTMSG doesn't work
  * reliably on this architecture.
  */
-int syscall_handle_clone(context_t *ctx, struct tchild *child)
+static int syscall_handle_clone(context_t *ctx, struct tchild *child)
 {
     long retval;
     struct tchild *newchild;
