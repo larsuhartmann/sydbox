@@ -100,7 +100,9 @@ static int trace_peek(pid_t pid, long off, long *res) {
 #if defined(I386)
 #define ORIG_ACCUM      (4 * ORIG_EAX)
 #define ACCUM           (4 * EAX)
-static const long syscall_args[1][MAX_ARGS] = {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 4 * EDI, 4 * EBP};
+static const long syscall_args[1][MAX_ARGS] = {
+    {4 * EBX, 4 * ECX, 4 * EDX, 4 * ESI, 4 * EDI, 4 * EBP}
+};
 #elif defined(X86_64)
 #define ORIG_ACCUM      (8 * ORIG_RAX)
 #define ACCUM           (8 * RAX)
@@ -157,9 +159,12 @@ static int trace_ia64_peek(pid_t pid, int narg, long *res)
 #define ACCUM_FLAGS (sizeof(unsigned long) * PT_CCR)
 #define SO_MASK     0x10000000
 static const long syscall_args[1][MAX_ARGS] = {
-    sizeof(unsigned long) * PT_R3, sizeof(unsigned long) * PT_R4,
-    sizeof(unsigned long) * PT_R5, sizeof(unsigned long) * PT_R6,
-    sizeof(unsigned long) * PT_R7, sizeof(unsigned long) * PT_R8};
+    {
+        sizeof(unsigned long) * PT_R3, sizeof(unsigned long) * PT_R4,
+        sizeof(unsigned long) * PT_R5, sizeof(unsigned long) * PT_R6,
+        sizeof(unsigned long) * PT_R7, sizeof(unsigned long) * PT_R8
+    },
+};
 #endif
 
 #define MIN(a,b)        (((a) < (b)) ? (a) : (b))
