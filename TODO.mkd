@@ -1,6 +1,6 @@
 ## Sydbox TODO list ##
 
-  - Libification, compnerd started this in libsydbox branch.
+  - Libification, compnerd started this in [libsydbox](http://github.com/alip/sydbox/tree/libsydbox) branch.
   - Port it to different architectures. Currently we support x86, x86_64, ia64 and ppc64.
   - Proper network support. This includes denying only non-local connections etc.
   - Write more tests. We could always use more unit and/or program tests.
