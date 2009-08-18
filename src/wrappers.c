@@ -44,10 +44,6 @@
  *
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE 1
-#endif // !_GNU_SOURCE
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif // HAVE_CONFIG_H
@@ -58,13 +54,8 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <unistd.h>
-
-#include <libgen.h>
-#if defined(basename)
-#undef basename // get the GNU version from string.h
-#endif
 #include <string.h>
+#include <unistd.h>
 
 #include <stddef.h>
 #include <sys/stat.h>
@@ -86,17 +77,13 @@
 gchar *
 edirname (const gchar *path)
 {
-    char *pathc = g_strdup (path);
-    char *dname = dirname(pathc);
-    char *dnamec = g_strdup (dname);
-    g_free (pathc);
-    return dnamec;
+    return g_path_get_dirname(path);
 }
 
 gchar *
 ebasename (const gchar *path)
 {
-    return basename(path);
+    return g_path_get_basename(path);
 }
 
 // readlink that allocates the string itself and appends a zero at the end
@@ -315,12 +302,14 @@ static int elstat(const char *path, struct stat *buf)
          * nothing else to do.
          */
         g_free(dname);
+        g_free(bname);
         errno = ENAMETOOLONG;
         return -1;
     }
     ret = lstat(bname, buf);
     save_errno = errno;
     g_free(dname);
+    g_free(bname);
     errno = save_errno;
     return ret;
 }
