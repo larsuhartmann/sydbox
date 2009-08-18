@@ -1087,14 +1087,15 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
 
     newchild = tchild_find(ctx->children, retval);
     if (NULL != newchild) {
-        /* Wow, ptrace(PTRACE_GETEVENTMSG, ...) didn't fail!
-         */
-        return 0;
+        if (!newchild->inherited)
+            tchild_inherit(newchild, child);
+    }
+    else {
+        tchild_new(&(ctx->children), retval);
+        newchild = tchild_find(ctx->children, retval);
+        tchild_inherit(newchild, child);
     }
 
-    tchild_new(&(ctx->children), retval);
-    newchild = tchild_find(ctx->children, retval);
-    tchild_inherit(newchild, child);
     if (0 > trace_syscall(newchild->pid, 0)) {
         if (G_UNLIKELY(ESRCH != errno)) {
             g_critical("failed to resume child %i: %s", child->pid, g_strerror (errno));
