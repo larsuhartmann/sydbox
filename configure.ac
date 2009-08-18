@@ -42,6 +42,7 @@ AC_PROG_CC_C99
 if test x"$ac_cv_prog_cc_c99" = x"no"; then
 	AC_MSG_ERROR([sydbox requires a C compiler that supports ISO C99!])
 fi
+AC_GNU_SOURCE
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_PROG_SED
@@ -382,22 +383,8 @@ for flag in $WANTED_CFLAGS ; do
 done
 dnl }}}
 
-dnl {{{ Check for gcc and glibc
+dnl {{{ Check for gcc
 AM_CONDITIONAL(GCC, test x"$GCC" = x"yes")
-AC_MSG_CHECKING([whether libc is gnu])
-AC_CACHE_VAL([ac_cv_glibc])
-AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
-#include <unistd.h>
-
-#ifndef _CS_GNU_LIBC_VERSION
-#error Not glibc
-#endif
-]])],
-[AC_MSG_RESULT([yes]) ; ac_cv_glibc=yes],
-[AC_MSG_RESULT([no]) ; ac_cv_glibc=no])
-if test x"$ac_cv_glibc" = x"yes"; then
-	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -D_GNU_SOURCE"
-fi
 dnl }}}
 
 dnl {{{ Profiling
