@@ -22,19 +22,49 @@
 
 #include <glib.h>
 
+/**
+ * LOG_LEVEL_DEBUG_TRACE:
+ *
+ * Custom log level used for extremely verbose logging
+ *
+ * Since: 0.1_alpha
+ **/
 #define LOG_LEVEL_DEBUG_TRACE       (1 << (G_LOG_LEVEL_USER_SHIFT + 0))
 
+/**
+ * g_info:
+ * @varargs: format string, followed by parameters to insert into the format
+ * string (as with printf())
+ *
+ * A convinience function/macro to log an info message
+ *
+ * Since: 0.1_alpha
+ **/
 #ifndef g_info
 #define g_info(...)                 g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
 #endif
 
 #ifndef g_debug_trace
-#define g_debug_trace(...)          g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, __VA_ARGS__)
+#define g_debug_trace(...)          g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, __VA_ARGS__)
 #endif
 
+/**
+ * sydbox_log_init:
+ *
+ * Initalises the logging infrastructure
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_log_init (void);
 
+/**
+ * sydbox_log_fini:
+ *
+ * Shutdown the logging infrastructure and perform any cleanup necessary
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_log_fini (void);
 

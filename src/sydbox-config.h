@@ -40,24 +40,85 @@
 #define ENV_LOCK            "SANDBOX_LOCK"
 #define ENV_WAIT_ALL        "SANDBOX_WAIT_ALL"
 
+/**
+ * sydbox_config_load:
+ * @param config: path to the configuration file.
+ *
+ * Loads the configuration from the file specified by @config.  If @config is
+ * %NULL, the environment variable %SANDBOX_CONFIG is consulted.  If
+ * %SANDBOX_CONFIG is also unset, the default configuration file is consulte.
+ * Returns %TRUE if the operation succeeds, %FALSE otherwise.
+ *
+ * Returns: a #gboolean indicating if the config file was loaded successfully
+ *
+ * Since: 0.1_alpha
+ **/
 bool
 sydbox_config_load (const gchar * const config);
 
+/**
+ * sydbox_config_update_from_environment:
+ *
+ * Update the configuration state from supported environment variables.
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_config_update_from_environment (void);
 
+/**
+ * sydbox_config_write_to_stderr:
+ *
+ * Writes the configuration state to stderr.
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_config_write_to_stderr (void);
 
+/**
+ * sydbox_config_get_log_file:
+ *
+ * Accessor for the log file being used for the current state.
+ *
+ * Returns: the path to the logfile
+ *
+ * Since: 0.1_alpha
+ **/
 const gchar *
 sydbox_config_get_log_file (void);
 
+/**
+ * sydbox_config_set_log_file:
+ * @logfile: path to the logfile
+ *
+ * Sets the logfile that should be used.
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_config_set_log_file (const gchar * const logfile);
 
+/**
+ * sydbox_config_get_verbosity:
+ *
+ * Accessor for the current verbosity level
+ *
+ * Returns: a #gint indicating the current log level
+ *
+ * Since: 0.1_alpha
+ **/
 gint
 sydbox_config_get_verbosity (void);
 
+/**
+ * sydbox_config_set_verbosity:
+ * @verbosity: #gint specifying the current log level
+ *
+ * Sets the current loglevel to be used
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_config_set_verbosity (gint verbosity);
 
@@ -73,15 +134,41 @@ sydbox_config_get_sandbox_exec (void);
 void
 sydbox_config_set_sandbox_exec (bool on);
 
+/**
+ * sydbox_config_get_sandbox_network:
+ *
+ * Returns %TRUE if network accesses should be sandboxed, %FALSE otherwise
+ *
+ * Returns: #gboolean indicating if network accesses should be sandboxed
+ *
+ * Since: 0.1_alpha
+ **/
 bool
 sydbox_config_get_sandbox_network (void);
 
 void
 sydbox_config_set_sandbox_network (bool on);
 
+/**
+ * sydbox_config_get_colourise_output:
+ *
+ * Returns %TRUE if the output should be coloured, %FALSE otherwise
+ *
+ * Returns: a #gboolean stating if output should have colour
+ *
+ * Since: 0.1_alpha
+ **/
 bool
 sydbox_config_get_colourise_output (void);
 
+/**
+ * sydbox_config_set_colourise_output:
+ * @colourise: a #gboolean indicating if output should be coloured
+ *
+ * Sets whether the output should be coloured
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_config_set_colourise_output (bool colourise);
 
@@ -103,15 +190,50 @@ sydbox_config_get_allow_proc_pid (void);
 void
 sydbox_config_set_allow_proc_pid (bool allow);
 
+/**
+ * sydbox_config_get_paranoid_mode_enabled:
+ *
+ * Returns %TRUE if paranoid mode is enabled, %FALSE otherwise
+ *
+ * Returns: a #gboolean indicating if paranoid mode is enabled
+ *
+ * Since: 0.1_alpha
+ **/
 bool
 sydbox_config_get_paranoid_mode_enabled (void);
 
+/**
+ * sydbox_config_set_paranoid_mode_enabled:
+ * @enabled: a #gboolean indicating if paranoid mode is enabled
+ *
+ * Sets whether paranoid mode is enabled
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_config_set_paranoid_mode_enabled (bool enabled);
 
+/**
+ * sydbox_config_get_write_prefixes:
+ *
+ * Returns a list of permitted write prefixes
+ *
+ * Returns: a #GSList containing permitted write prefixes
+ *
+ * Since: 0.1_alpha
+ **/
 GSList *
 sydbox_config_get_write_prefixes (void);
 
+/**
+ * sydbox_config_get_predict_prefixes:
+ *
+ * Returns a list of predicted write prefixes
+ *
+ * Returns: a #GSList containing predicted write prefixes
+ *
+ * Since: 0.1_alpha
+ **/
 GSList *
 sydbox_config_get_predict_prefixes (void);
 

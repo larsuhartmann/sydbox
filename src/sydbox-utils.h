@@ -22,13 +22,45 @@
 
 #include <glib.h>
 
+/**
+ * ANSI_:
+ * @ANSI_NORMAL: reset style
+ * @ANSI_MAGENTA: set foreground to magenta
+ * @ANSI_DARK_MAGENTA: set foreground to dark magenta
+ *
+ * ANSI escape sequences
+ *
+ * Since: 0.1_alpha
+ **/
 #define ANSI_NORMAL         "[00;00m"
 #define ANSI_MAGENTA        "[00;35m"
 #define ANSI_DARK_MAGENTA   "[01;35m"
 
+/**
+ * sydbox_access_violation:
+ * @pid: process id of the process being traced
+ * @fmt: format string (as with printf())
+ * @varargs: parameters to be used with @fmt
+ *
+ * Prints an access violation error message to %stderr
+ *
+ * Since: 0.1_alpha
+ **/
 void
 sydbox_access_violation (const pid_t pid, const gchar *fmt, ...) G_GNUC_PRINTF (2, 3);
 
+/**
+ * sydbox_compress_path:
+ * @path: the path to compress
+ *
+ * Replaces runs of forward slashses with a single slash.  This does not
+ * canonicalise the path!
+ *
+ * Returns: string containing the compressed path.  The return value should be
+ * freed with g_free when no longer in use.
+ *
+ * Since: 0.1_alpha
+ **/
 gchar *
 sydbox_compress_path (const gchar * const path);
 
