@@ -390,23 +390,23 @@ sydbox_internal_main (int argc, char **argv)
 
 int main (int argc, char **argv)
 {
-    GError *error = NULL;
+    GError *parse_error = NULL;
     GOptionContext *context;
 
     context = g_option_context_new ("-- command [args]");
     g_option_context_add_main_entries (context, entries, PACKAGE);
     g_option_context_set_summary (context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
 
-    if (! g_option_context_parse (context, &argc, &argv, &error)) {
-        g_printerr ("option parsing failed: %s\n", error->message);
-        g_option_context_free (context);
-        g_error_free (error);
+    if (! g_option_context_parse (context, &argc, &argv, &parse_error)) {
+        g_printerr("fatal: option parsing failed: %s\n", parse_error->message);
+        g_option_context_free(context);
+        g_error_free(parse_error);
         return EXIT_FAILURE;
     }
-    g_option_context_free (context);
+    g_option_context_free(context);
 
     if (version) {
-        g_printerr (PACKAGE "-" VERSION GIT_HEAD "\n");
+        g_printerr(PACKAGE "-" VERSION GIT_HEAD "\n");
         return EXIT_SUCCESS;
     }
 
@@ -420,7 +420,7 @@ int main (int argc, char **argv)
         }
 
         if (! argv[0]) {
-            g_printerr ("no command given\n");
+            g_printerr("fatal: no command given\n");
             return EXIT_FAILURE;
         }
     }
