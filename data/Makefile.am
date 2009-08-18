@@ -1,10 +1,12 @@
-EXTRA_DIST = sydbox.1.txt sydbox.1.xml sydbox.1 sydbox.conf
+EXTRA_DIST = sydbox.1.txt sydbox.1.xml sydbox.1
 
 BUILT_SOURCES = sydbox.1
 
 MANPAGE_XSL := /etc/asciidoc/docbook-xsl/manpage.xsl
 
 all: sydbox.1
+
+sysconf_DATA = sydbox.conf
 
 sydbox.1.xml: sydbox.1.txt
 	asciidoc -d manpage -b docbook $<
