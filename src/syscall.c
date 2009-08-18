@@ -1085,6 +1085,13 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
         return 0;
     }
 
+    newchild = tchild_find(ctx->children, retval);
+    if (NULL != newchild) {
+        /* Wow, ptrace(PTRACE_GETEVENTMSG, ...) didn't fail!
+         */
+        return 0;
+    }
+
     tchild_new(&(ctx->children), retval);
     newchild = tchild_find(ctx->children, retval);
     tchild_inherit(newchild, child);
