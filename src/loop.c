@@ -265,6 +265,8 @@ int trace_loop(context_t *ctx) {
                 if (0 != ret)
                     return ret;
                 break;
+            default:
+                g_assert_not_reached();
         }
     }
     return ret;
