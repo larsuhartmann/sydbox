@@ -57,7 +57,7 @@ bool dispatch_chdir64(int sno);
 #endif
 
 #if defined(POWERPC)
-int dispatch_clone(int personality, int sno);
+bool dispatch_clone(int personality, int sno);
 #endif // defined(POWERPC)
 
 #endif // SYDBOX_GUARD_DISPATCH_H
