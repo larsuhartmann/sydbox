@@ -478,6 +478,28 @@ int trace_set_return(pid_t pid, long val) {
         errno = save_errno;
         return -1;
     }
+#elif defined(POWERPC)
+    long flags;
+
+    if (G_UNLIKELY(0 > trace_peek(pid, ACCUM_FLAGS, &flags))) {
+        int save_errno = errno;
+        g_info("failed to get return flags for child %i: %s", pid, g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    if (val < 0)
+        flags |= SO_MASK;
+    else
+        flags &= ~SO_MASK;
+
+    if (G_UNLIKELY(0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val)) ||
+            G_UNLIKELY(0 != ptrace(PTRACE_POKEUSER, pid, ACCUM_FLAGS, flags))) {
+        int save_errno = errno;
+        g_info("failed to set return for child %i: %s", pid, g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
 #else
     if (G_UNLIKELY(0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val))) {
         save_errno = errno;
