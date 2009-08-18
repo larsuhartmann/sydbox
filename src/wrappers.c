@@ -48,7 +48,6 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#include <assert.h>
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -355,7 +354,7 @@ canonicalize_filename_mode (const gchar *name,
             rname_limit = dest;
     }
 #endif
-    assert('/' == name[0]);
+    g_assert(g_path_is_absolute(name));
     rname = g_malloc (PATH_MAX);
     rname_limit = rname + PATH_MAX;
     rname[0] = '/';
