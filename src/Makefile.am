@@ -23,6 +23,9 @@ endif
 if IA64
 sydbox_SOURCES+= dispatch.c
 endif
+if POWERPC
+sydbox_SOURCES+= dispatch.c
+endif
 
 nodist_sydbox_SOURCES= syscall_marshaller.h syscall_marshaller.c
 BUILT_SOURCES= syscall_marshaller.h syscall_marshaller.c
