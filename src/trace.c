@@ -493,8 +493,10 @@ int trace_set_return(pid_t pid, long val) {
         return -1;
     }
 
-    if (val < 0)
+    if (val < 0) {
         flags |= SO_MASK;
+        val = -val;
+    }
     else
         flags &= ~SO_MASK;
 
