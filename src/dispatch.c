@@ -62,6 +62,8 @@ inline const char *dispatch_mode(int personality G_GNUC_UNUSED)
     mode = "32 bit";
 #elif defined(IA64)
     mode = "64 bit";
+#elif defined(POWERPC)
+    mode = "64 bit";
 #else
 #error unsupported architecture
 #endif
