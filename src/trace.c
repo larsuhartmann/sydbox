@@ -482,7 +482,7 @@ int trace_set_return(pid_t pid, long val) {
     long flags;
 
     if (G_UNLIKELY(0 > trace_peek(pid, ACCUM_FLAGS, &flags))) {
-        int save_errno = errno;
+        save_errno = errno;
         g_info("failed to get return flags for child %i: %s", pid, g_strerror(errno));
         errno = save_errno;
         return -1;
@@ -495,7 +495,7 @@ int trace_set_return(pid_t pid, long val) {
 
     if (G_UNLIKELY(0 != ptrace(PTRACE_POKEUSER, pid, ACCUM, val)) ||
             G_UNLIKELY(0 != ptrace(PTRACE_POKEUSER, pid, ACCUM_FLAGS, flags))) {
-        int save_errno = errno;
+        save_errno = errno;
         g_info("failed to set return for child %i: %s", pid, g_strerror(errno));
         errno = save_errno;
         return -1;
