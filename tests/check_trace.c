@@ -29,7 +29,7 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#if defined(I386) || defined(IA64)
+#if defined(I386) || defined(IA64) || defined(POWERPC)
 #define CHECK_PERSONALITY 0
 #elif defined(X86_64)
 #define CHECK_PERSONALITY 1

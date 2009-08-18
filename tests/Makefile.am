@@ -23,6 +23,10 @@ endif
 if IA64
 check_sydbox_SOURCES+= $(top_builddir)/src/dispatch.c
 endif
+if POWERPC
+check_sydbox_SOURCES+= $(top_builddir)/src/dispatch.c
+endif
+
 nodist_check_sydbox_SOURCES= $(top_builddir)/src/syscall_marshaller.c
 
 check_sydbox_CFLAGS = \
