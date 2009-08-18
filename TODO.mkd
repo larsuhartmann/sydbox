@@ -5,3 +5,8 @@
   - Proper network support. This includes denying only non-local connections etc.
   - Write more tests. We could always use more unit and/or program tests.
 
+### PowerPC ###
+
+  - This architecture support is rather new and needs testing.
+  - The last test of tests/progtests/t35-magic-exec_lock.bash hangs.
+
