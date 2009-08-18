@@ -3,7 +3,7 @@
   - Libification, compnerd started this in [libsydbox](http://github.com/alip/sydbox/tree/libsydbox) branch.
 
 ### Unit tests ###
-  - We could always use more unit and/or program tests
+  - We could always use more unit and/or program tests.
   - Move checks written in [check](http://check.sourceforge.net/) to
     [glib](http://library.gnome.org/devel/glib/unstable/glib-Testing.html)
     so we can ditch the [dev-libs/check](http://git.exherbo.org/summer/packages/dev-libs/check/) dependency.
