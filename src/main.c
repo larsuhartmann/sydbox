@@ -82,15 +82,15 @@ static gint verbosity = -1;
 static gchar *logfile;
 static gchar *config_file;
 
-static bool dump;
-static bool disable_sandbox_path;
-static bool sandbox_exec;
-static bool sandbox_net;
-static bool lock;
-static bool colour;
-static bool version;
-static bool paranoid;
-static bool wait_all;
+static gboolean dump;
+static gboolean disable_sandbox_path;
+static gboolean sandbox_exec;
+static gboolean sandbox_net;
+static gboolean lock;
+static gboolean colour;
+static gboolean version;
+static gboolean paranoid;
+static gboolean wait_all;
 
 static GOptionEntry entries[] =
 {
