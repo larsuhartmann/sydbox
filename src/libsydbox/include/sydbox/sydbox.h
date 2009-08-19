@@ -18,8 +18,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __SYDBOX_H__
-#define __SYDBOX_H__
+#ifndef SYDBOX_GUARD_SYDBOX_H
+#define SYDBOX_GUARD_SYDBOX_H 1
 
 #include <glib.h>
 
@@ -28,42 +28,43 @@
 
 G_BEGIN_DECLS
 
-gint
-sydbox_execl (const SydboxContext * const ctx,
-              const gchar *path,
-              const gchar *arg,
-              ...);
+/**
+ * execl() wrapper.
+ */
+gint sydbox_execl(const struct sydbox_context * const ctx, const gchar *path,
+        const gchar *arg, ...);
 
-gint
-sydbox_execlp (const SydboxContext * const ctx,
-               const gchar *file,
-               const gchar *arg,
-               ...);
+/**
+ * execlp() wrapper.
+ */
+gint sydbox_execlp (const struct sydbox_context * const ctx, const gchar *file,
+        const gchar *arg, ...);
 
-gint
-sydbox_execle (const SydboxContext * const ctx,
-               const gchar *path,
-               const gchar *arg,
-               ...,
-               gchar * const envp[]);
+/**
+ * execle() wrapper.
+ */
+gint sydbox_execle(const struct sydbox_context * const ctx, const gchar *path,
+        const gchar *arg, ..., gchar * const envp[]);
 
-gint
-sydbox_execv (const SydboxContext * const ctx,
-              const gchar *path,
-              gchar * const argv[]);
+/**
+ * execv() wrapper.
+ */
+gint sydbox_execv(const struct sydbox_context * const ctx, const gchar *path,
+        gchar * const argv[]);
 
-gint
-sydbox_execvp (const SydboxContext * const ctx,
-               const gchar *file,
-               gchar * const argv[]);
+/**
+ * execvp() wrapper.
+ */
+gint sydbox_execvp(const struct sydbox_context * const ctx, const gchar *file,
+        gchar * const argv[]);
 
-gint
-sydbox_execve (const SydboxContext * const ctx,
-               const gchar *filename,
-               gchar * const argv[],
-               gchar * const envp[]);
+/**
+ * execvp() wrapper
+ */
+gint sydbox_execve(const struct sydbox_context * const ctx, const gchar *filename,
+        gchar * const argv[], gchar * const envp[]);
 
 G_END_DECLS
 
-#endif
+#endif // SYDBOX_GUARD_SYDBOX_H
 
