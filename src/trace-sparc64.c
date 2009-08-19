@@ -42,8 +42,11 @@
 #undef PTRACE_SETREGS
 #define PTRACE_SETREGS PTRACE_SETREGS64
 
-int trace_personality(pid_t pid)
+inline int trace_personality(pid_t pid)
 {
+    return 0;
+/* FIXME: Why doesn't this work?! */
+#if 0
     struct regs regs;
     unsigned long trap;
 
@@ -68,6 +71,7 @@ int trace_personality(pid_t pid)
             g_warning("unknown system call trap %08lx %016lx\n", trap, regs.r_tpc);
             return -1;
     }
+#endif
 }
 
 int trace_get_syscall(pid_t pid, long *scno)

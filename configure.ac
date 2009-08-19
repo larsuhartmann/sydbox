@@ -114,7 +114,8 @@ AM_CONDITIONAL(I386, test x"$arch" = x"i386")
 AM_CONDITIONAL(X86_64, test x"$arch" = x"x86_64")
 AM_CONDITIONAL(IA64, test x"$arch" = x"ia64")
 AM_CONDITIONAL(POWERPC, test x"$arch" = x"powerpc")
-AM_CONDITIONAL(P1, test x"$arch" = x"i386" -o x"$arch" = x"ia64" -o x"$arch" = x"powerpc")
+AM_CONDITIONAL(SPARC64, test x"$arch" = x"sparc64")
+AM_CONDITIONAL(P1, test x"$arch" = x"i386" -o x"$arch" = x"ia64" -o x"$arch" = x"powerpc" -o x"$arch" = x"sparc64")
 AM_CONDITIONAL(P2, test x"$arch" = x"x86_64")
 dnl }}}
 
