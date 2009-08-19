@@ -816,8 +816,10 @@ static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr,
 
     g_debug("ending check for system call %d(%s), child %i", self->no, sname, child->pid);
 
-    if (ctx->before_initial_execve && self->flags & EXEC_CALL)
+    if (ctx->before_initial_execve && self->flags & EXEC_CALL) {
+        g_debug("setting before_initial_execve flag to off");
         ctx->before_initial_execve = false;
+    }
 
     for (unsigned int i = 0; i < 2; i++)
         g_free(data->dirfdlist[i]);
