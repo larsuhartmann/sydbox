@@ -106,9 +106,8 @@ sydbox_log_init (void)
     if (sydbox_config_get_log_file ()) {
         fd = g_fopen (sydbox_config_get_log_file (), "a");
         if (! fd) {
-            const gchar *error_string = g_strerror (errno);
-            g_printerr ("could not open log '%s': %s\n", sydbox_config_get_log_file (), error_string);
-            g_printerr ("all logging will go to stderr\n");
+            g_printerr("warning: could not open log '%s': %s\n", sydbox_config_get_log_file (), g_strerror(errno));
+            g_printerr("warning: all logging will go to stderr\n");
         }
     }
 
