@@ -132,12 +132,20 @@ int trace_geteventmsg(pid_t pid, void *data)
 {
     int save_errno;
 
+#if defined(POWERPC) || defined(SPARC64)
+    /* PTRACE_GETEVENTMSG doesn't work reliably on these architectures.
+     * So just return 0, xfork() in loop.c will ignore it.
+     * We'll check the return value of clone() instead.
+     */
+    *data = 0;
+#else
     if (G_UNLIKELY(0 > ptrace(PTRACE_GETEVENTMSG, pid, NULL, data))) {
         save_errno = errno;
         g_info("failed to get event message of child %i: %s", pid, g_strerror(errno));
         errno = save_errno;
         return -1;
     }
+#endif // defined(POWERPC) || defined(SPARC64)
     return 0;
 }
 

@@ -56,7 +56,7 @@ bool dispatch_chdir64(int sno);
 #error unsupported architecture
 #endif
 
-#if defined(POWERPC)
+#if defined(POWERPC) || defined(SPARC64)
 bool dispatch_clone(int personality, int sno);
 #endif // defined(POWERPC)
 
