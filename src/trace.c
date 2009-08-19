@@ -137,7 +137,8 @@ int trace_geteventmsg(pid_t pid, void *data)
      * So just return 0, xfork() in loop.c will ignore it.
      * We'll check the return value of clone() instead.
      */
-    *data = 0;
+    pid_t *cpid = (pid_t *) data;
+    *cpid = 0;
 #else
     if (G_UNLIKELY(0 > ptrace(PTRACE_GETEVENTMSG, pid, NULL, data))) {
         save_errno = errno;
