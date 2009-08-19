@@ -88,7 +88,7 @@ static int xfork(context_t *ctx, struct tchild *child) {
             g_debug("PTRACE_GETEVENTMSG returned 0 as pid, ignoring!");
             return 0;
         }
-#endif // POWERPC
+#endif // defined(POWERPC)
         g_debug("the newborn child's pid is %i", childpid);
     }
 
