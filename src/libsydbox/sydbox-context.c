@@ -112,7 +112,7 @@ sydbox_context_set_write_prefixes (SydboxContext * const ctx,
     for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
         prefix = (gchar *) entry->data;
         g_assert(NULL != prefix);
-        g_assert('/' == prefix[0]);
+        g_assert(g_path_is_absolute(prefix));
         ctx->write_prefixes = g_slist_append(ctx->write_prefixes, g_strdup(prefix));
     }
 }
@@ -160,7 +160,7 @@ sydbox_context_set_execve_prefixes (SydboxContext * const ctx,
     for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
         prefix = (gchar *) entry->data;
         g_assert(NULL != prefix);
-        g_assert('/' == prefix[0]);
+        g_assert(g_path_is_absolute(prefix));
         ctx->execve_prefixes = g_slist_append(ctx->execve_prefixes, g_strdup(prefix));
     }
 }
