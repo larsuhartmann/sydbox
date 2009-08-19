@@ -251,16 +251,12 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
     tchild_new (&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
-#if defined(I386) || defined(IA64) || defined(POWERPC)
-    eldest->personality = 0;
     eldest->personality = trace_personality(pid);
     if (0 > eldest->personality) {
         g_critical("failed to determine personality of eldest child %i: %s", eldest->pid, g_strerror(errno));
         g_printerr("failed to determine personality of eldest child %i: %s", eldest->pid, g_strerror(errno));
         exit(-1);
     }
-#error unsupported architecture
-#endif
     g_debug("eldest child %i runs in %s mode", eldest->pid, dispatch_mode(eldest->personality));
     eldest->sandbox->path = sydbox_config_get_sandbox_path();
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
