@@ -162,7 +162,7 @@ int trace_set_return(pid_t pid, long val)
     return 0;
 }
 
-int trace_get_arg(pid_t pid, int personality, int arg, long *res)
+int trace_get_arg(pid_t pid, int personality G_GNUC_UNUSED, int arg, long *res)
 {
     int save_errno;
     struct regs regs;
@@ -181,7 +181,7 @@ int trace_get_arg(pid_t pid, int personality, int arg, long *res)
     return 0;
 }
 
-char *trace_get_path(pid_t pid, int personality, int arg)
+char *trace_get_path(pid_t pid, int personality G_GNUC_UNUSED, int arg)
 {
     int save_errno;
     long addr = 0;
@@ -214,7 +214,7 @@ char *trace_get_path(pid_t pid, int personality, int arg)
     return buf;
 }
 
-int trace_set_path(pid_t pid, int personality, int arg, const char *src, size_t len)
+int trace_set_path(pid_t pid, int personality G_GNUC_UNUSED, int arg, const char *src, size_t len)
 {
     int n, m, save_errno;
     long addr = 0;
@@ -230,7 +230,7 @@ int trace_set_path(pid_t pid, int personality, int arg, const char *src, size_t 
         save_errno = errno;
         g_info("failed to get address of argument %d: %s", arg, g_strerror(errno));
         errno = save_errno;
-        return NULL;
+        return -1;
     }
     addr = regs.r_o0 + arg;
 
@@ -270,7 +270,7 @@ int trace_set_path(pid_t pid, int personality, int arg, const char *src, size_t 
     return 0;
 }
 
-int trace_fake_stat(pid_t pid, int personality)
+int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
 {
     int n, m, save_errno;
     long addr = 0;
@@ -279,6 +279,7 @@ int trace_fake_stat(pid_t pid, int personality)
         char x[sizeof(long)];
     } u;
     struct stat fakebuf;
+    struct regs regs;
 
     if (G_UNLIKELY(0 > ptrace(PTRACE_GETREGS, pid, &regs, NULL))) {
         save_errno = errno;
