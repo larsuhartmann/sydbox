@@ -229,7 +229,7 @@ int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
     } u;
     struct stat fakebuf;
 
-    if (G_UNLIKELY(0 > upeek_ia64(pid, arg, &addr))) {
+    if (G_UNLIKELY(0 > upeek_ia64(pid, 1, &addr))) {
         save_errno = errno;
         g_info("failed to get address of argument %d: %s", 1, g_strerror(errno));
         errno = save_errno;
