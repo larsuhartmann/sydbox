@@ -16,7 +16,7 @@ sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS)
 # dispatch.c
 sydbox_SOURCES+= dispatch.h dispatch-table.h
 if I386
-sydbox_SOURCES+= dispatch.c
+sydbox_SOURCES+= dispatch.c trace-x86.c
 endif
 if X86_64
 sydbox_SOURCES+= dispatch32.c dispatch64.c trace-x86_64.c
