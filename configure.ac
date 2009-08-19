@@ -104,10 +104,6 @@ powerpc*)
 	arch=powerpc
 	AC_DEFINE([POWERPC], 1, [Define for the POWERPC architecture.])
 	;;
-sparc64)
-	arch=sparc64
-	AC_DEFINE([SPARC64], 1, [Define for the SPARC64 architecture.])
-	;;
 *)
 	AC_MSG_RESULT([NO!])
 	AC_MSG_ERROR([architecture $host_cpu is not supported by sydbox])
@@ -118,9 +114,8 @@ AM_CONDITIONAL(I386, test x"$arch" = x"i386")
 AM_CONDITIONAL(X86_64, test x"$arch" = x"x86_64")
 AM_CONDITIONAL(IA64, test x"$arch" = x"ia64")
 AM_CONDITIONAL(POWERPC, test x"$arch" = x"powerpc")
-AM_CONDITIONAL(SPARC64, test x"$arch" = x"sparc64")
 AM_CONDITIONAL(P1, test x"$arch" = x"i386" -o x"$arch" = x"ia64" -o x"$arch" = x"powerpc")
-AM_CONDITIONAL(P2, test x"$arch" = x"x86_64" -o x"$arch" = x"sparc64")
+AM_CONDITIONAL(P2, test x"$arch" = x"x86_64")
 dnl }}}
 
 dnl {{{ Check headers
