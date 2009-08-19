@@ -245,6 +245,13 @@ static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNU
     tchild_new(&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
+    eldest->personality = trace_personality(pid);
+    if (0 > eldest->personality) {
+        g_critical("failed to determine personality of eldest child %i: %s", eldest->pid, g_strerror(errno));
+        g_printerr("failed to determine personality of eldest child %i: %s", eldest->pid, g_strerror(errno));
+        exit(-1);
+    }
+    g_debug("eldest child %i runs in %s mode", eldest->pid, dispatch_mode(eldest->personality));
     eldest->sandbox->path = sydbox_config_get_sandbox_path();
     eldest->sandbox->exec = sydbox_config_get_sandbox_exec();
     eldest->sandbox->network = sydbox_config_get_sandbox_network();
