@@ -22,7 +22,7 @@ if X86_64
 sydbox_SOURCES+= dispatch32.c dispatch64.c trace-x86_64.c
 endif
 if IA64
-sydbox_SOURCES+= dispatch.c
+sydbox_SOURCES+= dispatch.c trace-ia64.c
 endif
 if POWERPC
 sydbox_SOURCES+= dispatch.c
