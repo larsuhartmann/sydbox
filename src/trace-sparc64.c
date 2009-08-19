@@ -42,7 +42,7 @@
 #undef PTRACE_SETREGS
 #define PTRACE_SETREGS PTRACE_SETREGS64
 
-inline int trace_personality(pid_t pid)
+inline int trace_personality(pid_t pid G_GNUC_UNUSED)
 {
     return 0;
 /* FIXME: Why doesn't this work?! */
