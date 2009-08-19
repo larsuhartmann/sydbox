@@ -23,7 +23,7 @@
 
 #include <glib.h>
 
-#include "sydbox-context.h"
+#include <sydbox/context.h>
 
 struct sydbox_context
 {

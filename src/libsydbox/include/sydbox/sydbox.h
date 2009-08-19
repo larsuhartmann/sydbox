@@ -23,8 +23,8 @@
 
 #include <glib.h>
 
-#include <sydbox-unstable.h>
-#include <sydbox-context.h>
+#include <sydbox/unstable.h>
+#include <sydbox/context.h>
 
 G_BEGIN_DECLS
 

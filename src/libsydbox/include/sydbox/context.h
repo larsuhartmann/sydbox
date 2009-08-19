@@ -25,7 +25,7 @@
 
 #include <glib.h>
 
-#include <sydbox-unstable.h>
+#include <sydbox/unstable.h>
 
 G_BEGIN_DECLS
 
