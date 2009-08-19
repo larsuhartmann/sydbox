@@ -119,7 +119,7 @@ AM_CONDITIONAL(P2, test x"$arch" = x"x86_64")
 dnl }}}
 
 dnl {{{ Check headers
-AC_CHECK_HEADERS([sys/reg.h], [], [])
+AC_CHECK_HEADERS([asm/reg.h sys/reg.h], [], [])
 dnl }}}
 
 dnl {{{ Check functions
