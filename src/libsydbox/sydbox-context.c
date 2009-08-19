@@ -18,18 +18,19 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 #include <glib.h>
 
 #include "sydbox-context.h"
 
-struct _SydboxContext
+struct sydbox_context
 {
     // Public
-    gboolean sandbox_path;
-    gboolean sandbox_execve;
-    gboolean sandbox_network;
+    bool sandbox_path;
+    bool sandbox_execve;
+    bool sandbox_network;
 
     GSList *write_prefixes;
     GSList *predict_prefixes;
@@ -37,71 +38,61 @@ struct _SydboxContext
 
     // Internal
     pid_t eldest;                   // first child's pid is kept to determine return code.
-    gboolean before_initial_execve; // first execve() is noted here for execve(2) sandboxing.
+    bool before_initial_execve;     // first execve() is noted here for execve(2) sandboxing.
     GSList *children;               // list of children.
 };
 
-SydboxContext *
-sydbox_context_create (void)
+struct sydbox_context *sydbox_context_new(void)
 {
-    SydboxContext *ctx = g_try_new0(SydboxContext, 1);
+    struct sydbox_context *ctx = g_try_new0(struct sydbox_context, 1);
     if (NULL == ctx)
         return NULL;
-    ctx->before_initial_execve = TRUE;
+    ctx->before_initial_execve = true;
     return ctx;
 }
 
-void
-sydbox_context_destroy (SydboxContext *ctx)
+void sydbox_context_free(struct sydbox_context *ctx)
 {
-    g_free (ctx);
+    g_free(ctx);
 }
 
-gboolean
-sydbox_context_get_sandbox_path (const SydboxContext * const ctx)
+bool sydbox_context_get_sandbox_path (const struct sydbox_context * const ctx)
 {
     return ctx->sandbox_path;
 }
 
-void
-sydbox_context_set_sandbox_path (SydboxContext * const ctx, gboolean enabled)
+void sydbox_context_set_sandbox_path(struct sydbox_context * const ctx, bool enabled)
 {
     ctx->sandbox_path = enabled;
 }
 
-gboolean
-sydbox_context_get_sandbox_execve (const SydboxContext * const ctx)
+bool sydbox_context_get_sandbox_execve(const struct sydbox_context * const ctx)
 {
     return ctx->sandbox_execve;
 }
 
-void
-sydbox_context_set_sandbox_execve (SydboxContext * const ctx, gboolean enabled)
+void sydbox_context_set_sandbox_execve(struct sydbox_context * const ctx, bool enabled)
 {
     ctx->sandbox_execve = enabled;
 }
 
-gboolean
-sydbox_context_get_sandbox_network (const SydboxContext * const ctx)
+bool sydbox_context_get_sandbox_network(const struct sydbox_context * const ctx)
 {
     return ctx->sandbox_network;
 }
 
-void
-sydbox_context_set_sandbox_network (SydboxContext * const ctx, gboolean enabled)
+void sydbox_context_set_sandbox_network(struct sydbox_context * const ctx, bool enabled)
 {
     ctx->sandbox_network = enabled;
 }
 
-const GSList *
-sydbox_context_get_write_prefixes (const SydboxContext * const ctx)
+const GSList *sydbox_context_get_write_prefixes(const struct sydbox_context * const ctx)
 {
     return ctx->write_prefixes;
 }
 
-void
-sydbox_context_set_write_prefixes (SydboxContext * const ctx,
-                                   const GSList * const prefixes)
+void sydbox_context_set_write_prefixes(struct sydbox_context * const ctx,
+        const GSList * const prefixes)
 {
     gchar *prefix;
     const GSList *entry;
@@ -117,15 +108,13 @@ sydbox_context_set_write_prefixes (SydboxContext * const ctx,
     }
 }
 
-const GSList *
-sydbox_context_get_predict_prefixes (const SydboxContext * const ctx)
+const GSList *sydbox_context_get_predict_prefixes(const struct sydbox_context * const ctx)
 {
     return ctx->predict_prefixes;
 }
 
-void
-sydbox_context_set_predict_prefixes (SydboxContext * const ctx,
-                                     const GSList * const prefixes)
+void sydbox_context_set_predict_prefixes(struct sydbox_context * const ctx,
+        const GSList * const prefixes)
 {
     gchar *prefix;
     const GSList *entry;
@@ -141,15 +130,13 @@ sydbox_context_set_predict_prefixes (SydboxContext * const ctx,
     }
 }
 
-const GSList *
-sydbox_context_get_execve_prefixes (const SydboxContext * const ctx)
+const GSList *sydbox_context_get_execve_prefixes(const struct sydbox_context * const ctx)
 {
     return ctx->execve_prefixes;
 }
 
-void
-sydbox_context_set_execve_prefixes (SydboxContext * const ctx,
-                                    const GSList * const prefixes)
+void sydbox_context_set_execve_prefixes(struct sydbox_context * const ctx,
+        const GSList * const prefixes)
 {
     gchar *prefix;
     const GSList *entry;

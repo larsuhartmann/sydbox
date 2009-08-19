@@ -18,8 +18,10 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __SYDBOX_CONTEXT_H__
-#define __SYDBOX_CONTEXT_H__
+#ifndef SYDBOX_GUARD_CONTEXT_H
+#define SYDBOX_GUARD_CONTEXT_H 1
+
+#include <stdbool.h>
 
 #include <glib.h>
 
@@ -27,55 +29,87 @@
 
 G_BEGIN_DECLS
 
-typedef struct _SydboxContext SydboxContext;
+/**
+ * This opaque object represents a sydbox context.
+ * Create a new instance with sydbox_context_new.
+ */
+struct sydbox_context;
 
-SydboxContext *
-sydbox_context_create (void);
+/**
+ * Create a new sydbox context instance.
+ * Returns NULL if memory allocation fails and sets errno accordingly.
+ */
+struct sydbox_context *sydbox_context_new(void);
 
-void
-sydbox_context_destroy (SydboxContext *ctx);
+/**
+ * Frees the given sydbox context.
+ */
+void sydbox_context_free(struct sydbox_context *ctx);
 
-gboolean
-sydbox_context_get_sandbox_path (const SydboxContext * const ctx);
+/**
+ * Returns a boolean that specifies whether path sandboxing is enabled.
+ */
+bool sydbox_context_get_sandbox_path(const struct sydbox_context * const ctx);
 
-void
-sydbox_context_set_sandbox_path (SydboxContext * const ctx, gboolean enabled);
+/**
+ * Sets path sandboxing on/off.
+ */
+void sydbox_context_set_sandbox_path(struct sydbox_context * const ctx, bool enabled);
 
-gboolean
-sydbox_context_get_sandbox_execve (const SydboxContext * const ctx);
+/**
+ * Returns a boolean that specifies whether execve(2) sandboxing is enabled.
+ */
+bool sydbox_context_get_sandbox_execve(const struct sydbox_context * const ctx);
 
-void
-sydbox_context_set_sandbox_execve (SydboxContext * const ctx, gboolean enabled);
+/**
+ * Sets execve(2) sandboxing on/off.
+ */
+void sydbox_context_set_sandbox_execve(struct sydbox_context * const ctx, bool enabled);
 
-gboolean
-sydbox_context_get_sandbox_network (const SydboxContext * const ctx);
+/**
+ * Returns a boolean that specifies whether network sandboxing is enabled.
+ */
+bool sydbox_context_get_sandbox_network(const struct sydbox_context * const ctx);
 
-void
-sydbox_context_set_sandbox_network (SydboxContext * const ctx, gboolean enabled);
+/**
+ * Sets network sandboxing on/off.
+ */
+void sydbox_context_set_sandbox_network(struct sydbox_context * const ctx, bool enabled);
 
-const GSList *
-sydbox_context_get_write_prefixes (const SydboxContext * const ctx);
+/**
+ * Returns a list of write allowed path prefixes.
+ */
+const GSList *sydbox_context_get_write_prefixes(const struct sydbox_context * const ctx);
 
-void
-sydbox_context_set_write_prefixes (SydboxContext * const ctx,
-                                   const GSList * const prefixes);
+/**
+ * Sets the list of write allowed path prefixes.
+ */
+void sydbox_context_set_write_prefixes(struct sydbox_context * const ctx,
+        const GSList * const prefixes);
 
-const GSList *
-sydbox_context_get_predict_prefixes (const SydboxContext * const ctx);
+/**
+ * Returns a list of predict allowed path prefixes.
+ */
+const GSList *sydbox_context_get_predict_prefixes(const struct sydbox_context * const ctx);
 
-void
-sydbox_context_set_predict_prefixes (SydboxContext * const ctx,
-                                     const GSList * const prefixes);
+/**
+ * Sets the list of predict enabled path prefixes.
+ */
+void sydbox_context_set_predict_prefixes(struct sydbox_context * const ctx,
+        const GSList * const prefixes);
 
-const GSList *
-sydbox_context_get_execve_prefixes (const SydboxContext * const ctx);
+/**
+ * Returns a list of execve(2) allowed path prefixes.
+ */
+const GSList *sydbox_context_get_execve_prefixes(const struct sydbox_context * const ctx);
 
-void
-sydbox_context_set_execve_prefixes (SydboxContext * const ctx,
-                                    const GSList * const prefixes);
-
+/**
+ * Sets the list of execve(2) allowed path prefixes.
+ */
+void sydbox_context_set_execve_prefixes(struct sydbox_context * const ctx,
+        const GSList * const prefixes);
 
 G_END_DECLS
 
-#endif
+#endif // SYDBOX_GUARD_CONTEXT_H
 
