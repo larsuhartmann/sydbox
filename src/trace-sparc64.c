@@ -285,7 +285,7 @@ int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
         save_errno = errno;
         g_info("failed to get address of argument 1: %s", g_strerror(errno));
         errno = save_errno;
-        return NULL;
+        return -1;
     }
     addr = regs.r_o0 + 1;
 
