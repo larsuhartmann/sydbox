@@ -1008,7 +1008,7 @@ static int syscall_handle_chdir(struct tchild *child)
     return 0;
 }
 
-#if defined(POWERPC)
+#if defined(POWERPC) || defined(SPARC64)
 /* clone(2) handler for POWERPC because PTRACE_GETEVENTMSG doesn't work
  * reliably on this architecture.
  */
