@@ -8,7 +8,8 @@ sydbox_SOURCES = children.h context.h flags.h sydbox-log.h loop.h \
 		 path.h proc.h syscall.h trace.h wrappers.h \
 		 sydbox-config.h sydbox-log.h sydbox-utils.h \
 		 path.c proc.c children.c \
-		 context.c syscall.c trace.c wrappers.c loop.c \
+		 context.c syscall.c wrappers.c loop.c \
+		 trace-util.c trace-util.h trace.c trace.h \
 		 sydbox-config.c sydbox-log.c sydbox-utils.c main.c
 sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS)
 
@@ -18,7 +19,7 @@ if I386
 sydbox_SOURCES+= dispatch.c
 endif
 if X86_64
-sydbox_SOURCES+= dispatch32.c dispatch64.c
+sydbox_SOURCES+= dispatch32.c dispatch64.c trace-x86_64.c
 endif
 if IA64
 sydbox_SOURCES+= dispatch.c

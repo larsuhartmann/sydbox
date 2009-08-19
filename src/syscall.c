@@ -116,7 +116,7 @@ static void systemcall_get_property(GObject *obj,
  */
 static bool systemcall_get_path(pid_t pid, int personality, int narg, struct checkdata *data)
 {
-    data->pathlist[narg] = trace_get_string(pid, personality, narg);
+    data->pathlist[narg] = trace_get_path(pid, personality, narg);
     if (G_UNLIKELY(NULL == data->pathlist[narg])) {
         data->result = RS_ERROR;
         data->save_errno = errno;
@@ -351,7 +351,7 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
 
     if (G_UNLIKELY(RS_MAGIC == data->result)) {
         g_debug("changing path to /dev/null");
-        if (G_UNLIKELY(0 > trace_set_string(child->pid, child->personality, 0, "/dev/null", 10))) {
+        if (G_UNLIKELY(0 > trace_set_path(child->pid, child->personality, 0, "/dev/null", 10))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)
@@ -719,7 +719,7 @@ static void systemcall_check_path(SystemCall *self,
         if (self->flags & RETURNS_FD) {
             g_debug("system call %d(%s) returns fd and its argument is under a predict path", self->no, sname);
             g_debug("changing the path argument to /dev/null");
-            if (0 > trace_set_string(child->pid, child->personality, narg, "/dev/null", 10)) {
+            if (0 > trace_set_path(child->pid, child->personality, narg, "/dev/null", 10)) {
                 data->result = RS_ERROR;
                 data->save_errno = errno;
                 if (ESRCH == errno)
@@ -740,7 +740,7 @@ static void systemcall_check_path(SystemCall *self,
          */
         g_debug ("paranoia! system call %d(%s) resolves symlinks, substituting path with resolved path",
                 self->no, sname);
-        if (G_UNLIKELY(0 > trace_set_string(child->pid, child->personality, narg, path, strlen(path) + 1))) {
+        if (G_UNLIKELY(0 > trace_set_path(child->pid, child->personality, narg, path, strlen(path) + 1))) {
             data->result = RS_ERROR;
             data->save_errno = errno;
             if (ESRCH == errno)

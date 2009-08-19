@@ -213,16 +213,14 @@ int trace_loop(context_t *ctx) {
                     g_info("access to magic commands is now denied for child %i", child->pid);
                     child->sandbox->lock = LOCK_SET;
                 }
-#if defined(X86_64)
                 // Update child's personality
-                child->personality = trace_type(child->pid);
+                child->personality = trace_personality(child->pid);
                 if (0 > child->personality) {
                     g_critical("failed to determine personality of child %i: %s", child->pid, g_strerror(errno));
                     g_printerr("failed to determine personality of child %i: %s", child->pid, g_strerror(errno));
                     exit(-1);
                 }
                 g_debug("updated child %i's personality to %s mode", child->pid, dispatch_mode(child->personality));
-#endif // defined(X86_64)
                 ret = xsyscall(ctx, child);
                 if (0 != ret)
                     return ret;
