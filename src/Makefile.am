@@ -28,7 +28,7 @@ if POWERPC
 sydbox_SOURCES+= dispatch.c trace-powerpc.c
 endif
 if SPARC64
-sydbox_SOURCES+= dispatch.c trace-sparc64.c
+sydbox_SOURCES+= dispatch32.c dispatch64.c trace-sparc64.c
 endif
 
 nodist_sydbox_SOURCES= syscall_marshaller.h syscall_marshaller.c

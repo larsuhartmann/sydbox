@@ -1062,6 +1062,7 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
  */
 int syscall_handle(context_t *ctx, struct tchild *child)
 {
+    int currpers;
     long sno;
     struct checkdata data;
     SystemCall *handler;
@@ -1088,6 +1089,16 @@ int syscall_handle(context_t *ctx, struct tchild *child)
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         g_debug_trace("child %i is entering system call %lu(%s)", child->pid, sno, sname);
+
+        /* Determine the personality of the child */
+        currpers = trace_personality(child->pid);
+        if (0 > currpers)
+            g_warning("Failed to determine personality of child %i: %s", child->pid, g_strerror(errno));
+        else {
+            if (currpers != child->personality)
+                g_debug("updated child %i's personality to %s mode", child->pid, dispatch_mode(currpers));
+            child->personality = currpers;
+        }
 
         /* Get handler for the system call
          */
