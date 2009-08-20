@@ -42,6 +42,10 @@ const char *dispatch_name32(int sno);
 const char *dispatch_name64(int sno);
 bool dispatch_chdir32(int sno);
 bool dispatch_chdir64(int sno);
+#if defined(SPARC64)
+bool dispatch_clone32(int sno);
+bool dispatch_clone64(int sno);
+#endif // defined(SPARC64)
 
 #define dispatch_flags(personality, sno) \
     ((personality) == 0) ? dispatch_flags32((sno)) : dispatch_flags64((sno))
@@ -51,12 +55,16 @@ bool dispatch_chdir64(int sno);
     ((personality) == 0) ? "32 bit" : "64 bit"
 #define dispatch_chdir(personality, sno) \
     ((personality) == 0) ? dispatch_chdir32((sno)) : dispatch_chdir64((sno))
+#if defined(SPARC64)
+#define dispatch_clone(personality, sno) \
+    ((personality) == 0) ? dispatch_clone32((sno)) : dispatch_clone64((sno))
+#endif // defined(SPARC64)
 
 #else
 #error unsupported architecture
 #endif
 
-#if defined(POWERPC) || defined(SPARC64)
+#if defined(POWERPC)
 bool dispatch_clone(int personality, int sno);
 #endif // defined(POWERPC)
 

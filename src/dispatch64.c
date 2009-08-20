@@ -55,3 +55,10 @@ bool dispatch_chdir64(int sno)
     return IS_CHDIR(sno);
 }
 
+#if defined(SPARC64)
+bool dispatch_clone64(int sno)
+{
+    return IS_CLONE(sno);
+}
+#endif // defined(SPARC64)
+

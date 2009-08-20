@@ -75,7 +75,7 @@ bool dispatch_chdir(int personality G_GNUC_UNUSED, int sno)
     return IS_CHDIR(sno);
 }
 
-#if defined(POWERPC) || defined(SPARC64)
+#if defined(POWERPC)
 bool dispatch_clone(int personality G_GNUC_UNUSED, int sno)
 {
     return IS_CLONE(sno);
