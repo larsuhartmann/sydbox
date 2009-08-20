@@ -532,7 +532,7 @@ static gchar *systemcall_resolvepath(SystemCall *self,
     char *path_sanitized;
     char *resolved_path;
 
-    if ('/' != path[0]) {
+    if (!g_path_is_absolute(path)) {
         char *absdir, *abspath;
         if (isat && NULL != data->dirfdlist[narg - 1]) {
             absdir = data->dirfdlist[narg - 1];
