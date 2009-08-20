@@ -23,7 +23,6 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -73,7 +72,7 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
 {
     GSList *walk;
 
-    assert(NULL != child && NULL != parent);
+    g_assert(NULL != child && NULL != parent);
     if (child->inherited)
         return;
 

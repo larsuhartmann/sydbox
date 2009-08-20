@@ -17,7 +17,6 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -122,7 +121,7 @@ int trace_get_arg(pid_t pid, int personality G_GNUC_UNUSED, int arg, long *res)
 {
     int save_errno;
 
-    assert(arg >= 0 && arg < MAX_ARGS);
+    g_assert(arg >= 0 && arg < MAX_ARGS);
 
     if (G_UNLIKELY(0 > upeek_ia64(pid, arg, res))) {
         save_errno = errno;
@@ -139,7 +138,7 @@ char *trace_get_path(pid_t pid, int personality G_GNUC_UNUSED, int arg)
     int save_errno;
     long addr = 0;
 
-    assert(arg >= 0 && arg < MAX_ARGS);
+    g_assert(arg >= 0 && arg < MAX_ARGS);
 
     if (G_UNLIKELY(0 > upeek_ia64(pid, arg, &addr))) {
         save_errno = errno;
@@ -174,7 +173,7 @@ int trace_set_path(pid_t pid, int personality G_GNUC_UNUSED, int arg, const char
         char x[sizeof(long)];
     } u;
 
-    assert(arg >= 0 && arg < MAX_ARGS);
+    g_assert(arg >= 0 && arg < MAX_ARGS);
 
     if (G_UNLIKELY(0 > upeek_ia64(pid, arg, &addr))) {
         save_errno = errno;

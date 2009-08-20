@@ -19,7 +19,6 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,7 +159,7 @@ int trace_loop(context_t *ctx) {
         }
         child = tchild_find(ctx->children, pid);
         event = trace_event(status);
-        assert(NULL != child || E_STOP == event || E_EXIT == event || E_EXIT_SIGNAL == event);
+        g_assert(NULL != child || E_STOP == event || E_EXIT == event || E_EXIT_SIGNAL == event);
 
         switch(event) {
             case E_STOP:

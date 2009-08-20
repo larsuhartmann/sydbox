@@ -17,7 +17,6 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -52,7 +51,7 @@ shell_expand (const char * const str)
 
     // Lose the newline at the end.
     nlindex = strlen(output) - 1;
-    assert('\n' == output[nlindex]);
+    g_assert('\n' == output[nlindex]);
     output[nlindex] = '\0';
     return output;
 }
