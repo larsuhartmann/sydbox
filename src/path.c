@@ -56,7 +56,6 @@ shell_expand (const char * const str)
     return output;
 }
 
-
 inline bool path_magic_dir(const char *path) {
     return (0 == strncmp(path, CMD_PATH, CMD_PATH_LEN - 1));
 }

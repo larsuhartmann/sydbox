@@ -76,7 +76,6 @@
 
 static context_t *ctx = NULL;
 
-
 static gint verbosity = -1;
 
 static gchar *logfile;
