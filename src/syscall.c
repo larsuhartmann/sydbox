@@ -126,6 +126,7 @@ static bool systemcall_get_path(pid_t pid, int personality, int narg, struct che
             g_warning("failed to grab string from argument %d: %s", narg, g_strerror(errno));
         return false;
     }
+    g_debug("path argument %d is `%s'", narg, data->pathlist[narg]);
     return true;
 }
 
