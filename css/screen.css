@@ -30,6 +30,7 @@ body {
 }
 
 #head #logo {
+  margin: 1em;
   float: left;
 }
 
