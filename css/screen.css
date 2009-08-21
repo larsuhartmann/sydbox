@@ -34,8 +34,7 @@ body {
 }
 
 #head li {
-  display: inline;
-  margin-left: 1em;
+  list-style: none;
 }
 
 #head br.clear {
