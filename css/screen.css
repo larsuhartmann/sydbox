@@ -26,7 +26,7 @@ body {
   background-color: white;
   border: thin solid white;
   border-bottom: medium solid #006600;
-  overflow: auto;
+  overflow: hidden;
   margin: -1%;
 }
 
