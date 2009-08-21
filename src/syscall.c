@@ -654,6 +654,33 @@ static void systemcall_canonicalize(SystemCall *self, gpointer ctx_ptr,
     }
 }
 
+static int systemcall_check_create(SystemCall *self,
+                                   struct tchild *child,
+                                   int narg, struct checkdata *data)
+{
+    char *path;
+    struct stat buf;
+
+    path = data->rpathlist[narg];
+    if (self->flags & (MUST_CREAT | MUST_CREAT2 | MUST_CREAT_AT | MUST_CREAT_AT2)) {
+        g_debug("system call %d(%s) has one of MUST_CREAT* flags set, checking if `%s' exists",
+                self->no, sname, path);
+        if (0 == stat(path, &buf)) {
+            /* The system call _has_ to create the path but it exists.
+             * Deny the system call and set errno to EEXIST but don't throw
+             * an access violation.
+             * Useful for cases like mkdir -p a/b/c.
+             */
+            g_debug("`%s' exists, system call %d(%s) will fail with EEXIST", path, self->no, sname);
+            g_debug("denying system call %d(%s) and failing with EEXIST without violation", self->no, sname);
+            data->result = RS_DENY;
+            child->retval = -EEXIST;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void systemcall_check_path(SystemCall *self,
                                   struct tchild *child,
                                   int narg, struct checkdata *data)
@@ -666,23 +693,9 @@ static void systemcall_check_path(SystemCall *self,
     int allow_predict = pathlist_check(child->sandbox->predict_prefixes, path);
 
     if (G_UNLIKELY(!allow_write && !allow_predict)) {
-        if (self->flags & (MUST_CREAT | MUST_CREAT2 | MUST_CREAT_AT | MUST_CREAT_AT2)) {
-            g_debug("system call %d(%s) has one of MUST_CREAT* flags set, checking if `%s' exists",
-                    self->no, sname, path);
-            struct stat buf;
-            if (0 == stat(path, &buf)) {
-                /* The system call _has_ to create the path but it exists.
-                 * Deny the system call and set errno to EEXIST but don't throw
-                 * an access violation.
-                 * Useful for cases like mkdir -p a/b/c.
-                 */
-                g_debug("`%s' exists, system call %d(%s) will fail with EEXIST", path, self->no, sname);
-                g_debug("denying system call %d(%s) and failing with EEXIST without violation", self->no, sname);
-                data->result = RS_DENY;
-                child->retval = -EEXIST;
-                return;
-            }
-        }
+        if (systemcall_check_create(self, child, narg, data))
+            return;
+
         child->retval = -EPERM;
 
         /* Don't raise access violations for access(2) system call.
@@ -730,8 +743,16 @@ static void systemcall_check_path(SystemCall *self,
             }
         }
         else {
-            data->result = RS_DENY;
-            child->retval = 0;
+            /* Check if the system call will fail with EEXIST here as well.
+             * This is necessary because we add / to predict during src_test,
+             * and some programs rely on e.g: mkdir() fail with EEXIST.
+             * Check bug 217 for more information.
+             */
+            if (!systemcall_check_create(self, child, narg, data)) {
+                /* Only now we can allow predict access. */
+                data->result = RS_DENY;
+                child->retval = 0;
+            }
         }
     }
 
