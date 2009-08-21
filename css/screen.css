@@ -26,6 +26,7 @@ body {
   background-color: white;
   border: thin solid white;
   border-bottom: medium solid #006600;
+  overflow: auto;
   margin: -1%;
 }
 
@@ -36,10 +37,6 @@ body {
 
 #head li {
   list-style: none;
-}
-
-#head br.clear {
-  clear: both;
 }
 
 pre {
