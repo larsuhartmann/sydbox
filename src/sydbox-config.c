@@ -231,6 +231,14 @@ sydbox_config_load (const gchar * const file)
         }
     }
 
+    // Get main.hooks
+    char **hooklist = g_key_file_get_string_list(config_fd, "main", "hooks", NULL, NULL);
+    if (NULL != hooklist) {
+        for (unsigned int i = 0; NULL != hooklist[i]; i++)
+            sydbox_config_addhook(hooklist[i]);
+        g_strfreev(hooklist);
+    }
+
     // Get log.file
     if (g_getenv(ENV_LOG))
         config->logfile = g_strdup(g_getenv(ENV_LOG));
