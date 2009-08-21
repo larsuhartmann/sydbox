@@ -246,5 +246,7 @@ int sydbox_config_rmhook(const gchar *path);
 
 void sydbox_config_rmhook_all(void);
 
+GSList *sydbox_config_get_hooks(void);
+
 #endif
 
