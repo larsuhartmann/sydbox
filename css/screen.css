@@ -38,6 +38,10 @@ body {
   margin-left: 1em;
 }
 
+#head br.clear {
+  clear: both;
+}
+
 pre {
   border: solid 1px #006600;
   background-color: #f8f8ff;
