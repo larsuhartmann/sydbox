@@ -720,19 +720,19 @@ static void systemcall_check_path(SystemCall *self,
 
         switch (narg) {
             case 0:
-                sydbox_access_violation(child->pid, "%s(\"%s\", %s)",
+                sydbox_access_violation(child->pid, sname, path, "%s(\"%s\", %s)",
                                         sname, path, MODE_STRING(self->flags));
                 break;
             case 1:
-                sydbox_access_violation(child->pid, "%s(?, \"%s\", %s)",
+                sydbox_access_violation(child->pid, sname, path, "%s(?, \"%s\", %s)",
                                         sname, path, MODE_STRING(self->flags));
                 break;
             case 2:
-                sydbox_access_violation(child->pid, "%s(?, ?, \"%s\", %s)",
+                sydbox_access_violation(child->pid, sname, path, "%s(?, ?, \"%s\", %s)",
                                         sname, path, MODE_STRING(self->flags));
                 break;
             case 3:
-                sydbox_access_violation(child->pid, "%s(?, ?, ?, \"%s\", %s)",
+                sydbox_access_violation(child->pid, sname, path, "%s(?, ?, ?, \"%s\", %s)",
                                         sname, path, MODE_STRING(self->flags));
                 break;
             default:
@@ -796,7 +796,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         return;
 
     if (child->sandbox->network && self->flags & NET_CALL) {
-        sydbox_access_violation(child->pid, "%s()", sname);
+        sydbox_access_violation(child->pid, sname, NULL, "%s()", sname);
         data->result = RS_DENY;
         child->retval = -EACCES;
         return;
@@ -805,7 +805,8 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         g_debug("checking `%s' for exec access", data->rpathlist[0]);
         int allow_exec = pathlist_check(child->sandbox->exec_prefixes, data->rpathlist[0]);
         if (!allow_exec) {
-            sydbox_access_violation(child->pid, "execve(\"%s\", argv[], envp[])", data->rpathlist[0]);
+            sydbox_access_violation(child->pid, sname, data->rpathlist[0],
+                    "execve(\"%s\", argv[], envp[])", data->rpathlist[0]);
             data->result = RS_DENY;
             child->retval = -EACCES;
         }
