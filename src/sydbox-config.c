@@ -19,6 +19,7 @@
  */
 
 #include <stdbool.h>
+#include <string.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -42,6 +43,7 @@ struct sydbox_config
     bool wait_all;
     bool allow_proc_pid;
 
+    GSList *hooks;
     GSList *write_prefixes;
     GSList *predict_prefixes;
     GSList *exec_prefixes;
@@ -544,5 +546,37 @@ GSList *
 sydbox_config_get_exec_prefixes (void)
 {
     return config->exec_prefixes;
+}
+
+void sydbox_config_addhook(gchar *path)
+{
+    config->hooks = g_slist_append(config->hooks, path);
+}
+
+int sydbox_config_rmhook(const gchar *path)
+{
+    char *hook;
+    GSList *walk;
+
+    walk = config->hooks;
+    while (NULL != walk) {
+        hook = (gchar *) walk->data;
+        if (0 == strncmp(hook, path, strlen(path) + 1)) {
+            g_debug("removing hook `%s'", path);
+            config->hooks = g_slist_remove_link(config->hooks, walk);
+            g_free(hook);
+            g_slist_free(walk);
+            return 1;
+        }
+        walk = g_slist_next(walk);
+    }
+    return 0;
+}
+
+void sydbox_config_rmhook_all(void)
+{
+    g_slist_foreach(config->hooks, (GFunc) g_free, NULL);
+    g_slist_free(config->hooks);
+    config->hooks = NULL;
 }
 
