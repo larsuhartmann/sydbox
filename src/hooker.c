@@ -35,16 +35,16 @@ gint hooker_spawn(const gchar *hook, pid_t pid, const gchar *sname, const gchar 
 
     spawn_error = NULL;
     if (G_UNLIKELY(!g_spawn_sync(NULL, argv, NULL, 0, NULL, NULL, NULL, NULL, &ret, &spawn_error))) {
-        g_warning("failed to execute hook `%s': %s", argv[0], spawn_error->message);
+        g_warning("failed to execute access violation hook `%s': %s", argv[0], spawn_error->message);
         g_error_free(spawn_error);
-        for (int i = 0; i < 5; i++)
+        for (unsigned int i = 0; i < 5; i++)
             g_free(argv[i]);
         return 0;
     }
 
-    for (int i = 0; i < 5; i++)
+    g_debug("access violation hook `%s' returned %d", argv[0], ret);
+    for (unsigned int i = 0; i < 5; i++)
         g_free(argv[i]);
-    g_debug("hook `%s' returned %d", argv[0], ret);
     return ret;
 }
 
