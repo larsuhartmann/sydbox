@@ -35,10 +35,13 @@ body {
   float: left;
 }
 
-#head li {
-  list-style: none;
+#head ul {
   padding: 0em;
   float: left;
+}
+
+#head li {
+  list-style: none;
 }
 
 pre {
