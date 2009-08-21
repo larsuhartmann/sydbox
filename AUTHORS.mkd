@@ -5,3 +5,5 @@
 - Saleem Abdulrasool \<[compnerd@compnerd.org](mailto:compnerd@compnerd.org)\>  
   Contributor, [glib](http://library.gnome.org/devel/glib/),
   [libsydbox](http://github.com/alip/sydbox/tree/libsydbox)
+- David Shakaryan \<[omp@gentoo.org](mailto:omp@gentoo.org)\>  
+  Logo

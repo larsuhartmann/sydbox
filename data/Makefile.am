@@ -1,4 +1,4 @@
-EXTRA_DIST = sydbox.1.txt sydbox.1.xml sydbox.1
+EXTRA_DIST = sydbox.1.txt sydbox.1.xml sydbox.1 logo.svg
 
 BUILT_SOURCES = sydbox.1
 
