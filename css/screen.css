@@ -37,6 +37,8 @@ body {
 
 #head li {
   list-style: none;
+  padding: 0em;
+  float: left;
 }
 
 pre {
