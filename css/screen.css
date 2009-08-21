@@ -29,6 +29,10 @@ body {
   margin: -1%;
 }
 
+#head #logo {
+  float: left;
+}
+
 #head li {
   display: inline;
   margin-left: 1em;
