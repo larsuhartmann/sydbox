@@ -4,6 +4,9 @@ News for sydbox
 This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
+0.1_rc3:
+    * Replaced access violation hooks with filters.
+
 0.1_rc2:
     * Ported to PPC64, now PPC64 is a supported architecture. (thanks to mrothe)
     * Removed the so-called "compatibility" mode.
