@@ -349,18 +349,6 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         child->sandbox->exec = false;
         g_info("execve(2) sandboxing is now disabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_addhook(path))) {
-        data->result = RS_MAGIC;
-        rpath = path + CMD_ADDHOOK_LEN;
-        sydbox_config_addhook(g_strdup(rpath));
-        g_info("approved addhook(\"%s\") for child %i", rpath, child->pid);
-    }
-    else if (G_UNLIKELY(path_magic_rmhook(path))) {
-        data->result = RS_MAGIC;
-        rpath = path + CMD_RMHOOK_LEN;
-        sydbox_config_rmhook(rpath);
-        g_info("approved rmhook(\"%s\") for child %i", rpath, child->pid);
-    }
 
     if (G_UNLIKELY(RS_MAGIC == data->result)) {
         g_debug("changing path to /dev/null");

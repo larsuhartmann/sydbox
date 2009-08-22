@@ -110,16 +110,6 @@ inline bool path_magic_unsandbox_exec(const char *path)
     return (0 == strncmp(path, CMD_UNSANDBOX_EXEC, CMD_UNSANDBOX_EXEC_LEN));
 }
 
-inline bool path_magic_addhook(const char *path)
-{
-    return (0 == strncmp(path, CMD_ADDHOOK, CMD_ADDHOOK_LEN));
-}
-
-inline bool path_magic_rmhook(const char *path)
-{
-    return (0 == strncmp(path, CMD_RMHOOK, CMD_RMHOOK_LEN));
-}
-
 int pathnode_new(GSList **pathlist, const char *path, int sanitize) {
     char *data;
 

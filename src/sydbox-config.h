@@ -240,11 +240,5 @@ sydbox_config_get_predict_prefixes (void);
 GSList *
 sydbox_config_get_exec_prefixes (void);
 
-void sydbox_config_addhook(gchar *path);
-
-int sydbox_config_rmhook(const gchar *path);
-
-void sydbox_config_rmhook_all(void);
-
 #endif
 

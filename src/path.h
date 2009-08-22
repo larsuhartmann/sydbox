@@ -51,10 +51,6 @@
 #define CMD_SANDBOX_EXEC_LEN    (CMD_PATH_LEN + 13)
 #define CMD_UNSANDBOX_EXEC      CMD_PATH"unsandbox_exec"
 #define CMD_UNSANDBOX_EXEC_LEN  (CMD_PATH_LEN + 15)
-#define CMD_ADDHOOK             CMD_PATH"addhook/"
-#define CMD_ADDHOOK_LEN         (CMD_PATH_LEN + 8)
-#define CMD_RMHOOK              CMD_PATH"rmhook/"
-#define CMD_RMHOOK_LEN          (CMD_PATH_LEN + 7)
 
 bool
 path_magic_dir (const char *path);
@@ -94,12 +90,6 @@ path_magic_sandbox_exec (const char *path);
 
 bool
 path_magic_unsandbox_exec (const char *path);
-
-bool
-path_magic_addhook(const char *path);
-
-bool
-path_magic_rmhook(const char *path);
 
 int
 pathnode_new (GSList **pathlist, const char *path, int sanitize);
