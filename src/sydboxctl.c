@@ -17,7 +17,6 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <fcntl.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,20 +34,10 @@ static bool has_sydbox(void)
     return (0 == stat(SYDBOX_CMD_PATH, &buf));
 }
 
-static int cmd_on(void)
-{
-    return open(SYDBOX_CMD_ON, O_WRONLY);
-}
-
-static int cmd_off(void)
-{
-    return open(SYDBOX_CMD_OFF, O_WRONLY);
-}
-
-static int cmd_enabled(void)
+static bool sydbox_enabled(void)
 {
     struct stat buf;
-    return stat(SYDBOX_CMD_ENABLED, &buf);
+    return (0 == stat(SYDBOX_CMD_ENABLED, &buf));
 }
 
 int main(int argc, char **argv)
@@ -66,12 +55,8 @@ int main(int argc, char **argv)
     }
     mode = argv[1];
 
-    if (0 == strncmp(mode, "on", 3))
-        return cmd_on();
-    else if (0 == strncmp(mode, "off", 4))
-        return cmd_off();
     if (0 == strncmp(mode, "enabled", 8))
-        return cmd_enabled();
+        return sydbox_enabled() ? EXIT_SUCCESS : EXIT_FAILURE;
     else {
         g_printerr("fatal: unknown command `%s'\n", mode);
         return EXIT_FAILURE;
