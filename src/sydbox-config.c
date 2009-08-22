@@ -580,8 +580,3 @@ void sydbox_config_rmhook_all(void)
     config->hooks = NULL;
 }
 
-GSList *sydbox_config_get_hooks(void)
-{
-    return config->hooks;
-}
-
