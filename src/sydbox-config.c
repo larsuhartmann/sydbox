@@ -231,6 +231,15 @@ sydbox_config_load (const gchar * const file)
         }
     }
 
+    // Get prefix.write
+    char **filterlist = g_key_file_get_string_list(config_fd, "main", "filters", NULL, NULL);
+    if (NULL != filterlist) {
+        for (unsigned int i = 0; NULL != filterlist[i]; i++)
+            sydbox_config_addfilter(filterlist[i]);
+        g_strfreev(filterlist);
+    }
+
+
     // Get log.file
     if (g_getenv(ENV_LOG))
         config->logfile = g_strdup(g_getenv(ENV_LOG));
