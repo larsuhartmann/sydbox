@@ -236,9 +236,7 @@ int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
     }
 
     memset(&fakebuf, 0, sizeof(struct stat));
-    fakebuf.st_mode = S_IFDIR;
-    fakebuf.st_uid  = 0;
-    fakebuf.st_gid  = 0;
+    fakebuf.st_mode = S_IFBLK;
 
     long *fakeptr = (long *) &fakebuf;
     n = 0;
