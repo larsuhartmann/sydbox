@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <fnmatch.h>
 
 #include <glib/gstdio.h>
 
@@ -31,10 +32,22 @@
 #include "sydbox-config.h"
 
 void
-sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)
+sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, ...)
 {
     va_list args;
     time_t now = time (NULL);
+
+    if (NULL != path) {
+        GSList *walk = sydbox_config_get_filters();
+        while (NULL != walk) {
+            gchar *pattern = (gchar *)walk->data;
+            if (0 == fnmatch(pattern, path, FNM_PATHNAME)) {
+                g_debug("pattern `%s' matches path `%s', ignoring the access violation", pattern, path);
+                return;
+            }
+            walk = g_slist_next(walk);
+        }
+    }
 
     g_fprintf (stderr, PACKAGE "@%lu: %sAccess Violation!%s\n", now,
                sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",

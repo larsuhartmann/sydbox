@@ -126,6 +126,9 @@ static void cleanup(void) {
     struct tchild *child;
 
     g_info("cleaning up before exit");
+
+    sydbox_config_rmfilter_all();
+
     if (NULL != ctx) {
         walk = ctx->children;
         while (NULL != walk) {

@@ -240,5 +240,13 @@ sydbox_config_get_predict_prefixes (void);
 GSList *
 sydbox_config_get_exec_prefixes (void);
 
+GSList *sydbox_config_get_filters(void);
+
+void sydbox_config_addfilter(const gchar *filter);
+
+int sydbox_config_rmfilter(const gchar *filter);
+
+void sydbox_config_rmfilter_all(void);
+
 #endif
 

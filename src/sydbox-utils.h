@@ -39,15 +39,16 @@
 /**
  * sydbox_access_violation:
  * @pid: process id of the process being traced
+ * @path: path that caused the access violation if any.
  * @fmt: format string (as with printf())
  * @varargs: parameters to be used with @fmt
  *
- * Prints an access violation error message to %stderr
+ * Raise an access violation.
  *
  * Since: 0.1_alpha
  **/
 void
-sydbox_access_violation (const pid_t pid, const gchar *fmt, ...) G_GNUC_PRINTF (2, 3);
+sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, ...) G_GNUC_PRINTF (3, 4);
 
 /**
  * sydbox_compress_path:

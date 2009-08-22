@@ -51,6 +51,10 @@
 #define CMD_SANDBOX_EXEC_LEN    (CMD_PATH_LEN + 13)
 #define CMD_UNSANDBOX_EXEC      CMD_PATH"unsandbox_exec"
 #define CMD_UNSANDBOX_EXEC_LEN  (CMD_PATH_LEN + 15)
+#define CMD_ADDFILTER           CMD_PATH"addfilter/"
+#define CMD_ADDFILTER_LEN       (CMD_PATH_LEN + 10)
+#define CMD_RMFILTER            CMD_PATH"rmfilter/"
+#define CMD_RMFILTER_LEN        (CMD_PATH_LEN + 9)
 
 bool
 path_magic_dir (const char *path);
@@ -90,6 +94,10 @@ path_magic_sandbox_exec (const char *path);
 
 bool
 path_magic_unsandbox_exec (const char *path);
+
+bool path_magic_addfilter(const char *path);
+
+bool path_magic_rmfilter(const char *path);
 
 int
 pathnode_new (GSList **pathlist, const char *path, int sanitize);
