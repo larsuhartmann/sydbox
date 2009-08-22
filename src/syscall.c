@@ -674,7 +674,9 @@ static int systemcall_check_create(SystemCall *self,
     struct stat buf;
 
     path = data->rpathlist[narg];
-    if (self->flags & (MUST_CREAT | MUST_CREAT2 | MUST_CREAT_AT | MUST_CREAT_AT2)) {
+    if ((narg == 0 && self->flags & MUST_CREAT) ||
+            (narg == 1 && self->flags & (MUST_CREAT2 | MUST_CREAT_AT)) ||
+            (narg == 3 && self->flags & MUST_CREAT_AT2)) {
         g_debug("system call %d(%s) has one of MUST_CREAT* flags set, checking if `%s' exists",
                 self->no, sname, path);
         if (0 == stat(path, &buf)) {
