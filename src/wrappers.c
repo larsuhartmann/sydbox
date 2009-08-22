@@ -61,6 +61,7 @@
 
 #include <glib.h>
 
+#include "sydbox-config.h"
 #include "path.h"
 #include "wrappers.h"
 
@@ -288,7 +289,7 @@ static int elstat(const char *path, struct stat *buf)
     ret = lstat(path, buf);
     if (G_LIKELY(0 == ret))
         return ret;
-    else if (ENAMETOOLONG != errno)
+    else if (ENAMETOOLONG != errno || !sydbox_config_get_wrap_lstat())
         return ret;
 
     dname = edirname(path);

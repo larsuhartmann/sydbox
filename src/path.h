@@ -39,6 +39,10 @@
 #define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
 #define CMD_EXEC_LOCK           CMD_PATH"exec_lock"
 #define CMD_EXEC_LOCK_LEN       (CMD_PATH_LEN + 10)
+#define CMD_WRAP_LSTAT          CMD_PATH"wrap_lstat"
+#define CMD_WRAP_LSTAT_LEN      (CMD_PATH_LEN + 11)
+#define CMD_NOWRAP_LSTAT        CMD_PATH"nowrap_lstat"
+#define CMD_NOWRAP_LSTAT_LEN    (CMD_PATH_LEN + 13)
 #define CMD_WRITE               CMD_PATH"write/"
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
 #define CMD_PREDICT             CMD_PATH"predict/"
@@ -76,6 +80,10 @@ path_magic_lock (const char *path);
 
 bool
 path_magic_exec_lock (const char *path);
+
+bool path_magic_wrap_lstat(const char *path);
+
+bool path_magic_nowrap_lstat(const char *path);
 
 bool
 path_magic_write (const char *path);

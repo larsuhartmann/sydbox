@@ -42,6 +42,7 @@ struct sydbox_config
     bool paranoid_mode_enabled;
     bool wait_all;
     bool allow_proc_pid;
+    bool wrap_lstat;
 
     GSList *filters;
     GSList *write_prefixes;
@@ -63,6 +64,7 @@ static void sydbox_config_set_defaults(void)
     config->paranoid_mode_enabled = false;
     config->wait_all = false;
     config->allow_proc_pid = true;
+    config->wrap_lstat = true;
 }
 
 bool
@@ -230,6 +232,27 @@ sydbox_config_load (const gchar * const file)
                 break;
         }
     }
+
+    config->wrap_lstat = g_key_file_get_boolean(config_fd, "main", "wrap_lstat", &config_error);
+    if (!config->allow_proc_pid && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.wrap_lstat not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->wrap_lstat = true;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
 
     // Get prefix.write
     char **filterlist = g_key_file_get_string_list(config_fd, "main", "filters", NULL, NULL);
@@ -525,6 +548,16 @@ void
 sydbox_config_set_allow_proc_pid (bool allow)
 {
     config->allow_proc_pid = allow;
+}
+
+bool sydbox_config_get_wrap_lstat(void)
+{
+    return config->wrap_lstat;
+}
+
+void sydbox_config_set_wrap_lstat(bool enabled)
+{
+    config->wrap_lstat = enabled;
 }
 
 bool

@@ -190,6 +190,10 @@ sydbox_config_get_allow_proc_pid (void);
 void
 sydbox_config_set_allow_proc_pid (bool allow);
 
+bool sydbox_config_get_wrap_lstat(void);
+
+void sydbox_config_set_wrap_lstat(bool enabled);
+
 /**
  * sydbox_config_get_paranoid_mode_enabled:
  *

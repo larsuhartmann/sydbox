@@ -309,6 +309,16 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         g_info ("access to magic commands will be denied on execve() for child %i",
                 child->pid);
     }
+    else if (G_UNLIKELY(path_magic_wrap_lstat(path))) {
+        data->result = RS_MAGIC;
+        sydbox_config_set_wrap_lstat(true);
+        g_info("lstat calls will now be wrapped");
+    }
+    else if (G_UNLIKELY(path_magic_nowrap_lstat(path))) {
+        data->result = RS_MAGIC;
+        sydbox_config_set_wrap_lstat(false);
+        g_info("lstat calls will now not be wrapped");
+    }
     else if (G_UNLIKELY(path_magic_write(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;
