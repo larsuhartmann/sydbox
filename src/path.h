@@ -56,66 +56,47 @@
 #define CMD_RMFILTER            CMD_PATH"rmfilter/"
 #define CMD_RMFILTER_LEN        (CMD_PATH_LEN + 9)
 
-bool
-path_magic_dir (const char *path);
+bool path_magic_dir(const char *path);
 
-bool
-path_magic_on (const char *path);
+bool path_magic_on(const char *path);
 
-bool
-path_magic_off (const char *path);
+bool path_magic_off(const char *path);
 
-bool
-path_magic_toggle (const char *path);
+bool path_magic_toggle(const char *path);
 
-bool
-path_magic_enabled (const char *path);
+bool path_magic_enabled(const char *path);
 
-bool
-path_magic_lock (const char *path);
+bool path_magic_lock(const char *path);
 
-bool
-path_magic_exec_lock (const char *path);
+bool path_magic_exec_lock(const char *path);
 
-bool
-path_magic_write (const char *path);
+bool path_magic_write(const char *path);
 
-bool
-path_magic_predict (const char *path);
+bool path_magic_predict(const char *path);
 
-bool
-path_magic_rmwrite (const char *path);
+bool path_magic_rmwrite(const char *path);
 
-bool
-path_magic_rmpredict (const char *path);
+bool path_magic_rmpredict(const char *path);
 
-bool
-path_magic_sandbox_exec (const char *path);
+bool path_magic_sandbox_exec(const char *path);
 
-bool
-path_magic_unsandbox_exec (const char *path);
+bool path_magic_unsandbox_exec(const char *path);
 
 bool path_magic_addfilter(const char *path);
 
 bool path_magic_rmfilter(const char *path);
 
-int
-pathnode_new (GSList **pathlist, const char *path, int sanitize);
+int pathnode_new(GSList **pathlist, const char *path, int sanitize);
 
-int
-pathnode_new_early (GSList **pathlist, const char *path, int sanitize);
+int pathnode_new_early(GSList **pathlist, const char *path, int sanitize);
 
-void
-pathnode_free (GSList **pathlist);
+void pathnode_free(GSList **pathlist);
 
-void
-pathnode_delete (GSList **pathlist, const char *path_sanitized);
+void pathnode_delete(GSList **pathlist, const char *path_sanitized);
 
-int
-pathlist_init (GSList **pathlist, const char *pathlist_env);
+int pathlist_init(GSList **pathlist, const char *pathlist_env);
 
-int
-pathlist_check (GSList *pathlist, const char *path_sanitized);
+int pathlist_check(GSList *pathlist, const char *path_sanitized);
 
 #endif // SYDBOX_GUARD_PATH_H
 

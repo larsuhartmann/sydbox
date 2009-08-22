@@ -38,7 +38,8 @@
 
 
 // Event handlers
-static int xsetup(context_t *ctx, struct tchild *child) {
+static int xsetup(context_t *ctx, struct tchild *child)
+{
     if (0 > trace_setup(child->pid)) {
         if (G_UNLIKELY(ESRCH != errno)) {
             g_critical("failed to set tracing options: %s", g_strerror(errno));
@@ -52,7 +53,8 @@ static int xsetup(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
-static int xsyscall(context_t *ctx, struct tchild *child) {
+static int xsyscall(context_t *ctx, struct tchild *child)
+{
     if (0 > trace_syscall(child->pid, 0)) {
         if (G_UNLIKELY(ESRCH != errno)) {
             g_critical("failed to resume child %i: %s", child->pid, g_strerror (errno));
@@ -64,7 +66,8 @@ static int xsyscall(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
-static int xfork(context_t *ctx, struct tchild *child) {
+static int xfork(context_t *ctx, struct tchild *child)
+{
     pid_t childpid;
     struct tchild *newchild;
 
@@ -111,7 +114,8 @@ static int xfork(context_t *ctx, struct tchild *child) {
     return 0;
 }
 
-static int xgenuine(context_t * ctx, struct tchild *child, int status) {
+static int xgenuine(context_t * ctx, struct tchild *child, int status)
+{
     if (G_UNLIKELY(0 > trace_syscall(child->pid, WSTOPSIG(status)))) {
         if (G_UNLIKELY(ESRCH != errno)) {
             g_critical("failed to resume child %i after genuine signal: %s", child->pid, g_strerror(errno));
@@ -124,7 +128,8 @@ static int xgenuine(context_t * ctx, struct tchild *child, int status) {
     return 0;
 }
 
-static int xunknown(context_t *ctx, struct tchild *child, int status) {
+static int xunknown(context_t *ctx, struct tchild *child, int status)
+{
     if (G_UNLIKELY(0 > trace_syscall(child->pid, WSTOPSIG(status)))) {
         if (G_UNLIKELY(ESRCH != errno)) {
             g_critical("failed to resume child %i after unknown signal %#x: %s",
@@ -133,13 +138,14 @@ static int xunknown(context_t *ctx, struct tchild *child, int status) {
                     child->pid, WSTOPSIG(status), g_strerror(errno));
             exit(-1);
         }
-        return context_remove_child (ctx, child->pid);
+        return context_remove_child(ctx, child->pid);
     }
     g_debug("resumed child %i after unknown signal %#x", child->pid, status);
     return 0;
 }
 
-int trace_loop(context_t *ctx) {
+int trace_loop(context_t *ctx)
+{
     int status, ret;
     unsigned int event;
     pid_t pid;
@@ -152,8 +158,8 @@ int trace_loop(context_t *ctx) {
             if (ECHILD == errno)
                 break;
             else {
-                g_critical ("waitpid failed: %s", g_strerror (errno));
-                g_printerr ("waitpid failed: %s", g_strerror (errno));
+                g_critical("waitpid failed: %s", g_strerror(errno));
+                g_printerr("waitpid failed: %s", g_strerror(errno));
                 exit (-1);
             }
         }

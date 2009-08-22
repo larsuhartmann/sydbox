@@ -35,7 +35,8 @@
 #include "sydbox-log.h"
 #include "sydbox-config.h"
 
-void tchild_new(GSList **children, pid_t pid) {
+void tchild_new(GSList **children, pid_t pid)
+{
     gchar *proc_pid;
     struct tchild *child;
 
@@ -106,7 +107,8 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
     child->inherited = true;
 }
 
-static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED) {
+static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
+{
     if (G_LIKELY(NULL != child->sandbox)) {
         if (G_LIKELY(NULL != child->sandbox->write_prefixes))
             pathnode_free(&(child->sandbox->write_prefixes));
@@ -114,21 +116,23 @@ static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
             pathnode_free(&(child->sandbox->predict_prefixes));
         if (G_LIKELY(NULL != child->sandbox->exec_prefixes))
             pathnode_free(&(child->sandbox->exec_prefixes));
-        g_free (child->sandbox);
+        g_free(child->sandbox);
     }
     if (G_LIKELY(NULL != child->cwd))
-        g_free (child->cwd);
-    g_free (child);
+        g_free(child->cwd);
+    g_free(child);
 }
 
-void tchild_free(GSList **children) {
-    g_debug ("freeing children %p", (void *) *children);
+void tchild_free(GSList **children)
+{
+    g_debug("freeing children %p", (void *) *children);
     g_slist_foreach(*children, (GFunc) tchild_free_one, NULL);
     g_slist_free(*children);
     *children = NULL;
 }
 
-void tchild_delete(GSList **children, pid_t pid) {
+void tchild_delete(GSList **children, pid_t pid)
+{
     GSList *walk;
     struct tchild *child;
 

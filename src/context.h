@@ -18,8 +18,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  **/
 
-#ifndef __CONTEXT_H__
-#define __CONTEXT_H__
+#ifndef SYDBOX_GUARD_CONTEXT_H
+#define SYDBOX_GUARD_CONTEXT_H 1
 
 #include <stdbool.h>
 #include <sys/types.h>
@@ -33,14 +33,11 @@ typedef struct
     GSList *children;           // list of children
 } context_t;
 
-context_t *
-context_new (void);
+context_t *context_new(void);
 
-void
-context_free (context_t *ctx);
+void context_free(context_t *ctx);
 
-int
-context_remove_child (context_t * const ctx, pid_t pid);
+int context_remove_child(context_t * const ctx, pid_t pid);
 
-#endif /* __CONTEXT_H__ */
+#endif // SYDBOX_GUARD_CONTEXT_H
 

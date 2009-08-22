@@ -18,8 +18,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  **/
 
-#ifndef __WRAPPERS_H__
-#define __WRAPPERS_H__
+#ifndef SYDBOX_GUARD_WRAPPERS_H
+#define SYDBOX_GUARD_WRAPPERS_H 1
 
 #include <stdbool.h>
 
@@ -31,25 +31,17 @@ typedef enum canonicalize_mode_t
     CAN_ALL_BUT_LAST,   /* All components excluding last one must exist.  */
 } canonicalize_mode_t;
 
-gchar *
-edirname (const gchar *path);
+gchar *edirname(const gchar *path);
 
-gchar *
-ebasename (const gchar *path);
+gchar *ebasename(const gchar *path);
 
-gchar *
-ereadlink (const gchar *path);
+gchar *ereadlink(const gchar *path);
 
-gchar *
-egetcwd (void);
+gchar *egetcwd(void);
 
-int
-echdir (gchar *dir);
+int echdir(gchar *dir);
 
-gchar *
-canonicalize_filename_mode (const gchar *name,
-                            canonicalize_mode_t can_mode,
-                            bool resolve);
+gchar *canonicalize_filename_mode(const gchar *name, canonicalize_mode_t can_mode, bool resolve);
 
-#endif
+#endif // SYDBOX_GUARD_WRAPPERS_H
 

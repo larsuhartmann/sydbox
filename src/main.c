@@ -121,7 +121,8 @@ static GOptionEntry entries[] =
 };
 
 // Cleanup functions
-static void cleanup(void) {
+static void cleanup(void)
+{
     GSList *walk;
     struct tchild *child;
 
@@ -141,7 +142,8 @@ static void cleanup(void) {
     sydbox_log_fini();
 }
 
-static void sig_cleanup(int signum) {
+static void sig_cleanup(int signum)
+{
     struct sigaction action;
     g_fprintf(stderr, "Caught signal %d, exiting\n", signum);
     cleanup();
@@ -152,63 +154,59 @@ static void sig_cleanup(int signum) {
 }
 
 
-static gchar *
-get_username (void)
+static gchar *get_username(void)
 {
     struct passwd *pwd;
     uid_t uid;
 
     errno = 0;
-    uid = geteuid ();
-    pwd = getpwuid (uid);
+    uid = geteuid();
+    pwd = getpwuid(uid);
 
     if (errno)
         return NULL;
 
-    return g_strdup (pwd->pw_name);
+    return g_strdup(pwd->pw_name);
 }
 
-static gchar *
-get_groupname (void)
+static gchar *get_groupname (void)
 {
     struct group *grp;
     gid_t gid;
 
     errno = 0;
-    gid = getegid ();
-    grp = getgrgid (gid);
+    gid = getegid();
+    grp = getgrgid(gid);
 
     if (errno)
         return NULL;
 
-    return g_strdup (grp->gr_name);
+    return g_strdup(grp->gr_name);
 }
 
-static void G_GNUC_NORETURN
-sydbox_execute_child (int argc G_GNUC_UNUSED, char **argv)
+static void G_GNUC_NORETURN sydbox_execute_child(int argc G_GNUC_UNUSED, char **argv)
 {
-    if (trace_me () < 0) {
-        g_printerr ("failed to set tracing: %s", g_strerror (errno));
-        _exit (-1);
+    if (trace_me() < 0) {
+        g_printerr("failed to set tracing: %s", g_strerror (errno));
+        _exit(-1);
     }
 
     /* stop and wait for the parent to resume us with trace_syscall */
-    if (kill (getpid (), SIGSTOP) < 0) {
-        g_printerr ("failed to send SIGSTOP: %s", g_strerror (errno));
-        _exit (-1);
+    if (kill(getpid(), SIGSTOP) < 0) {
+        g_printerr("failed to send SIGSTOP: %s", g_strerror (errno));
+        _exit(-1);
     }
 
-    if (strncmp (argv[0], "/bin/sh", 8) == 0)
-        g_fprintf (stderr, ANSI_DARK_MAGENTA PINK_FLOYD ANSI_NORMAL);
+    if (strncmp(argv[0], "/bin/sh", 8) == 0)
+        g_fprintf(stderr, ANSI_DARK_MAGENTA PINK_FLOYD ANSI_NORMAL);
 
-    execvp (argv[0], argv);
+    execvp(argv[0], argv);
 
-    g_printerr ("execvp() failed: %s\n", g_strerror (errno));
+    g_printerr("execvp() failed: %s\n", g_strerror (errno));
     _exit(-1);
 }
 
-static int
-sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
+static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
 {
     int status, retval;
     struct sigaction new_action, old_action;
@@ -247,7 +245,7 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
         exit(-1);
     }
 
-    tchild_new (&(ctx->children), pid);
+    tchild_new(&(ctx->children), pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
     eldest->personality = trace_personality(pid);
@@ -280,19 +278,17 @@ sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t 
         exit(-1);
     }
 
-    g_info ("entering loop");
+    g_info("entering loop");
     retval = trace_loop (ctx);
-    g_info ("exited loop with return value: %d", retval);
+    g_info("exited loop with return value: %d", retval);
 
     syscall_free();
     return retval;
 }
 
-static int
-sydbox_internal_main (int argc, char **argv)
+static int sydbox_internal_main (int argc, char **argv)
 {
     pid_t pid;
-
 
     syscall_init();
     ctx = context_new ();
@@ -303,7 +299,7 @@ sydbox_internal_main (int argc, char **argv)
      * options are loaded from config file, updated from the environment, and
      * then overridden by the user passed parameters.
      */
-    if (! sydbox_config_load (config_file))
+    if (!sydbox_config_load(config_file))
         return EXIT_FAILURE;
 
     if (verbosity >= 0)
@@ -313,9 +309,9 @@ sydbox_internal_main (int argc, char **argv)
         sydbox_config_set_log_file (logfile);
 
     /* initialize logging as early as possible */
-    sydbox_log_init ();
+    sydbox_log_init();
 
-    sydbox_config_update_from_environment ();
+    sydbox_config_update_from_environment();
 
     if (colour)
         sydbox_config_set_colourise_output(true);
@@ -339,46 +335,46 @@ sydbox_internal_main (int argc, char **argv)
         sydbox_config_set_paranoid_mode_enabled(true);
 
     if (dump) {
-        sydbox_config_write_to_stderr ();
+        sydbox_config_write_to_stderr();
         return EXIT_SUCCESS;
     }
 
-    if (sydbox_config_get_verbosity () > 1) {
+    if (sydbox_config_get_verbosity() > 1) {
         gchar *username = NULL, *groupname = NULL;
         GString *command = NULL;
 
-        if (! (username = get_username ())) {
-            g_printerr ("failed to get password file entry: %s", g_strerror (errno));
+        if (!(username = get_username())) {
+            g_printerr("failed to get password file entry: %s", g_strerror (errno));
             return EXIT_FAILURE;
         }
 
-        if (! (groupname = get_groupname ())) {
-            g_printerr ("failed to get group file entry: %s", g_strerror (errno));
-            g_free (username);
+        if (!(groupname = get_groupname())) {
+            g_printerr("failed to get group file entry: %s", g_strerror (errno));
+            g_free(username);
             return EXIT_FAILURE;
         }
 
-        command = g_string_new ("");
+        command = g_string_new("");
         for (gint i = 0; i < argc; i++)
-            g_string_append_printf (command, "%s ", argv[i]);
-        g_string_truncate (command, command->len - 1);
+            g_string_append_printf(command, "%s ", argv[i]);
+        g_string_truncate(command, command->len - 1);
 
-        g_info ("forking to execute '%s' as %s:%s", command->str, username, groupname);
+        g_info("forking to execute '%s' as %s:%s", command->str, username, groupname);
 
-        g_free (username);
-        g_free (groupname);
-        g_string_free (command, TRUE);
+        g_free(username);
+        g_free(groupname);
+        g_string_free(command, TRUE);
     }
 
     if ((pid = fork()) < 0) {
-        g_printerr ("failed to fork: %s", g_strerror (errno));
+        g_printerr("failed to fork: %s", g_strerror (errno));
         return EXIT_FAILURE;
     }
 
     if (pid == 0)
-        sydbox_execute_child (argc, argv);
+        sydbox_execute_child(argc, argv);
     else
-        return sydbox_execute_parent (argc, argv, pid);
+        return sydbox_execute_parent(argc, argv, pid);
 }
 
 int main (int argc, char **argv)
@@ -386,11 +382,11 @@ int main (int argc, char **argv)
     GError *parse_error = NULL;
     GOptionContext *context;
 
-    context = g_option_context_new ("-- command [args]");
-    g_option_context_add_main_entries (context, entries, PACKAGE);
-    g_option_context_set_summary (context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
+    context = g_option_context_new("-- command [args]");
+    g_option_context_add_main_entries(context, entries, PACKAGE);
+    g_option_context_set_summary(context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
 
-    if (! g_option_context_parse (context, &argc, &argv, &parse_error)) {
+    if (! g_option_context_parse(context, &argc, &argv, &parse_error)) {
         g_printerr("fatal: option parsing failed: %s\n", parse_error->message);
         g_option_context_free(context);
         g_error_free(parse_error);
@@ -403,21 +399,21 @@ int main (int argc, char **argv)
         return EXIT_SUCCESS;
     }
 
-    if (! dump) {
+    if (!dump) {
         argc--;
         argv++;
 
-        if (argv[0] && strcmp (argv[0], "--") == 0) {
+        if (argv[0] && strcmp(argv[0], "--") == 0) {
             argc--;
             argv++;
         }
 
-        if (! argv[0]) {
+        if (!argv[0]) {
             g_printerr("fatal: no command given\n");
             return EXIT_FAILURE;
         }
     }
 
-    return sydbox_internal_main (argc, argv);
+    return sydbox_internal_main(argc, argv);
 }
 

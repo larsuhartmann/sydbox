@@ -32,29 +32,26 @@
 #include "wrappers.h"
 #include "sydbox-log.h"
 
-context_t *
-context_new (void)
+context_t *context_new (void)
 {
     context_t *ctx;
 
-    ctx = (context_t *) g_malloc0 (sizeof (context_t));
+    ctx = (context_t *) g_malloc0(sizeof(context_t));
 
     ctx->before_initial_execve = true;
 
     return ctx;
 }
 
-void
-context_free (context_t *ctx)
+void context_free(context_t *ctx)
 {
     if (G_LIKELY(NULL != ctx->children))
         tchild_free (&(ctx->children));
 
-    g_free (ctx);
+    g_free(ctx);
 }
 
-int
-context_remove_child (context_t * const ctx, pid_t pid)
+int context_remove_child(context_t * const ctx, pid_t pid)
 {
     g_info("removing child %d from context", pid);
     tchild_delete(&ctx->children, pid);

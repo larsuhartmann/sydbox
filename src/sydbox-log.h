@@ -17,8 +17,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __SYDBOX_LOG_H__
-#define __SYDBOX_LOG_H__
+#ifndef SYDBOX_GUARD_LOG_H
+#define SYDBOX_GUARD_LOG_H 1
 
 #include <glib.h>
 
@@ -41,11 +41,11 @@
  * Since: 0.1_alpha
  **/
 #ifndef g_info
-#define g_info(...)                 g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
+#define g_info(...)                 g_log(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
 #endif
 
 #ifndef g_debug_trace
-#define g_debug_trace(...)          g_log (G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, __VA_ARGS__)
+#define g_debug_trace(...)          g_log(G_LOG_DOMAIN, LOG_LEVEL_DEBUG_TRACE, __VA_ARGS__)
 #endif
 
 /**
@@ -55,8 +55,7 @@
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_log_init (void);
+void sydbox_log_init(void);
 
 /**
  * sydbox_log_fini:
@@ -65,8 +64,7 @@ sydbox_log_init (void);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_log_fini (void);
+void sydbox_log_fini(void);
 
-#endif
+#endif // SYDBOX_GUARD_LOG_H
 

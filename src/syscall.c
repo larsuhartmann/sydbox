@@ -282,44 +282,43 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     const char *rpath;
     char *rpath_sanitized;
 
-    g_debug ("checking if open(\"%s\", ...) is magic", path);
+    g_debug("checking if open(\"%s\", ...) is magic", path);
     if (G_UNLIKELY(path_magic_on(path))) {
         data->result = RS_MAGIC;
         child->sandbox->path = true;
-        g_info ("path sandboxing is now enabled for child %i", child->pid);
+        g_info("path sandboxing is now enabled for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_off(path))) {
         data->result = RS_MAGIC;
         child->sandbox->path = false;
-        g_info ("path sandboxing is now disabled for child %i", child->pid);
+        g_info("path sandboxing is now disabled for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_toggle(path))) {
         data->result = RS_MAGIC;
         child->sandbox->path = !(child->sandbox->path);
-        g_info ("path sandboxing is now %sabled for child %i", child->sandbox->path ? "en" : "dis", child->pid);
+        g_info("path sandboxing is now %sabled for child %i", child->sandbox->path ? "en" : "dis", child->pid);
     }
     else if (G_UNLIKELY(path_magic_lock(path))) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_SET;
-        g_info ("access to magic commands is now denied for child %i", child->pid);
+        g_info("access to magic commands is now denied for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_exec_lock(path))) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_PENDING;
-        g_info ("access to magic commands will be denied on execve() for child %i",
-                child->pid);
+        g_info("access to magic commands will be denied on execve() for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_write(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
-        g_info ("approved addwrite(\"%s\") for child %i", rpath, child->pid);
+        g_info("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
     else if (G_UNLIKELY(path_magic_predict(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_PREDICT_LEN;
         pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
-        g_info ("approved addpredict(\"%s\") for child %i", rpath, child->pid);
+        g_info("approved addpredict(\"%s\") for child %i", rpath, child->pid);
     }
     else if (G_UNLIKELY(path_magic_rmwrite(path))) {
         data->result = RS_MAGIC;
@@ -327,8 +326,8 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
-        g_info ("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
-        g_free (rpath_sanitized);
+        g_info("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_free(rpath_sanitized);
     }
     else if (G_UNLIKELY(path_magic_rmpredict(path))) {
         data->result = RS_MAGIC;
@@ -336,8 +335,8 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->predict_prefixes)
             pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
-        g_info ("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
-        g_free (rpath_sanitized);
+        g_info("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_free(rpath_sanitized);
     }
     else if (G_UNLIKELY(path_magic_sandbox_exec(path))) {
         data->result = RS_MAGIC;
@@ -774,7 +773,7 @@ static void systemcall_check_path(SystemCall *self,
         /* Change the path argument with the resolved path to
          * prevent symlink races.
          */
-        g_debug ("paranoia! system call %d(%s) resolves symlinks, substituting path with resolved path",
+        g_debug("paranoia! system call %d(%s) resolves symlinks, substituting path with resolved path",
                 self->no, sname);
         if (G_UNLIKELY(0 > trace_set_path(child->pid, child->personality, narg, path, strlen(path) + 1))) {
             data->result = RS_ERROR;

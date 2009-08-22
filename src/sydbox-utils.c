@@ -35,7 +35,7 @@
 void sydbox_access_violation(const pid_t pid, const gchar *path, const gchar *fmt, ...)
 {
     va_list args;
-    time_t now = time (NULL);
+    time_t now = time(NULL);
 
     if (NULL != path) {
         GSList *walk = sydbox_config_get_filters();

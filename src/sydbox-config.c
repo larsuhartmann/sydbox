@@ -65,8 +65,7 @@ static void sydbox_config_set_defaults(void)
     config->allow_proc_pid = true;
 }
 
-bool
-sydbox_config_load (const gchar * const file)
+bool sydbox_config_load(const gchar * const file)
 {
     const gchar *config_file;
     GKeyFile *config_fd;
@@ -75,7 +74,7 @@ sydbox_config_load (const gchar * const file)
     g_return_val_if_fail(!config, true);
 
     // Initialize config structure
-    config = g_new0 (struct sydbox_config, 1);
+    config = g_new0(struct sydbox_config, 1);
 
     if (g_getenv(ENV_NO_CONFIG)) {
         /* ENV_NO_CONFIG set, set the defaults,
@@ -372,187 +371,161 @@ sydbox_config_load (const gchar * const file)
     return true;
 }
 
-void
-sydbox_config_update_from_environment (void)
+void sydbox_config_update_from_environment(void)
 {
-    g_info ("extending path list using environment variable " ENV_WRITE);
-    pathlist_init (&config->write_prefixes, g_getenv (ENV_WRITE));
+    g_info("extending path list using environment variable " ENV_WRITE);
+    pathlist_init(&config->write_prefixes, g_getenv(ENV_WRITE));
 
-    g_info ("extending path list using environment variable " ENV_PREDICT);
-    pathlist_init (&config->predict_prefixes, g_getenv (ENV_PREDICT));
+    g_info("extending path list using environment variable " ENV_PREDICT);
+    pathlist_init(&config->predict_prefixes, g_getenv(ENV_PREDICT));
 
-    g_info ("extending path list using environment variable " ENV_EXEC_ALLOW);
+    g_info("extending path list using environment variable " ENV_EXEC_ALLOW);
     pathlist_init(&config->exec_prefixes, g_getenv(ENV_EXEC_ALLOW));
 }
 
 
-static inline void
-print_slist_entry (gpointer data, gpointer userdata G_GNUC_UNUSED)
+static inline void print_slist_entry(gpointer data, gpointer userdata G_GNUC_UNUSED)
 {
     gchar *cdata = (gchar *) data;
     if (NULL != cdata && '\0' != cdata[0])
-        g_fprintf (stderr, "\t%s\n", cdata);
+        g_fprintf(stderr, "\t%s\n", cdata);
 }
 
-void
-sydbox_config_write_to_stderr (void)
+void sydbox_config_write_to_stderr (void)
 {
-    g_fprintf (stderr, "main.colour = %s\n", config->colourise_output ? "on" : "off");
-    g_fprintf (stderr, "main.lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
-    g_fprintf (stderr, "main.paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
-    g_fprintf (stderr, "main.wait_all = %s\n", config->wait_all ? "yes" : "no");
-    g_fprintf (stderr, "main.allow_proc_pid = %s\n", config->allow_proc_pid ? "yes" : "no");
-    g_fprintf (stderr, "log.file = %s\n", config->logfile ? config->logfile : "stderr");
-    g_fprintf (stderr, "log.level = %d\n", config->verbosity);
-    g_fprintf (stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
-    g_fprintf (stderr, "sandbox.exec = %s\n", config->sandbox_exec ? "yes" : "no");
-    g_fprintf (stderr, "sandbox.network = %s\n", config->sandbox_network ? "yes" : "no");
-    g_fprintf (stderr, "prefix.write:\n");
-    g_slist_foreach (config->write_prefixes, print_slist_entry, NULL);
-    g_fprintf (stderr, "prefix.predict:\n");
-    g_slist_foreach (config->predict_prefixes, print_slist_entry, NULL);
-    g_fprintf (stderr, "prefix.exec\n");
-    g_slist_foreach (config->exec_prefixes, print_slist_entry, NULL);
+    g_fprintf(stderr, "main.colour = %s\n", config->colourise_output ? "on" : "off");
+    g_fprintf(stderr, "main.lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
+    g_fprintf(stderr, "main.paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
+    g_fprintf(stderr, "main.wait_all = %s\n", config->wait_all ? "yes" : "no");
+    g_fprintf(stderr, "main.allow_proc_pid = %s\n", config->allow_proc_pid ? "yes" : "no");
+    g_fprintf(stderr, "log.file = %s\n", config->logfile ? config->logfile : "stderr");
+    g_fprintf(stderr, "log.level = %d\n", config->verbosity);
+    g_fprintf(stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
+    g_fprintf(stderr, "sandbox.exec = %s\n", config->sandbox_exec ? "yes" : "no");
+    g_fprintf(stderr, "sandbox.network = %s\n", config->sandbox_network ? "yes" : "no");
+    g_fprintf(stderr, "prefix.write:\n");
+    g_slist_foreach(config->write_prefixes, print_slist_entry, NULL);
+    g_fprintf(stderr, "prefix.predict:\n");
+    g_slist_foreach(config->predict_prefixes, print_slist_entry, NULL);
+    g_fprintf(stderr, "prefix.exec\n");
+    g_slist_foreach(config->exec_prefixes, print_slist_entry, NULL);
 }
 
 
-const gchar *
-sydbox_config_get_log_file (void)
+const gchar *sydbox_config_get_log_file(void)
 {
     return config->logfile;
 }
 
-void
-sydbox_config_set_log_file (const gchar * const logfile)
+void sydbox_config_set_log_file(const gchar * const logfile)
 {
     if (config->logfile)
-        g_free (config->logfile);
+        g_free(config->logfile);
 
-    config->logfile = g_strdup (logfile);
+    config->logfile = g_strdup(logfile);
 }
 
-gint
-sydbox_config_get_verbosity (void)
+gint sydbox_config_get_verbosity(void)
 {
     return config->verbosity;
 }
 
-void
-sydbox_config_set_verbosity (gint verbosity)
+void sydbox_config_set_verbosity(gint verbosity)
 {
     config->verbosity = verbosity;
 }
 
-bool
-sydbox_config_get_sandbox_path (void)
+bool sydbox_config_get_sandbox_path(void)
 {
     return config->sandbox_path;
 }
 
-void
-sydbox_config_set_sandbox_path (bool on)
+void sydbox_config_set_sandbox_path(bool on)
 {
     config->sandbox_path = on;
 }
 
-bool
-sydbox_config_get_sandbox_exec (void)
+bool sydbox_config_get_sandbox_exec(void)
 {
     return config->sandbox_exec;
 }
 
-void
-sydbox_config_set_sandbox_exec (bool on)
+void sydbox_config_set_sandbox_exec(bool on)
 {
     config->sandbox_exec = on;
 }
 
-bool
-sydbox_config_get_sandbox_network (void)
+bool sydbox_config_get_sandbox_network(void)
 {
     return config->sandbox_network;
 }
 
-void
-sydbox_config_set_sandbox_network (bool on)
+void sydbox_config_set_sandbox_network(bool on)
 {
     config->sandbox_network = on;
 }
 
-bool
-sydbox_config_get_colourise_output (void)
+bool sydbox_config_get_colourise_output(void)
 {
     return config->colourise_output;
 }
 
-void
-sydbox_config_set_colourise_output (bool colourise)
+void sydbox_config_set_colourise_output(bool colourise)
 {
     config->colourise_output = colourise;
 }
 
-bool
-sydbox_config_get_disallow_magic_commands (void)
+bool sydbox_config_get_disallow_magic_commands(void)
 {
     return config->disallow_magic_commands;
 }
 
-void
-sydbox_config_set_disallow_magic_commands (bool disallow)
+void sydbox_config_set_disallow_magic_commands(bool disallow)
 {
     config->disallow_magic_commands = disallow;
 }
 
-bool
-sydbox_config_get_wait_all (void)
+bool sydbox_config_get_wait_all(void)
 {
     return config->wait_all;
 }
 
-void
-sydbox_config_set_wait_all (bool waitall)
+void sydbox_config_set_wait_all(bool waitall)
 {
     config->wait_all = waitall;
 }
 
-bool
-sydbox_config_get_allow_proc_pid (void)
+bool sydbox_config_get_allow_proc_pid(void)
 {
     return config->allow_proc_pid;
 }
 
-void
-sydbox_config_set_allow_proc_pid (bool allow)
+void sydbox_config_set_allow_proc_pid(bool allow)
 {
     config->allow_proc_pid = allow;
 }
 
-bool
-sydbox_config_get_paranoid_mode_enabled (void)
+bool sydbox_config_get_paranoid_mode_enabled(void)
 {
     return config->paranoid_mode_enabled;
 }
 
-void
-sydbox_config_set_paranoid_mode_enabled (bool enabled)
+void sydbox_config_set_paranoid_mode_enabled(bool enabled)
 {
     config->paranoid_mode_enabled = enabled;
 }
 
-GSList *
-sydbox_config_get_write_prefixes (void)
+GSList *sydbox_config_get_write_prefixes(void)
 {
     return config->write_prefixes;
 }
 
-GSList *
-sydbox_config_get_predict_prefixes (void)
+GSList *sydbox_config_get_predict_prefixes(void)
 {
     return config->predict_prefixes;
 }
 
-GSList *
-sydbox_config_get_exec_prefixes (void)
+GSList *sydbox_config_get_exec_prefixes(void)
 {
     return config->exec_prefixes;
 }

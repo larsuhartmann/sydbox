@@ -19,8 +19,8 @@
  */
 
 
-#ifndef __SYDBOX_CONFIG_H__
-#define __SYDBOX_CONFIG_H__
+#ifndef SYDBOX_GUARD_CONFIG_H
+#define SYDBOX_GUARD_CONFIG_H 1
 
 #include <stdbool.h>
 
@@ -53,8 +53,7 @@
  *
  * Since: 0.1_alpha
  **/
-bool
-sydbox_config_load (const gchar * const config);
+bool sydbox_config_load(const gchar * const config);
 
 /**
  * sydbox_config_update_from_environment:
@@ -63,8 +62,7 @@ sydbox_config_load (const gchar * const config);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_config_update_from_environment (void);
+void sydbox_config_update_from_environment(void);
 
 /**
  * sydbox_config_write_to_stderr:
@@ -73,8 +71,7 @@ sydbox_config_update_from_environment (void);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_config_write_to_stderr (void);
+void sydbox_config_write_to_stderr(void);
 
 /**
  * sydbox_config_get_log_file:
@@ -85,8 +82,7 @@ sydbox_config_write_to_stderr (void);
  *
  * Since: 0.1_alpha
  **/
-const gchar *
-sydbox_config_get_log_file (void);
+const gchar *sydbox_config_get_log_file(void);
 
 /**
  * sydbox_config_set_log_file:
@@ -96,8 +92,7 @@ sydbox_config_get_log_file (void);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_config_set_log_file (const gchar * const logfile);
+void sydbox_config_set_log_file(const gchar * const logfile);
 
 /**
  * sydbox_config_get_verbosity:
@@ -108,8 +103,7 @@ sydbox_config_set_log_file (const gchar * const logfile);
  *
  * Since: 0.1_alpha
  **/
-gint
-sydbox_config_get_verbosity (void);
+gint sydbox_config_get_verbosity(void);
 
 /**
  * sydbox_config_set_verbosity:
@@ -119,20 +113,15 @@ sydbox_config_get_verbosity (void);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_config_set_verbosity (gint verbosity);
+void sydbox_config_set_verbosity(gint verbosity);
 
-bool
-sydbox_config_get_sandbox_path (void);
+bool sydbox_config_get_sandbox_path(void);
 
-void
-sydbox_config_set_sandbox_path (bool on);
+void sydbox_config_set_sandbox_path(bool on);
 
-bool
-sydbox_config_get_sandbox_exec (void);
+bool sydbox_config_get_sandbox_exec(void);
 
-void
-sydbox_config_set_sandbox_exec (bool on);
+void sydbox_config_set_sandbox_exec(bool on);
 
 /**
  * sydbox_config_get_sandbox_network:
@@ -143,11 +132,9 @@ sydbox_config_set_sandbox_exec (bool on);
  *
  * Since: 0.1_alpha
  **/
-bool
-sydbox_config_get_sandbox_network (void);
+bool sydbox_config_get_sandbox_network(void);
 
-void
-sydbox_config_set_sandbox_network (bool on);
+void sydbox_config_set_sandbox_network(bool on);
 
 /**
  * sydbox_config_get_colourise_output:
@@ -158,8 +145,7 @@ sydbox_config_set_sandbox_network (bool on);
  *
  * Since: 0.1_alpha
  **/
-bool
-sydbox_config_get_colourise_output (void);
+bool sydbox_config_get_colourise_output(void);
 
 /**
  * sydbox_config_set_colourise_output:
@@ -169,26 +155,19 @@ sydbox_config_get_colourise_output (void);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_config_set_colourise_output (bool colourise);
+void sydbox_config_set_colourise_output(bool colourise);
 
-bool
-sydbox_config_get_disallow_magic_commands (void);
+bool sydbox_config_get_disallow_magic_commands(void);
 
-void
-sydbox_config_set_disallow_magic_commands (bool disallow);
+void sydbox_config_set_disallow_magic_commands(bool disallow);
 
-bool
-sydbox_config_get_wait_all (void);
+bool sydbox_config_get_wait_all(void);
 
-void
-sydbox_config_set_wait_all (bool waitall);
+void sydbox_config_set_wait_all(bool waitall);
 
-bool
-sydbox_config_get_allow_proc_pid (void);
+bool sydbox_config_get_allow_proc_pid(void);
 
-void
-sydbox_config_set_allow_proc_pid (bool allow);
+void sydbox_config_set_allow_proc_pid(bool allow);
 
 /**
  * sydbox_config_get_paranoid_mode_enabled:
@@ -199,8 +178,7 @@ sydbox_config_set_allow_proc_pid (bool allow);
  *
  * Since: 0.1_alpha
  **/
-bool
-sydbox_config_get_paranoid_mode_enabled (void);
+bool sydbox_config_get_paranoid_mode_enabled(void);
 
 /**
  * sydbox_config_set_paranoid_mode_enabled:
@@ -210,8 +188,7 @@ sydbox_config_get_paranoid_mode_enabled (void);
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_config_set_paranoid_mode_enabled (bool enabled);
+void sydbox_config_set_paranoid_mode_enabled(bool enabled);
 
 /**
  * sydbox_config_get_write_prefixes:
@@ -222,8 +199,7 @@ sydbox_config_set_paranoid_mode_enabled (bool enabled);
  *
  * Since: 0.1_alpha
  **/
-GSList *
-sydbox_config_get_write_prefixes (void);
+GSList *sydbox_config_get_write_prefixes(void);
 
 /**
  * sydbox_config_get_predict_prefixes:
@@ -234,11 +210,9 @@ sydbox_config_get_write_prefixes (void);
  *
  * Since: 0.1_alpha
  **/
-GSList *
-sydbox_config_get_predict_prefixes (void);
+GSList *sydbox_config_get_predict_prefixes(void);
 
-GSList *
-sydbox_config_get_exec_prefixes (void);
+GSList *sydbox_config_get_exec_prefixes(void);
 
 GSList *sydbox_config_get_filters(void);
 
@@ -248,5 +222,5 @@ int sydbox_config_rmfilter(const gchar *filter);
 
 void sydbox_config_rmfilter_all(void);
 
-#endif
+#endif // SYDBOX_GUARD_CONFIG_H
 

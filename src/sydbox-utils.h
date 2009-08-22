@@ -17,8 +17,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __SYDBOX_UTILS_H__
-#define __SYDBOX_UTILS_H__
+#ifndef SYDBOX_GUARD_UTILS_H
+#define SYDBOX_GUARD_UTILS_H 1
 
 #include <glib.h>
 
@@ -47,8 +47,7 @@
  *
  * Since: 0.1_alpha
  **/
-void
-sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, ...) G_GNUC_PRINTF (3, 4);
+void sydbox_access_violation(const pid_t pid, const gchar *path, const gchar *fmt, ...) G_GNUC_PRINTF (3, 4);
 
 /**
  * sydbox_compress_path:
@@ -62,8 +61,7 @@ sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, .
  *
  * Since: 0.1_alpha
  **/
-gchar *
-sydbox_compress_path (const gchar * const path);
+gchar *sydbox_compress_path(const gchar * const path);
 
-#endif
+#endif // SYDBOX_GUARD_UTILS_H
 
