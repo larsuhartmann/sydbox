@@ -125,17 +125,13 @@ static void cleanup(void) {
     GSList *walk;
     struct tchild *child;
 
-    g_info("cleaning up before exit");
-
     sydbox_config_rmfilter_all();
 
     if (NULL != ctx) {
         walk = ctx->children;
         while (NULL != walk) {
             child = (struct tchild *) walk->data;
-            g_info("killing child %i", child->pid);
-            if (0 > trace_kill(child->pid) && ESRCH != errno)
-                g_warning("failed to kill child %i: %s", child->pid, g_strerror(errno));
+            trace_kill(child->pid);
             walk = g_slist_next(walk);
         }
 
@@ -147,6 +143,7 @@ static void cleanup(void) {
 
 static void sig_cleanup(int signum) {
     struct sigaction action;
+    g_fprintf(stderr, "Caught signal %d, exiting\n", signum);
     cleanup();
     sigaction(signum, NULL, &action);
     action.sa_handler = SIG_DFL;
