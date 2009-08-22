@@ -69,7 +69,8 @@ int trace_me(void)
     return 0;
 }
 
-int trace_setup(pid_t pid) {
+int trace_setup(pid_t pid)
+{
     int save_errno;
 
     g_debug("setting tracing options for child %i", pid);
@@ -87,9 +88,25 @@ int trace_setup(pid_t pid) {
     return 0;
 }
 
-int trace_kill(pid_t pid) {
+int trace_cont(pid_t pid)
+{
+    int save_errno;
+
+    if (G_UNLIKELY(0 > ptrace(PTRACE_CONT, pid, NULL, NULL))) {
+        save_errno = errno;
+        g_info("failed to continue child %i: %s", pid, g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+    return 0;
+}
+
+int trace_kill(pid_t pid)
+{
+    int save_errno;
+
     if (G_UNLIKELY(0 > ptrace(PTRACE_KILL, pid, NULL, NULL) && ESRCH != errno)) {
-        int save_errno = errno;
+        save_errno = errno;
         g_info("failed to kill child %i: %s", pid, g_strerror(errno));
         errno = save_errno;
         return -1;
