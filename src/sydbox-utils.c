@@ -45,6 +45,8 @@ sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, .
                 g_debug("pattern `%s' matches path `%s', ignoring the access violation", pattern, path);
                 return;
             }
+            else
+                g_debug("pattern `%s' doesn't match path `%s'", pattern, path);
             walk = g_slist_next(walk);
         }
     }
