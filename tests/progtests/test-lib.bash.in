@@ -36,16 +36,17 @@ else
     colour=false
 fi
 
+sydboxctl="@TOP_BUILDDIR@"/src/sydboxctl
 sydbox() {
     local vdir
     if [[ -n "$SYDBOX_RUN_UNDER_VALGRIND" ]]; then
-        vdir="@TOP_BUILDDIR@/tests/valgrind"
+        vdir="@TOP_BUILDDIR@"/tests/valgrind
         SYDBOX_VALGRIND="$vdir" SYDBOX_NO_CONFIG=1 \
             "$vdir"/valgrind.sh \
-            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SYDBOX_LOG" "$@"
+            "@TOP_BUILDDIR@"/src/sydbox -0 4 -l "$SYDBOX_LOG" "$@"
     else
         SYDBOX_NO_CONFIG=1 \
-            @TOP_BUILDDIR@/src/sydbox -0 4 -l "$SYDBOX_LOG" "$@"
+            "@TOP_BUILDDIR@"/src/sydbox -0 4 -l "$SYDBOX_LOG" "$@"
     fi
 }
 
