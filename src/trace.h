@@ -95,12 +95,6 @@ int trace_me(void);
 int trace_setup(pid_t pid);
 
 /**
- * Lets the child continue its execution.
- * Returns 0 on success, -1 on failure and sets errno accordingly.
- */
-int trace_cont(pid_t pid);
-
-/**
  * Kills the given child.
  * Returns 0 on success or if child is already dead, -1 on failure and sets
  * errno accordingly.

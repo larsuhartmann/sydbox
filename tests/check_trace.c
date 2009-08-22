@@ -276,7 +276,7 @@ START_TEST(check_trace_set_syscall) {
 }
 END_TEST
 
-START_TEST(check_trace_get_path_first) {
+START_TEST(check_trace_get_string_first) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -301,7 +301,7 @@ START_TEST(check_trace_get_path_first) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        path = trace_get_path(pid, CHECK_PERSONALITY, 0);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 0);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/null", 10), "Expected '/dev/null' got '%s'", path);
 
@@ -311,7 +311,7 @@ START_TEST(check_trace_get_path_first) {
 }
 END_TEST
 
-START_TEST(check_trace_get_path_second) {
+START_TEST(check_trace_get_string_second) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -336,7 +336,7 @@ START_TEST(check_trace_get_path_second) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        path = trace_get_path(pid, CHECK_PERSONALITY, 1);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 1);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/null", 10), "Expected '/dev/null' got '%s'", path);
 
@@ -346,7 +346,7 @@ START_TEST(check_trace_get_path_second) {
 }
 END_TEST
 
-START_TEST(check_trace_get_path_third) {
+START_TEST(check_trace_get_string_third) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -371,7 +371,7 @@ START_TEST(check_trace_get_path_third) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        path = trace_get_path(pid, CHECK_PERSONALITY, 2);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 2);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'", path);
 
@@ -381,7 +381,7 @@ START_TEST(check_trace_get_path_third) {
 }
 END_TEST
 
-START_TEST(check_trace_get_path_fourth) {
+START_TEST(check_trace_get_string_fourth) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -406,7 +406,7 @@ START_TEST(check_trace_get_path_fourth) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        path = trace_get_path(pid, CHECK_PERSONALITY, 3);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 3);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "arnold_layne", 13), "Expected 'arnold_layne' got '%s'", path);
 
@@ -416,7 +416,7 @@ START_TEST(check_trace_get_path_fourth) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_first_lensame) {
+START_TEST(check_trace_set_string_first_lensame) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -441,9 +441,9 @@ START_TEST(check_trace_set_path_first_lensame) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_set_path(pid, CHECK_PERSONALITY, 0, "/dev/zero", 10), "Failed to set string: %s",
+        fail_if(0 > trace_set_string(pid, CHECK_PERSONALITY, 0, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 0);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 0);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
@@ -453,7 +453,7 @@ START_TEST(check_trace_set_path_first_lensame) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_first_lenshort) {
+START_TEST(check_trace_set_string_first_lenshort) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -478,9 +478,9 @@ START_TEST(check_trace_set_path_first_lenshort) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_set_path(pid, CHECK_PERSONALITY, 0, "/dev/zero", 10), "Failed to set string: %s",
+        fail_if(0 > trace_set_string(pid, CHECK_PERSONALITY, 0, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 0);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 0);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
@@ -490,7 +490,7 @@ START_TEST(check_trace_set_path_first_lenshort) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_first_lenlong) {
+START_TEST(check_trace_set_string_first_lenlong) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -515,9 +515,9 @@ START_TEST(check_trace_set_path_first_lenlong) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_set_path(pid, CHECK_PERSONALITY, 0, "/dev/zero", 10), "Failed to set string: %s",
+        fail_if(0 > trace_set_string(pid, CHECK_PERSONALITY, 0, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 0);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 0);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
@@ -527,7 +527,7 @@ START_TEST(check_trace_set_path_first_lenlong) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_second_lensame) {
+START_TEST(check_trace_set_string_second_lensame) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -552,9 +552,9 @@ START_TEST(check_trace_set_path_second_lensame) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_set_path(pid, CHECK_PERSONALITY, 1, "/dev/zero", 10), "Failed to set string: %s",
+        fail_if(0 > trace_set_string(pid, CHECK_PERSONALITY, 1, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 1);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 1);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
@@ -564,7 +564,7 @@ START_TEST(check_trace_set_path_second_lensame) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_second_lenshort) {
+START_TEST(check_trace_set_string_second_lenshort) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -589,9 +589,9 @@ START_TEST(check_trace_set_path_second_lenshort) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_set_path(pid, CHECK_PERSONALITY, 1, "/dev/zero", 10), "Failed to set string: %s",
+        fail_if(0 > trace_set_string(pid, CHECK_PERSONALITY, 1, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 1);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 1);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
@@ -601,7 +601,7 @@ START_TEST(check_trace_set_path_second_lenshort) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_second_lenlong) {
+START_TEST(check_trace_set_string_second_lenlong) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -626,9 +626,9 @@ START_TEST(check_trace_set_path_second_lenlong) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(0 > trace_set_path(pid, CHECK_PERSONALITY, 1, "/dev/zero", 10), "Failed to set string: %s",
+        fail_if(0 > trace_set_string(pid, CHECK_PERSONALITY, 1, "/dev/zero", 10), "Failed to set string: %s",
                 strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 1);
+        path = trace_get_string(pid, CHECK_PERSONALITY, 1);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "/dev/zero", 10), "Expected '/dev/zero' got '%s'", path);
 
@@ -638,7 +638,7 @@ START_TEST(check_trace_set_path_second_lenlong) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_third_lensame) {
+START_TEST(check_trace_set_string_third_lensame) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -663,8 +663,8 @@ START_TEST(check_trace_set_path_third_lensame) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(trace_set_path(pid, CHECK_PERSONALITY, 2, "david", 6), "Failed to set string: %s", strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 2);
+        fail_if(trace_set_string(pid, CHECK_PERSONALITY, 2, "david", 6), "Failed to set string: %s", strerror(errno));
+        path = trace_get_string(pid, CHECK_PERSONALITY, 2);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
@@ -674,7 +674,7 @@ START_TEST(check_trace_set_path_third_lensame) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_third_lenshort) {
+START_TEST(check_trace_set_string_third_lenshort) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -699,8 +699,8 @@ START_TEST(check_trace_set_path_third_lenshort) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(trace_set_path(pid, CHECK_PERSONALITY, 2, "david", 6), "Failed to set string: %s", strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 2);
+        fail_if(trace_set_string(pid, CHECK_PERSONALITY, 2, "david", 6), "Failed to set string: %s", strerror(errno));
+        path = trace_get_string(pid, CHECK_PERSONALITY, 2);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
@@ -710,7 +710,7 @@ START_TEST(check_trace_set_path_third_lenshort) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_third_lenlong) {
+START_TEST(check_trace_set_string_third_lenlong) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -735,8 +735,8 @@ START_TEST(check_trace_set_path_third_lenlong) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(trace_set_path(pid, CHECK_PERSONALITY, 2, "david", 6), "Failed to set string: %s", strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 2);
+        fail_if(trace_set_string(pid, CHECK_PERSONALITY, 2, "david", 6), "Failed to set string: %s", strerror(errno));
+        path = trace_get_string(pid, CHECK_PERSONALITY, 2);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
@@ -746,7 +746,7 @@ START_TEST(check_trace_set_path_third_lenlong) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_fourth_lensame) {
+START_TEST(check_trace_set_string_fourth_lensame) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -771,8 +771,8 @@ START_TEST(check_trace_set_path_fourth_lensame) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(trace_set_path(pid, CHECK_PERSONALITY, 3, "david", 6), "Failed to set string: %s", strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 3);
+        fail_if(trace_set_string(pid, CHECK_PERSONALITY, 3, "david", 6), "Failed to set string: %s", strerror(errno));
+        path = trace_get_string(pid, CHECK_PERSONALITY, 3);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
@@ -782,7 +782,7 @@ START_TEST(check_trace_set_path_fourth_lensame) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_fourth_lenshort) {
+START_TEST(check_trace_set_string_fourth_lenshort) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -807,8 +807,8 @@ START_TEST(check_trace_set_path_fourth_lenshort) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(trace_set_path(pid, CHECK_PERSONALITY, 3, "david", 6), "Failed to set string: %s", strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 3);
+        fail_if(trace_set_string(pid, CHECK_PERSONALITY, 3, "david", 6), "Failed to set string: %s", strerror(errno));
+        path = trace_get_string(pid, CHECK_PERSONALITY, 3);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
@@ -818,7 +818,7 @@ START_TEST(check_trace_set_path_fourth_lenshort) {
 }
 END_TEST
 
-START_TEST(check_trace_set_path_fourth_lenlong) {
+START_TEST(check_trace_set_string_fourth_lenlong) {
     PRINT_TEST_HEADER();
     pid_t pid;
 
@@ -843,8 +843,8 @@ START_TEST(check_trace_set_path_fourth_lenlong) {
         wait(&status);
         fail_unless(WIFSTOPPED(status), "child %i didn't stop by sending itself SIGTRAP", pid);
 
-        fail_if(trace_set_path(pid, CHECK_PERSONALITY, 3, "david", 6), "Failed to set string: %s", strerror(errno));
-        path = trace_get_path(pid, CHECK_PERSONALITY, 3);
+        fail_if(trace_set_string(pid, CHECK_PERSONALITY, 3, "david", 6), "Failed to set string: %s", strerror(errno));
+        path = trace_get_string(pid, CHECK_PERSONALITY, 3);
         fail_if(NULL == path, "Failed to get string: %s", strerror(errno));
         fail_unless(0 == strncmp(path, "david", 6), "Expected 'david' got '%s'", path);
 
@@ -867,22 +867,22 @@ Suite *trace_suite_create(void) {
     tcase_add_test(tc_trace, check_trace_event_e_exit_signal);
     tcase_add_test(tc_trace, check_trace_get_syscall);
     tcase_add_test(tc_trace, check_trace_set_syscall);
-    tcase_add_test(tc_trace, check_trace_get_path_first);
-    tcase_add_test(tc_trace, check_trace_get_path_second);
-    tcase_add_test(tc_trace, check_trace_get_path_third);
-    tcase_add_test(tc_trace, check_trace_get_path_fourth);
-    tcase_add_test(tc_trace, check_trace_set_path_first_lensame);
-    tcase_add_test(tc_trace, check_trace_set_path_first_lenshort);
-    tcase_add_test(tc_trace, check_trace_set_path_first_lenlong);
-    tcase_add_test(tc_trace, check_trace_set_path_second_lensame);
-    tcase_add_test(tc_trace, check_trace_set_path_second_lenshort);
-    tcase_add_test(tc_trace, check_trace_set_path_second_lenlong);
-    tcase_add_test(tc_trace, check_trace_set_path_third_lensame);
-    tcase_add_test(tc_trace, check_trace_set_path_third_lenshort);
-    tcase_add_test(tc_trace, check_trace_set_path_third_lenlong);
-    tcase_add_test(tc_trace, check_trace_set_path_fourth_lensame);
-    tcase_add_test(tc_trace, check_trace_set_path_fourth_lenshort);
-    tcase_add_test(tc_trace, check_trace_set_path_fourth_lenlong);
+    tcase_add_test(tc_trace, check_trace_get_string_first);
+    tcase_add_test(tc_trace, check_trace_get_string_second);
+    tcase_add_test(tc_trace, check_trace_get_string_third);
+    tcase_add_test(tc_trace, check_trace_get_string_fourth);
+    tcase_add_test(tc_trace, check_trace_set_string_first_lensame);
+    tcase_add_test(tc_trace, check_trace_set_string_first_lenshort);
+    tcase_add_test(tc_trace, check_trace_set_string_first_lenlong);
+    tcase_add_test(tc_trace, check_trace_set_string_second_lensame);
+    tcase_add_test(tc_trace, check_trace_set_string_second_lenshort);
+    tcase_add_test(tc_trace, check_trace_set_string_second_lenlong);
+    tcase_add_test(tc_trace, check_trace_set_string_third_lensame);
+    tcase_add_test(tc_trace, check_trace_set_string_third_lenshort);
+    tcase_add_test(tc_trace, check_trace_set_string_third_lenlong);
+    tcase_add_test(tc_trace, check_trace_set_string_fourth_lensame);
+    tcase_add_test(tc_trace, check_trace_set_string_fourth_lenshort);
+    tcase_add_test(tc_trace, check_trace_set_string_fourth_lenlong);
     suite_add_tcase(s, tc_trace);
 
     return s;
