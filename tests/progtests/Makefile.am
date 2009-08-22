@@ -9,7 +9,7 @@ TESTS = t01-chmod.bash t02-chown.bash t03-open.bash t04-creat.bash t05-lchown.ba
 	t25-linkat-first.bash t26-linkat-second-atfdcwd.bash t27-linkat-second.bash \
 	t28-symlinkat-atfdcwd.bash t29-symlinkat.bash t30-fchmodat-atfdcwd.bash t31-fchmodat.bash \
 	t32-magic-onoff.bash t33-magic-enabled.bash t34-magic-lock.bash t35-magic-exec_lock.bash \
-	t36-magic-write.bash t37-magic-unwrite.bash t9999-ctl.bash
+	t36-magic-write.bash t37-magic-unwrite.bash
 EXTRA_DIST= $(TESTS)
 
 check_PROGRAMS = test-lib.bash t01_chmod t01_chmod_toolong t02_chown t02_chown_toolong \

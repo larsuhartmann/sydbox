@@ -3,7 +3,7 @@ EXTRA_DIST= syscall_marshaller.list
 
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
 	   $(glib_CFLAGS) $(gobject_CFLAGS) @SYDBOX_CFLAGS@
-bin_PROGRAMS = sydbox sydboxctl
+bin_PROGRAMS = sydbox
 sydbox_SOURCES = children.h commands.h context.h flags.h sydbox-log.h \
 		 loop.h path.h proc.h syscall.h trace.h wrappers.h \
 		 sydbox-config.h sydbox-log.h sydbox-utils.h \
@@ -12,9 +12,6 @@ sydbox_SOURCES = children.h commands.h context.h flags.h sydbox-log.h \
 		 trace-util.c trace-util.h trace.c trace.h \
 		 sydbox-config.c sydbox-log.c sydbox-utils.c main.c
 sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS)
-
-sydboxctl_SOURCES= commands.h sydboxctl.c
-sydboxctl_LDADD= $(glib_LIBS)
 
 # dispatch.c
 sydbox_SOURCES+= dispatch.h dispatch-table.h

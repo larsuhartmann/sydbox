@@ -34,7 +34,6 @@ gprof*
 data/sydbox.1
 data/sydbox.1.xml
 src/sydbox
-src/sydboxctl
 src/syscallent.h
 src/syscallent32.h
 src/syscallent64.h
