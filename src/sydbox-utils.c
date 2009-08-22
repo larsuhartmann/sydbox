@@ -24,30 +24,17 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <glib.h>
 #include <glib/gstdio.h>
 
-#include "hooker.h"
 #include "sydbox-log.h"
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
 
-void sydbox_access_violation(const pid_t pid, const gchar *sname, const gchar *path, const gchar *fmt, ...)
+void
+sydbox_access_violation (const pid_t pid, const gchar *fmt, ...)
 {
     va_list args;
     time_t now = time (NULL);
-    const gchar *hook;
-    GSList *hooks = sydbox_config_get_hooks();
-
-    /* Run the hooks */
-    while (NULL != hooks) {
-        hook = (gchar *)hooks->data;
-        if (hooker_spawn(hook, pid, sname, path)) {
-            g_debug("hook `%s' returned non-zero, not raising an access violation", hook);
-            return;
-        }
-        hooks = g_slist_next(hooks);
-    }
 
     g_fprintf (stderr, PACKAGE "@%lu: %sAccess Violation!%s\n", now,
                sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",
