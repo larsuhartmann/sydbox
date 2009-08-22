@@ -166,7 +166,7 @@ static gchar *get_username(void)
     return g_strdup(pwd->pw_name);
 }
 
-static gchar *get_groupname (void)
+static gchar *get_groupname(void)
 {
     struct group *grp;
     gid_t gid;
@@ -203,7 +203,7 @@ static void G_GNUC_NORETURN sydbox_execute_child(int argc G_GNUC_UNUSED, char **
     _exit(-1);
 }
 
-static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
+static int sydbox_execute_parent(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
 {
     int status, retval;
     struct sigaction new_action, old_action;
@@ -282,7 +282,7 @@ static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNU
     return retval;
 }
 
-static int sydbox_internal_main (int argc, char **argv)
+static int sydbox_internal_main(int argc, char **argv)
 {
     pid_t pid;
 
@@ -379,7 +379,7 @@ int main (int argc, char **argv)
     g_option_context_add_main_entries(context, entries, PACKAGE);
     g_option_context_set_summary(context, PACKAGE "-" VERSION GIT_HEAD " - ptrace based sandbox");
 
-    if (! g_option_context_parse(context, &argc, &argv, &parse_error)) {
+    if (!g_option_context_parse(context, &argc, &argv, &parse_error)) {
         g_printerr("fatal: option parsing failed: %s\n", parse_error->message);
         g_option_context_free(context);
         g_error_free(parse_error);

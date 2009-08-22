@@ -4,8 +4,8 @@ EXTRA_DIST= syscall_marshaller.list
 AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
 	   $(glib_CFLAGS) $(gobject_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
-sydbox_SOURCES = children.h context.h flags.h sydbox-log.h loop.h \
-		 path.h proc.h syscall.h trace.h wrappers.h \
+sydbox_SOURCES = children.h commands.h context.h flags.h sydbox-log.h \
+		 loop.h path.h proc.h syscall.h trace.h wrappers.h \
 		 sydbox-config.h sydbox-log.h sydbox-utils.h \
 		 path.c proc.c children.c \
 		 context.c syscall.c wrappers.c loop.c \

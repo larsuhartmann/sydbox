@@ -56,67 +56,67 @@ static char *shell_expand(const char * const str)
 
 inline bool path_magic_dir(const char *path)
 {
-    return (0 == strncmp(path, CMD_PATH, CMD_PATH_LEN - 1));
+    return (0 == strncmp(path, SYDBOX_CMD_PATH, SYDBOX_CMD_PATH_LEN - 1));
 }
 
 inline bool path_magic_on(const char *path)
 {
-    return (0 == strncmp(path, CMD_ON, CMD_ON_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_ON, SYDBOX_CMD_ON_LEN));
 }
 
 inline bool path_magic_off(const char *path)
 {
-    return  (0 == strncmp(path, CMD_OFF, CMD_OFF_LEN));
+    return  (0 == strncmp(path, SYDBOX_CMD_OFF, SYDBOX_CMD_OFF_LEN));
 }
 
 inline bool path_magic_toggle(const char *path)
 {
-    return (0 == strncmp(path, CMD_TOGGLE, CMD_TOGGLE_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_TOGGLE, SYDBOX_CMD_TOGGLE_LEN));
 }
 
 inline bool path_magic_enabled(const char *path)
 {
-    return (0 == strncmp(path, CMD_ENABLED, CMD_ENABLED_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_ENABLED, SYDBOX_CMD_ENABLED_LEN));
 }
 
 inline bool path_magic_lock(const char *path)
 {
-    return (0 == strncmp(path, CMD_LOCK, CMD_LOCK_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_LOCK, SYDBOX_CMD_LOCK_LEN));
 }
 
 inline bool path_magic_exec_lock(const char *path)
 {
-    return (0 == strncmp(path, CMD_EXEC_LOCK, CMD_EXEC_LOCK_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_EXEC_LOCK, SYDBOX_CMD_EXEC_LOCK_LEN));
 }
 
 inline bool path_magic_write(const char *path)
 {
-    return (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_WRITE, SYDBOX_CMD_WRITE_LEN));
 }
 
 inline bool path_magic_rmwrite(const char *path)
 {
-    return (0 == strncmp(path, CMD_RMWRITE, CMD_RMWRITE_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_RMWRITE, SYDBOX_CMD_RMWRITE_LEN));
 }
 
 inline bool path_magic_sandbox_exec(const char *path)
 {
-    return (0 == strncmp(path, CMD_SANDBOX_EXEC, CMD_SANDBOX_EXEC_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_SANDBOX_EXEC, SYDBOX_CMD_SANDBOX_EXEC_LEN));
 }
 
 inline bool path_magic_unsandbox_exec(const char *path)
 {
-    return (0 == strncmp(path, CMD_UNSANDBOX_EXEC, CMD_UNSANDBOX_EXEC_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_UNSANDBOX_EXEC, SYDBOX_CMD_UNSANDBOX_EXEC_LEN));
 }
 
 inline bool path_magic_addfilter(const char *path)
 {
-    return (0 == strncmp(path, CMD_ADDFILTER, CMD_ADDFILTER_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_ADDFILTER, SYDBOX_CMD_ADDFILTER_LEN));
 }
 
 inline bool path_magic_rmfilter(const char *path)
 {
-    return (0 == strncmp(path, CMD_RMFILTER, CMD_RMFILTER_LEN));
+    return (0 == strncmp(path, SYDBOX_CMD_RMFILTER, SYDBOX_CMD_RMFILTER_LEN));
 }
 
 int pathnode_new(GSList **pathlist, const char *path, int sanitize)
