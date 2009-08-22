@@ -37,7 +37,6 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include "commands.h"
 #include "path.h"
 #include "proc.h"
 #include "trace.h"
@@ -311,13 +310,13 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     }
     else if (G_UNLIKELY(path_magic_write(path))) {
         data->result = RS_MAGIC;
-        rpath = path + SYDBOX_CMD_WRITE_LEN;
+        rpath = path + CMD_WRITE_LEN;
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
         g_info("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
     else if (G_UNLIKELY(path_magic_rmwrite(path))) {
         data->result = RS_MAGIC;
-        rpath = path + SYDBOX_CMD_RMWRITE_LEN;
+        rpath = path + CMD_RMWRITE_LEN;
         rpath_sanitized = sydbox_compress_path (rpath);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
@@ -336,13 +335,13 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
     }
     else if (G_UNLIKELY(path_magic_addfilter(path))) {
         data->result = RS_MAGIC;
-        rpath = path + SYDBOX_CMD_ADDFILTER_LEN;
+        rpath = path + CMD_ADDFILTER_LEN;
         sydbox_config_addfilter(rpath);
         g_info("approved addfilter(\"%s\") for child %i", rpath, child->pid);
     }
     else if (G_UNLIKELY(path_magic_rmfilter(path))) {
         data->result = RS_MAGIC;
-        rpath = path + SYDBOX_CMD_RMFILTER_LEN;
+        rpath = path + CMD_RMFILTER_LEN;
         sydbox_config_rmfilter(rpath);
         g_info("approved rmfilter(\"%s\") for child %i", rpath, child->pid);
     }

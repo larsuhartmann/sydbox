@@ -25,7 +25,32 @@
 
 #include <glib.h>
 
-#include "commands.h"
+#define CMD_PATH                "/dev/sydbox/"
+#define CMD_PATH_LEN            12
+#define CMD_ON                  CMD_PATH"on"
+#define CMD_ON_LEN              (CMD_PATH_LEN + 3)
+#define CMD_OFF                 CMD_PATH"off"
+#define CMD_OFF_LEN             (CMD_PATH_LEN + 4)
+#define CMD_TOGGLE              CMD_PATH"toggle"
+#define CMD_TOGGLE_LEN          (CMD_PATH_LEN + 7)
+#define CMD_ENABLED             CMD_PATH"enabled"
+#define CMD_ENABLED_LEN         (CMD_PATH_LEN + 8)
+#define CMD_LOCK                CMD_PATH"lock"
+#define CMD_LOCK_LEN            (CMD_PATH_LEN + 5)
+#define CMD_EXEC_LOCK           CMD_PATH"exec_lock"
+#define CMD_EXEC_LOCK_LEN       (CMD_PATH_LEN + 10)
+#define CMD_WRITE               CMD_PATH"write/"
+#define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
+#define CMD_RMWRITE             CMD_PATH"unwrite/"
+#define CMD_RMWRITE_LEN         (CMD_PATH_LEN + 8)
+#define CMD_SANDBOX_EXEC        CMD_PATH"sandbox_exec"
+#define CMD_SANDBOX_EXEC_LEN    (CMD_PATH_LEN + 13)
+#define CMD_UNSANDBOX_EXEC      CMD_PATH"unsandbox_exec"
+#define CMD_UNSANDBOX_EXEC_LEN  (CMD_PATH_LEN + 15)
+#define CMD_ADDFILTER           CMD_PATH"addfilter/"
+#define CMD_ADDFILTER_LEN       (CMD_PATH_LEN + 10)
+#define CMD_RMFILTER            CMD_PATH"rmfilter/"
+#define CMD_RMFILTER_LEN        (CMD_PATH_LEN + 9)
 
 bool path_magic_dir(const char *path);
 
