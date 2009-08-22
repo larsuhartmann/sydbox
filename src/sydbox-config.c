@@ -235,7 +235,7 @@ sydbox_config_load (const gchar * const file)
     char **hooklist = g_key_file_get_string_list(config_fd, "main", "hooks", NULL, NULL);
     if (NULL != hooklist) {
         for (unsigned int i = 0; NULL != hooklist[i]; i++)
-            sydbox_config_addhook(g_strdup(hooklist[i]));
+            sydbox_config_addhook(hooklist[i]);
         g_strfreev(hooklist);
     }
 
@@ -401,8 +401,6 @@ sydbox_config_write_to_stderr (void)
     g_fprintf (stderr, "main.paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
     g_fprintf (stderr, "main.wait_all = %s\n", config->wait_all ? "yes" : "no");
     g_fprintf (stderr, "main.allow_proc_pid = %s\n", config->allow_proc_pid ? "yes" : "no");
-    g_fprintf (stderr, "main.hooks:\n");
-    g_slist_foreach (config->hooks, print_slist_entry, NULL);
     g_fprintf (stderr, "log.file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf (stderr, "log.level = %d\n", config->verbosity);
     g_fprintf (stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
