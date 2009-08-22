@@ -88,7 +88,6 @@ static gboolean sandbox_net;
 static gboolean lock;
 static gboolean colour;
 static gboolean version;
-static gboolean paranoid;
 static gboolean wait_all;
 
 static GOptionEntry entries[] =
@@ -105,8 +104,6 @@ static GOptionEntry entries[] =
         "Path to the log file",           NULL },
     { "no-colour",              'C', 0, G_OPTION_ARG_NONE | G_OPTION_FLAG_REVERSE, &colour,
         "Disable colouring of messages",  NULL },
-    { "paranoid",               'p', 0, G_OPTION_ARG_NONE,                         &paranoid,
-        "Paranoid mode (EXPERIMENTAL)",   NULL },
     { "lock",                   'L', 0, G_OPTION_ARG_NONE,                         &lock,
         "Disallow magic commands",        NULL },
     { "disable-sandbox-path",   'P', 0, G_OPTION_ARG_NONE,                         &disable_sandbox_path,
@@ -329,9 +326,6 @@ static int sydbox_internal_main (int argc, char **argv)
 
     if (wait_all)
         sydbox_config_set_wait_all(true);
-
-    if (paranoid)
-        sydbox_config_set_paranoid_mode_enabled(true);
 
     if (dump) {
         sydbox_config_write_to_stderr();

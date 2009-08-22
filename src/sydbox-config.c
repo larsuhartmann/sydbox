@@ -39,7 +39,6 @@ struct sydbox_config
     bool sandbox_network;
     bool colourise_output;
     bool disallow_magic_commands;
-    bool paranoid_mode_enabled;
     bool wait_all;
     bool allow_proc_pid;
 
@@ -59,7 +58,6 @@ static void sydbox_config_set_defaults(void)
     config->sandbox_network = false;
     config->sandbox_exec = false;
     config->disallow_magic_commands = false;
-    config->paranoid_mode_enabled = false;
     config->wait_all = false;
     config->allow_proc_pid = true;
 }
@@ -134,27 +132,6 @@ bool sydbox_config_load(const gchar * const file)
                     g_assert_not_reached();
                     break;
             }
-        }
-    }
-
-    // Get main.paranoid
-    config->paranoid_mode_enabled = g_key_file_get_boolean(config_fd, "main", "paranoid", &config_error);
-    if (!config->paranoid_mode_enabled && config_error) {
-        switch (config_error->code) {
-            case G_KEY_FILE_ERROR_INVALID_VALUE:
-                g_printerr("main.paranoid not a boolean: %s", config_error->message);
-                g_error_free(config_error);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return false;
-            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                g_error_free(config_error);
-                config_error = NULL;
-                config->paranoid_mode_enabled = false;
-                break;
-            default:
-                g_assert_not_reached();
-                break;
         }
     }
 
@@ -383,7 +360,6 @@ void sydbox_config_write_to_stderr (void)
 {
     g_fprintf(stderr, "main.colour = %s\n", config->colourise_output ? "on" : "off");
     g_fprintf(stderr, "main.lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
-    g_fprintf(stderr, "main.paranoid = %s\n", config->paranoid_mode_enabled ? "yes" : "no");
     g_fprintf(stderr, "main.wait_all = %s\n", config->wait_all ? "yes" : "no");
     g_fprintf(stderr, "main.allow_proc_pid = %s\n", config->allow_proc_pid ? "yes" : "no");
     g_fprintf(stderr, "log.file = %s\n", config->logfile ? config->logfile : "stderr");
@@ -489,16 +465,6 @@ bool sydbox_config_get_allow_proc_pid(void)
 void sydbox_config_set_allow_proc_pid(bool allow)
 {
     config->allow_proc_pid = allow;
-}
-
-bool sydbox_config_get_paranoid_mode_enabled(void)
-{
-    return config->paranoid_mode_enabled;
-}
-
-void sydbox_config_set_paranoid_mode_enabled(bool enabled)
-{
-    config->paranoid_mode_enabled = enabled;
 }
 
 GSList *sydbox_config_get_write_prefixes(void)

@@ -725,22 +725,6 @@ static void systemcall_check_path(SystemCall *self,
         }
         data->result = RS_DENY;
     }
-
-    if (sydbox_config_get_paranoid_mode_enabled() && data->resolve) {
-        /* Change the path argument with the resolved path to
-         * prevent symlink races.
-         */
-        g_debug("paranoia! system call %d(%s) resolves symlinks, substituting path with resolved path",
-                self->no, sname);
-        if (G_UNLIKELY(0 > trace_set_path(child->pid, child->personality, narg, path, strlen(path) + 1))) {
-            data->result = RS_ERROR;
-            data->save_errno = errno;
-            if (ESRCH == errno)
-                g_debug("failed to set string: %s", g_strerror(errno));
-            else
-                g_warning("failed to set string: %s", g_strerror(errno));
-        }
-    }
 }
 
 static void systemcall_check(SystemCall *self, gpointer ctx_ptr,

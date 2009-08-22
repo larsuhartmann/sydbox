@@ -169,27 +169,6 @@ bool sydbox_config_get_allow_proc_pid(void);
 void sydbox_config_set_allow_proc_pid(bool allow);
 
 /**
- * sydbox_config_get_paranoid_mode_enabled:
- *
- * Returns %TRUE if paranoid mode is enabled, %FALSE otherwise
- *
- * Returns: a #gboolean indicating if paranoid mode is enabled
- *
- * Since: 0.1_alpha
- **/
-bool sydbox_config_get_paranoid_mode_enabled(void);
-
-/**
- * sydbox_config_set_paranoid_mode_enabled:
- * @enabled: a #gboolean indicating if paranoid mode is enabled
- *
- * Sets whether paranoid mode is enabled
- *
- * Since: 0.1_alpha
- **/
-void sydbox_config_set_paranoid_mode_enabled(bool enabled);
-
-/**
  * sydbox_config_get_write_prefixes:
  *
  * Returns a list of permitted write prefixes
