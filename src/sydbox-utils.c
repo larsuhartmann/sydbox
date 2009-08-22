@@ -25,14 +25,14 @@
 #include <string.h>
 #include <fnmatch.h>
 
+#include <glib.h>
 #include <glib/gstdio.h>
 
 #include "sydbox-log.h"
 #include "sydbox-utils.h"
 #include "sydbox-config.h"
 
-void
-sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, ...)
+void sydbox_access_violation(const pid_t pid, const gchar *path, const gchar *fmt, ...)
 {
     va_list args;
     time_t now = time (NULL);
@@ -51,49 +51,48 @@ sydbox_access_violation (const pid_t pid, const gchar *path, const gchar *fmt, .
         }
     }
 
-    g_fprintf (stderr, PACKAGE "@%lu: %sAccess Violation!%s\n", now,
-               sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",
-               sydbox_config_get_colourise_output () ? ANSI_NORMAL : "");
-    g_fprintf (stderr, PACKAGE "@%lu: %sChild Process ID: %s%i%s\n", now,
-               sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",
-               sydbox_config_get_colourise_output () ? ANSI_DARK_MAGENTA : "",
-               pid,
-               sydbox_config_get_colourise_output () ? ANSI_NORMAL : "");
-    g_fprintf (stderr, PACKAGE "@%lu: %sReason: %s", now,
-               sydbox_config_get_colourise_output () ? ANSI_MAGENTA : "",
-               sydbox_config_get_colourise_output () ? ANSI_DARK_MAGENTA : "");
+    g_fprintf(stderr, PACKAGE "@%lu: %sAccess Violation!%s\n", now,
+              sydbox_config_get_colourise_output() ? ANSI_MAGENTA : "",
+              sydbox_config_get_colourise_output() ? ANSI_NORMAL : "");
+    g_fprintf(stderr, PACKAGE "@%lu: %sChild Process ID: %s%i%s\n", now,
+              sydbox_config_get_colourise_output() ? ANSI_MAGENTA : "",
+              sydbox_config_get_colourise_output() ? ANSI_DARK_MAGENTA : "",
+              pid,
+              sydbox_config_get_colourise_output() ? ANSI_NORMAL : "");
+    g_fprintf(stderr, PACKAGE "@%lu: %sReason: %s", now,
+              sydbox_config_get_colourise_output() ? ANSI_MAGENTA : "",
+              sydbox_config_get_colourise_output() ? ANSI_DARK_MAGENTA : "");
 
-    va_start (args, fmt);
-    g_vfprintf (stderr, fmt, args);
-    va_end (args);
+    va_start(args, fmt);
+    g_vfprintf(stderr, fmt, args);
+    va_end(args);
 
-    g_fprintf (stderr, "%s\n", sydbox_config_get_colourise_output () ? ANSI_NORMAL : "");
+    g_fprintf(stderr, "%s\n", sydbox_config_get_colourise_output() ? ANSI_NORMAL : "");
 }
 
-gchar *
-sydbox_compress_path (const gchar * const path)
+gchar *sydbox_compress_path(const gchar * const path)
 {
     bool skip_slashes = false;
     gchar *retval;
     GString *compressed;
     guint i;
 
-    compressed = g_string_sized_new (strlen (path));
+    compressed = g_string_sized_new(strlen(path));
 
-    for (i = 0; i < strlen (path); i++) {
+    for (i = 0; i < strlen(path); i++) {
         if (path[i] == '/' && skip_slashes)
             continue;
         skip_slashes = (path[i] == '/');
 
-        g_string_append_c (compressed, path[i]);
+        g_string_append_c(compressed, path[i]);
     }
 
     /* truncate trailing slashes on paths other than '/' */
     if (compressed->len > 1 && compressed->str[compressed->len - 1] == '/')
-        g_string_truncate (compressed, compressed->len - 1);
+        g_string_truncate(compressed, compressed->len - 1);
 
     retval = compressed->str;
-    g_string_free (compressed, FALSE);
+    g_string_free(compressed, FALSE);
 
     return retval;
 }
