@@ -28,6 +28,7 @@
 #include "sydbox-log.h"
 #include "sydbox-utils.h"
 
+
 static char *
 shell_expand (const char * const str)
 {
