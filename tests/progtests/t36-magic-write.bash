@@ -5,15 +5,6 @@
 
 . test-lib.bash
 
-start_test "t36-magic-write-stat"
-sydbox -- bash <<EOF
-[[ -e /dev/sydbox/write ]]
-EOF
-if [[ 0 != $? ]]; then
-    die "/dev/sydbox/write doesn't exist"
-fi
-end_test
-
 start_test "t36-magic-write-locked"
 sydbox --lock -- bash <<EOF
 [[ -e /dev/sydbox/write ]]
@@ -25,7 +16,7 @@ end_test
 
 start_test "t36-magic-write-add"
 sydbox -- bash <<EOF
-:>/dev/sydbox/write/${cwd}
+[[ -e /dev/sydbox/write/${cwd} ]]
 echo Oh Arnold Layne, its not the same > arnold.layne
 EOF
 if [[ 0 != $? ]]; then

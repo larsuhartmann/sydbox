@@ -16,15 +16,16 @@
 int main(int argc, char **argv)
 {
     int fd;
+    struct stat buf;
 
     /* Turn off the sandbox. */
-    if (0 > open("/dev/sydbox/off", O_RDWR)) {
+    if (0 > stat("/dev/sydbox/off", &buf)) {
         fprintf(stderr, "%s: failed to set sydbox off\n", argv[0]);
         return EXIT_FAILURE;
     }
 
     /* Turn it on again */
-    if (0 > open("/dev/sydbox/on", O_RDWR)) {
+    if (0 > stat("/dev/sydbox/on", &buf)) {
         fprintf(stderr, "%s: failed to set sydbox on\n", argv[0]);
         return EXIT_FAILURE;
     }

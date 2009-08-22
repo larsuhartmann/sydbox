@@ -17,7 +17,7 @@ end_test
 
 start_test "t33-magic-enabled-off"
 sydbox -- bash <<EOF
-:>/dev/sydbox/off
+[[ -e /dev/sydbox/off ]]
 [[ -e /dev/sydbox/enabled ]]
 EOF
 if [[ 0 == $? ]]; then

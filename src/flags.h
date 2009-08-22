@@ -45,10 +45,9 @@
 #define MUST_CREAT_AT           (1 << 21) // MUST_CREAT for at suffixed functions
 #define MUST_CREAT_AT1          (1 << 22) // MUST_CREAT2 for symlinkat()
 #define MUST_CREAT_AT2          (1 << 23) // MUST_CREAT2 for at suffixed functions
-#define MAGIC_OPEN              (1 << 24) // Check if the open() call is magic
-#define MAGIC_STAT              (1 << 25) // Check if the stat() call is magic
-#define NET_CALL                (1 << 26) // Allowing the system call depends on the net flag
-#define EXEC_CALL               (1 << 27) // Allowing the system call depends on the exec flag
+#define MAGIC_STAT              (1 << 24) // Check if the stat() call is magic
+#define NET_CALL                (1 << 25) // Allowing the system call depends on the net flag
+#define EXEC_CALL               (1 << 26) // Allowing the system call depends on the exec flag
 
 #endif // SYDBOX_GUARD_FLAGS_H
 

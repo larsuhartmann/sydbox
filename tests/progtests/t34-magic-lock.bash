@@ -6,15 +6,6 @@
 no_create_files=1
 . test-lib.bash
 
-start_test "t34-magic-lock-stat"
-sydbox -- bash <<EOF
-[[ -e /dev/sydbox/lock ]]
-EOF
-if [[ 0 != $? ]]; then
-    die "/dev/sydbox/lock doesn't exist"
-fi
-end_test
-
 start_test "t34-magic-lock-locked"
 sydbox --lock -- bash <<EOF
 [[ -e /dev/sydbox/lock ]]
@@ -26,7 +17,7 @@ end_test
 
 start_test "t34-magic-lock-disable"
 sydbox -- bash <<EOF
-:>/dev/sydbox/lock
+[[ -e /dev/sydbox/lock ]]
 [[ -e /dev/sydbox ]]
 EOF
 if [[ 0 == $? ]]; then

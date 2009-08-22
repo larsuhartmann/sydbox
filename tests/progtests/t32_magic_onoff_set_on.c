@@ -4,12 +4,13 @@
  * Distributed under the terms of the GNU General Public License v2
  */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
+#include <unistd.h>
 
 int main(void)
 {
-    return (0 > open("/dev/sydbox/on", O_RDWR)) ? EXIT_FAILURE : EXIT_SUCCESS;
+    struct stat buf;
+    return (0 > stat("/dev/sydbox/on", &buf)) ? EXIT_FAILURE : EXIT_SUCCESS;
 }

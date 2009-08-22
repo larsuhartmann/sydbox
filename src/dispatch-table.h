@@ -32,7 +32,7 @@ static const struct syscall_def {
 #if defined(__NR_chown32)
     {__NR_chown32,      CHECK_PATH},
 #endif
-    {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE | MAGIC_OPEN},
+    {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE},
     {__NR_creat,        CHECK_PATH | CAN_CREAT | RETURNS_FD},
     {__NR_stat,         MAGIC_STAT},
 #if defined(__NR_stat64)

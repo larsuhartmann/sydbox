@@ -269,20 +269,20 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
     }
 }
 
-/* Checks for magic open() call
- * If the open() call is magic, this function calls the corresponding magic
- * function and sets data->result to RS_MAGIC. In this case it also sets
- * open()'s path argument to /dev/null if this fails it sets data->result to
- * RS_ERROR and data->save_errno to errno.
- * If the open() call isn't magic this function does nothing.
+/* Checks for magic stat() calls.
+ * If the stat() call is magic, this function calls trace_fake_stat() to fake
+ * the stat buffer and sets data->result to RS_DENY and child->retval to 0.
+ * If trace_fake_stat() fails it sets data->result to RS_ERROR and
+ * data->save_errno to errno.
+ * If the stat() caill isn't magic, this function does nothing.
  */
-static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
+static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     const char *rpath;
     char *rpath_sanitized;
 
-    g_debug("checking if open(\"%s\", ...) is magic", path);
+    g_debug("checking if stat(\"%s\") is magic", path);
     if (G_UNLIKELY(path_magic_on(path))) {
         data->result = RS_MAGIC;
         child->sandbox->path = true;
@@ -345,34 +345,10 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         sydbox_config_rmfilter(rpath);
         g_info("approved rmfilter(\"%s\") for child %i", rpath, child->pid);
     }
+    else if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path))))
+        data->result = RS_MAGIC;
 
-    if (G_UNLIKELY(RS_MAGIC == data->result)) {
-        g_debug("changing path to /dev/null");
-        if (G_UNLIKELY(0 > trace_set_path(child->pid, child->personality, 0, "/dev/null", 10))) {
-            data->result = RS_ERROR;
-            data->save_errno = errno;
-            if (ESRCH == errno)
-                g_debug("failed to set string to /dev/null: %s", g_strerror(errno));
-            else
-                g_warning("failed to set string to /dev/null: %s", g_strerror(errno));
-        }
-    }
-    else
-        g_debug("open(\"%s\", ...) not magic", path);
-}
-
-/* Checks for magic stat() calls.
- * If the stat() call is magic, this function calls trace_fake_stat() to fake
- * the stat buffer and sets data->result to RS_DENY and child->retval to 0.
- * If trace_fake_stat() fails it sets data->result to RS_ERROR and
- * data->save_errno to errno.
- * If the stat() caill isn't magic, this function does nothing.
- */
-static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
-{
-    char *path = data->pathlist[0];
-    g_debug("checking if stat(\"%s\") is magic", path);
-    if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path)))) {
+    if (data->result == RS_MAGIC) {
         g_debug("stat(\"%s\") is magic, faking stat buffer", path);
         if (G_UNLIKELY(0 > trace_fake_stat(child->pid, child->personality))) {
             data->result = RS_ERROR;
@@ -398,10 +374,8 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
  * returns.
  * If child->sandbox->lock is set to LOCK_SET which means magic calls are
  * locked, it does nothing and simply returns.
- * If the system call isn't one of open() or stat(), it does nothing and
- * simply returns.
- * Otherwise it calls systemcall_magic_open() for open() and
- * systemcall_magic_stat() for stat().
+ * If the system call isn't stat(), it does nothing and simply returns.
+ * Otherwise it calls systemcall_magic_stat()
  */
 static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
                              gpointer child_ptr, gpointer data_ptr)
@@ -415,13 +389,10 @@ static void systemcall_magic(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
         g_debug("Lock is set for child %i, skipping magic checks", child->pid);
         return;
     }
-    else if (!(self->flags & MAGIC_OPEN || self->flags & MAGIC_STAT))
+    else if (!(self->flags & MAGIC_STAT))
         return;
 
-    if (self->flags & MAGIC_OPEN)
-        systemcall_magic_open(child, data);
-    else
-        systemcall_magic_stat(child, data);
+    systemcall_magic_stat(child, data);
 }
 
 /* Fourth callback for systemcall handler.

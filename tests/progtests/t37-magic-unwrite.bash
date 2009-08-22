@@ -5,15 +5,6 @@
 
 . test-lib.bash
 
-start_test "t37-magic-unwrite-stat"
-sydbox -- bash <<EOF
-[[ -e /dev/sydbox/unwrite ]]
-EOF
-if [[ 0 != $? ]]; then
-    die "/dev/sydbox/unwrite doesn't exist"
-fi
-end_test
-
 start_test "t37-magic-unwrite-locked"
 sydbox --lock -- bash <<EOF
 [[ -e /dev/sydbox/unwrite ]]
@@ -25,8 +16,8 @@ end_test
 
 start_test "t37-magic-unwrite-remove"
 sydbox -- bash <<EOF
-:>/dev/sydbox/write/${cwd}
-:>/dev/sydbox/unwrite/${cwd}
+[[ -e /dev/sydbox/write/${cwd} ]]
+[[ -e /dev/sydbox/unwrite/${cwd} ]]
 echo Oh Arnold Layne, its not the same > arnold.layne
 EOF
 if [[ 0 == $? ]]; then

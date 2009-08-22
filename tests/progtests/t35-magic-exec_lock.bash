@@ -6,15 +6,6 @@
 no_create_files=1
 . test-lib.bash
 
-start_test "t35-magic-exec_lock-stat"
-sydbox -- bash <<EOF
-[[ -e /dev/sydbox/exec_lock ]]
-EOF
-if [[ 0 != $? ]]; then
-    die "/dev/sydbox/exec_lock doesn't exist"
-fi
-end_test
-
 start_test "t35-magic-exec_lock-locked"
 sydbox --lock -- bash <<EOF
 [[ -e /dev/sydbox/exec_lock ]]
@@ -26,7 +17,7 @@ end_test
 
 start_test "t35-magic-exec_lock-disable-on-exec"
 sydbox -- bash <<EOF
-:>/dev/sydbox/exec_lock
+[[ -e /dev/sydbox/exec_lock ]]
 bash -c "[[ -e /dev/sydbox ]]"
 EOF
 if [[ 0 == $? ]]; then
