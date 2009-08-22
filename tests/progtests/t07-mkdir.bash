@@ -17,15 +17,6 @@ elif [[ -d see.emily.play ]]; then
 fi
 end_test
 
-start_test "t07-mkdir-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t07_mkdir
-if [[ 0 != $? ]]; then
-    die "failed to predict mkdir"
-elif [[ -d see.emily.play ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t07-mkdir-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t07_mkdir
 if [[ 0 != $? ]]; then
@@ -45,14 +36,6 @@ if [[ 0 == $? ]]; then
     die "failed to deny mkdir"
 elif lstat_long "$dname"; then
     die "failed to deny mkdir, dir exists"
-fi
-
-start_test "t07-mkdir-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t07_mkdir_toolong "$long_dir" "$dname"
-if [[ 0 != $? ]]; then
-    die "failed to predict mkdir"
-elif lstat_long "$dname"; then
-    die "predict allowed access"
 fi
 
 start_test "t07-mkdir-toolong-write"

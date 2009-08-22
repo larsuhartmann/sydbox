@@ -45,7 +45,6 @@ struct sydbox_config
 
     GSList *filters;
     GSList *write_prefixes;
-    GSList *predict_prefixes;
     GSList *exec_prefixes;
 } *config;
 
@@ -230,7 +229,7 @@ bool sydbox_config_load(const gchar * const file)
         }
     }
 
-    // Get prefix.write
+    // Get main.filters
     char **filterlist = g_key_file_get_string_list(config_fd, "main", "filters", NULL, NULL);
     if (NULL != filterlist) {
         for (unsigned int i = 0; NULL != filterlist[i]; i++)
@@ -350,14 +349,6 @@ bool sydbox_config_load(const gchar * const file)
         g_strfreev(write_prefixes);
     }
 
-    // Get prefix.predict
-    char **predict_prefixes = g_key_file_get_string_list(config_fd, "prefix", "predict", NULL, NULL);
-    if (NULL != predict_prefixes) {
-        for (unsigned int i = 0; NULL != predict_prefixes[i]; i++)
-            pathnode_new_early(&config->predict_prefixes, predict_prefixes[i], 1);
-        g_strfreev(predict_prefixes);
-    }
-
     // Get prefix.exec
     char **exec_prefixes = g_key_file_get_string_list(config_fd, "prefix", "exec", NULL, NULL);
     if (NULL != exec_prefixes) {
@@ -375,9 +366,6 @@ void sydbox_config_update_from_environment(void)
 {
     g_info("extending path list using environment variable " ENV_WRITE);
     pathlist_init(&config->write_prefixes, g_getenv(ENV_WRITE));
-
-    g_info("extending path list using environment variable " ENV_PREDICT);
-    pathlist_init(&config->predict_prefixes, g_getenv(ENV_PREDICT));
 
     g_info("extending path list using environment variable " ENV_EXEC_ALLOW);
     pathlist_init(&config->exec_prefixes, g_getenv(ENV_EXEC_ALLOW));
@@ -405,8 +393,6 @@ void sydbox_config_write_to_stderr (void)
     g_fprintf(stderr, "sandbox.network = %s\n", config->sandbox_network ? "yes" : "no");
     g_fprintf(stderr, "prefix.write:\n");
     g_slist_foreach(config->write_prefixes, print_slist_entry, NULL);
-    g_fprintf(stderr, "prefix.predict:\n");
-    g_slist_foreach(config->predict_prefixes, print_slist_entry, NULL);
     g_fprintf(stderr, "prefix.exec\n");
     g_slist_foreach(config->exec_prefixes, print_slist_entry, NULL);
 }
@@ -518,11 +504,6 @@ void sydbox_config_set_paranoid_mode_enabled(bool enabled)
 GSList *sydbox_config_get_write_prefixes(void)
 {
     return config->write_prefixes;
-}
-
-GSList *sydbox_config_get_predict_prefixes(void)
-{
-    return config->predict_prefixes;
 }
 
 GSList *sydbox_config_get_exec_prefixes(void)

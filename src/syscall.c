@@ -314,12 +314,6 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
         g_info("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (G_UNLIKELY(path_magic_predict(path))) {
-        data->result = RS_MAGIC;
-        rpath = path + CMD_PREDICT_LEN;
-        pathnode_new(&(child->sandbox->predict_prefixes), rpath, 1);
-        g_info("approved addpredict(\"%s\") for child %i", rpath, child->pid);
-    }
     else if (G_UNLIKELY(path_magic_rmwrite(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMWRITE_LEN;
@@ -327,15 +321,6 @@ static void systemcall_magic_open(struct tchild *child, struct checkdata *data)
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
         g_info("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
-        g_free(rpath_sanitized);
-    }
-    else if (G_UNLIKELY(path_magic_rmpredict(path))) {
-        data->result = RS_MAGIC;
-        rpath = path + CMD_RMPREDICT_LEN;
-        rpath_sanitized = sydbox_compress_path (rpath);
-        if (NULL != child->sandbox->predict_prefixes)
-            pathnode_delete(&(child->sandbox->predict_prefixes), rpath_sanitized);
-        g_info("approved rmpredict(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free(rpath_sanitized);
     }
     else if (G_UNLIKELY(path_magic_sandbox_exec(path))) {
@@ -702,10 +687,8 @@ static void systemcall_check_path(SystemCall *self,
 
     g_debug("checking `%s' for write access", path);
     int allow_write = pathlist_check(child->sandbox->write_prefixes, path);
-    g_debug("checking `%s' for predict access", path);
-    int allow_predict = pathlist_check(child->sandbox->predict_prefixes, path);
 
-    if (G_UNLIKELY(!allow_write && !allow_predict)) {
+    if (G_UNLIKELY(!allow_write)) {
         if (systemcall_check_create(self, child, narg, data))
             return;
 
@@ -741,32 +724,6 @@ static void systemcall_check_path(SystemCall *self,
                 break;
         }
         data->result = RS_DENY;
-    }
-    else if (!allow_write && allow_predict) {
-        if (self->flags & RETURNS_FD) {
-            g_debug("system call %d(%s) returns fd and its argument is under a predict path", self->no, sname);
-            g_debug("changing the path argument to /dev/null");
-            if (0 > trace_set_path(child->pid, child->personality, narg, "/dev/null", 10)) {
-                data->result = RS_ERROR;
-                data->save_errno = errno;
-                if (ESRCH == errno)
-                    g_debug("failed to set string: %s", g_strerror(errno));
-                else
-                    g_warning("failed to set string: %s", g_strerror(errno));
-            }
-        }
-        else {
-            /* Check if the system call will fail with EEXIST here as well.
-             * This is necessary because we add / to predict during src_test,
-             * and some programs rely on e.g: mkdir() fail with EEXIST.
-             * Check bug 217 for more information.
-             */
-            if (!systemcall_check_create(self, child, narg, data)) {
-                /* Only now we can allow predict access. */
-                data->result = RS_DENY;
-                child->retval = 0;
-            }
-        }
     }
 
     if (sydbox_config_get_paranoid_mode_enabled() && data->resolve) {

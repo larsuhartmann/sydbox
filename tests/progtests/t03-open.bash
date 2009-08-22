@@ -19,16 +19,6 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t03-open-wronly-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t03_open 1
-if [[ 0 != $? ]]; then
-    die "failed to predict open(\"arnold.layne\", O_WRONLY)"
-fi
-if [[ ! -z "$(<arnold.layne)" ]]; then
-    die "predict allowed access to O_WRONLY"
-fi
-end_test
-
 start_test "t03-open-wronly-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t03_open 1
 if [[ 0 != $? ]]; then
@@ -47,15 +37,6 @@ fi
 end_test
 
 :>arnold.layne
-start_test "t03-open-rdwr-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t03_open 2
-if [[ 0 != $? ]]; then
-    die "failed to predict open(\"arnold.layne\", O_RDWR)"
-fi
-if [[ ! -z "$(<arnold.layne)" ]]; then
-    die "predict allowed access to O_RDWR"
-fi
-end_test
 
 start_test "t03-open-rdwr-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t03_open 2
@@ -88,17 +69,6 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t03-open-wronly-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t03_open_toolong 1 "$long_dir" "$tmpfile"
-if [[ 0 != $? ]]; then
-    die "failed to predict open(\"TOO_LONG_DIR/$tmpfile\", O_WRONLY)"
-fi
-data="$(read_long $tmpfile)"
-if [[ ! -z "$data" ]]; then
-    die "predict allowed access to O_WRONLY"
-fi
-end_test
-
 start_test "t03-open-wronly-toolong-write"
 SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t03_open_toolong 1 "$long_dir" "$tmpfile"
 if [[ 0 != $? ]]; then
@@ -120,17 +90,6 @@ end_test
 # Need to cleanup here because the file has already been written
 rm -fr "$long_dir"
 tmpfile="$(mkstemp_long)"
-
-start_test "t03-open-rdwr-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t03_open_toolong 2 "$long_dir" "$tmpfile"
-if [[ 0 != $? ]]; then
-    die "failed to predict open(\"TOO_LONG_DIR/$tmpfile\", O_RDWR)"
-fi
-data="$(read_long $tmpfile)"
-if [[ ! -z "$data" ]]; then
-    die "predict allowed access to O_RDWR"
-fi
-end_test
 
 start_test "t03-open-rdwr-toolong-write"
 SYDBOX_WRITE="$cwd"/$long_dir sydbox -- ./t03_open_toolong 2 "$long_dir" "$tmpfile"

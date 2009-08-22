@@ -16,13 +16,6 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t05-lchown-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t05_lchown
-if [[ 0 != $? ]]; then
-    die "failed to predict lchown"
-fi
-end_test
-
 start_test "t05-lchown-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t05_lchown
 if [[ 0 != $? ]]; then

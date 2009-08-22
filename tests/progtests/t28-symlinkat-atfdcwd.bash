@@ -20,15 +20,6 @@ elif [[ -h jugband.blues ]]; then
 fi
 end_test
 
-start_test "t28-symlinkat-atfdcwd-predict"
-SYDBOX_PREDICT="$cwd" sydbox -- ./t28_symlinkat_atfdcwd
-if [[ 0 != $? ]]; then
-    die "failed to predict symlinkat"
-elif [[ -h jugband.blues ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t28-symlinkat-atfdcwd-write"
 SYDBOX_WRITE="$cwd" sydbox -- ./t28_symlinkat_atfdcwd
 if [[ 0 != $? ]]; then

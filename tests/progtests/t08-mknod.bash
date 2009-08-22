@@ -16,15 +16,6 @@ elif [[ -p arnold.layne.fifo ]]; then
 fi
 end_test
 
-start_test "t08-mknod-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t08_mknod
-if [[ 0 != $? ]]; then
-    die "failed to predict mknod"
-elif [[ -p arnold.layne.fifo ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t08-mknod-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t08_mknod
 if [[ 0 != $? ]]; then
@@ -44,14 +35,6 @@ if [[ 0 == $? ]]; then
     die "failed to deny mknod"
 elif lstat_long "$fname"; then
     die "failed to deny mknod, fifo exists"
-fi
-
-start_test "t08-mknod-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t08_mknod_toolong "$long_dir" "$fname"
-if [[ 0 != $? ]]; then
-    die "failed to predict mknod"
-elif lstat_long "$fname"; then
-    die "predict allowed access"
 fi
 
 start_test "t08-mknod-toolong-write"

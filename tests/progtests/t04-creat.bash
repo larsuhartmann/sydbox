@@ -17,15 +17,6 @@ elif [[ -f arnold.layne ]]; then
 fi
 end_test
 
-start_test "t04-creat-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t04_creat
-if [[ 0 != $? ]]; then
-    die "failed to predict creat"
-elif [[ -f arnold.layne ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t04-creat-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t04_creat
 if [[ 0 != $? ]]; then
@@ -45,15 +36,6 @@ if [[ 0 == $? ]]; then
     die "failed to deny creat"
 elif lstat_long "$fname"; then
     die "file exists, failed to deny creat"
-fi
-end_test
-
-start_test "t04-creat-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t04_creat_toolong "$long_dir" "$fname"
-if [[ 0 != $? ]]; then
-    die "failed to predict creat"
-elif lstat_long "$fname"; then
-    die "predict allowed access"
 fi
 end_test
 

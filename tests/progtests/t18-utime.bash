@@ -12,11 +12,4 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t18-utime-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t18_utime
-if [[ 0 != $? ]]; then
-    die "failed to predict utime"
-fi
-end_test
-
 # No t18-utime-write because of possible noatime, nomtime mount options

@@ -18,13 +18,6 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t06-link-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t06_link
-if [[ 0 != $? ]]; then
-    die "failed to predict link"
-fi
-end_test
-
 start_test "t06-link-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t06_link
 if [[ 0 != $? ]]; then

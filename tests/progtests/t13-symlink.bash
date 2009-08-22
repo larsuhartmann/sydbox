@@ -16,15 +16,6 @@ elif [[ -h jugband.blues ]]; then
 fi
 end_test
 
-start_test "t13-symlink-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t13_symlink
-if [[ 0 != $? ]]; then
-    die "failed to predict symlink"
-elif [[ -h jugband.blues ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t13-symlink-deny"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t13_symlink
 if [[ 0 != $? ]]; then
@@ -48,15 +39,6 @@ if [[ 0 == $? ]]; then
     die "failed to deny symlink"
 elif lstat_long "$sname" >>"${SYDBOX_LOG}" 2>&1; then
     die "symlink exists, failed to deny symlink"
-fi
-end_test
-
-start_test "t13-symlink-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t13_symlink_toolong "$long_dir" "$tname" "$sname"
-if [[ 0 != $? ]]; then
-    die "failed to predict symlink"
-elif lstat_long "$sname" >>"${SYDBOX_LOG}" 2>&1; then
-    die "predict allowed access"
 fi
 end_test
 

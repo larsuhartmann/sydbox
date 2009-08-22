@@ -43,15 +43,6 @@ elif [[ -z "$(<arnold.layne)" ]]; then
 fi
 end_test
 
-start_test "t14-truncate-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t14_truncate
-if [[ 0 != $? ]]; then
-    die "failed to predict truncate"
-elif [[ -z "$(<arnold.layne)" ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t14-truncate-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t14_truncate
 if [[ 0 != $? ]]; then
@@ -73,17 +64,6 @@ fi
 data="$(read_long $fname)"
 if [[ -z "$data" ]]; then
     die "file truncated, failed to deny truncate"
-fi
-end_test
-
-start_test "t14-truncate-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t14_truncate_toolong "$long_dir" "$fname"
-if [[ 0 != $? ]]; then
-    die "failed to predict truncate"
-fi
-data="$(read_long $fname)"
-if [[ -z "$data" ]]; then
-    die "predict allowed access"
 fi
 end_test
 

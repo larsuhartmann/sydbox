@@ -30,7 +30,6 @@
 #define ENV_LOG             "SYDBOX_LOG"
 #define ENV_CONFIG          "SYDBOX_CONFIG"
 #define ENV_WRITE           "SYDBOX_WRITE"
-#define ENV_PREDICT         "SYDBOX_PREDICT"
 #define ENV_EXEC_ALLOW      "SYDBOX_EXEC_ALLOW"
 #define ENV_DISABLE_PATH    "SYDBOX_DISABLE_PATH"
 #define ENV_EXEC            "SYDBOX_EXEC"
@@ -200,17 +199,6 @@ void sydbox_config_set_paranoid_mode_enabled(bool enabled);
  * Since: 0.1_alpha
  **/
 GSList *sydbox_config_get_write_prefixes(void);
-
-/**
- * sydbox_config_get_predict_prefixes:
- *
- * Returns a list of predicted write prefixes
- *
- * Returns: a #GSList containing predicted write prefixes
- *
- * Since: 0.1_alpha
- **/
-GSList *sydbox_config_get_predict_prefixes(void);
 
 GSList *sydbox_config_get_exec_prefixes(void);
 

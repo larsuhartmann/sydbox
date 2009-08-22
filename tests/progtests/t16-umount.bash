@@ -12,9 +12,3 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t16-umount-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t16_umount
-if [[ 0 != $? ]]; then
-    die "failed to predict umount"
-fi
-end_test

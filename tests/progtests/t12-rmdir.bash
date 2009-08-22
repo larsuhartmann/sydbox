@@ -22,15 +22,6 @@ elif [[ ! -d see.emily.play ]]; then
 fi
 end_test
 
-start_test "t12-rmdir-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t12_rmdir
-if [[ 0 != $? ]]; then
-    die "failed to predict rmdir"
-elif [[ ! -d see.emily.play ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t12-rmdir-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t12_rmdir
 if [[ 0 != $? ]]; then
@@ -49,15 +40,6 @@ if [[ 0 == $? ]]; then
     die "failed to deny rmdir"
 elif ! lstat_long "$tmpdir"; then
     die "dir doesn't exist, failed to deny rmdir"
-fi
-end_test
-
-start_test "t12-rmdir-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t12_rmdir_toolong "$long_dir" "$tmpdir"
-if [[ 0 != $? ]]; then
-    die "failed to predict rmdir"
-elif ! lstat_long "$tmpdir"; then
-    die "predict allowed access"
 fi
 end_test
 

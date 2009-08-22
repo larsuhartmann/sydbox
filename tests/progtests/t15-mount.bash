@@ -12,9 +12,3 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t15-mount-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t15_mount
-if [[ 0 != $? ]]; then
-    die "failed to predict mount"
-fi
-end_test

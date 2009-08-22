@@ -41,12 +41,8 @@
 #define CMD_EXEC_LOCK_LEN       (CMD_PATH_LEN + 10)
 #define CMD_WRITE               CMD_PATH"write/"
 #define CMD_WRITE_LEN           (CMD_PATH_LEN + 6)
-#define CMD_PREDICT             CMD_PATH"predict/"
-#define CMD_PREDICT_LEN         (CMD_PATH_LEN + 8)
 #define CMD_RMWRITE             CMD_PATH"unwrite/"
 #define CMD_RMWRITE_LEN         (CMD_PATH_LEN + 8)
-#define CMD_RMPREDICT           CMD_PATH"unpredict/"
-#define CMD_RMPREDICT_LEN       (CMD_PATH_LEN + 10)
 #define CMD_SANDBOX_EXEC        CMD_PATH"sandbox_exec"
 #define CMD_SANDBOX_EXEC_LEN    (CMD_PATH_LEN + 13)
 #define CMD_UNSANDBOX_EXEC      CMD_PATH"unsandbox_exec"
@@ -72,11 +68,7 @@ bool path_magic_exec_lock(const char *path);
 
 bool path_magic_write(const char *path);
 
-bool path_magic_predict(const char *path);
-
 bool path_magic_rmwrite(const char *path);
-
-bool path_magic_rmpredict(const char *path);
 
 bool path_magic_sandbox_exec(const char *path);
 

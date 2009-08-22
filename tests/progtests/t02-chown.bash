@@ -12,13 +12,6 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t02-chown-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t02_chown
-if [[ 0 != $? ]]; then
-    die "failed to predict chown"
-fi
-end_test
-
 start_test "t02-chown-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t02_chown
 if [[ 0 != $? ]]; then
@@ -37,13 +30,6 @@ start_test "t02-chown-deny-toolong"
 sydbox -- ./t02_chown_toolong "$long_dir" "$tmpfile"
 if [[ 0 == $? ]]; then
     die "failed to deny chown"
-fi
-end_test
-
-start_test "t02-chown-predict-toolong"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t02_chown_toolong "$long_dir" "$tmpfile"
-if [[ 0 != $? ]]; then
-    die "failed to predict chown"
 fi
 end_test
 

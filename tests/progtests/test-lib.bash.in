@@ -17,7 +17,6 @@ export TZ=UTC
 unset CDPATH
 unset PWD
 unset SYDBOX_WRITE
-unset SYDBOX_PREDICT
 unset SYDBOX_EXEC_ALLOW
 unset SYDBOX_EXEC
 unset SYDBOX_NET

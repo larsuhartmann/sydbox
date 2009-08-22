@@ -16,15 +16,6 @@ elif [[ -f lucifer.sam ]]; then
 fi
 end_test
 
-start_test "t23-renameat-second-predict"
-SYDBOX_WRITE="${cwd}/see.emily.play" SYDBOX_PREDICT="${cwd}" sydbox -- ./t23_renameat_second
-if [[ 0 != $? ]]; then
-    die "failed to predict renameat"
-elif [[ -f lucifer.sam ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t23-renameat-second-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t23_renameat_second
 if [[ 0 != $? ]]; then

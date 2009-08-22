@@ -18,8 +18,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef __CHILDREN_H__
-#define __CHILDREN_H__
+#ifndef SYDBOX_GUARD_CHILDREN_H
+#define SYDBOX_GUARD_CHILDREN_H
 
 #include <stdbool.h>
 #include <sys/types.h>
@@ -45,7 +45,6 @@ struct tdata
     bool network;                // Whether network sandboxing is enabled for child.
     int lock;                    // Whether magic commands are locked for the child.
     GSList *write_prefixes;
-    GSList *predict_prefixes;
     GSList *exec_prefixes;
 };
 
@@ -61,20 +60,15 @@ struct tchild
     struct tdata *sandbox;   // Sandbox data */
 };
 
-void
-tchild_new (GSList **children, pid_t pid);
+void tchild_new(GSList **children, pid_t pid);
 
-void
-tchild_inherit(struct tchild *child, struct tchild *parent);
+void tchild_inherit(struct tchild *child, struct tchild *parent);
 
-void
-tchild_free (GSList **children);
+void tchild_free(GSList **children);
 
-void
-tchild_delete (GSList **children, pid_t pid);
+void tchild_delete(GSList **children, pid_t pid);
 
-struct tchild *
-tchild_find(GSList *children, pid_t pid);
+struct tchild *tchild_find(GSList *children, pid_t pid);
 
-#endif
+#endif // SYDBOX_GUARD_CHILDREN_H
 

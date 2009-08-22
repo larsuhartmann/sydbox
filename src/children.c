@@ -54,7 +54,6 @@ void tchild_new(GSList **children, pid_t pid)
     child->sandbox->network = false;
     child->sandbox->lock = LOCK_UNSET;
     child->sandbox->write_prefixes = NULL;
-    child->sandbox->predict_prefixes = NULL;
     child->sandbox->exec_prefixes = NULL;
 
     if (sydbox_config_get_allow_proc_pid()) {
@@ -93,11 +92,6 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
         pathnode_new(&(child->sandbox->write_prefixes), walk->data, 0);
         walk = g_slist_next(walk);
     }
-    walk = parent->sandbox->predict_prefixes;
-    while (NULL != walk) {
-        pathnode_new(&(child->sandbox->predict_prefixes), walk->data, 0);
-        walk = g_slist_next(walk);
-    }
     walk = parent->sandbox->exec_prefixes;
     while (NULL != walk) {
         pathnode_new(&(child->sandbox->exec_prefixes), walk->data, 0);
@@ -112,8 +106,6 @@ static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
     if (G_LIKELY(NULL != child->sandbox)) {
         if (G_LIKELY(NULL != child->sandbox->write_prefixes))
             pathnode_free(&(child->sandbox->write_prefixes));
-        if (G_LIKELY(NULL != child->sandbox->predict_prefixes))
-            pathnode_free(&(child->sandbox->predict_prefixes));
         if (G_LIKELY(NULL != child->sandbox->exec_prefixes))
             pathnode_free(&(child->sandbox->exec_prefixes));
         g_free(child->sandbox);

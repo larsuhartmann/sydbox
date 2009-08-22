@@ -94,19 +94,9 @@ inline bool path_magic_write(const char *path)
     return (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN));
 }
 
-inline bool path_magic_predict(const char *path)
-{
-    return (0 == strncmp(path, CMD_PREDICT, CMD_PREDICT_LEN));
-}
-
 inline bool path_magic_rmwrite(const char *path)
 {
     return (0 == strncmp(path, CMD_RMWRITE, CMD_RMWRITE_LEN));
-}
-
-inline bool path_magic_rmpredict(const char *path)
-{
-    return (0 == strncmp(path, CMD_RMPREDICT, CMD_RMPREDICT_LEN));
 }
 
 inline bool path_magic_sandbox_exec(const char *path)

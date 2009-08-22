@@ -16,17 +16,6 @@ if [[ "$perms" != '-rw-r--r--' ]]; then
 fi
 end_test
 
-start_test "t31-fchmodat-predict"
-SYDBOX_PREDICT="$cwd" sydbox -- ./t31_fchmodat
-if [[ 0 != $? ]]; then
-    die "failed to predict fchmodat"
-fi
-perms=$(ls -l arnold.layne | cut -d' ' -f1)
-if [[ "$perms" != '-rw-r--r--' ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t31-fchmodat-write"
 SYDBOX_WRITE="$cwd" sydbox -- ./t31_fchmodat
 if [[ 0 != $? ]]; then

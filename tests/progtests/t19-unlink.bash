@@ -14,15 +14,6 @@ elif [[ ! -f arnold.layne ]]; then
 fi
 end_test
 
-start_test "t19-unlink-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t19_unlink
-if [[ 0 != $? ]]; then
-    die "failed to predict unlink"
-elif [[ ! -f arnold.layne ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t19-unlink-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t19_unlink
 if [[ 0 != $? ]]; then
@@ -41,15 +32,6 @@ if [[ 0 == $? ]]; then
     die "failed to deny unlink"
 elif ! lstat_long "$tmpfile"; then
     die "file doesn't exist, failed to deny unlink"
-fi
-end_test
-
-start_test "t19-unlink-toolong-predict"
-SYDBOX_PREDICT="$cwd"/$long_dir sydbox -- ./t19_unlink_toolong "$long_dir" "$tmpfile"
-if [[ 0 != $? ]]; then
-    die "failed to predict unlink"
-elif ! lstat_long "$tmpfile"; then
-    die "predict allowed access"
 fi
 end_test
 

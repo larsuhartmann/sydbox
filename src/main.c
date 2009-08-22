@@ -260,7 +260,6 @@ static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNU
     eldest->sandbox->network = sydbox_config_get_sandbox_network();
     eldest->sandbox->lock = sydbox_config_get_disallow_magic_commands() ? LOCK_SET : LOCK_UNSET;
     eldest->sandbox->write_prefixes = sydbox_config_get_write_prefixes();
-    eldest->sandbox->predict_prefixes = sydbox_config_get_predict_prefixes();
     eldest->sandbox->exec_prefixes = sydbox_config_get_exec_prefixes();
     eldest->cwd = egetcwd();
     if (NULL == eldest->cwd) {

@@ -16,15 +16,6 @@ elif [[ -f arnold.layne.hard ]]; then
 fi
 end_test
 
-start_test "t25-linkat-first-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t25_linkat_first
-if [[ 0 != $? ]]; then
-    die "failed to predict linkat"
-elif [[ -f arnold.layne.hard ]]; then
-    die "predict allowed access"
-fi
-end_test
-
 start_test "t25-linkat-first-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t25_linkat_first
 if [[ 0 != $? ]]; then

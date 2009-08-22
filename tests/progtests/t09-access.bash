@@ -24,13 +24,6 @@ if [[ 0 == $? ]]; then
 fi
 end_test
 
-start_test "t09-access-w_ok-predict"
-SYDBOX_PREDICT="${cwd}" sydbox -- ./t09_access 1
-if [[ 0 != $? ]]; then
-    die "failed to predict access(\"arnold.layne\", W_OK)"
-fi
-end_test
-
 start_test "t09-access-w_ok-write"
 SYDBOX_WRITE="${cwd}" sydbox -- ./t09_access 1
 if [[ 0 != $? ]]; then
