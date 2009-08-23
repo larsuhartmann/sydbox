@@ -496,7 +496,7 @@ int sydbox_config_rmfilter(const gchar *filter)
         if (0 == strncmp(walk->data, filter, strlen(filter) + 1)) {
             config->filters = g_slist_remove_link(config->filters, walk);
             g_free(walk->data);
-            g_free(walk);
+            g_slist_free(walk);
             return 1;
         }
         walk = g_slist_next(walk);
