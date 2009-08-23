@@ -104,6 +104,10 @@ powerpc*)
 	arch=powerpc
 	AC_DEFINE([POWERPC], 1, [Define for the POWERPC architecture.])
 	;;
+sparc64)
+	arch=sparc64
+	AC_DEFINE([SPARC64], 1, [Define for the SPARC64 architecture.])
+	;;
 *)
 	AC_MSG_RESULT([NO!])
 	AC_MSG_ERROR([architecture $host_cpu is not supported by sydbox])
