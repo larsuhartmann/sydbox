@@ -188,7 +188,7 @@ void pathnode_delete(GSList **pathlist, const char *path_sanitized)
     walk = *pathlist;
     while (NULL != walk) {
         if (0 == strncmp(walk->data, path_sanitized, strlen(path_sanitized) + 1)) {
-            g_debug ("freeing pathnode %p", (void *) walk);
+            g_debug("freeing pathnode %p", (void *) walk);
             *pathlist = g_slist_remove_link(*pathlist, walk);
             g_free(walk->data);
             g_slist_free(walk);

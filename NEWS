@@ -4,6 +4,12 @@ News for sydbox
 This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
+0.1_rc4:
+    * addpredict is dead!
+    * Paranoid mode is dead!
+    * Magic open() calls are replaced with magic stat() calls.
+    * Fixed a nasty bug that might cause rmfilter to segfault.
+
 0.1_rc3:
     * Replaced access violation hooks with filters.
 
