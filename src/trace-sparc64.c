@@ -145,12 +145,14 @@ int trace_set_return(pid_t pid, long val)
         return -1;
     }
 
-    if (val < 0)
+    if (val < 0) {
         regs.r_tstate |= 0x1100000000UL;
-    else
+        regs.r_o0 = -val;
+    }
+    else {
         regs.r_tstate &= ~0x1100000000UL;
-
-    regs.r_o0 = val;
+        regs.r_o0 = val;
+    }
 
     if (G_UNLIKELY(0 > ptrace(PTRACE_SETREGS, pid, &regs, NULL))) {
         save_errno = errno;
