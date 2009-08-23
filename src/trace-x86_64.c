@@ -158,60 +158,6 @@ char *trace_get_path(pid_t pid, int personality, int arg)
     return buf;
 }
 
-int trace_set_path(pid_t pid, int personality, int arg, const char *src, size_t len)
-{
-    int n, m, save_errno;
-    long addr = 0;
-    union {
-        long val;
-        char x[sizeof(long)];
-    } u;
-
-    g_assert(arg >= 0 && arg < MAX_ARGS);
-
-    if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][arg], &addr))) {
-        save_errno = errno;
-        g_info("failed to get address of argument %d: %s", arg, g_strerror(errno));
-        errno = save_errno;
-        return -1;
-    }
-
-    n = 0;
-    m = len / sizeof(long);
-
-    while (n < m) {
-        memcpy(u.x, src, sizeof(long));
-        if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val))) {
-            save_errno = errno;
-            g_info("failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, g_strerror(errno));
-            errno = save_errno;
-            return -1;
-        }
-        ++n;
-        src += sizeof(long);
-    }
-
-    m = len % sizeof(long);
-    if (0 != m) {
-        errno = 0;
-        u.val = ptrace(PTRACE_PEEKDATA, pid, addr + n * ADDR_MUL, 0);
-        if (G_UNLIKELY(0 != errno)) {
-            save_errno = errno;
-            g_info("failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, g_strerror(errno));
-            errno = save_errno;
-            return -1;
-        }
-        memcpy(u.x, src, m);
-        if (G_UNLIKELY(0 > ptrace(PTRACE_POKEDATA, pid, addr + n * ADDR_MUL, u.val))) {
-            save_errno = errno;
-            g_info("failed to set argument %d to \"%s\" for child %i: %s", arg, src, pid, g_strerror(errno));
-            errno = save_errno;
-            return -1;
-        }
-    }
-    return 0;
-}
-
 int trace_fake_stat(pid_t pid, int personality)
 {
     int n, m, save_errno;

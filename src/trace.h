@@ -157,12 +157,6 @@ int trace_get_arg(pid_t pid, int personality, int arg, long *res);
 char *trace_get_path(pid_t pid, int personality, int arg);
 
 /**
- * Sets the path argument to the given value.
- * Returns 0 on success, -1 on failure and sets errno accordingly.
- */
-int trace_set_path(pid_t pid, int personality, int arg, const char *src, size_t len);
-
-/**
  * Fake the stat buffer.
  * Returns 0 on success, -1 on failure and sets errno accordingly.
  */
