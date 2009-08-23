@@ -33,7 +33,6 @@ struct sydbox_context
     bool sandbox_network;
 
     GSList *write_prefixes;
-    GSList *predict_prefixes;
     GSList *execve_prefixes;
 
     // Internal
@@ -98,35 +97,13 @@ void sydbox_context_set_write_prefixes(struct sydbox_context * const ctx,
     const GSList *entry;
 
     if (ctx->write_prefixes)
-        g_slist_free (ctx->write_prefixes);
+        g_slist_free(ctx->write_prefixes);
 
     for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
         prefix = (gchar *) entry->data;
         g_assert(NULL != prefix);
         g_assert(g_path_is_absolute(prefix));
         ctx->write_prefixes = g_slist_append(ctx->write_prefixes, g_strdup(prefix));
-    }
-}
-
-const GSList *sydbox_context_get_predict_prefixes(const struct sydbox_context * const ctx)
-{
-    return ctx->predict_prefixes;
-}
-
-void sydbox_context_set_predict_prefixes(struct sydbox_context * const ctx,
-        const GSList * const prefixes)
-{
-    gchar *prefix;
-    const GSList *entry;
-
-    if (ctx->predict_prefixes)
-        g_slist_free (ctx->predict_prefixes);
-
-    for (entry = prefixes; NULL != entry; entry = g_slist_next(entry)) {
-        prefix = (gchar *) entry->data;
-        g_assert(NULL != prefix);
-        g_assert(g_path_is_absolute(prefix));
-        ctx->predict_prefixes = g_slist_append(ctx->predict_prefixes, g_strdup(prefix));
     }
 }
 

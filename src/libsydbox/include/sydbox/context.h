@@ -88,17 +88,6 @@ void sydbox_context_set_write_prefixes(struct sydbox_context * const ctx,
         const GSList * const prefixes);
 
 /**
- * Returns a list of predict allowed path prefixes.
- */
-const GSList *sydbox_context_get_predict_prefixes(const struct sydbox_context * const ctx);
-
-/**
- * Sets the list of predict enabled path prefixes.
- */
-void sydbox_context_set_predict_prefixes(struct sydbox_context * const ctx,
-        const GSList * const prefixes);
-
-/**
  * Returns a list of execve(2) allowed path prefixes.
  */
 const GSList *sydbox_context_get_execve_prefixes(const struct sydbox_context * const ctx);
