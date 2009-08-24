@@ -20,6 +20,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <glib.h>
 
 #include "trace.h"
@@ -189,6 +193,7 @@ int trace_fake_stat(pid_t pid, int personality)
 
 int trace_decode_socketcall(pid_t pid, int personality)
 {
+    int save_errno;
     long addr;
 
      if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][0], &addr))) {
