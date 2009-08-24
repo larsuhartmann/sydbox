@@ -209,7 +209,8 @@ int trace_decode_socketcall(pid_t pid, int personality)
 char *trace_get_addr(pid_t pid, int personality, int *family)
 {
     int save_errno;
-    long args, addr, addrlen;
+    long args;
+    unsigned int addr, addrlen;
     union {
         char pad[128];
         struct sockaddr sa;
@@ -238,7 +239,7 @@ char *trace_get_addr(pid_t pid, int personality, int *family)
         return NULL;
     }
 
-    if (addrlen < 2 || (unsigned long)addrlen > sizeof(addrbuf))
+    if (addrlen < 2 || addrlen > sizeof(addrbuf))
         addrlen = sizeof(addrbuf);
 
     memset(&addrbuf, 0, sizeof(addrbuf));
