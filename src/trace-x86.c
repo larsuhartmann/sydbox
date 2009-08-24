@@ -225,13 +225,14 @@ char *trace_get_addr(pid_t pid, int personality, int *family)
         errno = save_errno;
         return NULL;
     }
+    args += ADDR_MUL;
     if (umove(pid, args, &addr) < 0) {
         save_errno = errno;
         g_info("failed to decode argument 1: %s", g_strerror(errno));
         errno = save_errno;
         return NULL;
     }
-    args += __WORDSIZE;
+    args += ADDR_MUL;
     if (umove(pid, args, &addrlen) < 0) {
         save_errno = errno;
         g_info("failed to decode argument 2: %s", g_strerror(errno));
