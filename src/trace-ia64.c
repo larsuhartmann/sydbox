@@ -20,6 +20,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <glib.h>
 
 #include "trace.h"
@@ -210,5 +214,60 @@ int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
         }
     }
     return 0;
+}
+
+char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, int *family)
+{
+    int save_errno;
+    long addr, addrlen;
+    union {
+        char pad[128];
+        struct sockaddr sa;
+        struct sockaddr_in sa_in;
+        struct sockaddr_in6 sa6;
+    } addrbuf;
+    char ip[100];
+
+    if (G_UNLIKELY(0 > upeek_ia64(pid, 1, &addr))) {
+        save_errno = errno;
+        g_info("failed to get address of argument 1: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+    if (G_UNLIKELY(0 > upeek_ia64(pid, 2, &addrlen))) {
+        save_errno = errno;
+        g_info("failed to get address of argument 2: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+
+    if (addrlen < 2 || (unsigned long)addrlen > sizeof(addrbuf))
+        addrlen = sizeof(addrbuf);
+
+    memset(&addrbuf, 0, sizeof(addrbuf));
+    if (umoven(pid, addr, addrbuf.pad, addrlen) < 0) {
+        save_errno = errno;
+        g_info("failed to get socket address: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+    addrbuf.pad[sizeof(addrbuf.pad) - 1] = '\0';
+
+    if (family != NULL)
+        *family = addrbuf.sa.sa_family;
+
+    switch (addrbuf.sa.sa_family) {
+        case AF_UNIX:
+            /* We don't care about unix sockets for now */
+            return g_strdup("unix");
+        case AF_INET:
+            inet_ntop(AF_INET, &addrbuf.sa_in.sin_addr, ip, sizeof(ip));
+            return g_strdup(ip);
+        case AF_INET6:
+            inet_ntop(AF_INET6, &addrbuf.sa6.sin6_addr, ip, sizeof(ip));
+            return g_strdup(ip);
+        default:
+            return g_strdup("other");
+    }
 }
 
