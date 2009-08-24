@@ -73,6 +73,15 @@ enum
 };
 
 /**
+ * Decoded socketcall subcalls
+ */
+enum {
+    SUBCALL_SOCKET = 1,
+    SUBCALL_BIND,
+    SUBCALL_CONNECT,
+};
+
+/**
  * Returns the personality of the process with the given PID.
  */
 int trace_personality(pid_t pid);
@@ -167,6 +176,13 @@ int trace_fake_stat(pid_t pid, int personality);
  * Returns NULL on failure and sets errno accordingly.
  */
 char *trace_get_addr(pid_t pid, int personality, int *family);
+
+#if defined(X86)
+/**
+ * Decode a socketcall to its subcalls.
+ */
+int trace_decode_socketcall(pid_t pid, int personality);
+#endif // defined(X86)
 
 #endif // SYDBOX_GUARD_TRACE_H
 

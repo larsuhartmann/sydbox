@@ -215,6 +215,26 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
             return;
     }
     if (child->sandbox->network == SYDBOX_NETWORK_LOCAL && self->flags & (BIND_CALL | CONNECT_CALL)) {
+#if defined(X86)
+        int subcall = trace_decode_socketcall(child->pid, child->personality);
+        if (0 > subcall) {
+            data->result = RS_ERROR;
+            data->save_errno = errno;
+        }
+        else if (subcall == SUBCALL_SOCKET)
+            sname = "socket";
+        else if (subcall == SUBCALL_BIND || subcall == SUBCALL_CONNECT) {
+            sname = (subcall == SUBCALL_BIND) ? "bind" : "connect";
+            data->addr = trace_get_addr(child->pid, child->personality, &(data->family));
+            if (data->addr == NULL) {
+                data->result = RS_ERROR;
+                data->save_errno = errno;
+                return;
+            }
+            else
+                g_debug("Destination address for subcall %s is %s", sname, data->addr);
+        }
+#else
         data->addr = trace_get_addr(child->pid, child->personality, &(data->family));
         if (data->addr == NULL) {
             data->result = RS_ERROR;
@@ -222,9 +242,9 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
             return;
         }
         else
-            g_debug("Destination address is %s\n", data->addr);
+            g_debug("Destination address is %s", data->addr);
+#endif
     }
-
 }
 
 /* Second callback for system call handler

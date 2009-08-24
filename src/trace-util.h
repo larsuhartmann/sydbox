@@ -24,4 +24,7 @@ int upeek(pid_t pid, long off, long *res);
 int umoven(pid_t pid, long addr, char *dest, size_t len);
 int umovestr(pid_t pid, long addr, char *dest, size_t len);
 
+#define umove(pid, addr, objp)  \
+    umoven((pid), (addr), (char *)(objp), sizeof *(objp))
+
 #endif // SYDBOX_GUARD_UTIL_H
