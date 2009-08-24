@@ -46,6 +46,9 @@ struct checkdata {
     gchar *dirfdlist[2];    // dirfd arguments (resolved)
     gchar *pathlist[4];     // Path arguments
     gchar *rpathlist[4];    // Path arguments (canonicalized)
+
+    int family;             // Family of destination address (AF_UNIX, AF_INET etc.)
+    gchar *addr;            // Destination address for socket calls
 };
 
 typedef struct _SystemCall {

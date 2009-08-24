@@ -39,6 +39,12 @@
 #define ENV_LOCK            "SYDBOX_LOCK"
 #define ENV_WAIT_ALL        "SYDBOX_WAIT_ALL"
 
+enum {
+    SYDBOX_NETWORK_ALLOW,
+    SYDBOX_NETWORK_DENY,
+    SYDBOX_NETWORK_LOCAL,
+};
+
 /**
  * sydbox_config_load:
  * @param config: path to the configuration file.
@@ -131,9 +137,9 @@ void sydbox_config_set_sandbox_exec(bool on);
  *
  * Since: 0.1_alpha
  **/
-bool sydbox_config_get_sandbox_network(void);
+int sydbox_config_get_sandbox_network(void);
 
-void sydbox_config_set_sandbox_network(bool on);
+void sydbox_config_set_sandbox_network(int state);
 
 /**
  * sydbox_config_get_colourise_output:

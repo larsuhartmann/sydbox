@@ -162,5 +162,11 @@ char *trace_get_path(pid_t pid, int personality, int arg);
  */
 int trace_fake_stat(pid_t pid, int personality);
 
+/**
+ * Returns the destination of network calls.
+ * Returns NULL on failure and sets errno accordingly.
+ */
+char *trace_get_addr(pid_t pid, int personality, int *family);
+
 #endif // SYDBOX_GUARD_TRACE_H
 

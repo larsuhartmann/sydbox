@@ -34,9 +34,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include <sys/socket.h>
+
 #include <glib.h>
 #include <glib-object.h>
 
+#include "net.h"
 #include "path.h"
 #include "proc.h"
 #include "trace.h"
@@ -211,6 +214,17 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
+    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL && self->flags & (BIND_CALL | CONNECT_CALL)) {
+        data->addr = trace_get_addr(child->pid, child->personality, &(data->family));
+        if (data->addr == NULL) {
+            data->result = RS_ERROR;
+            data->save_errno = errno;
+            return;
+        }
+        else
+            g_debug("Destination address is %s\n", data->addr);
+    }
+
 }
 
 /* Second callback for system call handler
@@ -708,7 +722,15 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
 
-    if (child->sandbox->network && self->flags & NET_CALL) {
+    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL && self->flags & (BIND_CALL | CONNECT_CALL)) {
+        if ((data->family == AF_INET || data->family == AF_INET6)&& !net_localhost(data->addr)) {
+            sydbox_access_violation(child->pid, NULL,
+                    "%s{family=AF_INET%s, addr=%s}", sname, data->family == AF_INET6 ? "6" : "", data->addr);
+            data->result = RS_DENY;
+            child->retval = -ECONNREFUSED;
+        }
+    }
+    if (child->sandbox->network == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
         sydbox_access_violation(child->pid, NULL, "%s()", sname);
         data->result = RS_DENY;
         child->retval = -EACCES;
@@ -775,6 +797,9 @@ static void systemcall_end_check(SystemCall *self, gpointer ctx_ptr,
         g_free(data->pathlist[i]);
         g_free(data->rpathlist[i]);
     }
+
+    if (data->addr != NULL)
+        g_free(data->addr);
 }
 
 static void systemcall_class_init(SystemCallClass *cls)

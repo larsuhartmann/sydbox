@@ -5,10 +5,10 @@ AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
 	   $(glib_CFLAGS) $(gobject_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = children.h context.h flags.h sydbox-log.h loop.h \
-		 path.h proc.h syscall.h trace.h wrappers.h \
+		 net.h path.h proc.h syscall.h trace.h wrappers.h \
 		 sydbox-config.h sydbox-log.h sydbox-utils.h \
 		 path.c proc.c children.c \
-		 context.c syscall.c wrappers.c loop.c \
+		 context.c syscall.c wrappers.c loop.c net.c \
 		 trace-util.c trace-util.h trace.c trace.h \
 		 sydbox-config.c sydbox-log.c sydbox-utils.c main.c
 sydbox_LDADD= $(glib_LIBS) $(gobject_LIBS)

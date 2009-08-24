@@ -82,6 +82,12 @@ static const struct syscall_def {
 #elif defined(__NR_socket)
     {__NR_socket,       NET_CALL},
 #endif
+#if defined(__NR_connect)
+    {__NR_connect,      CONNECT_CALL | NET_CALL},
+#endif
+#if defined(__NR_bind)
+    {__NR_bind,         BIND_CALL | NET_CALL},
+#endif
     {__NR_execve,       EXEC_CALL},
     {-1,                -1},
 };

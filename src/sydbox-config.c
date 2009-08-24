@@ -36,7 +36,8 @@ struct sydbox_config
 
     bool sandbox_path;
     bool sandbox_exec;
-    bool sandbox_network;
+    int sandbox_network;
+
     bool colourise_output;
     bool disallow_magic_commands;
     bool wait_all;
@@ -55,7 +56,7 @@ static void sydbox_config_set_defaults(void)
     config->colourise_output = true;
     config->verbosity = 1;
     config->sandbox_path = true;
-    config->sandbox_network = false;
+    config->sandbox_network = SYDBOX_NETWORK_ALLOW;
     config->sandbox_exec = false;
     config->disallow_magic_commands = false;
     config->wait_all = false;
@@ -64,6 +65,7 @@ static void sydbox_config_set_defaults(void)
 
 bool sydbox_config_load(const gchar * const file)
 {
+    gchar *network;
     const gchar *config_file;
     GKeyFile *config_fd;
     GError *config_error = NULL;
@@ -292,31 +294,27 @@ bool sydbox_config_load(const gchar * const file)
         }
     }
 
-    // Get sandbox.net
+    // Get sandbox.network
+    config->sandbox_network = SYDBOX_NETWORK_ALLOW;
     if (g_getenv(ENV_NET))
-        config->sandbox_network = true;
+        config->sandbox_network = SYDBOX_NETWORK_DENY;
     else {
-        config->sandbox_network = g_key_file_get_boolean(config_fd, "sandbox", "network", &config_error);
-        if (!config->sandbox_network && config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("sandbox.network not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->sandbox_network = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
+        network = g_key_file_get_string(config_fd, "sandbox", "network", NULL);
+        if (network != NULL) {
+            if (0 == strncmp(network, "allow", 6))
+                config->sandbox_network = SYDBOX_NETWORK_ALLOW;
+            else if (0 == strncmp(network, "deny", 5))
+                config->sandbox_network = SYDBOX_NETWORK_DENY;
+            else if (0 == strncmp(network, "local", 6))
+                config->sandbox_network = SYDBOX_NETWORK_LOCAL;
+            else {
+                g_printerr("invalid value for sandbox.network\n");
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
             }
         }
     }
-
 
     // Get prefix.write
     char **write_prefixes = g_key_file_get_string_list(config_fd, "prefix", "write", NULL, NULL);
@@ -366,7 +364,14 @@ void sydbox_config_write_to_stderr (void)
     g_fprintf(stderr, "log.level = %d\n", config->verbosity);
     g_fprintf(stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
     g_fprintf(stderr, "sandbox.exec = %s\n", config->sandbox_exec ? "yes" : "no");
-    g_fprintf(stderr, "sandbox.network = %s\n", config->sandbox_network ? "yes" : "no");
+    if (config->sandbox_network == SYDBOX_NETWORK_ALLOW)
+        g_fprintf(stderr, "sandbox.network = allow\n");
+    else if (config->sandbox_network == SYDBOX_NETWORK_DENY)
+        g_fprintf(stderr, "sandbox.network = deny\n");
+    else if (config->sandbox_network == SYDBOX_NETWORK_LOCAL)
+        g_fprintf(stderr, "sandbox.network = local\n");
+    else
+        g_assert_not_reached();
     g_fprintf(stderr, "prefix.write:\n");
     g_slist_foreach(config->write_prefixes, print_slist_entry, NULL);
     g_fprintf(stderr, "prefix.exec\n");
@@ -417,14 +422,14 @@ void sydbox_config_set_sandbox_exec(bool on)
     config->sandbox_exec = on;
 }
 
-bool sydbox_config_get_sandbox_network(void)
+int sydbox_config_get_sandbox_network(void)
 {
     return config->sandbox_network;
 }
 
-void sydbox_config_set_sandbox_network(bool on)
+void sydbox_config_set_sandbox_network(int state)
 {
-    config->sandbox_network = on;
+    config->sandbox_network = state;
 }
 
 bool sydbox_config_get_colourise_output(void)
