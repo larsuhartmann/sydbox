@@ -131,11 +131,12 @@ void sydbox_config_set_sandbox_exec(bool on);
 /**
  * sydbox_config_get_sandbox_network:
  *
- * Returns %TRUE if network accesses should be sandboxed, %FALSE otherwise
+ * Returns the state of network sandboxing which can be one of:
+ * - SYDBOX_NETWORK_ALLOW
+ * - SYDBOX_NETWORK_DENY
+ * - SYDBOX_NETWORK_LOCAL
  *
- * Returns: #gboolean indicating if network accesses should be sandboxed
- *
- * Since: 0.1_alpha
+ * Since: 0.1_rc5
  **/
 int sydbox_config_get_sandbox_network(void);
 
