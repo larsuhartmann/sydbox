@@ -219,13 +219,14 @@ char *trace_get_addr(pid_t pid, int personality, int *family)
     } addrbuf;
     char ip[100];
 
-     if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &args))) {
+    if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &args))) {
         save_errno = errno;
         g_info("failed to get address of argument 1: %s", g_strerror(errno));
         errno = save_errno;
         return NULL;
     }
-    args += ADDR_MUL;
+
+    args += ADDR_MUL; // skip the first argument which is sockfd.
     if (umove(pid, args, &addr) < 0) {
         save_errno = errno;
         g_info("failed to decode argument 1: %s", g_strerror(errno));
