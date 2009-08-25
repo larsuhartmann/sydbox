@@ -76,9 +76,9 @@ enum
  * Decoded socketcall subcalls
  */
 enum {
-    SUBCALL_SOCKET = 1,
-    SUBCALL_BIND,
-    SUBCALL_CONNECT,
+    SOCKET_SUBCALL_SOCKET = 1,
+    SOCKET_SUBCALL_BIND,
+    SOCKET_SUBCALL_CONNECT,
 };
 
 /**
@@ -177,7 +177,7 @@ int trace_fake_stat(pid_t pid, int personality);
  */
 char *trace_get_addr(pid_t pid, int personality, int *family);
 
-#if defined(X86)
+#if defined(I386)
 /**
  * Decode a socketcall to its subcalls.
  */
