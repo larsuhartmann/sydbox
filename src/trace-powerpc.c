@@ -20,6 +20,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <glib.h>
 
 #include "trace.h"
@@ -219,5 +223,95 @@ int trace_fake_stat(pid_t pid, int personality)
         }
     }
     return 0;
+}
+
+int trace_decode_socketcall(pid_t pid, int personality)
+{
+    int save_errno;
+    long addr;
+
+     if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][0], &addr))) {
+        save_errno = errno;
+        g_info("failed to get address of argument 0: %s", g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    return addr;
+}
+
+char *trace_get_addr(pid_t pid, int personality, int *family)
+{
+    int save_errno;
+    long args;
+    unsigned int addr, addrlen;
+    union {
+        char pad[128];
+        struct sockaddr sa;
+        struct sockaddr_in sa_in;
+        struct sockaddr_in6 sa6;
+    } addrbuf;
+    char ip[100];
+
+    if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &args))) {
+        save_errno = errno;
+        g_info("failed to get address of argument 1: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+
+    args += ADDR_MUL; // skip the first argument which is sockfd.
+    if (umove(pid, args, &addr) < 0) {
+        save_errno = errno;
+        g_info("failed to decode argument 1: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+    args += ADDR_MUL;
+    if (umove(pid, args, &addrlen) < 0) {
+        save_errno = errno;
+        g_info("failed to decode argument 2: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+
+    if (addrlen < 2 || addrlen > sizeof(addrbuf))
+        addrlen = sizeof(addrbuf);
+
+    memset(&addrbuf, 0, sizeof(addrbuf));
+    if (umoven(pid, addr, addrbuf.pad, addrlen) < 0) {
+        save_errno = errno;
+        g_info("failed to get socket address: %s", g_strerror(errno));
+        errno = save_errno;
+        return NULL;
+    }
+    addrbuf.pad[sizeof(addrbuf.pad) - 1] = '\0';
+
+    if (family != NULL)
+        *family = addrbuf.sa.sa_family;
+
+    switch (addrbuf.sa.sa_family) {
+        case AF_UNIX:
+            /* We don't care about unix sockets for now */
+            return g_strdup("unix");
+        case AF_INET:
+            if (!inet_ntop(AF_INET, &addrbuf.sa_in.sin_addr, ip, sizeof(ip))) {
+                save_errno = errno;
+                g_info("inet_ntop() failed: %s", g_strerror(errno));
+                errno = save_errno;
+                return NULL;
+            }
+            return g_strdup(ip);
+        case AF_INET6:
+            if (!inet_ntop(AF_INET6, &addrbuf.sa6.sin6_addr, ip, sizeof(ip))) {
+                save_errno = errno;
+                g_info("inet_ntop() failed: %s", g_strerror(errno));
+                errno = save_errno;
+                return NULL;
+            }
+            return g_strdup(ip);
+        default:
+            return g_strdup("other");
+    }
 }
 

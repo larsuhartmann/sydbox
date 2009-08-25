@@ -177,7 +177,7 @@ int trace_fake_stat(pid_t pid, int personality);
  */
 char *trace_get_addr(pid_t pid, int personality, int *family);
 
-#if defined(I386)
+#if defined(I386) || defined(POWERPC)
 /**
  * Decode a socketcall to its subcalls.
  */

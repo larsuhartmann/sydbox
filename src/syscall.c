@@ -215,7 +215,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
             return;
     }
     if (child->sandbox->network == SYDBOX_NETWORK_LOCAL && self->flags & (BIND_CALL | CONNECT_CALL)) {
-#if defined(I386)
+#if defined(I386) || defined(POWERPC)
         int subcall = trace_decode_socketcall(child->pid, child->personality);
         g_debug("Decoded socket subcall is %d", subcall);
         if (0 > subcall) {
