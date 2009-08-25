@@ -119,6 +119,21 @@ inline bool path_magic_rmfilter(const char *path)
     return (0 == strncmp(path, CMD_RMFILTER, CMD_RMFILTER_LEN));
 }
 
+inline bool path_magic_net_allow(const char *path)
+{
+    return (0 == strncmp(path, CMD_NET_ALLOW, CMD_NET_ALLOW_LEN));
+}
+
+inline bool path_magic_net_deny(const char *path)
+{
+    return (0 == strncmp(path, CMD_NET_DENY, CMD_NET_DENY_LEN));
+}
+
+inline bool path_magic_net_local(const char *path)
+{
+    return (0 == strncmp(path, CMD_NET_LOCAL, CMD_NET_LOCAL_LEN));
+}
+
 int pathnode_new(GSList **pathlist, const char *path, int sanitize)
 {
     char *data;

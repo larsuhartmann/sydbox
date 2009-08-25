@@ -51,6 +51,12 @@
 #define CMD_ADDFILTER_LEN       (CMD_PATH_LEN + 10)
 #define CMD_RMFILTER            CMD_PATH"rmfilter/"
 #define CMD_RMFILTER_LEN        (CMD_PATH_LEN + 9)
+#define CMD_NET_ALLOW           CMD_PATH"net/allow"
+#define CMD_NET_ALLOW_LEN       (CMD_PATH_LEN + 10)
+#define CMD_NET_DENY            CMD_PATH"net/deny"
+#define CMD_NET_DENY_LEN        (CMD_PATH_LEN + 9)
+#define CMD_NET_LOCAL           CMD_PATH"net/local"
+#define CMD_NET_LOCAL_LEN       (CMD_PATH_LEN + 10)
 
 bool path_magic_dir(const char *path);
 
@@ -77,6 +83,12 @@ bool path_magic_unsandbox_exec(const char *path);
 bool path_magic_addfilter(const char *path);
 
 bool path_magic_rmfilter(const char *path);
+
+bool path_magic_net_allow(const char *path);
+
+bool path_magic_net_deny(const char *path);
+
+bool path_magic_net_local(const char *path);
 
 int pathnode_new(GSList **pathlist, const char *path, int sanitize);
 

@@ -380,6 +380,21 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         sydbox_config_rmfilter(rpath);
         g_info("approved rmfilter(\"%s\") for child %i", rpath, child->pid);
     }
+    else if (G_UNLIKELY(path_magic_net_allow(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network = SYDBOX_NETWORK_ALLOW;
+        g_info("approved net.allow() for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_net_deny(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network = SYDBOX_NETWORK_DENY;
+        g_info("approved net.deny() for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_net_local(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network = SYDBOX_NETWORK_LOCAL;
+        g_info("approved net.local() for child %i", child->pid);
+    }
     else if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path))))
         data->result = RS_MAGIC;
 
