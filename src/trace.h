@@ -26,6 +26,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -172,17 +173,15 @@ char *trace_get_path(pid_t pid, int personality, int arg);
 int trace_fake_stat(pid_t pid, int personality);
 
 /**
- * Returns the destination of network calls.
- * Returns NULL on failure and sets errno accordingly.
- */
-char *trace_get_addr(pid_t pid, int personality, int *family);
-
-#if defined(I386) || defined(POWERPC)
-/**
  * Decode a socketcall to its subcalls.
  */
 int trace_decode_socketcall(pid_t pid, int personality);
-#endif // defined(X86)
+
+/**
+ * Returns the destination of network calls.
+ * Returns NULL on failure and sets errno accordingly.
+ */
+char *trace_get_addr(pid_t pid, int personality, bool decode, int *family);
 
 #endif // SYDBOX_GUARD_TRACE_H
 

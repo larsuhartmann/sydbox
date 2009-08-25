@@ -17,6 +17,7 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdbool.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -216,7 +217,22 @@ int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
     return 0;
 }
 
-char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, int *family)
+int trace_decode_socketcall(pid_t pid, int personality)
+{
+    int save_errno;
+    long addr;
+
+    if (G_UNLIKELY(0 > upeek_ia64(pid, 0, &addr))) {
+        save_errno = errno;
+        g_info("failed to get address of argument 0: %s", g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    return addr;
+}
+
+char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, bool decode G_GNUC_UNUSED, int *family)
 {
     int save_errno;
     long addr, addrlen;

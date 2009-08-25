@@ -179,6 +179,7 @@ static bool systemcall_get_dirfd(SystemCall *self,
 static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
                                    gpointer child_ptr, gpointer data_ptr)
 {
+    int subcall;
     context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
@@ -214,37 +215,37 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
-    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL && self->flags & (BIND_CALL | CONNECT_CALL)) {
-#if defined(I386) || defined(POWERPC)
-        int subcall = trace_decode_socketcall(child->pid, child->personality);
-        g_debug("Decoded socket subcall is %d", subcall);
-        if (0 > subcall) {
-            data->result = RS_ERROR;
-            data->save_errno = errno;
+    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL) {
+        if (self->flags & DECODE_SOCKETCALL) {
+            subcall = trace_decode_socketcall(child->pid, child->personality);
+            if (0 > subcall) {
+                data->result = RS_ERROR;
+                data->save_errno = errno;
+                return;
+            }
+            g_debug("Decoded socket subcall is %d", subcall);
+            if (subcall == SOCKET_SUBCALL_SOCKET)
+                sname = "socket";
+            else if (subcall == SOCKET_SUBCALL_BIND || subcall == SOCKET_SUBCALL_CONNECT) {
+                sname = (subcall == SOCKET_SUBCALL_BIND) ? "bind" : "connect";
+                data->addr = trace_get_addr(child->pid, child->personality, true, &(data->family));
+                if (data->addr == NULL) {
+                    data->result = RS_ERROR;
+                    data->save_errno = errno;
+                    return;
+                }
+                g_debug("Destination address for subcall %s is %s", sname, data->addr);
+            }
         }
-        else if (subcall == SOCKET_SUBCALL_SOCKET)
-            sname = "socket";
-        else if (subcall == SOCKET_SUBCALL_BIND || subcall == SOCKET_SUBCALL_CONNECT) {
-            sname = (subcall == SOCKET_SUBCALL_BIND) ? "bind" : "connect";
-            data->addr = trace_get_addr(child->pid, child->personality, &(data->family));
+        else if (self->flags & (BIND_CALL | CONNECT_CALL)) {
+            data->addr = trace_get_addr(child->pid, child->personality, false, &(data->family));
             if (data->addr == NULL) {
                 data->result = RS_ERROR;
                 data->save_errno = errno;
                 return;
             }
-            else
-                g_debug("Destination address for subcall %s is %s", sname, data->addr);
+            g_debug("Destination address for %s is %s", sname, data->addr);
         }
-#else
-        data->addr = trace_get_addr(child->pid, child->personality, &(data->family));
-        if (data->addr == NULL) {
-            data->result = RS_ERROR;
-            data->save_errno = errno;
-            return;
-        }
-        else
-            g_debug("Destination address is %s", data->addr);
-#endif
     }
 }
 
@@ -758,7 +759,8 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
 
-    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL && self->flags & (BIND_CALL | CONNECT_CALL)) {
+    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL &&
+            self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL)) {
         if ((data->family == AF_INET || data->family == AF_INET6)&& !net_localhost(data->addr)) {
             sydbox_access_violation(child->pid, NULL,
                     "%s{family=AF_INET%s, addr=%s}", sname, data->family == AF_INET6 ? "6" : "", data->addr);

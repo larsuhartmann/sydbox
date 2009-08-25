@@ -78,7 +78,7 @@ static const struct syscall_def {
     {__NR_fchmodat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3},
     {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
 #if defined(__NR_socketcall)
-    {__NR_socketcall,   BIND_CALL | CONNECT_CALL | NET_CALL},
+    {__NR_socketcall,   DECODE_SOCKETCALL | NET_CALL},
 #elif defined(__NR_socket)
     {__NR_socket,       NET_CALL},
 #endif

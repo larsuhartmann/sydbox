@@ -17,6 +17,8 @@
  * Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdbool.h>
+
 #include <string.h>
 #include <sys/stat.h>
 
@@ -210,10 +212,25 @@ int trace_fake_stat(pid_t pid, int personality)
     return 0;
 }
 
-char *trace_get_addr(pid_t pid, int personality, int *family)
+int trace_decode_socketcall(pid_t pid, int personality)
 {
     int save_errno;
-    long addr, addrlen;
+    long addr;
+
+     if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][0], &addr))) {
+        save_errno = errno;
+        g_info("failed to get address of argument 0: %s", g_strerror(errno));
+        errno = save_errno;
+        return -1;
+    }
+
+    return addr;
+}
+
+char *trace_get_addr(pid_t pid, int personality, bool decode, int *family)
+{
+    int save_errno;
+    long addr, addrlen, args;
     union {
         char pad[128];
         struct sockaddr sa;
@@ -222,17 +239,45 @@ char *trace_get_addr(pid_t pid, int personality, int *family)
     } addrbuf;
     char ip[100];
 
-    if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &addr))) {
-        save_errno = errno;
-        g_info("failed to get address of argument 1: %s", g_strerror(errno));
-        errno = save_errno;
-        return NULL;
+    if (decode) {
+        unsigned int iaddr, iaddrlen;
+
+        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &args))) {
+            save_errno = errno;
+            g_info("failed to get address of argument 1: %s", g_strerror(errno));
+            errno = save_errno;
+            return NULL;
+        }
+        args += 4; // TODO: Wordsizes for personalities!
+        if (umove(pid, args, &iaddr) < 0) {
+            save_errno = errno;
+            g_info("failed to decode argument 1: %s", g_strerror(errno));
+            errno = save_errno;
+            return NULL;
+        }
+        args += 4;
+        if (umove(pid, args, &iaddrlen) < 0) {
+            save_errno = errno;
+            g_info("failed to decode argument 2: %s", g_strerror(errno));
+            errno = save_errno;
+            return NULL;
+        }
+        addr = iaddr;
+        addrlen = iaddrlen;
     }
-    if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][2], &addrlen))) {
-        save_errno = errno;
-        g_info("failed to get address of argument 2: %s", g_strerror(errno));
-        errno = save_errno;
-        return NULL;
+    else {
+        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &addr))) {
+            save_errno = errno;
+            g_info("failed to get address of argument 1: %s", g_strerror(errno));
+            errno = save_errno;
+            return NULL;
+        }
+        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][2], &addrlen))) {
+            save_errno = errno;
+            g_info("failed to get address of argument 2: %s", g_strerror(errno));
+            errno = save_errno;
+            return NULL;
+        }
     }
 
     if (addrlen < 2 || (unsigned long)addrlen > sizeof(addrbuf))

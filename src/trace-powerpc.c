@@ -240,7 +240,7 @@ int trace_decode_socketcall(pid_t pid, int personality)
     return addr;
 }
 
-char *trace_get_addr(pid_t pid, int personality, int *family)
+char *trace_get_addr(pid_t pid, int personality, bool decode G_GNUC_UNUSED, int *family)
 {
     int save_errno;
     long args;
