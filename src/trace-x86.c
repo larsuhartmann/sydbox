@@ -261,10 +261,20 @@ char *trace_get_addr(pid_t pid, int personality, int *family)
             /* We don't care about unix sockets for now */
             return g_strdup("unix");
         case AF_INET:
-            inet_ntop(AF_INET, &addrbuf.sa_in.sin_addr, ip, sizeof(ip));
+            if (!inet_ntop(AF_INET, &addrbuf.sa_in.sin_addr, ip, sizeof(ip))) {
+                save_errno = errno;
+                g_info("inet_ntop() failed: %s", g_strerror(errno));
+                errno = save_errno;
+                return NULL;
+            }
             return g_strdup(ip);
         case AF_INET6:
-            inet_ntop(AF_INET6, &addrbuf.sa6.sin6_addr, ip, sizeof(ip));
+            if (!inet_ntop(AF_INET6, &addrbuf.sa6.sin6_addr, ip, sizeof(ip))) {
+                save_errno = errno;
+                g_info("inet_ntop() failed: %s", g_strerror(errno));
+                errno = save_errno;
+                return NULL;
+            }
             return g_strdup(ip);
         default:
             return g_strdup("other");
