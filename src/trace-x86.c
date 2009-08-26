@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -260,8 +261,7 @@ char *trace_get_addr(pid_t pid, int personality, bool decode G_GNUC_UNUSED, int 
 
     switch (addrbuf.sa.sa_family) {
         case AF_UNIX:
-            /* We don't care about unix sockets for now */
-            return g_strdup("unix");
+            return g_strdup(addrbuf.sa_un.sun_path);
         case AF_INET:
             if (port != NULL)
                 *port = ntohs(addrbuf.sa_in.sin_port);

@@ -104,9 +104,19 @@ inline bool path_magic_sandbox_exec(const char *path)
     return (0 == strncmp(path, CMD_SANDBOX_EXEC, CMD_SANDBOX_EXEC_LEN));
 }
 
-inline bool path_magic_unsandbox_exec(const char *path)
+inline bool path_magic_sandunbox_exec(const char *path)
 {
-    return (0 == strncmp(path, CMD_UNSANDBOX_EXEC, CMD_UNSANDBOX_EXEC_LEN));
+    return (0 == strncmp(path, CMD_SANDUNBOX_EXEC, CMD_SANDUNBOX_EXEC_LEN));
+}
+
+inline bool path_magic_sandbox_net(const char *path)
+{
+    return (0 == strncmp(path, CMD_SANDBOX_NET, CMD_SANDBOX_NET_LEN));
+}
+
+inline bool path_magic_sandunbox_net(const char *path)
+{
+    return (0 == strncmp(path, CMD_SANDUNBOX_NET, CMD_SANDUNBOX_NET_LEN));
 }
 
 inline bool path_magic_addfilter(const char *path)
@@ -134,9 +144,19 @@ inline bool path_magic_net_local(const char *path)
     return (0 == strncmp(path, CMD_NET_LOCAL, CMD_NET_LOCAL_LEN));
 }
 
-inline bool path_magic_net_local_self(const char *path)
+inline bool path_magic_net_restrict_connect(const char *path)
 {
-    return (0 == strncmp(path, CMD_NET_LOCAL_SELF, CMD_NET_LOCAL_SELF_LEN));
+    return (0 == strncmp(path, CMD_NET_RESTRICT_CONNECT, CMD_NET_RESTRICT_CONNECT_LEN));
+}
+
+inline bool path_magic_net_unrestrict_connect(const char *path)
+{
+    return (0 == strncmp(path, CMD_NET_UNRESTRICT_CONNECT, CMD_NET_UNRESTRICT_CONNECT_LEN));
+}
+
+inline bool path_magic_net_whitelist(const char *path)
+{
+    return (0 == strncmp(path, CMD_NET_WHITELIST, CMD_NET_WHITELIST_LEN));
 }
 
 int pathnode_new(GSList **pathlist, const char *path, int sanitize)

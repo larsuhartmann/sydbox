@@ -43,7 +43,6 @@ enum {
     SYDBOX_NETWORK_ALLOW,
     SYDBOX_NETWORK_DENY,
     SYDBOX_NETWORK_LOCAL,
-    SYDBOX_NETWORK_LOCAL_SELF,
 };
 
 /**
@@ -132,17 +131,21 @@ void sydbox_config_set_sandbox_exec(bool on);
 /**
  * sydbox_config_get_sandbox_network:
  *
- * Returns the state of network sandboxing which can be one of:
- * - SYDBOX_NETWORK_ALLOW
- * - SYDBOX_NETWORK_DENY
- * - SYDBOX_NETWORK_LOCAL
- * - SYDBOX_NETWORK_LOCAL_SELF
+ * Returns the state of network sandboxing which is a #bool.
  *
- * Since: 0.1_rc5
+ * Since: 0.1_rc6
  **/
-int sydbox_config_get_sandbox_network(void);
+bool sydbox_config_get_sandbox_network(void);
 
-void sydbox_config_set_sandbox_network(int state);
+void sydbox_config_set_sandbox_network(bool on);
+
+bool sydbox_config_get_network_restrict_connect(void);
+
+void sydbox_config_set_network_restrict_connect(bool on);
+
+int sydbox_config_get_network_mode(void);
+
+void sydbox_config_set_network_mode(int state);
 
 /**
  * sydbox_config_get_colourise_output:
@@ -191,6 +194,10 @@ GSList *sydbox_config_get_write_prefixes(void);
 GSList *sydbox_config_get_exec_prefixes(void);
 
 GSList *sydbox_config_get_filters(void);
+
+GSList *sydbox_config_get_network_whitelist(void);
+
+void sydbox_config_set_network_whitelist(GSList *whitelist);
 
 void sydbox_config_addfilter(const gchar *filter);
 

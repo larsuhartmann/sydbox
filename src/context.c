@@ -49,8 +49,6 @@ void context_free(context_t *ctx)
 {
     if (G_LIKELY(NULL != ctx->children))
         tchild_free(&(ctx->children));
-    if (G_LIKELY(NULL != ctx->network_whitelist))
-        netlist_free(&(ctx->network_whitelist));
     g_free(ctx);
 }
 

@@ -51,7 +51,9 @@ void tchild_new(GSList **children, pid_t pid)
     child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
     child->sandbox->path = true;
     child->sandbox->exec = false;
-    child->sandbox->network = SYDBOX_NETWORK_ALLOW;
+    child->sandbox->network = false;
+    child->sandbox->network_mode = SYDBOX_NETWORK_ALLOW;
+    child->sandbox->network_restrict_connect = false;
     child->sandbox->lock = LOCK_UNSET;
     child->sandbox->write_prefixes = NULL;
     child->sandbox->exec_prefixes = NULL;
@@ -85,6 +87,8 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
     child->sandbox->path = parent->sandbox->path;
     child->sandbox->exec = parent->sandbox->exec;
     child->sandbox->network = parent->sandbox->network;
+    child->sandbox->network_mode = parent->sandbox->network_mode;
+    child->sandbox->network_restrict_connect = parent->sandbox->network_restrict_connect;
     child->sandbox->lock = parent->sandbox->lock;
     // Copy path lists
     walk = parent->sandbox->write_prefixes;

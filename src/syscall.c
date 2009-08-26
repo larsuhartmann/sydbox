@@ -214,8 +214,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
-    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL ||
-            child->sandbox->network == SYDBOX_NETWORK_LOCAL_SELF) {
+    if (child->sandbox->network && child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL) {
         if (self->flags & DECODE_SOCKETCALL) {
             data->socket_subcall = trace_decode_socketcall(child->pid, child->personality);
             if (0 > data->socket_subcall) {
@@ -312,13 +311,14 @@ static void systemcall_flags(SystemCall *self, gpointer ctx_ptr G_GNUC_UNUSED,
  * the stat buffer and sets data->result to RS_DENY and child->retval to 0.
  * If trace_fake_stat() fails it sets data->result to RS_ERROR and
  * data->save_errno to errno.
- * If the stat() caill isn't magic, this function does nothing.
+ * If the stat() call isn't magic, this function does nothing.
  */
 static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
 {
     char *path = data->pathlist[0];
     const char *rpath;
     char *rpath_sanitized;
+    GSList *whitelist;
 
     g_debug("checking if stat(\"%s\") is magic", path);
     if (G_UNLIKELY(path_magic_on(path))) {
@@ -366,10 +366,20 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         child->sandbox->exec = true;
         g_info("execve(2) sandboxing is now enabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_unsandbox_exec(path))) {
+    else if (G_UNLIKELY(path_magic_sandunbox_exec(path))) {
         data->result = RS_MAGIC;
         child->sandbox->exec = false;
         g_info("execve(2) sandboxing is now disabled for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_sandbox_net(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network = true;
+        g_info("network sandboxing is now enabled for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_sandunbox_net(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network = false;
+        g_info("network sandboxing is now disabled for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_addfilter(path))) {
         data->result = RS_MAGIC;
@@ -385,23 +395,64 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
     }
     else if (G_UNLIKELY(path_magic_net_allow(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->network = SYDBOX_NETWORK_ALLOW;
+        child->sandbox->network_mode = SYDBOX_NETWORK_ALLOW;
         g_info("approved net.allow() for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_net_deny(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->network = SYDBOX_NETWORK_DENY;
+        child->sandbox->network_mode = SYDBOX_NETWORK_DENY;
         g_info("approved net.deny() for child %i", child->pid);
     }
     else if (G_UNLIKELY(path_magic_net_local(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->network = SYDBOX_NETWORK_LOCAL;
+        child->sandbox->network_mode = SYDBOX_NETWORK_LOCAL;
         g_info("approved net.local() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_local_self(path))) {
+    else if (G_UNLIKELY(path_magic_net_restrict_connect(path))) {
         data->result = RS_MAGIC;
-        child->sandbox->network = SYDBOX_NETWORK_LOCAL_SELF;
-        g_info("approved net.local_self() for child %i", child->pid);
+        child->sandbox->network_restrict_connect = true;
+        g_info("approved net.restrict.connect() for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_net_unrestrict_connect(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network_restrict_connect = false;
+        g_info("approved net.unrestrict.connect() for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_net_whitelist(path))) {
+        data->result = RS_MAGIC;
+        whitelist = sydbox_config_get_network_whitelist();
+        rpath = path + CMD_NET_WHITELIST_LEN;
+        if (0 == strncmp(rpath, "unix://", 7)) {
+            netlist_new(&whitelist, AF_UNIX, -1, rpath + 7);
+            sydbox_config_set_network_whitelist(whitelist);
+            g_debug("New address for whitelist {family=AF_UNIX path=%s}", rpath + 7);
+        }
+        else if (0 == strncmp(rpath, "inet://", 7)) {
+            char *addr = g_strdup(rpath + 7);
+            char *port = strrchr(addr, ':');
+            if (NULL == port || port + 1 == '\0')
+                g_warning("malformed whitelist address `%s'", rpath);
+            else {
+                addr[port - addr] = '\0';
+                netlist_new(&whitelist, AF_INET, atoi(++port), addr);
+                sydbox_config_set_network_whitelist(whitelist);
+                g_debug("New address for whitelist {family=AF_INET addr=%s port=%d}", addr, atoi(port));
+            }
+            g_free(addr);
+        }
+        else if (0 == strncmp(rpath, "inet6://", 8)) {
+            char *addr = g_strdup(rpath + 7);
+            char *port = strrchr(addr, ':');
+            if (NULL == port || (port + 1) == '\0')
+                g_warning("malformed whitelist address `%s'", rpath);
+            else {
+                addr[port - addr] = '\0';
+                netlist_new(&whitelist, AF_INET6, atoi(++port), addr);
+                sydbox_config_set_network_whitelist(whitelist);
+                g_debug("New address for whitelist {family=AF_INET6 addr=%s port=%d}", addr, atoi(port));
+            }
+            g_free(addr);
+        }
     }
     else if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path))))
         data->result = RS_MAGIC;
@@ -766,55 +817,59 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
 
-    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL &&
-            self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL)) {
-        if ((data->family == AF_INET || data->family == AF_INET6) && !net_localhost(data->addr)) {
-            sydbox_access_violation(child->pid, NULL,
-                    "%s{family=AF_INET%s addr=%s port=%d}",
-                    sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
-            data->result = RS_DENY;
-            child->retval = -ECONNREFUSED;
-        }
-    }
-    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL_SELF &&
-            self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL)) {
-        if (self->flags & BIND_CALL ||
-                (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_BIND)) {
-            /* Check if the connection is local for bind(2) call. */
-            if ((data->family == AF_INET || data->family == AF_INET6) && !net_localhost(data->addr)) {
-                sydbox_access_violation(child->pid, NULL,
-                        "%s{family=AF_INET%s addr=%s port=%d}",
-                        sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
-                data->result = RS_DENY;
-                child->retval = -ECONNREFUSED;
-            }
-        }
-        else if (self->flags & CONNECT_CALL ||
-                    (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_CONNECT)) {
-            /* Check for the network whitelist first for the connect(2) call. */
-            int whitelisted = 0;
-            GSList *walk = ctx->network_whitelist;
+    if (child->sandbox->network && child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL &&
+            self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL) &&
+            (data->family == AF_UNIX || data->family == AF_INET || data->family == AF_INET6)) {
+
+        bool violation = false;
+
+        /* If network_restrict_connect is set, check if this is a whitelisted
+         * connect(2) call.
+         */
+        if (child->sandbox->network_restrict_connect &&
+                (self->flags & CONNECT_CALL ||
+                 (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_CONNECT))) {
+            violation = true;
+            GSList *walk = sydbox_config_get_network_whitelist();
+            g_debug("net.restrict_connect is set, checking if connect(2) call is whitelisted");
             while (NULL != walk) {
                 struct sydbox_addr *saddr = (struct sydbox_addr *) walk->data;
+                g_debug("Checking whitelisted address {family=%d addr=%s port=%d} for equality",
+                        saddr->family, saddr->addr, saddr->port);
                 if (data->family == saddr->family && data->port == saddr->port &&
                         0 == strncmp(data->addr, saddr->addr, strlen(saddr->addr) + 1)) {
-                    g_debug("Whitelisted connection family:%d addr:%s port:%d",
+                    g_debug("Whitelisted connection {family:%d addr:%s port:%d}",
                             saddr->family, saddr->addr, saddr->port);
-                    whitelisted = 1;
+                    violation = false;
                     break;
                 }
                 walk = g_slist_next(walk);
             }
-            if (!whitelisted && (data->family == AF_INET || data->family == AF_INET6)) {
-                sydbox_access_violation(child->pid, NULL,
-                        "%s{family=AF_INET%s addr=%s port=%d}",
-                        sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
-                data->result = RS_DENY;
-                child->retval = -ECONNREFUSED;
+        }
+        else if (data->family != AF_UNIX && !net_localhost(data->addr))
+            violation = true;
+
+        if (violation) {
+            switch (data->family) {
+                case AF_UNIX:
+                    sydbox_access_violation(child->pid, NULL, "%s{family=AF_UNIX path=%s}", sname, data->addr);
+                    break;
+                case AF_INET:
+                    sydbox_access_violation(child->pid, NULL, "%s{family=AF_INET addr=%s port=%d}",
+                            sname, data->addr, data->port);
+                    break;
+                case AF_INET6:
+                    sydbox_access_violation(child->pid, NULL, "%s{family=AF_INET6 addr=%s port=%d}",
+                            sname, data->addr, data->port);
+                    break;
+                default:
+                    g_assert_not_reached();
             }
+            data->result = RS_DENY;
+            child->retval = -ECONNREFUSED;
         }
     }
-    if (child->sandbox->network == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
+    if (child->sandbox->network_mode == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
         sydbox_access_violation(child->pid, NULL, "%s()", sname);
         data->result = RS_DENY;
         child->retval = -EACCES;
@@ -1120,11 +1175,12 @@ static int syscall_handle_chdir(struct tchild *child)
 /**
  * bind(2) handler
  */
-static int syscall_handle_bind(context_t *ctx, struct tchild *child, int flags)
+static int syscall_handle_bind(struct tchild *child, int flags)
 {
     int subcall, family, port;
     long retval;
     char *addr;
+    GSList *whitelist;
 
     if (0 > trace_get_return(child->pid, &retval)) {
         if (G_UNLIKELY(ESRCH != errno)) {
@@ -1155,7 +1211,7 @@ static int syscall_handle_bind(context_t *ctx, struct tchild *child, int flags)
                 g_printerr("Failed to decode socketcall: %s", g_strerror(errno));
                 exit(-1);
             }
-            // Child is dead
+            // Child is dead.
             return -1;
         }
         if (subcall != SOCKET_SUBCALL_BIND)
@@ -1182,7 +1238,9 @@ static int syscall_handle_bind(context_t *ctx, struct tchild *child, int flags)
     }
 
     g_debug("Whitelisting successful bind() addr:%s port:%d", addr, port);
-    netlist_new(&(ctx->network_whitelist), family, port, addr);
+    whitelist = sydbox_config_get_network_whitelist();
+    netlist_new(&whitelist, family, port, addr);
+    sydbox_config_set_network_whitelist(whitelist);
     g_free(addr);
     return 0;
 }
@@ -1337,10 +1395,9 @@ int syscall_handle(context_t *ctx, struct tchild *child)
             if (0 > syscall_handle_chdir(child))
                 return context_remove_child(ctx, child->pid);
         }
-        else if (child->sandbox->network == SYDBOX_NETWORK_LOCAL_SELF &&
-                    dispatch_maybind(child->personality, sno)) {
+        else if (child->sandbox->network_restrict_connect && dispatch_maybind(child->personality, sno)) {
             flags = dispatch_flags(child->personality, sno);
-            if (0 > syscall_handle_bind(ctx, child, flags))
+            if (0 > syscall_handle_bind(child, flags))
                 return context_remove_child(ctx, child->pid);
         }
 #if defined(POWERPC)

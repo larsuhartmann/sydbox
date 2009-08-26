@@ -19,11 +19,15 @@
  */
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "net.h"
 #include "path.h"
 #include "sydbox-log.h"
 #include "sydbox-config.h"
@@ -36,7 +40,10 @@ struct sydbox_config
 
     bool sandbox_path;
     bool sandbox_exec;
-    int sandbox_network;
+    bool sandbox_network;
+
+    int network_mode;
+    bool network_restrict_connect;
 
     bool colourise_output;
     bool disallow_magic_commands;
@@ -46,6 +53,7 @@ struct sydbox_config
     GSList *filters;
     GSList *write_prefixes;
     GSList *exec_prefixes;
+    GSList *network_whitelist;
 } *config;
 
 
@@ -56,8 +64,10 @@ static void sydbox_config_set_defaults(void)
     config->colourise_output = true;
     config->verbosity = 1;
     config->sandbox_path = true;
-    config->sandbox_network = SYDBOX_NETWORK_ALLOW;
     config->sandbox_exec = false;
+    config->sandbox_network = false;
+    config->network_restrict_connect = false;
+    config->network_mode = SYDBOX_NETWORK_ALLOW;
     config->disallow_magic_commands = false;
     config->wait_all = false;
     config->allow_proc_pid = true;
@@ -65,7 +75,6 @@ static void sydbox_config_set_defaults(void)
 
 bool sydbox_config_load(const gchar * const file)
 {
-    gchar *network;
     const gchar *config_file;
     GKeyFile *config_fd;
     GError *config_error = NULL;
@@ -125,6 +134,7 @@ bool sydbox_config_load(const gchar * const file)
                     g_key_file_free(config_fd);
                     g_free(config);
                     return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
@@ -150,6 +160,7 @@ bool sydbox_config_load(const gchar * const file)
                     g_key_file_free(config_fd);
                     g_free(config);
                     return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
@@ -175,6 +186,7 @@ bool sydbox_config_load(const gchar * const file)
                     g_key_file_free(config_fd);
                     g_free(config);
                     return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
@@ -197,6 +209,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_key_file_free(config_fd);
                 g_free(config);
                 return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
@@ -225,14 +238,15 @@ bool sydbox_config_load(const gchar * const file)
 
     // Get log.level
     config->verbosity = g_key_file_get_integer(config_fd, "log", "level", &config_error);
-    if (0 == config->verbosity) {
+    if (config_error) {
         switch (config_error->code) {
             case G_KEY_FILE_ERROR_INVALID_VALUE:
                 g_printerr("log.level not an integer: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
                 g_free(config);
-                return FALSE;
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
@@ -249,7 +263,7 @@ bool sydbox_config_load(const gchar * const file)
         config->sandbox_path = false;
     else {
         config->sandbox_path = g_key_file_get_boolean(config_fd, "sandbox", "path", &config_error);
-        if (!config->sandbox_path && config_error) {
+        if (config_error) {
             switch (config_error->code) {
                 case G_KEY_FILE_ERROR_INVALID_VALUE:
                     g_printerr("sandbox.path not a boolean: %s", config_error->message);
@@ -257,6 +271,7 @@ bool sydbox_config_load(const gchar * const file)
                     g_key_file_free(config_fd);
                     g_free(config);
                     return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
@@ -274,7 +289,7 @@ bool sydbox_config_load(const gchar * const file)
         config->sandbox_exec = true;
     else {
         config->sandbox_exec = g_key_file_get_boolean(config_fd, "sandbox", "exec", &config_error);
-        if (!config->sandbox_exec && config_error) {
+        if (config_error) {
             switch (config_error->code) {
                 case G_KEY_FILE_ERROR_INVALID_VALUE:
                     g_printerr("sandbox.exec not a boolean: %s", config_error->message);
@@ -282,6 +297,7 @@ bool sydbox_config_load(const gchar * const file)
                     g_key_file_free(config_fd);
                     g_free(config);
                     return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
                 case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                     g_error_free(config_error);
                     config_error = NULL;
@@ -295,25 +311,27 @@ bool sydbox_config_load(const gchar * const file)
     }
 
     // Get sandbox.network
-    config->sandbox_network = SYDBOX_NETWORK_ALLOW;
     if (g_getenv(ENV_NET))
-        config->sandbox_network = SYDBOX_NETWORK_DENY;
+        config->sandbox_network = true;
     else {
-        network = g_key_file_get_string(config_fd, "sandbox", "network", NULL);
-        if (network != NULL) {
-            if (0 == strncmp(network, "allow", 6))
-                config->sandbox_network = SYDBOX_NETWORK_ALLOW;
-            else if (0 == strncmp(network, "deny", 5))
-                config->sandbox_network = SYDBOX_NETWORK_DENY;
-            else if (0 == strncmp(network, "local", 6))
-                config->sandbox_network = SYDBOX_NETWORK_LOCAL;
-            else if (0 == strncmp(network, "local_self", 11))
-                config->sandbox_network = SYDBOX_NETWORK_LOCAL_SELF;
-            else {
-                g_printerr("error: invalid value for sandbox.network `%s'\n", network);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return false;
+        config->sandbox_network = g_key_file_get_boolean(config_fd, "sandbox", "network", &config_error);
+        if (config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("main.network not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->sandbox_network = false;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
             }
         }
     }
@@ -332,6 +350,90 @@ bool sydbox_config_load(const gchar * const file)
         for (unsigned int i = 0; NULL != exec_prefixes[i]; i++)
             pathnode_new_early(&config->exec_prefixes, exec_prefixes[i], 1);
         g_strfreev(exec_prefixes);
+    }
+
+    // Get net.default
+    char *netdefault = g_key_file_get_string(config_fd, "net", "default", NULL);
+    if (NULL != netdefault) {
+        if (0 == strncmp(netdefault, "allow", 6))
+            config->network_mode = SYDBOX_NETWORK_ALLOW;
+        else if (0 == strncmp(netdefault, "deny", 5))
+            config->network_mode = SYDBOX_NETWORK_DENY;
+        else if (0 == strncmp(netdefault, "local", 6))
+            config->network_mode = SYDBOX_NETWORK_LOCAL;
+        else {
+            g_printerr("error: invalid value for net.default `%s'\n", netdefault);
+            g_key_file_free(config_fd);
+            g_free(config);
+            return false;
+        }
+    }
+
+    // Get net.restrict_connect
+    config->network_restrict_connect = g_key_file_get_boolean(config_fd, "net", "restrict_connect", &config_error);
+    if (config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("net.restrict_connect not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->network_restrict_connect = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
+    // Get net.whitelist
+    char **netwhitelist = g_key_file_get_string_list(config_fd, "net", "whitelist", NULL, NULL);
+    if (NULL != netwhitelist) {
+        for (unsigned int i = 0; NULL != netwhitelist[i]; i++) {
+            if (0 == strncmp(netwhitelist[i], "unix://", 7))
+                netlist_new(&config->network_whitelist, AF_UNIX, -1, netwhitelist[i] + 7);
+            else if (0 == strncmp(netwhitelist[i], "inet://", 7)) {
+                char *addr = g_strdup(netwhitelist[i] + 7);
+                char *port = strrchr(addr, ':');
+                if (NULL == port || (port + 1) == '\0') {
+                    g_printerr("error: malformed address `%s' at position %d of net.whitelist\n", netwhitelist[i], i);
+                    g_strfreev(netwhitelist);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                }
+                addr[port - addr] = '\0';
+                netlist_new(&config->network_whitelist, AF_INET, atoi(++port), addr);
+                g_free(addr);
+            }
+            else if (0 == strncmp(netwhitelist[i], "inet6://", 8)) {
+                char *addr = g_strdup(netwhitelist[i] + 8);
+                char *port = strrchr(addr, ':');
+                if (NULL == port || (port + 1) == '\0') {
+                    g_printerr("error: malformed address `%s' at position %d of net.whitelist\n", netwhitelist[i], i);
+                    g_strfreev(netwhitelist);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                }
+                addr[port - addr] = '\0';
+                netlist_new(&config->network_whitelist, AF_INET6, atoi(++port), addr);
+                g_free(addr);
+            }
+            else {
+                g_printerr("error: malformed address `%s' at position %d\n", netwhitelist[i], i);
+                g_strfreev(netwhitelist);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            }
+        }
+        g_strfreev(netwhitelist);
     }
 
     // Cleanup and return
@@ -356,6 +458,28 @@ static inline void print_slist_entry(gpointer data, gpointer userdata G_GNUC_UNU
         g_fprintf(stderr, "\t%s\n", cdata);
 }
 
+static inline void print_netlist_entry(gpointer data, gpointer userdata G_GNUC_UNUSED)
+{
+    struct sydbox_addr *saddr = (struct sydbox_addr *) data;
+
+    if (NULL == saddr)
+        return;
+
+    switch (saddr->family) {
+        case AF_UNIX:
+            g_fprintf(stderr, "\t{family=AF_UNIX path=%s}\n", saddr->addr);
+            break;
+        case AF_INET:
+            g_fprintf(stderr, "\t{family=AF_INET addr=%s port=%d}\n", saddr->addr, saddr->port);
+            break;
+        case AF_INET6:
+            g_fprintf(stderr, "\t{family=AF_INET6 addr=%s port=%d}\n", saddr->addr, saddr->port);
+            break;
+        default:
+            g_assert_not_reached();
+    }
+}
+
 void sydbox_config_write_to_stderr (void)
 {
     g_fprintf(stderr, "main.colour = %s\n", config->colourise_output ? "on" : "off");
@@ -366,20 +490,22 @@ void sydbox_config_write_to_stderr (void)
     g_fprintf(stderr, "log.level = %d\n", config->verbosity);
     g_fprintf(stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
     g_fprintf(stderr, "sandbox.exec = %s\n", config->sandbox_exec ? "yes" : "no");
-    if (config->sandbox_network == SYDBOX_NETWORK_ALLOW)
-        g_fprintf(stderr, "sandbox.network = allow\n");
-    else if (config->sandbox_network == SYDBOX_NETWORK_DENY)
-        g_fprintf(stderr, "sandbox.network = deny\n");
-    else if (config->sandbox_network == SYDBOX_NETWORK_LOCAL)
-        g_fprintf(stderr, "sandbox.network = local\n");
-    else if (config->sandbox_network == SYDBOX_NETWORK_LOCAL_SELF)
-        g_fprintf(stderr, "sandbox.network = local_self\n");
+    g_fprintf(stderr, "sandbox.network = %s\n", config->sandbox_network ? "yes" : "no");
+    if (config->network_mode == SYDBOX_NETWORK_ALLOW)
+        g_fprintf(stderr, "net.default = allow\n");
+    else if (config->network_mode == SYDBOX_NETWORK_DENY)
+        g_fprintf(stderr, "net.default = deny\n");
+    else if (config->network_mode == SYDBOX_NETWORK_LOCAL)
+        g_fprintf(stderr, "net.default = local\n");
     else
         g_assert_not_reached();
+    g_fprintf(stderr, "net.restrict_connect = %s\n", config->network_restrict_connect ? "yes" : "no");
     g_fprintf(stderr, "prefix.write:\n");
     g_slist_foreach(config->write_prefixes, print_slist_entry, NULL);
     g_fprintf(stderr, "prefix.exec\n");
     g_slist_foreach(config->exec_prefixes, print_slist_entry, NULL);
+    g_fprintf(stderr, "net.whitelist:\n");
+    g_slist_foreach(config->network_whitelist, print_netlist_entry, NULL);
 }
 
 
@@ -426,14 +552,34 @@ void sydbox_config_set_sandbox_exec(bool on)
     config->sandbox_exec = on;
 }
 
-int sydbox_config_get_sandbox_network(void)
+bool sydbox_config_get_sandbox_network(void)
 {
     return config->sandbox_network;
 }
 
-void sydbox_config_set_sandbox_network(int state)
+void sydbox_config_set_sandbox_network(bool on)
 {
-    config->sandbox_network = state;
+    config->sandbox_network = on;
+}
+
+bool sydbox_config_get_network_restrict_connect(void)
+{
+    return config->network_restrict_connect;
+}
+
+void sydbox_config_set_network_restrict_connect(bool on)
+{
+    config->network_restrict_connect = on;
+}
+
+int sydbox_config_get_network_mode(void)
+{
+    return config->network_mode;
+}
+
+void sydbox_config_set_network_mode(int state)
+{
+    config->network_mode = state;
 }
 
 bool sydbox_config_get_colourise_output(void)
@@ -489,6 +635,16 @@ GSList *sydbox_config_get_exec_prefixes(void)
 GSList *sydbox_config_get_filters(void)
 {
     return config->filters;
+}
+
+GSList *sydbox_config_get_network_whitelist(void)
+{
+    return config->network_whitelist;
+}
+
+void sydbox_config_set_network_whitelist(GSList *whitelist)
+{
+    config->network_whitelist = whitelist;
 }
 
 void sydbox_config_addfilter(const gchar *filter)
