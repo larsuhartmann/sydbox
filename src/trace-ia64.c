@@ -240,6 +240,7 @@ char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, bool decode G_GNU
     union {
         char pad[128];
         struct sockaddr sa;
+        struct sockaddr_un sa_un;
         struct sockaddr_in sa_in;
         struct sockaddr_in6 sa6;
     } addrbuf;
