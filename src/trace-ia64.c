@@ -217,7 +217,7 @@ int trace_fake_stat(pid_t pid, int personality G_GNUC_UNUSED)
     return 0;
 }
 
-int trace_decode_socketcall(pid_t pid, int personality)
+int trace_decode_socketcall(pid_t pid, int personality G_GNUC_UNUSED)
 {
     int save_errno;
     long addr;
