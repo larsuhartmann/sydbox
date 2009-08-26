@@ -770,7 +770,8 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
             self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL)) {
         if ((data->family == AF_INET || data->family == AF_INET6) && !net_localhost(data->addr)) {
             sydbox_access_violation(child->pid, NULL,
-                    "%s{family=AF_INET%s, addr=%s}", sname, data->family == AF_INET6 ? "6" : "", data->addr);
+                    "%s{family=AF_INET%s addr=%s port=%d}",
+                    sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
             data->result = RS_DENY;
             child->retval = -ECONNREFUSED;
         }
@@ -782,7 +783,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
             /* Check if the connection is local for bind(2) call. */
             if ((data->family == AF_INET || data->family == AF_INET6) && !net_localhost(data->addr)) {
                 sydbox_access_violation(child->pid, NULL,
-                        "%s{family=AF_INET%s, addr=%s port=%d}",
+                        "%s{family=AF_INET%s addr=%s port=%d}",
                         sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
                 data->result = RS_DENY;
                 child->retval = -ECONNREFUSED;
@@ -806,7 +807,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
             }
             if (!whitelisted && (data->family == AF_INET || data->family == AF_INET6)) {
                 sydbox_access_violation(child->pid, NULL,
-                        "%s{family=AF_INET%s, addr=%s port=%d}",
+                        "%s{family=AF_INET%s addr=%s port=%d}",
                         sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
                 data->result = RS_DENY;
                 child->retval = -ECONNREFUSED;
