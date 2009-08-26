@@ -11,7 +11,8 @@ check_sydbox_SOURCES = check_trace.c \
 		       $(top_builddir)/src/trace.c $(top_builddir)/src/wrappers.c \
 		       $(top_builddir)/src/proc.c \
 		       $(top_builddir)/src/sydbox-log.c $(top_builddir)/src/sydbox-config.c \
-		       $(top_builddir)/src/sydbox-utils.c $(top_builddir)/src/trace-util.c
+		       $(top_builddir)/src/sydbox-utils.c $(top_builddir)/src/trace-util.c \
+		       $(top_builddir)/src/net.c
 
 # dispatch.c
 check_sydbox_SOURCES+= $(top_builddir)/src/dispatch.h $(top_builddir)/src/dispatch-table.h
