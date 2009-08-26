@@ -74,7 +74,7 @@ command line parameters.
 
 *-N*::
 *--sandbox-network*::
-    Enable network sandboxing
+    Mode of network sandboxing (one of: allow, deny, local, local_self)
 
 *-W*::
 *--wait-all*::
@@ -109,8 +109,7 @@ sandboxing is on.
 SYDBOX_NET
 ~~~~~~~~~~~
 This variable controls the behaviour of sydbox with regards to network access.
-If it is set, sydbox will sandbox network connections. This is equivalent to
-*-N* option.
+If it is set, sydbox will deny network connections.
 
 SYDBOX_CONFIG
 ~~~~~~~~~~~~~~
