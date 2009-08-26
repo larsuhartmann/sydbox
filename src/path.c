@@ -134,6 +134,11 @@ inline bool path_magic_net_local(const char *path)
     return (0 == strncmp(path, CMD_NET_LOCAL, CMD_NET_LOCAL_LEN));
 }
 
+inline bool path_magic_net_local_self(const char *path)
+{
+    return (0 == strncmp(path, CMD_NET_LOCAL_SELF, CMD_NET_LOCAL_SELF_LEN));
+}
+
 int pathnode_new(GSList **pathlist, const char *path, int sanitize)
 {
     char *data;

@@ -57,6 +57,8 @@
 #define CMD_NET_DENY_LEN        (CMD_PATH_LEN + 9)
 #define CMD_NET_LOCAL           CMD_PATH"net/local"
 #define CMD_NET_LOCAL_LEN       (CMD_PATH_LEN + 10)
+#define CMD_NET_LOCAL_SELF      (CMD_PATH"net/local_self")
+#define CMD_NET_LOCAL_SELF_LEN  (CMD_PATH_LEN + 15)
 
 bool path_magic_dir(const char *path);
 
@@ -89,6 +91,8 @@ bool path_magic_net_allow(const char *path);
 bool path_magic_net_deny(const char *path);
 
 bool path_magic_net_local(const char *path);
+
+bool path_magic_net_local_self(const char *path);
 
 int pathnode_new(GSList **pathlist, const char *path, int sanitize);
 

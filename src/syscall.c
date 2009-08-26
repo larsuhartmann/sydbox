@@ -398,6 +398,11 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         child->sandbox->network = SYDBOX_NETWORK_LOCAL;
         g_info("approved net.local() for child %i", child->pid);
     }
+    else if (G_UNLIKELY(path_magic_net_local_self(path))) {
+        data->result = RS_MAGIC;
+        child->sandbox->network = SYDBOX_NETWORK_LOCAL_SELF;
+        g_info("approved net.local_self() for child %i", child->pid);
+    }
     else if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path))))
         data->result = RS_MAGIC;
 
