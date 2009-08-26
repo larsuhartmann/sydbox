@@ -28,7 +28,9 @@
 
 #include <glib.h>
 
+#include "children.h"
 #include "context.h"
+#include "net.h"
 #include "wrappers.h"
 #include "sydbox-log.h"
 
@@ -46,8 +48,9 @@ context_t *context_new (void)
 void context_free(context_t *ctx)
 {
     if (G_LIKELY(NULL != ctx->children))
-        tchild_free (&(ctx->children));
-
+        tchild_free(&(ctx->children));
+    if (G_LIKELY(NULL != ctx->network_whitelist))
+        netlist_free(&(ctx->network_whitelist));
     g_free(ctx);
 }
 

@@ -24,13 +24,12 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
-#include "children.h"
-
 typedef struct
 {
     pid_t eldest;               // first child's pid is kept to determine return code.
     bool before_initial_execve; // first execve() is noted here for execve(2) sandboxing.
     GSList *children;           // list of children
+    GSList *network_whitelist;  // network whitelist for SYDBOX_NETWORK_LOCAL_SELF
 } context_t;
 
 context_t *context_new(void);

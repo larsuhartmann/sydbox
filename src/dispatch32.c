@@ -55,3 +55,8 @@ bool dispatch_chdir32(int sno)
     return IS_CHDIR(sno);
 }
 
+bool dispatch_maybind32(int sno)
+{
+    return (__NR_socketcall == sno);
+}
+

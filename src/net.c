@@ -20,10 +20,37 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <glib.h>
+
 #include "net.h"
 
 bool net_localhost(const char *addr)
 {
     return (0 == strncmp(addr, "127.0.0.1", 10) || 0 == strncmp(addr, "::1", 4));
+}
+
+void netlist_new(GSList **netlist, int family, int port, const char *addr)
+{
+    struct sydbox_addr *saddr = (struct sydbox_addr *) g_malloc0(sizeof(struct sydbox_addr));
+
+    saddr->family = family;
+    saddr->port = port;
+    if (NULL != addr)
+        saddr->addr = g_strdup(addr);
+
+    *netlist = g_slist_prepend(*netlist, saddr);
+}
+
+static void netlist_free_one(struct sydbox_addr *saddr, void *userdata G_GNUC_UNUSED)
+{
+    g_free(saddr->addr);
+    g_free(saddr);
+}
+
+void netlist_free(GSList **netlist)
+{
+    g_slist_foreach(*netlist, (GFunc) netlist_free_one, NULL);
+    g_slist_free(*netlist);
+    *netlist = NULL;
 }
 

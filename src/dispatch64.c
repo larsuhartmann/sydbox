@@ -55,3 +55,8 @@ bool dispatch_chdir64(int sno)
     return IS_CHDIR(sno);
 }
 
+bool dispatch_maybind64(int sno)
+{
+    return (__NR_bind == sno);
+}
+

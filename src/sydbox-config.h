@@ -43,6 +43,7 @@ enum {
     SYDBOX_NETWORK_ALLOW,
     SYDBOX_NETWORK_DENY,
     SYDBOX_NETWORK_LOCAL,
+    SYDBOX_NETWORK_LOCAL_SELF,
 };
 
 /**
@@ -135,6 +136,7 @@ void sydbox_config_set_sandbox_exec(bool on);
  * - SYDBOX_NETWORK_ALLOW
  * - SYDBOX_NETWORK_DENY
  * - SYDBOX_NETWORK_LOCAL
+ * - SYDBOX_NETWORK_LOCAL_SELF
  *
  * Since: 0.1_rc5
  **/

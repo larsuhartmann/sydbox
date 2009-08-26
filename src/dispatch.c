@@ -75,6 +75,17 @@ bool dispatch_chdir(int personality G_GNUC_UNUSED, int sno)
     return IS_CHDIR(sno);
 }
 
+bool dispatch_maybind(int personality G_GNUC_UNUSED, int sno)
+{
+#if defined(I386) || defined(POWERPC)
+    return (__NR_socketcall == sno);
+#elif defined(IA64)
+    return (__NR_bind == sno);
+#else
+#error unsupported architecture
+#endif
+}
+
 #if defined(POWERPC)
 bool dispatch_clone(int personality G_GNUC_UNUSED, int sno)
 {

@@ -179,7 +179,6 @@ static bool systemcall_get_dirfd(SystemCall *self,
 static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
                                    gpointer child_ptr, gpointer data_ptr)
 {
-    int subcall;
     context_t *ctx = (context_t *) ctx_ptr;
     struct tchild *child = (struct tchild *) child_ptr;
     struct checkdata *data = (struct checkdata *) data_ptr;
@@ -215,36 +214,39 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
-    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL) {
+    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL ||
+            child->sandbox->network == SYDBOX_NETWORK_LOCAL_SELF) {
         if (self->flags & DECODE_SOCKETCALL) {
-            subcall = trace_decode_socketcall(child->pid, child->personality);
-            if (0 > subcall) {
+            data->socket_subcall = trace_decode_socketcall(child->pid, child->personality);
+            if (0 > data->socket_subcall) {
                 data->result = RS_ERROR;
                 data->save_errno = errno;
                 return;
             }
-            g_debug("Decoded socket subcall is %d", subcall);
-            if (subcall == SOCKET_SUBCALL_SOCKET)
+            g_debug("Decoded socket subcall is %d", data->socket_subcall);
+            if (data->socket_subcall == SOCKET_SUBCALL_SOCKET)
                 sname = "socket";
-            else if (subcall == SOCKET_SUBCALL_BIND || subcall == SOCKET_SUBCALL_CONNECT) {
-                sname = (subcall == SOCKET_SUBCALL_BIND) ? "bind" : "connect";
-                data->addr = trace_get_addr(child->pid, child->personality, true, &(data->family));
+            else if (data->socket_subcall == SOCKET_SUBCALL_BIND || data->socket_subcall == SOCKET_SUBCALL_CONNECT) {
+                sname = (data->socket_subcall == SOCKET_SUBCALL_BIND) ? "bind" : "connect";
+                data->addr = trace_get_addr(child->pid, child->personality, true, &(data->family), &(data->port));
                 if (data->addr == NULL) {
                     data->result = RS_ERROR;
                     data->save_errno = errno;
                     return;
                 }
-                g_debug("Destination address for subcall %s is %s", sname, data->addr);
+                g_debug("Destination of %s subcall family:%d addr:%s port:%d",
+                            sname, data->family, data->addr, data->port);
             }
         }
         else if (self->flags & (BIND_CALL | CONNECT_CALL)) {
-            data->addr = trace_get_addr(child->pid, child->personality, false, &(data->family));
+            data->addr = trace_get_addr(child->pid, child->personality, false, &(data->family), &(data->port));
             if (data->addr == NULL) {
                 data->result = RS_ERROR;
                 data->save_errno = errno;
                 return;
             }
-            g_debug("Destination address for %s is %s", sname, data->addr);
+            g_debug("Destination of %s call family:%d addr:%s port:%d",
+                    sname, data->family, data->addr, data->port);
         }
     }
 }
@@ -761,11 +763,49 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
 
     if (child->sandbox->network == SYDBOX_NETWORK_LOCAL &&
             self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL)) {
-        if ((data->family == AF_INET || data->family == AF_INET6)&& !net_localhost(data->addr)) {
+        if ((data->family == AF_INET || data->family == AF_INET6) && !net_localhost(data->addr)) {
             sydbox_access_violation(child->pid, NULL,
                     "%s{family=AF_INET%s, addr=%s}", sname, data->family == AF_INET6 ? "6" : "", data->addr);
             data->result = RS_DENY;
             child->retval = -ECONNREFUSED;
+        }
+    }
+    if (child->sandbox->network == SYDBOX_NETWORK_LOCAL_SELF &&
+            self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL)) {
+        if (self->flags & BIND_CALL ||
+                (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_BIND)) {
+            /* Check if the connection is local for bind(2) call. */
+            if ((data->family == AF_INET || data->family == AF_INET6) && !net_localhost(data->addr)) {
+                sydbox_access_violation(child->pid, NULL,
+                        "%s{family=AF_INET%s, addr=%s port=%d}",
+                        sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
+                data->result = RS_DENY;
+                child->retval = -ECONNREFUSED;
+            }
+        }
+        else if (self->flags & CONNECT_CALL ||
+                    (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_CONNECT)) {
+            /* Check for the network whitelist first for the connect(2) call. */
+            int whitelisted = 0;
+            GSList *walk = ctx->network_whitelist;
+            while (NULL != walk) {
+                struct sydbox_addr *saddr = (struct sydbox_addr *) walk->data;
+                if (data->family == saddr->family && data->port == saddr->port &&
+                        0 == strncmp(data->addr, saddr->addr, strlen(saddr->addr) + 1)) {
+                    g_debug("Whitelisted connection family:%d addr:%s port:%d",
+                            saddr->family, saddr->addr, saddr->port);
+                    whitelisted = 1;
+                    break;
+                }
+                walk = g_slist_next(walk);
+            }
+            if (!whitelisted && (data->family == AF_INET || data->family == AF_INET6)) {
+                sydbox_access_violation(child->pid, NULL,
+                        "%s{family=AF_INET%s, addr=%s port=%d}",
+                        sname, data->family == AF_INET6 ? "6" : "", data->addr, data->port);
+                data->result = RS_DENY;
+                child->retval = -ECONNREFUSED;
+            }
         }
     }
     if (child->sandbox->network == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
@@ -1071,6 +1111,76 @@ static int syscall_handle_chdir(struct tchild *child)
     return 0;
 }
 
+/**
+ * bind(2) handler
+ */
+static int syscall_handle_bind(context_t *ctx, struct tchild *child, int flags)
+{
+    int subcall, family, port;
+    long retval;
+    char *addr;
+
+    if (0 > trace_get_return(child->pid, &retval)) {
+        if (G_UNLIKELY(ESRCH != errno)) {
+            /* Error getting return code using ptrace()
+             * child is still alive, hence the error is fatal.
+             */
+            g_critical("failed to get return code: %s", g_strerror(errno));
+            g_printerr("failed to get return code: %s", g_strerror(errno));
+            exit(-1);
+        }
+        // Child is dead.
+        return -1;
+    }
+
+    if (0 != retval) {
+        /* Bind call failed, ignore it */
+        return 0;
+    }
+
+    if (flags & DECODE_SOCKETCALL) {
+        subcall = trace_decode_socketcall(child->pid, child->personality);
+        if (0 > subcall) {
+            if (G_UNLIKELY(ESRCH != errno)) {
+                /* Error getting socket subcall using ptrace()
+                 * child is still alive, hence the error is fatal.
+                 */
+                g_critical("Failed to decode socketcall: %s", g_strerror(errno));
+                g_printerr("Failed to decode socketcall: %s", g_strerror(errno));
+                exit(-1);
+            }
+            // Child is dead
+            return -1;
+        }
+        if (subcall != SOCKET_SUBCALL_BIND)
+            return 0;
+
+        addr = trace_get_addr(child->pid, child->personality, true, &family, &port);
+    }
+    else if (flags & BIND_CALL)
+        addr = trace_get_addr(child->pid, child->personality, false, &family, &port);
+    else
+        g_assert_not_reached();
+
+    if (NULL == addr) {
+        if (G_UNLIKELY(ESRCH != errno)) {
+            /* Error getting address using ptrace()
+             * child is still alive, hence the error is fatal.
+             */
+            g_critical("Failed to get address of bind() call: %s", g_strerror(errno));
+            g_printerr("Failed to get address of bind() call: %s", g_strerror(errno));
+            exit(-1);
+        }
+        // Child is dead
+        return -1;
+    }
+
+    g_debug("Whitelisting successful bind() addr:%s port:%d", addr, port);
+    netlist_new(&(ctx->network_whitelist), family, port, addr);
+    g_free(addr);
+    return 0;
+}
+
 #if defined(POWERPC)
 /* clone(2) handler for POWERPC because PTRACE_GETEVENTMSG doesn't work
  * reliably on this architecture.
@@ -1125,6 +1235,7 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
  */
 int syscall_handle(context_t *ctx, struct tchild *child)
 {
+    int flags;
     long sno;
     struct checkdata data;
     SystemCall *handler;
@@ -1218,6 +1329,12 @@ int syscall_handle(context_t *ctx, struct tchild *child)
              * working directory. Update current working directory.
              */
             if (0 > syscall_handle_chdir(child))
+                return context_remove_child(ctx, child->pid);
+        }
+        else if (child->sandbox->network == SYDBOX_NETWORK_LOCAL_SELF &&
+                    dispatch_maybind(child->personality, sno)) {
+            flags = dispatch_flags(child->personality, sno);
+            if (0 > syscall_handle_bind(ctx, child, flags))
                 return context_remove_child(ctx, child->pid);
         }
 #if defined(POWERPC)

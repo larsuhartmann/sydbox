@@ -307,6 +307,8 @@ bool sydbox_config_load(const gchar * const file)
                 config->sandbox_network = SYDBOX_NETWORK_DENY;
             else if (0 == strncmp(network, "local", 6))
                 config->sandbox_network = SYDBOX_NETWORK_LOCAL;
+            else if (0 == strncmp(network, "local_self", 11))
+                config->sandbox_network = SYDBOX_NETWORK_LOCAL_SELF;
             else {
                 g_printerr("invalid value for sandbox.network\n");
                 g_key_file_free(config_fd);
@@ -370,6 +372,8 @@ void sydbox_config_write_to_stderr (void)
         g_fprintf(stderr, "sandbox.network = deny\n");
     else if (config->sandbox_network == SYDBOX_NETWORK_LOCAL)
         g_fprintf(stderr, "sandbox.network = local\n");
+    else if (config->sandbox_network == SYDBOX_NETWORK_LOCAL_SELF)
+        g_fprintf(stderr, "sandbox.network = local_self\n");
     else
         g_assert_not_reached();
     g_fprintf(stderr, "prefix.write:\n");

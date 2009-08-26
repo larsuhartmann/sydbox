@@ -22,7 +22,19 @@
 
 #include <stdbool.h>
 
+#include <glib.h>
+
+struct sydbox_addr {
+    int family;
+    int port;
+    char *addr;
+};
+
 bool net_localhost(const char *addr);
+
+void netlist_new(GSList **netlist, int family, int port, const char *addr);
+
+void netlist_free(GSList **netlist);
 
 #endif // SYDBOX_GUARD_NET_H
 

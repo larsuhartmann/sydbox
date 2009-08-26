@@ -47,7 +47,9 @@ struct checkdata {
     gchar *pathlist[4];     // Path arguments
     gchar *rpathlist[4];    // Path arguments (canonicalized)
 
+    int socket_subcall;     // Socketcall() subcall
     int family;             // Family of destination address (AF_UNIX, AF_INET etc.)
+    int port;               // Port of destination address
     gchar *addr;            // Destination address for socket calls
 };
 

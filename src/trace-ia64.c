@@ -232,7 +232,7 @@ int trace_decode_socketcall(pid_t pid, int personality)
     return addr;
 }
 
-char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, bool decode G_GNUC_UNUSED, int *family)
+char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, bool decode G_GNUC_UNUSED, int *family, int *port)
 {
     int save_errno;
     long addr, addrlen;
@@ -271,12 +271,16 @@ char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, bool decode G_GNU
 
     if (family != NULL)
         *family = addrbuf.sa.sa_family;
+    if (port != NULL)
+        *port = -1;
 
     switch (addrbuf.sa.sa_family) {
         case AF_UNIX:
             /* We don't care about unix sockets for now */
             return g_strdup("unix");
         case AF_INET:
+            if (port != NULL)
+                *port = ntohs(addrbuf.sa_in.sin_port);
             if (!inet_ntop(AF_INET, &addrbuf.sa_in.sin_addr, ip, sizeof(ip))) {
                 save_errno = errno;
                 g_info("inet_ntop() failed: %s", g_strerror(errno));
@@ -285,6 +289,8 @@ char *trace_get_addr(pid_t pid, int personality G_GNUC_UNUSED, bool decode G_GNU
             }
             return g_strdup(ip);
         case AF_INET6:
+            if (port != NULL)
+                *port = ntohs(addrbuf.sa6.sin6_port);
             if (!inet_ntop(AF_INET6, &addrbuf.sa6.sin6_addr, ip, sizeof(ip))) {
                 save_errno = errno;
                 g_info("inet_ntop() failed: %s", g_strerror(errno));

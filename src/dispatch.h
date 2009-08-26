@@ -35,6 +35,7 @@ int dispatch_flags(int personality, int sno);
 const char *dispatch_name(int personality, int sno);
 const char *dispatch_mode(int personality);
 bool dispatch_chdir(int personality, int sno);
+bool dispatch_maybind(int personality, int sno);
 #elif defined(X86_64)
 int dispatch_flags32(int sno);
 int dispatch_flags64(int sno);
@@ -42,6 +43,8 @@ const char *dispatch_name32(int sno);
 const char *dispatch_name64(int sno);
 bool dispatch_chdir32(int sno);
 bool dispatch_chdir64(int sno);
+bool dispatch_maybind32(int sno);
+bool dispatch_maybind64(int sno);
 
 #define dispatch_flags(personality, sno) \
     ((personality) == 0) ? dispatch_flags32((sno)) : dispatch_flags64((sno))
@@ -51,6 +54,8 @@ bool dispatch_chdir64(int sno);
     ((personality) == 0) ? "32 bit" : "64 bit"
 #define dispatch_chdir(personality, sno) \
     ((personality) == 0) ? dispatch_chdir32((sno)) : dispatch_chdir64((sno))
+#define dispatch_maybind(personality, sno) \
+    ((personality) == 0) ? dispatch_maybind32((sno)) : dispatch_maybind64((sno))
 
 #else
 #error unsupported architecture

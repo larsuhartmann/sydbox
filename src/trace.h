@@ -181,7 +181,7 @@ int trace_decode_socketcall(pid_t pid, int personality);
  * Returns the destination of network calls.
  * Returns NULL on failure and sets errno accordingly.
  */
-char *trace_get_addr(pid_t pid, int personality, bool decode, int *family);
+char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *port);
 
 #endif // SYDBOX_GUARD_TRACE_H
 
