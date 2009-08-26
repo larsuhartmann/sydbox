@@ -310,7 +310,7 @@ bool sydbox_config_load(const gchar * const file)
             else if (0 == strncmp(network, "local_self", 11))
                 config->sandbox_network = SYDBOX_NETWORK_LOCAL_SELF;
             else {
-                g_printerr("invalid value for sandbox.network\n");
+                g_printerr("error: invalid value for sandbox.network `%s'\n", network);
                 g_key_file_free(config_fd);
                 g_free(config);
                 return false;
