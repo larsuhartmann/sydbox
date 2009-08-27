@@ -1263,7 +1263,7 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
             tchild_inherit(newchild, child);
     }
     else {
-        tchild_new(&(ctx->children), retval);
+        tchild_new(ctx->children, retval);
         newchild = tchild_find(ctx->children, retval);
         tchild_inherit(newchild, child);
     }

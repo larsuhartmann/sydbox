@@ -62,15 +62,15 @@ struct tchild
     struct tdata *sandbox;   // Sandbox data */
 };
 
-void tchild_new(GSList **children, pid_t pid);
+void tchild_new(GHashTable *children, pid_t pid);
 
 void tchild_inherit(struct tchild *child, struct tchild *parent);
 
-void tchild_free(GSList **children);
+void tchild_free_one(gpointer child_ptr);
 
-void tchild_delete(GSList **children, pid_t pid);
+void tchild_delete(GHashTable *children, pid_t pid);
 
-struct tchild *tchild_find(GSList *children, pid_t pid);
+struct tchild *tchild_find(GHashTable *children, pid_t pid);
 
 #endif // SYDBOX_GUARD_CHILDREN_H
 

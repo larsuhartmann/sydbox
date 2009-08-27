@@ -124,21 +124,17 @@ static GOptionEntry entries[] =
 };
 
 // Cleanup functions
+static void cleanup_child(gpointer pid_ptr, gpointer child_ptr G_GNUC_UNUSED, void *userdata G_GNUC_UNUSED)
+{
+    pid_t pid = GPOINTER_TO_INT(pid_ptr);
+    trace_kill(pid);
+}
+
 static void cleanup(void)
 {
-    GSList *walk;
-    struct tchild *child;
-
     sydbox_config_rmfilter_all();
-
     if (NULL != ctx) {
-        walk = ctx->children;
-        while (NULL != walk) {
-            child = (struct tchild *) walk->data;
-            trace_kill(child->pid);
-            walk = g_slist_next(walk);
-        }
-
+        g_hash_table_foreach(ctx->children, cleanup_child, NULL);
         context_free(ctx);
         ctx = NULL;
     }
@@ -248,7 +244,7 @@ static int sydbox_execute_parent(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUS
         exit(-1);
     }
 
-    tchild_new(&(ctx->children), pid);
+    tchild_new(ctx->children, pid);
     ctx->eldest = pid;
     eldest = tchild_find(ctx->children, pid);
     eldest->personality = trace_personality(pid);

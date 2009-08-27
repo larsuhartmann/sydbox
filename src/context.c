@@ -41,22 +41,22 @@ context_t *context_new (void)
     ctx = (context_t *) g_malloc0(sizeof(context_t));
 
     ctx->before_initial_execve = true;
+    ctx->children = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, tchild_free_one);
 
     return ctx;
 }
 
 void context_free(context_t *ctx)
 {
-    if (G_LIKELY(NULL != ctx->children))
-        tchild_free(&(ctx->children));
+    g_hash_table_destroy(ctx->children);
     g_free(ctx);
 }
 
 int context_remove_child(context_t * const ctx, pid_t pid)
 {
     g_info("removing child %d from context", pid);
-    tchild_delete(&ctx->children, pid);
+    g_hash_table_remove(ctx->children, &pid);
 
-    return (NULL == ctx->children) ? -1 : 0;
+    return (0 == g_hash_table_size(ctx->children)) ? -1 : 0;
 }
 

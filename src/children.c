@@ -35,20 +35,20 @@
 #include "sydbox-log.h"
 #include "sydbox-config.h"
 
-void tchild_new(GSList **children, pid_t pid)
+void tchild_new(GHashTable *children, pid_t pid)
 {
     gchar *proc_pid;
     struct tchild *child;
 
     g_debug("new child %i", pid);
-    child = (struct tchild *) g_malloc (sizeof(struct tchild));
+    child = (struct tchild *) g_malloc(sizeof(struct tchild));
     child->flags = TCHILD_NEEDSETUP;
     child->pid = pid;
     child->sno = 0xbadca11;
     child->retval = -1;
     child->cwd = NULL;
     child->inherited = false;
-    child->sandbox = (struct tdata *) g_malloc (sizeof(struct tdata));
+    child->sandbox = (struct tdata *) g_malloc(sizeof(struct tdata));
     child->sandbox->path = true;
     child->sandbox->exec = false;
     child->sandbox->network = false;
@@ -67,7 +67,7 @@ void tchild_new(GSList **children, pid_t pid)
         g_free(proc_pid);
     }
 
-    *children = g_slist_prepend(*children, child);
+    g_hash_table_insert(children, GINT_TO_POINTER(pid), child);
 }
 
 void tchild_inherit(struct tchild *child, struct tchild *parent)
@@ -105,8 +105,10 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
     child->inherited = true;
 }
 
-static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
+void tchild_free_one(gpointer child_ptr)
 {
+    struct tchild *child = (struct tchild *) child_ptr;
+
     if (G_LIKELY(NULL != child->sandbox)) {
         if (G_LIKELY(NULL != child->sandbox->write_prefixes))
             pathnode_free(&(child->sandbox->write_prefixes));
@@ -119,44 +121,13 @@ static void tchild_free_one(struct tchild *child, void *user_data G_GNUC_UNUSED)
     g_free(child);
 }
 
-void tchild_free(GSList **children)
+void tchild_delete(GHashTable *children, pid_t pid)
 {
-    g_debug("freeing children %p", (void *) *children);
-    g_slist_foreach(*children, (GFunc) tchild_free_one, NULL);
-    g_slist_free(*children);
-    *children = NULL;
+    g_hash_table_remove(children, GINT_TO_POINTER(pid));
 }
 
-void tchild_delete(GSList **children, pid_t pid)
+struct tchild *tchild_find(GHashTable *children, pid_t pid)
 {
-    GSList *walk;
-    struct tchild *child;
-
-    walk = *children;
-    while (NULL != walk) {
-        child = (struct tchild *) walk->data;
-        if (child->pid == pid) {
-            *children = g_slist_remove_link(*children, walk);
-            tchild_free_one(walk->data, NULL);
-            g_slist_free(walk);
-            break;
-        }
-        walk = g_slist_next(walk);
-    }
-}
-
-struct tchild *tchild_find(GSList *children, pid_t pid)
-{
-    GSList *walk;
-    struct tchild *child;
-
-    walk = children;
-    while (NULL != walk) {
-        child = (struct tchild *) walk->data;
-        if (pid == child->pid)
-            return child;
-        walk = g_slist_next(walk);
-    }
-    return NULL;
+    return g_hash_table_lookup(children, GINT_TO_POINTER(pid));
 }
 

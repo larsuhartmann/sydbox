@@ -99,7 +99,7 @@ static int xfork(context_t *ctx, struct tchild *child)
         /* Child hasn't been born yet, add it to the list of children and
          * inherit parent's sandbox data.
          */
-        tchild_new(&(ctx->children), childpid);
+        tchild_new(ctx->children, childpid);
         newchild = tchild_find(ctx->children, childpid);
         tchild_inherit(newchild, child);
     }
@@ -176,7 +176,7 @@ int trace_loop(context_t *ctx)
                      * event.
                      */
                     g_debug("setting up prematurely born child %i", pid);
-                    tchild_new(&(ctx->children), pid);
+                    tchild_new(ctx->children, pid);
                     child = tchild_find(ctx->children, pid);
                     ret = xsetup(ctx, child);
                     if (0 != ret)
@@ -249,7 +249,7 @@ int trace_loop(context_t *ctx)
                 }
                 else
                     g_debug("child %i exited with return code: %d", pid, ret);
-                tchild_delete(&(ctx->children), pid);
+                tchild_delete(ctx->children, pid);
                 break;
             case E_EXIT_SIGNAL:
                 if (G_UNLIKELY(ctx->eldest == pid)) {
@@ -260,7 +260,7 @@ int trace_loop(context_t *ctx)
                 }
                 else
                     g_info("child %i exited with signal %d", pid, WTERMSIG(status));
-                tchild_delete(&(ctx->children), pid);
+                tchild_delete(ctx->children, pid);
                 break;
             case E_UNKNOWN:
                 g_info("unknown signal %#x received from child %i", WSTOPSIG(status), pid);
