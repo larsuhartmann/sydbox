@@ -416,44 +416,25 @@ bool sydbox_config_load(const gchar * const file)
 
     // Get net.whitelist
     char **netwhitelist;
-    if (g_getenv(ENV_NET_WHITELIST))
-        netwhitelist = g_strsplit(g_getenv(ENV_NET_WHITELIST), ";", 0);
-    else
-        netwhitelist = g_key_file_get_string_list(config_fd, "net", "whitelist", NULL, NULL);
+    netwhitelist = g_key_file_get_string_list(config_fd, "net", "whitelist", NULL, NULL);
     if (NULL != netwhitelist) {
         for (unsigned int i = 0; NULL != netwhitelist[i]; i++) {
-            if (0 == strncmp(netwhitelist[i], "unix://", 7))
-                netlist_new(&config->network_whitelist, AF_UNIX, -1, netwhitelist[i] + 7);
-            else if (0 == strncmp(netwhitelist[i], "inet://", 7)) {
-                char *addr = g_strdup(netwhitelist[i] + 7);
-                char *port = strrchr(addr, ':');
-                if (NULL == port || (port + 1) == '\0') {
-                    g_printerr("error: malformed address `%s' at position %d of net.whitelist\n", netwhitelist[i], i);
-                    g_strfreev(netwhitelist);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                }
-                addr[port - addr] = '\0';
-                netlist_new(&config->network_whitelist, AF_INET, atoi(++port), addr);
-                g_free(addr);
+            if (0 > netlist_new_from_string(&config->network_whitelist, netwhitelist[i], false)) {
+                g_printerr("error: malformed address `%s' at position %d of net.whitelist\n", netwhitelist[i], i);
+                g_strfreev(netwhitelist);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
             }
-            else if (0 == strncmp(netwhitelist[i], "inet6://", 8)) {
-                char *addr = g_strdup(netwhitelist[i] + 8);
-                char *port = strrchr(addr, ':');
-                if (NULL == port || (port + 1) == '\0') {
-                    g_printerr("error: malformed address `%s' at position %d of net.whitelist\n", netwhitelist[i], i);
-                    g_strfreev(netwhitelist);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                }
-                addr[port - addr] = '\0';
-                netlist_new(&config->network_whitelist, AF_INET6, atoi(++port), addr);
-                g_free(addr);
-            }
-            else {
-                g_printerr("error: malformed address `%s' at position %d\n", netwhitelist[i], i);
+        }
+        g_strfreev(netwhitelist);
+    }
+
+    if (g_getenv(ENV_NET_WHITELIST)) {
+        netwhitelist = g_strsplit(g_getenv(ENV_NET_WHITELIST), ";", 0);
+        for (unsigned int i = 0; NULL != netwhitelist[i]; i++) {
+            if (0 > netlist_new_from_string(&config->network_whitelist, netwhitelist[i], false)) {
+                g_printerr("error: malformed address `%s' at position %d of "ENV_NET_WHITELIST"\n", netwhitelist[i], i);
                 g_strfreev(netwhitelist);
                 g_key_file_free(config_fd);
                 g_free(config);

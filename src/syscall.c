@@ -427,37 +427,10 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         data->result = RS_MAGIC;
         whitelist = sydbox_config_get_network_whitelist();
         rpath = path + CMD_NET_WHITELIST_LEN;
-        if (0 == strncmp(rpath, "unix://", 7)) {
-            netlist_new(&whitelist, AF_UNIX, -1, rpath + 7);
+        if (0 > netlist_new_from_string(&whitelist, rpath, true))
+            g_warning("malformed whitelist address `%s'", rpath);
+        else
             sydbox_config_set_network_whitelist(whitelist);
-            g_debug("New address for whitelist {family=AF_UNIX path=%s}", rpath + 7);
-        }
-        else if (0 == strncmp(rpath, "inet://", 7)) {
-            char *addr = g_strdup(rpath + 7);
-            char *port = strrchr(addr, ':');
-            if (NULL == port || port + 1 == '\0')
-                g_warning("malformed whitelist address `%s'", rpath);
-            else {
-                addr[port - addr] = '\0';
-                netlist_new(&whitelist, AF_INET, atoi(++port), addr);
-                sydbox_config_set_network_whitelist(whitelist);
-                g_debug("New address for whitelist {family=AF_INET addr=%s port=%d}", addr, atoi(port));
-            }
-            g_free(addr);
-        }
-        else if (0 == strncmp(rpath, "inet6://", 8)) {
-            char *addr = g_strdup(rpath + 7);
-            char *port = strrchr(addr, ':');
-            if (NULL == port || (port + 1) == '\0')
-                g_warning("malformed whitelist address `%s'", rpath);
-            else {
-                addr[port - addr] = '\0';
-                netlist_new(&whitelist, AF_INET6, atoi(++port), addr);
-                sydbox_config_set_network_whitelist(whitelist);
-                g_debug("New address for whitelist {family=AF_INET6 addr=%s port=%d}", addr, atoi(port));
-            }
-            g_free(addr);
-        }
     }
     else if (G_UNLIKELY(child->sandbox->path || !path_magic_enabled(path)))
         data->result = RS_MAGIC;
