@@ -184,13 +184,13 @@ static gchar *get_groupname (void)
 static void G_GNUC_NORETURN sydbox_execute_child(int argc G_GNUC_UNUSED, char **argv)
 {
     if (trace_me() < 0) {
-        g_printerr("failed to set tracing: %s", g_strerror (errno));
+        g_printerr("failed to set tracing: %s", g_strerror(errno));
         _exit(-1);
     }
 
     /* stop and wait for the parent to resume us with trace_syscall */
     if (kill(getpid(), SIGSTOP) < 0) {
-        g_printerr("failed to send SIGSTOP: %s", g_strerror (errno));
+        g_printerr("failed to send SIGSTOP: %s", g_strerror(errno));
         _exit(-1);
     }
 
@@ -203,7 +203,7 @@ static void G_GNUC_NORETURN sydbox_execute_child(int argc G_GNUC_UNUSED, char **
     _exit(-1);
 }
 
-static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
+static int sydbox_execute_parent(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED, pid_t pid)
 {
     int status, retval;
     struct sigaction new_action, old_action;
@@ -284,12 +284,12 @@ static int sydbox_execute_parent (int argc G_GNUC_UNUSED, char **argv G_GNUC_UNU
     return retval;
 }
 
-static int sydbox_internal_main (int argc, char **argv)
+static int sydbox_internal_main(int argc, char **argv)
 {
     pid_t pid;
 
     syscall_init();
-    ctx = context_new ();
+    ctx = context_new();
 
     g_atexit (cleanup);
 
@@ -301,10 +301,10 @@ static int sydbox_internal_main (int argc, char **argv)
         return EXIT_FAILURE;
 
     if (verbosity >= 0)
-        sydbox_config_set_verbosity (verbosity);
+        sydbox_config_set_verbosity(verbosity);
 
     if (logfile)
-        sydbox_config_set_log_file (logfile);
+        sydbox_config_set_log_file(logfile);
 
     /* initialize logging as early as possible */
     sydbox_log_init();
@@ -339,12 +339,12 @@ static int sydbox_internal_main (int argc, char **argv)
         GString *command = NULL;
 
         if (!(username = get_username())) {
-            g_printerr("failed to get password file entry: %s", g_strerror (errno));
+            g_printerr("failed to get password file entry: %s", g_strerror(errno));
             return EXIT_FAILURE;
         }
 
         if (!(groupname = get_groupname())) {
-            g_printerr("failed to get group file entry: %s", g_strerror (errno));
+            g_printerr("failed to get group file entry: %s", g_strerror(errno));
             g_free(username);
             return EXIT_FAILURE;
         }
@@ -361,8 +361,14 @@ static int sydbox_internal_main (int argc, char **argv)
         g_string_free(command, TRUE);
     }
 
+    /* Set some environment variables so the children can check.
+     */
+    g_setenv("SYDBOX_ACTIVE", "1", 1);
+    g_setenv("SYDBOX_VERSION", VERSION, 1);
+    g_setenv("SYDBOX_GITHEAD", GIT_HEAD, 1);
+
     if ((pid = fork()) < 0) {
-        g_printerr("failed to fork: %s", g_strerror (errno));
+        g_printerr("failed to fork: %s", g_strerror(errno));
         return EXIT_FAILURE;
     }
 
@@ -372,7 +378,7 @@ static int sydbox_internal_main (int argc, char **argv)
         return sydbox_execute_parent(argc, argv, pid);
 }
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
     GError *parse_error = NULL;
     GOptionContext *context;
