@@ -74,7 +74,7 @@ command line parameters.
 
 *-N*::
 *--sandbox-network*::
-    Mode of network sandboxing (one of: allow, deny, local, local_self)
+    Enable network sandboxing
 
 *-W*::
 *--wait-all*::
@@ -150,7 +150,7 @@ according to the command. Currently there's one type of magic commands:
   * */dev/sydbox/lock*              stat'ing this path locks magic commands.
   * */dev/sydbox/exec_lock*         stat'ing this path locks magic commands when an execve(2) is encountered.
   * */dev/sydbox/sandbox_exec*      stat'ing this path turns on execve(2) sandboxing.
-  * */dev/sydbox/unsandbox_exec*    stat'ing this path turns off execve(2) sandboxing.
+  * */dev/sydbox/sandunbox_exec*    stat'ing this path turns off execve(2) sandboxing.
   * */dev/sydbox/write/PATH*        stat'ing this path adds *PATH* to the list of write allowed paths.
   * */dev/sydbox/unwrite/PATH*      stat'ing this path removes *PATH* from the list of write allowed paths.
   * */dev/sydbox/net/allow*         stat'ing this path allows access to network.
