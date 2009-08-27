@@ -28,4 +28,11 @@ title: Sydbox the other sandbox
 - Read [TODO](http://github.com/alip/sydbox/blob/master/TODO.mkd) and see open [bugs](http://bit.ly/MzeIv).
 - Format patches are preferred. Either mail us or poke us on IRC.
 
+## FAQ ##
+
+- Why am I getting an access violation in my build directory?
+
+  This can happen if the $PALUDIS_TMPDIR environment variable is beneath a symlinked directory or is
+  a symlink itself, since mkdir() resolves symlinks and so does sydbox.
+
 <!-- vim: set tw=100 ft=mkd spell spelllang=en sw=4 sts=4 et : -->
