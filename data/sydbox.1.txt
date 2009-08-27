@@ -130,6 +130,14 @@ SYDBOX_NET_RESTRICT_CONNECT
 This variable controls the behaviour of network sandboxing when the network
 sandboxing mode is local. This is equivalent to *-R* option.
 
+SYDBOX_NET_WHITELIST
+~~~~~~~~~~~~~~~~~~~~
+This variable is a semicolon delimited list of whitelisted network connections.
+The values can be in one of the following forms:
+- unix:///path/to/socket
+- inet://ipv4_address:port
+- inet6://ipv6_address:port
+
 SYDBOX_CONFIG
 ~~~~~~~~~~~~~~
 This variable specifies the configuration file to be used by sydbox. This is

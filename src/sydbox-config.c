@@ -415,7 +415,11 @@ bool sydbox_config_load(const gchar * const file)
     }
 
     // Get net.whitelist
-    char **netwhitelist = g_key_file_get_string_list(config_fd, "net", "whitelist", NULL, NULL);
+    char **netwhitelist;
+    if (g_getenv(ENV_NET_WHITELIST))
+        netwhitelist = g_strsplit(g_getenv(ENV_NET_WHITELIST), ";", 0);
+    else
+        netwhitelist = g_key_file_get_string_list(config_fd, "net", "whitelist", NULL, NULL);
     if (NULL != netwhitelist) {
         for (unsigned int i = 0; NULL != netwhitelist[i]; i++) {
             if (0 == strncmp(netwhitelist[i], "unix://", 7))

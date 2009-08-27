@@ -36,6 +36,7 @@
 #define ENV_NET                     "SYDBOX_NET"
 #define ENV_NET_MODE                "SYDBOX_NET_MODE"
 #define ENV_NET_RESTRICT_CONNECT    "SYDBOX_NET_RESTRICT_CONNECT"
+#define ENV_NET_WHITELIST           "SYDBOX_NET_WHITELIST"
 #define ENV_NO_COLOUR               "SYDBOX_NO_COLOUR"
 #define ENV_NO_CONFIG               "SYDBOX_NO_CONFIG"
 #define ENV_LOCK                    "SYDBOX_LOCK"
