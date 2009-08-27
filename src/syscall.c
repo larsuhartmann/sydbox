@@ -869,7 +869,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
             child->retval = -ECONNREFUSED;
         }
     }
-    if (child->sandbox->network_mode == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
+    if (child->sandbox->network && child->sandbox->network_mode == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
         sydbox_access_violation(child->pid, NULL, "%s()", sname);
         data->result = RS_DENY;
         child->retval = -EACCES;
