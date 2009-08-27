@@ -4,6 +4,10 @@ News for sydbox
 This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
+0.1_rc6:
+    * Changed network interface with a more cleaner one.
+    * Support for network whitelisting.
+
 0.1_rc5:
     * Proper network sandboxing. Now sydbox is able to restrict network access
       to only local connections.
