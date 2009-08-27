@@ -1055,21 +1055,6 @@ void syscall_free(void)
     SystemCallHandler = NULL;
 }
 
-/* Lookup a handler for the system call.
- * Return the handler if found, NULL otherwise.
- */
-SystemCall *syscall_get_handler(int personality, int no)
-{
-    int flags;
-
-    flags = dispatch_flags(personality, no);
-    if (-1 == flags)
-        return NULL;
-    SystemCallHandler->no = no;
-    SystemCallHandler->flags = flags;
-    return SystemCallHandler;
-}
-
 /* BAD_SYSCALL handler for system calls.
  * This function restores real call number for the denied system call and sets
  * return code.
@@ -1299,10 +1284,10 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
  */
 int syscall_handle(context_t *ctx, struct tchild *child)
 {
+    bool isbadcall;
     int flags;
     long sno;
     struct checkdata data;
-    SystemCall *handler;
 
     // Get the system call number of child
     if (0 > trace_get_syscall(child->pid, &sno)) {
@@ -1318,77 +1303,75 @@ int syscall_handle(context_t *ctx, struct tchild *child)
         return context_remove_child(ctx, child->pid);
     }
 
+    isbadcall = IS_BAD_SYSCALL(sno);
+    if (!isbadcall) {
+        flags = dispatch_flags(child->personality, sno);
+        if (0 > flags)
+            return 0;
+    }
+    else
+        flags = -1;
+
     /* Get the name of the syscall for logging
      * If system call no is BAD_SYSCALL, this is a faked system call and the real
      * system call number is stored in child->sno.
      */
-    sname = dispatch_name(child->personality, IS_BAD_SYSCALL(sno) ? child->sno : (unsigned long) sno);
+    sname = dispatch_name(child->personality, isbadcall ? child->sno : (unsigned long) sno);
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         g_debug_trace("child %i is entering system call %lu(%s)", child->pid, sno, sname);
 
-        /* Get handler for the system call
-         */
-        handler = syscall_get_handler(child->personality, sno);
-        if (NULL == handler) {
-            /* There's no handler for this system call.
-             * Safe system call, allow access.
-             */
-            g_debug_trace("allowing access to system call %lu(%s)", sno, sname);
-        }
-        else {
-            /* There's a handler for this system call,
-             * call the handler.
-             */
-            memset(&data, 0, sizeof(struct checkdata));
-            g_signal_emit_by_name(handler, "check", ctx, child, &data);
+        /* Call the handler after setting system call number and flags. */
+        SystemCallHandler->no = sno;
+        SystemCallHandler->flags = flags;
+        memset(&data, 0, sizeof(struct checkdata));
+        g_signal_emit_by_name(SystemCallHandler, "check", ctx, child, &data);
 
-            /* Check result */
-            switch(data.result) {
-                case RS_ERROR:
-                    if (ESRCH == errno)
-                        return context_remove_child(ctx, child->pid);
-                    else if (EIO != errno && EFAULT != errno) {
-                        g_critical("error while checking system call %lu(%s) for access: %s",
-                                sno, sname, g_strerror(errno));
-                        g_printerr("error while checking system call %lu(%s) for access: %s",
-                                sno, sname, g_strerror(errno));
+        /* Check result */
+        switch(data.result) {
+            case RS_ERROR:
+                if (ESRCH == errno)
+                    return context_remove_child(ctx, child->pid);
+                else if (EIO != errno && EFAULT != errno) {
+                    g_critical("error while checking system call %lu(%s) for access: %s",
+                            sno, sname, g_strerror(errno));
+                    g_printerr("error while checking system call %lu(%s) for access: %s",
+                            sno, sname, g_strerror(errno));
+                    exit(-1);
+                }
+                /* fall through */
+            case RS_DENY:
+                g_debug("denying access to system call %lu(%s)", sno, sname);
+                child->sno = sno;
+                if (0 > trace_set_syscall(child->pid, BAD_SYSCALL)) {
+                    if (G_UNLIKELY(ESRCH != errno)) {
+                        g_critical("failed to set system call: %s", g_strerror(errno));
+                        g_printerr("failed to set system call: %s", g_strerror(errno));
                         exit(-1);
                     }
-                    /* fall through */
-                case RS_DENY:
-                    g_debug("denying access to system call %lu(%s)", sno, sname);
-                    child->sno = sno;
-                    if (0 > trace_set_syscall(child->pid, BAD_SYSCALL)) {
-                        if (G_UNLIKELY(ESRCH != errno)) {
-                            g_critical("failed to set system call: %s", g_strerror(errno));
-                            g_printerr("failed to set system call: %s", g_strerror(errno));
-                            exit(-1);
-                        }
-                        return context_remove_child(ctx, child->pid);
-                    }
-                    break;
-                case RS_ALLOW:
-                case RS_NOWRITE:
-                case RS_MAGIC:
-                    g_debug_trace("allowing access to system call %lu(%s)", sno, sname);
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+                    return context_remove_child(ctx, child->pid);
+                }
+                break;
+            case RS_ALLOW:
+            case RS_NOWRITE:
+            case RS_MAGIC:
+                g_debug_trace("allowing access to system call %lu(%s)", sno, sname);
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
     else { // Exiting sytem call
         g_debug_trace("child %i is exiting system call %lu(%s)", child->pid, sno, sname);
 
-        if (IS_BAD_SYSCALL(sno)) {
+        if (isbadcall) {
             /* Child is exiting a denied system call.
              */
             if (0 > syscall_handle_badcall(child))
                 return context_remove_child(ctx, child->pid);
         }
-        else if (dispatch_chdir(child->personality, sno)) {
+        else if (flags & CHDIR_CALL) {
             /* Child is exiting a system call that may have changed its current
              * working directory. Update current working directory.
              */
@@ -1401,7 +1384,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                 return context_remove_child(ctx, child->pid);
         }
 #if defined(POWERPC)
-        else if (dispatch_clone(child->personality, sno)) {
+        else if (flags & CLONE_CALL) {
             if (0 > syscall_handle_clone(ctx, child))
                 return context_remove_child(ctx, child->pid);
         }

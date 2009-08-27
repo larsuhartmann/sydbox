@@ -20,6 +20,10 @@
 #ifndef SYDBOX_GUARD_FLAGS_H
 #define SYDBOX_GUARD_FLAGS_H 1
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 // System call dispatch flags
 #define OPEN_MODE               (1 << 0)  // Check the mode argument of open()
 #define OPEN_MODE_AT            (1 << 1)  // Check the mode argument of openat()
@@ -50,6 +54,10 @@
 #define BIND_CALL               (1 << 26) // Check if the bind() call matches the accepted bind IPs
 #define NET_CALL                (1 << 27) // Accepting the system call depends on the net flag
 #define EXEC_CALL               (1 << 28) // Allowing the system call depends on the exec flag
+#define CHDIR_CALL              (1 << 29) // This call may change the current working directory
+#if defined(POWERPC)
+#define CLONE_CALL              (1 << 30) // This call returns the process id of a newborn child.
+#endif // defined(POWERPC)
 
 #endif // SYDBOX_GUARD_FLAGS_H
 

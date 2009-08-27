@@ -20,6 +20,10 @@
 #ifndef SYDBOX_GUARD_DISPATCH_TABLE_H
 #define SYDBOX_GUARD_DISPATCH_TABLE_H 1
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include "flags.h"
 
 // System call dispatch table
@@ -89,6 +93,11 @@ static const struct syscall_def {
     {__NR_bind,         BIND_CALL | NET_CALL},
 #endif
     {__NR_execve,       EXEC_CALL},
+    {__NR_chdir,        CHDIR_CALL},
+    {__NR_fchdir,       CHDIR_CALL},
+#if defined(POWERPC)
+    {__NR_clone,        CLONE_CALL},
+#endif // defined(POWERPC)
     {-1,                -1},
 };
 
