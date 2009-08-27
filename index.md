@@ -32,7 +32,7 @@ title: Sydbox the other sandbox
 
 - Why am I getting an access violation in my build directory?
 
-  This can happen if the $PALUDIS_TMPDIR environment variable is beneath a symlinked directory or is
+  This can happen if the **$PALUDIS\_TMPDIR** environment variable is beneath a symlinked directory or is
   a symlink itself, since mkdir() resolves symlinks and so does sydbox.
 
 <!-- vim: set tw=100 ft=mkd spell spelllang=en sw=4 sts=4 et : -->
