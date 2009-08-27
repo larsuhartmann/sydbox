@@ -117,7 +117,18 @@ sandboxing is on.
 SYDBOX_NET
 ~~~~~~~~~~~
 This variable controls the behaviour of sydbox with regards to network access.
-If it is set, sydbox will deny network connections.
+If it is set, sydbox will deny network connections. This is equivalent to *-N*
+option.
+
+SYDBOX_NET_MODE
+~~~~~~~~~~~~~~~
+This variable controls the behaviour the network sandboxing mode of sydbox.
+Possible values are allow, deny and local. This is equivalent to *-M* option.
+
+SYDBOX_NET_RESTRICT_CONNECT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This variable controls the behaviour of network sandboxing when the network
+sandboxing mode is local. This is equivalent to *-R* option.
 
 SYDBOX_CONFIG
 ~~~~~~~~~~~~~~

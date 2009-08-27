@@ -27,17 +27,19 @@
 #include <glib.h>
 
 // Environment variables
-#define ENV_LOG             "SYDBOX_LOG"
-#define ENV_CONFIG          "SYDBOX_CONFIG"
-#define ENV_WRITE           "SYDBOX_WRITE"
-#define ENV_EXEC_ALLOW      "SYDBOX_EXEC_ALLOW"
-#define ENV_DISABLE_PATH    "SYDBOX_DISABLE_PATH"
-#define ENV_EXEC            "SYDBOX_EXEC"
-#define ENV_NET             "SYDBOX_NET"
-#define ENV_NO_COLOUR       "SYDBOX_NO_COLOUR"
-#define ENV_NO_CONFIG       "SYDBOX_NO_CONFIG"
-#define ENV_LOCK            "SYDBOX_LOCK"
-#define ENV_WAIT_ALL        "SYDBOX_WAIT_ALL"
+#define ENV_LOG                     "SYDBOX_LOG"
+#define ENV_CONFIG                  "SYDBOX_CONFIG"
+#define ENV_WRITE                   "SYDBOX_WRITE"
+#define ENV_EXEC_ALLOW              "SYDBOX_EXEC_ALLOW"
+#define ENV_DISABLE_PATH            "SYDBOX_DISABLE_PATH"
+#define ENV_EXEC                    "SYDBOX_EXEC"
+#define ENV_NET                     "SYDBOX_NET"
+#define ENV_NET_MODE                "SYDBOX_NET_MODE"
+#define ENV_NET_RESTRICT_CONNECT    "SYDBOX_NET_RESTRICT_CONNECT"
+#define ENV_NO_COLOUR               "SYDBOX_NO_COLOUR"
+#define ENV_NO_CONFIG               "SYDBOX_NO_CONFIG"
+#define ENV_LOCK                    "SYDBOX_LOCK"
+#define ENV_WAIT_ALL                "SYDBOX_WAIT_ALL"
 
 enum {
     SYDBOX_NETWORK_ALLOW,

@@ -353,8 +353,8 @@ bool sydbox_config_load(const gchar * const file)
     }
 
     // Get net.default
-    char *netdefault = g_key_file_get_string(config_fd, "net", "default", NULL);
-    if (NULL != netdefault) {
+    if (g_getenv(ENV_NET_MODE)) {
+        const gchar *netdefault = g_getenv(ENV_NET_MODE);
         if (0 == strncmp(netdefault, "allow", 6))
             config->network_mode = SYDBOX_NETWORK_ALLOW;
         else if (0 == strncmp(netdefault, "deny", 5))
@@ -362,32 +362,55 @@ bool sydbox_config_load(const gchar * const file)
         else if (0 == strncmp(netdefault, "local", 6))
             config->network_mode = SYDBOX_NETWORK_LOCAL;
         else {
-            g_printerr("error: invalid value for net.default `%s'\n", netdefault);
+            g_printerr("error: invalid value for "ENV_NET_MODE" `%s'\n", netdefault);
             g_key_file_free(config_fd);
             g_free(config);
             return false;
         }
     }
-
-    // Get net.restrict_connect
-    config->network_restrict_connect = g_key_file_get_boolean(config_fd, "net", "restrict_connect", &config_error);
-    if (config_error) {
-        switch (config_error->code) {
-            case G_KEY_FILE_ERROR_INVALID_VALUE:
-                g_printerr("net.restrict_connect not a boolean: %s", config_error->message);
-                g_error_free(config_error);
+    else {
+        gchar *netdefault = g_key_file_get_string(config_fd, "net", "default", NULL);
+        if (NULL != netdefault) {
+            if (0 == strncmp(netdefault, "allow", 6))
+                config->network_mode = SYDBOX_NETWORK_ALLOW;
+            else if (0 == strncmp(netdefault, "deny", 5))
+                config->network_mode = SYDBOX_NETWORK_DENY;
+            else if (0 == strncmp(netdefault, "local", 6))
+                config->network_mode = SYDBOX_NETWORK_LOCAL;
+            else {
+                g_printerr("error: invalid value for net.default `%s'\n", netdefault);
+                g_free(netdefault);
                 g_key_file_free(config_fd);
                 g_free(config);
                 return false;
-            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                g_error_free(config_error);
-                config_error = NULL;
-                config->network_restrict_connect = false;
-                break;
-            default:
-                g_assert_not_reached();
-                break;
+            }
+            g_free(netdefault);
+        }
+    }
+
+    // Get net.restrict_connect
+    if (g_getenv(ENV_NET_RESTRICT_CONNECT))
+        config->network_restrict_connect = true;
+    else {
+        config->network_restrict_connect = g_key_file_get_boolean(config_fd, "net", "restrict_connect", &config_error);
+        if (config_error) {
+            switch (config_error->code) {
+                case G_KEY_FILE_ERROR_INVALID_VALUE:
+                    g_printerr("net.restrict_connect not a boolean: %s", config_error->message);
+                    g_error_free(config_error);
+                    g_key_file_free(config_fd);
+                    g_free(config);
+                    return false;
+                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                    g_error_free(config_error);
+                    config_error = NULL;
+                    config->network_restrict_connect = false;
+                    break;
+                default:
+                    g_assert_not_reached();
+                    break;
+            }
         }
     }
 
