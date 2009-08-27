@@ -321,6 +321,11 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
     GSList *whitelist;
 
     g_debug("checking if stat(\"%s\") is magic", path);
+    if (G_LIKELY(!path_magic_dir(path))) {
+        g_debug("stat(\"%s\") not magic", path);
+        return;
+    }
+
     if (G_UNLIKELY(path_magic_on(path))) {
         data->result = RS_MAGIC;
         child->sandbox->path = true;
@@ -454,7 +459,7 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
             g_free(addr);
         }
     }
-    else if (G_UNLIKELY(path_magic_dir(path) && (child->sandbox->path || !path_magic_enabled(path))))
+    else if (G_UNLIKELY(child->sandbox->path || !path_magic_enabled(path)))
         data->result = RS_MAGIC;
 
     if (data->result == RS_MAGIC) {
