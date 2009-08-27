@@ -76,6 +76,14 @@ command line parameters.
 *--sandbox-network*::
     Enable network sandboxing
 
+*-M*::
+*--network-mode*::
+    Network sandboxing mode, one of: allow, deny, local
+
+*-R*::
+*--network-restrict-connect*::
+    Restrict connections for network mode local
+
 *-W*::
 *--wait-all*::
     Wait for all children to exit before exiting

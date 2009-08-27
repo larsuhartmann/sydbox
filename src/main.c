@@ -80,11 +80,13 @@ static gint verbosity = -1;
 
 static gchar *logfile;
 static gchar *config_file;
+static gchar *sandbox_net_mode;
 
 static gboolean dump;
 static gboolean disable_sandbox_path;
 static gboolean sandbox_exec;
 static gboolean sandbox_net;
+static gboolean sandbox_net_restrict_connect;
 static gboolean lock;
 static gboolean colour;
 static gboolean version;
@@ -112,6 +114,10 @@ static GOptionEntry entries[] =
         "Enable execve(2) sandboxing",    NULL },
     { "sandbox-network",        'N', 0, G_OPTION_ARG_NONE,                         &sandbox_net,
         "Enable network sandboxing",      NULL },
+    { "network-mode",           'M', 0, G_OPTION_ARG_STRING,                       &sandbox_net_mode,
+        "Network sandboxing mode (one of: allow, deny, local)", NULL},
+    { "network-restrict-connect", 'R', 0, G_OPTION_ARG_NONE,                       &sandbox_net_restrict_connect,
+        "Restrict network connections for network mode local", NULL},
     { "wait-all",               'W', 0, G_OPTION_ARG_NONE,                         &wait_all,
         "Wait for all children to exit before exiting", NULL},
     { NULL, -1, 0, 0, NULL, NULL, NULL },
@@ -322,6 +328,22 @@ static int sydbox_internal_main(int argc, char **argv)
 
     if (sandbox_net)
         sydbox_config_set_sandbox_network(true);
+
+    if (NULL != sandbox_net_mode) {
+        if (0 == strncmp(sandbox_net_mode, "allow", 6))
+            sydbox_config_set_network_mode(SYDBOX_NETWORK_ALLOW);
+        else if (0 == strncmp(sandbox_net_mode, "deny", 5))
+            sydbox_config_set_network_mode(SYDBOX_NETWORK_DENY);
+        else if (0 == strncmp(sandbox_net_mode, "local", 6))
+            sydbox_config_set_network_mode(SYDBOX_NETWORK_LOCAL);
+        else {
+            g_printerr("error: invalid mode for --network-mode `%s'\n", sandbox_net_mode);
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (sandbox_net_restrict_connect)
+        sydbox_config_set_network_restrict_connect(true);
 
     if (lock)
         sydbox_config_set_disallow_magic_commands(true);
