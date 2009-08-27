@@ -32,8 +32,8 @@ static const struct syscall_def {
 #if defined(__NR_chown32)
     {__NR_chown32,      CHECK_PATH},
 #endif
-    {__NR_open,         CHECK_PATH | RETURNS_FD | OPEN_MODE},
-    {__NR_creat,        CHECK_PATH | CAN_CREAT | RETURNS_FD},
+    {__NR_open,         CHECK_PATH | OPEN_MODE},
+    {__NR_creat,        CHECK_PATH | CAN_CREAT},
     {__NR_stat,         MAGIC_STAT},
 #if defined(__NR_stat64)
     {__NR_stat64,       MAGIC_STAT},
@@ -67,7 +67,7 @@ static const struct syscall_def {
     {__NR_utimes,       CHECK_PATH},
 #endif
     {__NR_unlink,       CHECK_PATH | DONT_RESOLV},
-    {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT | RETURNS_FD},
+    {__NR_openat,       CHECK_PATH_AT | OPEN_MODE_AT},
     {__NR_mkdirat,      CHECK_PATH_AT | MUST_CREAT_AT},
     {__NR_mknodat,      CHECK_PATH_AT | MUST_CREAT_AT},
     {__NR_fchownat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW4},
