@@ -55,7 +55,7 @@ void context_free(context_t *ctx)
 int context_remove_child(context_t * const ctx, pid_t pid)
 {
     g_info("removing child %d from context", pid);
-    g_hash_table_remove(ctx->children, &pid);
+    g_hash_table_remove(ctx->children, GINT_TO_POINTER(pid));
 
     return (0 == g_hash_table_size(ctx->children)) ? -1 : 0;
 }
