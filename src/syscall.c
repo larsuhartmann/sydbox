@@ -1283,7 +1283,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
 
     isbadcall = IS_BAD_SYSCALL(sno);
     if (!isbadcall) {
-        flags = dispatch_flags(child->personality, sno);
+        flags = dispatch_lookup(child->personality, sno);
         if (0 > flags)
             return 0;
     }
@@ -1357,7 +1357,6 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                 return context_remove_child(ctx, child->pid);
         }
         else if (child->sandbox->network_restrict_connect && dispatch_maybind(child->personality, sno)) {
-            flags = dispatch_flags(child->personality, sno);
             if (0 > syscall_handle_bind(child, flags))
                 return context_remove_child(ctx, child->pid);
         }

@@ -132,6 +132,8 @@ static void cleanup_child(gpointer pid_ptr, gpointer child_ptr G_GNUC_UNUSED, vo
 
 static void cleanup(void)
 {
+    dispatch_free();
+    syscall_free();
     sydbox_config_rmfilter_all();
     if (NULL != ctx) {
         g_hash_table_foreach(ctx->children, cleanup_child, NULL);
@@ -282,7 +284,6 @@ static int sydbox_execute_parent(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUS
     retval = trace_loop (ctx);
     g_info("exited loop with return value: %d", retval);
 
-    syscall_free();
     return retval;
 }
 
@@ -290,6 +291,7 @@ static int sydbox_internal_main(int argc, char **argv)
 {
     pid_t pid;
 
+    dispatch_init();
     syscall_init();
     ctx = context_new();
 

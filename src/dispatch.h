@@ -29,20 +29,36 @@
 #define UNKNOWN_SYSCALL     "unknown"
 
 #if defined(I386) || defined(IA64) || defined(POWERPC)
-int dispatch_flags(int personality, int sno);
+void dispatch_init(void);
+void dispatch_free(void);
+int dispatch_lookup(int personality, int sno);
 const char *dispatch_name(int personality, int sno);
 const char *dispatch_mode(int personality);
 bool dispatch_maybind(int personality, int sno);
 #elif defined(X86_64)
-int dispatch_flags32(int sno);
-int dispatch_flags64(int sno);
+void dispatch_init32(void);
+void dispatch_init64(void);
+void dispatch_free32(void);
+void dispatch_free64(void);
+int dispatch_lookup32(int sno);
+int dispatch_lookup64(int sno);
 const char *dispatch_name32(int sno);
 const char *dispatch_name64(int sno);
 bool dispatch_maybind32(int sno);
 bool dispatch_maybind64(int sno);
 
-#define dispatch_flags(personality, sno) \
-    ((personality) == 0) ? dispatch_flags32((sno)) : dispatch_flags64((sno))
+#define dispatch_init()     \
+    do {                    \
+        dispatch_init32();  \
+        dispatch_init64();  \
+    } while (0)
+#define dispatch_free()     \
+    do {                    \
+        dispatch_free32();  \
+        dispatch_free64();  \
+    } while (0)
+#define dispatch_lookup(personality, sno) \
+    ((personality) == 0) ? dispatch_lookup32((sno)) : dispatch_lookup64((sno))
 #define dispatch_name(personality, sno) \
     ((personality) == 0) ? dispatch_name32((sno)) : dispatch_name64((sno))
 #define dispatch_mode(personality) \
