@@ -250,14 +250,14 @@ char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *
             errno = save_errno;
             return NULL;
         }
-        args += 4; // TODO: Wordsizes for personalities!
+        args += sizeof(unsigned int);
         if (umove(pid, args, &iaddr) < 0) {
             save_errno = errno;
             g_info("failed to decode argument 1: %s", g_strerror(errno));
             errno = save_errno;
             return NULL;
         }
-        args += 4;
+        args += sizeof(unsigned int);
         if (umove(pid, args, &iaddrlen) < 0) {
             save_errno = errno;
             g_info("failed to decode argument 2: %s", g_strerror(errno));
