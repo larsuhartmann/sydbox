@@ -53,3 +53,4 @@ tests/progtests/test-lib.bash
 tests/unit/children
 tests/unit/path
 tests/unit/sydbox-utils
+tests/unit/trace
