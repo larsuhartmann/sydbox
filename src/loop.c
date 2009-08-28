@@ -203,7 +203,7 @@ int trace_loop(context_t *ctx)
             case E_FORK:
             case E_VFORK:
             case E_CLONE:
-                g_debug ("latest event for child %i is E_FORK, calling event handler", pid);
+                g_debug("latest event for child %i is E_FORK, calling event handler", pid);
                 ret = xfork(ctx, child);
                 if (0 != ret)
                     return ret;
@@ -212,7 +212,7 @@ int trace_loop(context_t *ctx)
                     return ret;
                 break;
             case E_EXEC:
-                g_debug ("latest event for child %i is E_EXEC, calling event handler", pid);
+                g_debug("latest event for child %i is E_EXEC, calling event handler", pid);
                 // Check for exec_lock
                 if (G_UNLIKELY(LOCK_PENDING == child->sandbox->lock)) {
                     g_info("access to magic commands is now denied for child %i", child->pid);
@@ -231,7 +231,7 @@ int trace_loop(context_t *ctx)
                     return ret;
                 break;
             case E_GENUINE:
-                g_debug ("latest event for child %i is E_GENUINE, calling event handler", pid);
+                g_debug("latest event for child %i is E_GENUINE, calling event handler", pid);
                 ret = xgenuine(ctx, child, status);
                 if (0 != ret)
                     return ret;
