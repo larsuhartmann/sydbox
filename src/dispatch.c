@@ -55,9 +55,9 @@ void dispatch_init(void)
         return;
 
     flags = g_hash_table_new(g_direct_hash, g_direct_equal);
-#define REGISTER_SYSCALL(no)                                                           \
-    do {                                                                               \
-        g_hash_table_insert(flags, GINT_TO_POINTER((no)), dispatch_flags(-1, (no)));   \
+#define REGISTER_SYSCALL(no)                                                                            \
+    do {                                                                                                \
+        g_hash_table_insert(flags, GINT_TO_POINTER((no)), GINT_TO_POINTER(dispatch_flags(-1, (no))));   \
     } while (0)
 
     REGISTER_SYSCALL(__NR_chmod);
@@ -144,7 +144,7 @@ int dispatch_lookup(int personality G_GNUC_UNUSED, int sno)
 
     g_assert(flags != NULL);
     f = g_hash_table_lookup(flags, GINT_TO_POINTER(sno));
-    return (f == NULL) ? -1 : *f;
+    return (f == NULL) ? -1 : GPOINTER_TO_INT(f);
 }
 
 const char *dispatch_name(int personality G_GNUC_UNUSED, int sno)
