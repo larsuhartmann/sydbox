@@ -39,22 +39,32 @@ static const struct syscall_name {
 };
 
 static GHashTable *flags = NULL;
+static GHashTable *names = NULL;
 
 void dispatch_init(void)
 {
-    if (flags != NULL)
-        return;
-
-    flags = g_hash_table_new(g_direct_hash, g_direct_equal);
-    for (unsigned int i = 0; -1 != syscalls[i].no; i++)
-        g_hash_table_insert(flags, GINT_TO_POINTER(syscalls[i].no), GINT_TO_POINTER(syscalls[i].flags));
+    if (flags == NULL) {
+        flags = g_hash_table_new(g_direct_hash, g_direct_equal);
+        for (unsigned int i = 0; -1 != syscalls[i].no; i++)
+            g_hash_table_insert(flags, GINT_TO_POINTER(syscalls[i].no), GINT_TO_POINTER(syscalls[i].flags));
+    }
+    if (names == NULL) {
+        names = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
+        for (unsigned int i = 0; NULL != sysnames[i].name; i++)
+            g_hash_table_insert(names, GINT_TO_POINTER(sysnames[i].no), g_strdup(sysnames[i].name));
+    }
 }
 
 void dispatch_free(void)
 {
-    if (flags != NULL)
+    if (flags != NULL) {
         g_hash_table_destroy(flags);
-    flags = NULL;
+        flags = NULL;
+    }
+    if (names != NULL) {
+        g_hash_table_destroy(names);
+        names = NULL;
+    }
 }
 
 int dispatch_lookup(int personality G_GNUC_UNUSED, int sno)
@@ -68,11 +78,11 @@ int dispatch_lookup(int personality G_GNUC_UNUSED, int sno)
 
 const char *dispatch_name(int personality G_GNUC_UNUSED, int sno)
 {
-    for (unsigned int i = 0; NULL != sysnames[i].name; i++) {
-        if (sysnames[i].no == sno)
-            return sysnames[i].name;
-    }
-    return UNKNOWN_SYSCALL;
+    const char *sname;
+
+    g_assert(names != NULL);
+    sname = (const char *) g_hash_table_lookup(names, GINT_TO_POINTER(sno));
+    return sname ? sname : UNKNOWN_SYSCALL;
 }
 
 inline const char *dispatch_mode(int personality G_GNUC_UNUSED)

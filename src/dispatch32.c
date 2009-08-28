@@ -35,22 +35,32 @@ static const struct syscall_name {
 };
 
 static GHashTable *flags32 = NULL;
+static GHashTable *names32 = NULL;
 
 void dispatch_init32(void)
 {
-    if (flags32 != NULL)
-        return;
-
-    flags32 = g_hash_table_new(g_direct_hash, g_direct_equal);
-    for (unsigned int i = 0; -1 != syscalls[i].no; i++)
-        g_hash_table_insert(flags32, GINT_TO_POINTER(syscalls[i].no), GINT_TO_POINTER(syscalls[i].flags));
+    if (flags32 == NULL) {
+        flags32 = g_hash_table_new(g_direct_hash, g_direct_equal);
+        for (unsigned int i = 0; -1 != syscalls[i].no; i++)
+            g_hash_table_insert(flags32, GINT_TO_POINTER(syscalls[i].no), GINT_TO_POINTER(syscalls[i].flags));
+    }
+    if (names32 == NULL) {
+        names32 = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
+        for (unsigned int i = 0; NULL != sysnames[i].name; i++)
+            g_hash_table_insert(names32, GINT_TO_POINTER(sysnames[i].no), g_strdup(sysnames[i].name));
+    }
 }
 
 void dispatch_free32(void)
 {
-    if (flags32 != NULL)
+    if (flags32 != NULL) {
         g_hash_table_destroy(flags32);
-    flags32 = NULL;
+        flags32 = NULL;
+    }
+    if (names32 != NULL) {
+        g_hash_table_destroy(names32);
+        names32 = NULL;
+    }
 }
 
 int dispatch_lookup32(int sno)
@@ -64,11 +74,11 @@ int dispatch_lookup32(int sno)
 
 const char *dispatch_name32(int sno)
 {
-    for (unsigned int i = 0; NULL != sysnames[i].name; i++) {
-        if (sysnames[i].no == sno)
-            return sysnames[i].name;
-    }
-    return UNKNOWN_SYSCALL;
+    const char *sname;
+
+    g_assert(names32 != NULL);
+    sname = (const char *) g_hash_table_lookup(names32, GINT_TO_POINTER(sno));
+    return sname ? sname : UNKNOWN_SYSCALL;
 }
 
 bool dispatch_maybind32(int sno)
