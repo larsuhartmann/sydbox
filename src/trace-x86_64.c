@@ -183,7 +183,9 @@ int trace_fake_stat(pid_t pid, int personality)
     }
 
     memset(&fakebuf, 0, sizeof(struct stat));
-    fakebuf.st_mode = S_IFBLK;
+    fakebuf.st_mode = S_IFCHR | (S_IRUSR | S_IWUSR) | (S_IRGRP | S_IWGRP) | (S_IROTH | S_IWOTH);
+    fakebuf.st_rdev = 259; // /dev/null
+    fakebuf.st_mtime = -842745600; // ;)
 
     long *fakeptr = (long *) &fakebuf;
     n = 0;
