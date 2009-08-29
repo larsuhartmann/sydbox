@@ -40,7 +40,7 @@ struct checkdata {
     gint result;            // Check result
     gint save_errno;        // errno when the result is RS_ERROR
 
-    bool resolve;           // TRUE if the system call resolves paths
+    bool resolve;           // true if the system call resolves paths
     glong open_flags;       // flags argument of open()/openat()
     glong access_flags;     // flags argument of access()/faccessat()
     gchar *dirfdlist[2];    // dirfd arguments (resolved)

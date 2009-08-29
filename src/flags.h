@@ -34,7 +34,7 @@
 #define CHECK_PATH_AT           (1 << 6)  // CHECK_PATH for at suffixed functions
 #define CHECK_PATH_AT1          (1 << 7)  // CHECK_PATH2 for symlinkat()
 #define CHECK_PATH_AT2          (1 << 8)  // CHECK_PATH2 for at suffixed functions
-#define DONT_RESOLV             (1 << 9) // Don't resolve symlinks
+#define DONT_RESOLV             (1 << 9)  // Don't resolve symlinks
 #define IF_AT_SYMLINK_FOLLOW4   (1 << 10) // Resolving path depends on AT_SYMLINK_FOLLOW (4th argument)
 #define IF_AT_SYMLINK_NOFOLLOW3 (1 << 11) // Resolving path depends on AT_SYMLINK_NOFOLLOW (3th argument)
 #define IF_AT_SYMLINK_NOFOLLOW4 (1 << 12) // Resolving path depends on AT_SYMLINK_NOFOLLOW (4th argument)
