@@ -42,6 +42,7 @@ static const struct syscall_def {
 #if defined(__NR_stat64)
     {__NR_stat64,       MAGIC_STAT},
 #endif
+    {__NR_lstat,        MAGIC_STAT},
     {__NR_lchown,       CHECK_PATH | DONT_RESOLV},
 #if defined(__NR_lchown32)
     {__NR_lchown32,     CHECK_PATH | DONT_RESOLV},
