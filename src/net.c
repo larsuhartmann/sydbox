@@ -65,7 +65,7 @@ int netlist_new_from_string(GSList **netlist, const gchar *addr_str, bool canlog
         addr[port - addr] = '\0';
         netlist_new(netlist, AF_INET, atoi(++port), addr);
         if (canlog)
-            g_info("New whitelist address {family=AF_INET addr=%s port=%d", addr, atoi(port));
+            g_info("New whitelist address {family=AF_INET addr=%s port=%d}", addr, atoi(port));
         g_free(addr);
         return 0;
     }
@@ -79,7 +79,7 @@ int netlist_new_from_string(GSList **netlist, const gchar *addr_str, bool canlog
         addr[port - addr] = '\0';
         netlist_new(netlist, AF_INET6, atoi(++port), addr);
         if (canlog)
-            g_info("New whitelist address {family=AF_INET6 addr=%s port=%d", addr, atoi(port));
+            g_info("New whitelist address {family=AF_INET6 addr=%s port=%d}", addr, atoi(port));
         g_free(addr);
         return 0;
     }
