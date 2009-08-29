@@ -230,7 +230,7 @@ egetcwd (void)
         dir = opendir("..");
         if (NULL == dir) {
             save_errno = errno;
-            g_debug ("opendir() failed: %s", strerror(errno));
+            g_debug("opendir() failed: %s", g_strerror(errno));
             errno = save_errno;
             break;
         }
@@ -272,7 +272,7 @@ egetcwd (void)
     }
 
     if (*buf) {
-        g_debug ("changing current working directory to `%s'", buf + pos + 1);
+        g_debug("changing current working directory to `%s'", buf + pos + 1);
         echdir(buf + pos + 1);
     }
     g_free (buf);
