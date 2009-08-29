@@ -253,7 +253,7 @@ int trace_loop(context_t *ctx)
                 break;
             case E_EXIT_SIGNAL:
                 if (G_UNLIKELY(ctx->eldest == pid)) {
-                    ret = EXIT_FAILURE;
+                    ret = 128 + WTERMSIG(status);
                     g_message("eldest child %i exited with signal %d", pid, WTERMSIG(status));
                     if (!sydbox_config_get_wait_all())
                         return ret;
