@@ -209,7 +209,7 @@ int trace_decode_socketcall(pid_t pid, int personality)
     return addr;
 }
 
-char *trace_get_addr(pid_t pid, int personality, bool decode G_GNUC_UNUSED, int *family, int *port)
+char *trace_get_addr(pid_t pid, int personality, int narg, bool decode G_GNUC_UNUSED, int *family, int *port)
 {
     int save_errno;
     long args;
@@ -230,22 +230,29 @@ char *trace_get_addr(pid_t pid, int personality, bool decode G_GNUC_UNUSED, int 
         return NULL;
     }
 
-    args += ADDR_MUL; // skip the first argument which is sockfd.
+    args += (narg * ADDR_MUL);
     if (umove(pid, args, &addr) < 0) {
         save_errno = errno;
-        g_info("failed to decode argument 1: %s", g_strerror(errno));
+        g_info("failed to decode argument %d: %s", narg, g_strerror(errno));
         errno = save_errno;
         return NULL;
     }
     args += ADDR_MUL;
     if (umove(pid, args, &addrlen) < 0) {
         save_errno = errno;
-        g_info("failed to decode argument 2: %s", g_strerror(errno));
+        g_info("failed to decode argument %d: %s", narg, g_strerror(errno));
         errno = save_errno;
         return NULL;
     }
 
-    if (addrlen < 2 || addrlen > sizeof(addrbuf))
+    if (addr == 0) {
+        if (family != NULL)
+            *family = -1;
+        if (port != NULL)
+            *port = -1;
+        return g_strdup("NULL");
+    }
+    if (addrlen < 2 || (unsigned long)addrlen > sizeof(addrbuf))
         addrlen = sizeof(addrbuf);
 
     memset(&addrbuf, 0, sizeof(addrbuf));
@@ -286,7 +293,7 @@ char *trace_get_addr(pid_t pid, int personality, bool decode G_GNUC_UNUSED, int 
             }
             return g_strdup(ip);
         default:
-            return g_strdup("other");
+            return g_strdup("OTHER");
     }
 }
 

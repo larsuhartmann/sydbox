@@ -80,6 +80,7 @@ enum {
     SOCKET_SUBCALL_SOCKET = 1,
     SOCKET_SUBCALL_BIND,
     SOCKET_SUBCALL_CONNECT,
+    SOCKET_SUBCALL_SENDTO = 11,
 };
 
 /**
@@ -181,7 +182,7 @@ int trace_decode_socketcall(pid_t pid, int personality);
  * Returns the destination of network calls.
  * Returns NULL on failure and sets errno accordingly.
  */
-char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *port);
+char *trace_get_addr(pid_t pid, int personality, int narg, bool decode, int *family, int *port);
 
 #endif // SYDBOX_GUARD_TRACE_H
 

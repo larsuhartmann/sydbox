@@ -227,7 +227,18 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
                 sname = "socket";
             else if (data->socket_subcall == SOCKET_SUBCALL_BIND || data->socket_subcall == SOCKET_SUBCALL_CONNECT) {
                 sname = (data->socket_subcall == SOCKET_SUBCALL_BIND) ? "bind" : "connect";
-                data->addr = trace_get_addr(child->pid, child->personality, true, &(data->family), &(data->port));
+                data->addr = trace_get_addr(child->pid, child->personality, 1, true, &(data->family), &(data->port));
+                if (data->addr == NULL) {
+                    data->result = RS_ERROR;
+                    data->save_errno = errno;
+                    return;
+                }
+                g_debug("Destination of %s subcall family:%d addr:%s port:%d",
+                            sname, data->family, data->addr, data->port);
+            }
+            else if (data->socket_subcall == SOCKET_SUBCALL_SENDTO) {
+                sname = "sendto";
+                data->addr = trace_get_addr(child->pid, child->personality, 4, true, &(data->family), &(data->port));
                 if (data->addr == NULL) {
                     data->result = RS_ERROR;
                     data->save_errno = errno;
@@ -238,7 +249,16 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
             }
         }
         else if (self->flags & (BIND_CALL | CONNECT_CALL)) {
-            data->addr = trace_get_addr(child->pid, child->personality, false, &(data->family), &(data->port));
+            data->addr = trace_get_addr(child->pid, child->personality, 1, false, &(data->family), &(data->port));
+            if (data->addr == NULL) {
+                data->result = RS_ERROR;
+                data->save_errno = errno;
+                return;
+            }
+            g_debug("Destination of %s call family:%d addr:%s port:%d", sname, data->family, data->addr, data->port);
+        }
+        else if (self->flags & SENDTO_CALL) {
+            data->addr = trace_get_addr(child->pid, child->personality, 4, false, &(data->family), &(data->port));
             if (data->addr == NULL) {
                 data->result = RS_ERROR;
                 data->save_errno = errno;
@@ -817,7 +837,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
 
     if (child->sandbox->network &&
             child->sandbox->network_mode != SYDBOX_NETWORK_ALLOW &&
-            self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL) &&
+            self->flags & (BIND_CALL | CONNECT_CALL | SENDTO_CALL | DECODE_SOCKETCALL) &&
             (data->family == AF_UNIX || data->family == AF_INET || data->family == AF_INET6)) {
         bool violation;
 
@@ -828,9 +848,11 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         }
         else if (child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL) {
             if (child->sandbox->network_restrict_connect &&
-                    (self->flags & CONNECT_CALL ||
-                     (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_CONNECT))) {
-                g_debug("net.restrict_connect is set, checking if connect call is whitelisted");
+                    (self->flags & (CONNECT_CALL | SENDTO_CALL) ||
+                     (self->flags & DECODE_SOCKETCALL &&
+                      (data->socket_subcall == SOCKET_SUBCALL_CONNECT ||
+                       data->socket_subcall == SOCKET_SUBCALL_SENDTO)))) {
+                g_debug("net.restrict_connect is set, checking if connect/sendto call is whitelisted");
                 violation = !systemcall_check_network_whitelist(data);
             }
             else if (data->family != AF_UNIX && !net_localhost(data->addr))
@@ -1203,10 +1225,10 @@ static int syscall_handle_bind(struct tchild *child, int flags)
         if (subcall != SOCKET_SUBCALL_BIND)
             return 0;
 
-        addr = trace_get_addr(child->pid, child->personality, true, &family, &port);
+        addr = trace_get_addr(child->pid, child->personality, 1, true, &family, &port);
     }
     else if (flags & BIND_CALL)
-        addr = trace_get_addr(child->pid, child->personality, false, &family, &port);
+        addr = trace_get_addr(child->pid, child->personality, 1, false, &family, &port);
     else
         g_assert_not_reached();
 

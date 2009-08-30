@@ -230,7 +230,7 @@ int trace_decode_socketcall(pid_t pid, int personality)
     return addr;
 }
 
-char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *port)
+char *trace_get_addr(pid_t pid, int personality, int narg, bool decode, int *family, int *port)
 {
     int save_errno;
     long addr, addrlen, args;
@@ -252,17 +252,17 @@ char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *
             errno = save_errno;
             return NULL;
         }
-        args += sizeof(unsigned int);
+        args += narg * sizeof(unsigned int);
         if (umove(pid, args, &iaddr) < 0) {
             save_errno = errno;
-            g_info("failed to decode argument 1: %s", g_strerror(errno));
+            g_info("failed to decode argument %d: %s", narg, g_strerror(errno));
             errno = save_errno;
             return NULL;
         }
         args += sizeof(unsigned int);
         if (umove(pid, args, &iaddrlen) < 0) {
             save_errno = errno;
-            g_info("failed to decode argument 2: %s", g_strerror(errno));
+            g_info("failed to decode argument %d: %s", narg + 1, g_strerror(errno));
             errno = save_errno;
             return NULL;
         }
@@ -270,20 +270,27 @@ char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *
         addrlen = iaddrlen;
     }
     else {
-        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][1], &addr))) {
+        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][narg], &addr))) {
             save_errno = errno;
-            g_info("failed to get address of argument 1: %s", g_strerror(errno));
+            g_info("failed to get address of argument %d: %s", narg, g_strerror(errno));
             errno = save_errno;
             return NULL;
         }
-        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][2], &addrlen))) {
+        if (G_UNLIKELY(0 > upeek(pid, syscall_args[personality][narg + 1], &addrlen))) {
             save_errno = errno;
-            g_info("failed to get address of argument 2: %s", g_strerror(errno));
+            g_info("failed to get address of argument %d: %s", narg + 1, g_strerror(errno));
             errno = save_errno;
             return NULL;
         }
     }
 
+    if (addr == 0) {
+        if (family != NULL)
+            *family = -1;
+        if (port != NULL)
+            *port = -1;
+        return g_strdup("NULL");
+    }
     if (addrlen < 2 || (unsigned long)addrlen > sizeof(addrbuf))
         addrlen = sizeof(addrbuf);
 
@@ -325,7 +332,7 @@ char *trace_get_addr(pid_t pid, int personality, bool decode, int *family, int *
             }
             return g_strdup(ip);
         default:
-            return g_strdup("other");
+            return g_strdup("OTHER");
     }
 }
 
