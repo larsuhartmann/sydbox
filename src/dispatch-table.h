@@ -82,15 +82,13 @@ static const struct syscall_def {
     {__NR_fchmodat,     CHECK_PATH_AT | IF_AT_SYMLINK_NOFOLLOW3},
     {__NR_faccessat,    CHECK_PATH_AT | ACCESS_MODE_AT},
 #if defined(__NR_socketcall)
-    {__NR_socketcall,   DECODE_SOCKETCALL | NET_CALL},
-#elif defined(__NR_socket)
-    {__NR_socket,       NET_CALL},
+    {__NR_socketcall,   DECODE_SOCKETCALL},
 #endif
 #if defined(__NR_connect)
-    {__NR_connect,      CONNECT_CALL | NET_CALL},
+    {__NR_connect,      CONNECT_CALL},
 #endif
 #if defined(__NR_bind)
-    {__NR_bind,         BIND_CALL | NET_CALL},
+    {__NR_bind,         BIND_CALL},
 #endif
     {__NR_execve,       EXEC_CALL},
     {-1,                -1},

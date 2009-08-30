@@ -48,8 +48,7 @@
 #define DECODE_SOCKETCALL       (1 << 24) // Decode the socketcall() system call to its subcalls
 #define CONNECT_CALL            (1 << 25) // Check if the connect() call matches the accepted connect IPs
 #define BIND_CALL               (1 << 26) // Check if the bind() call matches the accepted bind IPs
-#define NET_CALL                (1 << 27) // Accepting the system call depends on the net flag
-#define EXEC_CALL               (1 << 28) // Allowing the system call depends on the exec flag
+#define EXEC_CALL               (1 << 27) // Allowing the system call depends on the exec flag
 
 #endif // SYDBOX_GUARD_FLAGS_H
 
