@@ -26,6 +26,8 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
+#define IS_CHDIR(_sno)      (__NR_chdir == (_sno) || __NR_fchdir == (_sno))
+#define IS_CLONE(_sno)      (__NR_clone == (_sno))
 #define UNKNOWN_SYSCALL     "unknown"
 
 #if defined(I386) || defined(IA64) || defined(POWERPC)
@@ -34,6 +36,7 @@ void dispatch_free(void);
 int dispatch_lookup(int personality, int sno);
 const char *dispatch_name(int personality, int sno);
 const char *dispatch_mode(int personality);
+bool dispatch_chdir(int personality, int sno);
 bool dispatch_maybind(int personality, int sno);
 #elif defined(X86_64)
 void dispatch_init32(void);
@@ -44,6 +47,8 @@ int dispatch_lookup32(int sno);
 int dispatch_lookup64(int sno);
 const char *dispatch_name32(int sno);
 const char *dispatch_name64(int sno);
+bool dispatch_chdir32(int sno);
+bool dispatch_chdir64(int sno);
 bool dispatch_maybind32(int sno);
 bool dispatch_maybind64(int sno);
 
@@ -63,12 +68,18 @@ bool dispatch_maybind64(int sno);
     ((personality) == 0) ? dispatch_name32((sno)) : dispatch_name64((sno))
 #define dispatch_mode(personality) \
     ((personality) == 0) ? "32 bit" : "64 bit"
+#define dispatch_chdir(personality, sno) \
+    ((personality) == 0) ? dispatch_chdir32((sno)) : dispatch_chdir64((sno))
 #define dispatch_maybind(personality, sno) \
     ((personality) == 0) ? dispatch_maybind32((sno)) : dispatch_maybind64((sno))
 
 #else
 #error unsupported architecture
 #endif
+
+#if defined(POWERPC)
+bool dispatch_clone(int personality, int sno);
+#endif // defined(POWERPC)
 
 #endif // SYDBOX_GUARD_DISPATCH_H
 
