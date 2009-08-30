@@ -214,7 +214,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
         if (!systemcall_get_path(child->pid, child->personality, 0, data))
             return;
     }
-    if (child->sandbox->network && child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL) {
+    if (child->sandbox->network && child->sandbox->network_mode != SYDBOX_NETWORK_ALLOW) {
         if (self->flags & DECODE_SOCKETCALL) {
             data->socket_subcall = trace_decode_socketcall(child->pid, child->personality);
             if (0 > data->socket_subcall) {
@@ -244,8 +244,7 @@ static void systemcall_start_check(SystemCall *self, gpointer ctx_ptr,
                 data->save_errno = errno;
                 return;
             }
-            g_debug("Destination of %s call family:%d addr:%s port:%d",
-                    sname, data->family, data->addr, data->port);
+            g_debug("Destination of %s call family:%d addr:%s port:%d", sname, data->family, data->addr, data->port);
         }
     }
 }
@@ -785,6 +784,27 @@ static void systemcall_check_path(SystemCall *self,
     }
 }
 
+static bool systemcall_check_network_whitelist(struct checkdata *data)
+{
+    GSList *walk;
+    struct sydbox_addr *addr;
+
+    walk = sydbox_config_get_network_whitelist();
+    while (NULL != walk) {
+        addr = (struct sydbox_addr *) walk->data;
+        g_debug("Checking whitelisted address {family=%d addr=%s port=%d} for equality",
+                addr->family, addr->addr, addr->port);
+        if (data->family == addr->family && data->port == addr->port &&
+                0 == strncmp(data->addr, addr->addr, strlen(addr->addr) + 1)) {
+            g_debug("Whitelisted connection {family:%d addr:%s port:%d}", addr->family, addr->addr, addr->port);
+            return true;
+        }
+        walk = g_slist_next(walk);
+    }
+    return false;
+}
+
+
 static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
                              gpointer child_ptr, gpointer data_ptr)
 {
@@ -795,37 +815,29 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     if (G_UNLIKELY(RS_ALLOW != data->result))
         return;
 
-    if (child->sandbox->network && child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL &&
+    if (child->sandbox->network &&
+            child->sandbox->network_mode != SYDBOX_NETWORK_ALLOW &&
             self->flags & (BIND_CALL | CONNECT_CALL | DECODE_SOCKETCALL) &&
             (data->family == AF_UNIX || data->family == AF_INET || data->family == AF_INET6)) {
+        bool violation;
 
-        bool violation = false;
-
-        /* If network_restrict_connect is set, check if this is a whitelisted
-         * connect(2) call.
-         */
-        if (child->sandbox->network_restrict_connect &&
-                (self->flags & CONNECT_CALL ||
-                 (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_CONNECT))) {
-            violation = true;
-            GSList *walk = sydbox_config_get_network_whitelist();
-            g_debug("net.restrict_connect is set, checking if connect(2) call is whitelisted");
-            while (NULL != walk) {
-                struct sydbox_addr *saddr = (struct sydbox_addr *) walk->data;
-                g_debug("Checking whitelisted address {family=%d addr=%s port=%d} for equality",
-                        saddr->family, saddr->addr, saddr->port);
-                if (data->family == saddr->family && data->port == saddr->port &&
-                        0 == strncmp(data->addr, saddr->addr, strlen(saddr->addr) + 1)) {
-                    g_debug("Whitelisted connection {family:%d addr:%s port:%d}",
-                            saddr->family, saddr->addr, saddr->port);
-                    violation = false;
-                    break;
-                }
-                walk = g_slist_next(walk);
-            }
+        violation = false;
+        if (child->sandbox->network_mode == SYDBOX_NETWORK_DENY) {
+            g_debug("net.default is deny, checking if the connection is whitelisted");
+            violation = !systemcall_check_network_whitelist(data);
         }
-        else if (data->family != AF_UNIX && !net_localhost(data->addr))
-            violation = true;
+        else if (child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL) {
+            if (child->sandbox->network_restrict_connect &&
+                    (self->flags & CONNECT_CALL ||
+                     (self->flags & DECODE_SOCKETCALL && data->socket_subcall == SOCKET_SUBCALL_CONNECT))) {
+                g_debug("net.restrict_connect is set, checking if connect call is whitelisted");
+                violation = !systemcall_check_network_whitelist(data);
+            }
+            else if (data->family != AF_UNIX && !net_localhost(data->addr))
+                violation = true;
+        }
+        else
+            g_assert_not_reached();
 
         if (violation) {
             switch (data->family) {
@@ -846,13 +858,9 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
             data->result = RS_DENY;
             child->retval = -ECONNREFUSED;
         }
-    }
-    if (child->sandbox->network && child->sandbox->network_mode == SYDBOX_NETWORK_DENY && self->flags & NET_CALL) {
-        sydbox_access_violation(child->pid, NULL, "%s()", sname);
-        data->result = RS_DENY;
-        child->retval = -EACCES;
         return;
     }
+
     if (!ctx->before_initial_execve && child->sandbox->exec && self->flags & EXEC_CALL) {
         g_debug("checking `%s' for exec access", data->rpathlist[0]);
         int allow_exec = pathlist_check(child->sandbox->exec_prefixes, data->rpathlist[0]);
