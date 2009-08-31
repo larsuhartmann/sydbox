@@ -56,6 +56,7 @@
 
 #define BAD_SYSCALL             0xbadca11
 #define IS_BAD_SYSCALL(_sno)    (BAD_SYSCALL == (_sno))
+#define IS_SUPPORTED_FAMILY(f)  ((f) == AF_UNIX || (f) == AF_INET || (f) == AF_INET6)
 
 #define MODE_STRING(flags)                                                      \
     ((flags) & OPEN_MODE || (flags) & OPEN_MODE_AT) ? "O_WRONLY/O_RDWR" : "..."
@@ -838,7 +839,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
     if (child->sandbox->network &&
             child->sandbox->network_mode != SYDBOX_NETWORK_ALLOW &&
             self->flags & (BIND_CALL | CONNECT_CALL | SENDTO_CALL | DECODE_SOCKETCALL) &&
-            (data->family == AF_UNIX || data->family == AF_INET || data->family == AF_INET6)) {
+            IS_SUPPORTED_FAMILY(data->family)) {
         bool violation;
 
         violation = false;
@@ -1245,10 +1246,12 @@ static int syscall_handle_bind(struct tchild *child, int flags)
         return -1;
     }
 
-    g_debug("Whitelisting successful bind() addr:%s port:%d", addr, port);
-    whitelist = sydbox_config_get_network_whitelist();
-    netlist_new(&whitelist, family, port, addr);
-    sydbox_config_set_network_whitelist(whitelist);
+    if (IS_SUPPORTED_FAMILY(family)) {
+        g_debug("Whitelisting successful bind() addr:%s port:%d", addr, port);
+        whitelist = sydbox_config_get_network_whitelist();
+        netlist_new(&whitelist, family, port, addr);
+        sydbox_config_set_network_whitelist(whitelist);
+    }
     g_free(addr);
     return 0;
 }
