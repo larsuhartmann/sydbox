@@ -217,7 +217,6 @@ bool sydbox_config_load(const gchar * const file)
         g_strfreev(filterlist);
     }
 
-
     // Get log.file
     config->logfile = g_key_file_get_string(config_fd, "log", "file", NULL);
 
