@@ -54,9 +54,12 @@
 #include "flags.h"
 #include "dispatch.h"
 
-#define BAD_SYSCALL             0xbadca11
-#define IS_BAD_SYSCALL(_sno)    (BAD_SYSCALL == (_sno))
-#define IS_SUPPORTED_FAMILY(f)  ((f) == AF_UNIX || (f) == AF_INET || (f) == AF_INET6)
+#define BAD_SYSCALL                 0xbadca11
+#define IS_BAD_SYSCALL(_sno)        (BAD_SYSCALL == (_sno))
+#define IS_SUPPORTED_FAMILY(f)      ((f) == AF_UNIX || (f) == AF_INET || (f) == AF_INET6)
+#define IS_NET_CALL(fl)             ((fl) & (BIND_CALL | CONNECT_CALL | SENDTO_CALL | DECODE_SOCKETCALL))
+#define NET_RESTRICTED_CALL(fl)     ((fl) & (CONNECT_CALL | SENDTO_CALL))
+#define NET_RESTRICTED_SUBCALL(sub) ((sub) == SOCKET_SUBCALL_CONNECT || (sub) == SOCKET_SUBCALL_SENDTO)
 
 #define MODE_STRING(flags)                                                      \
     ((flags) & OPEN_MODE || (flags) & OPEN_MODE_AT) ? "O_WRONLY/O_RDWR" : "..."
@@ -838,8 +841,7 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
 
     if (child->sandbox->network &&
             child->sandbox->network_mode != SYDBOX_NETWORK_ALLOW &&
-            self->flags & (BIND_CALL | CONNECT_CALL | SENDTO_CALL | DECODE_SOCKETCALL) &&
-            IS_SUPPORTED_FAMILY(data->family)) {
+            IS_NET_CALL(self->flags) && IS_SUPPORTED_FAMILY(data->family)) {
         bool violation;
 
         violation = false;
@@ -849,10 +851,8 @@ static void systemcall_check(SystemCall *self, gpointer ctx_ptr,
         }
         else if (child->sandbox->network_mode == SYDBOX_NETWORK_LOCAL) {
             if (child->sandbox->network_restrict_connect &&
-                    (self->flags & (CONNECT_CALL | SENDTO_CALL) ||
-                     (self->flags & DECODE_SOCKETCALL &&
-                      (data->socket_subcall == SOCKET_SUBCALL_CONNECT ||
-                       data->socket_subcall == SOCKET_SUBCALL_SENDTO)))) {
+                    (NET_RESTRICTED_CALL(self->flags) ||
+                     (self->flags & DECODE_SOCKETCALL && NET_RESTRICTED_SUBCALL(data->socket_subcall)))) {
                 g_debug("net.restrict_connect is set, checking if connect/sendto call is whitelisted");
                 violation = !systemcall_check_network_whitelist(data);
             }
