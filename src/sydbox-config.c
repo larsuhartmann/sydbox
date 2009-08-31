@@ -122,80 +122,68 @@ bool sydbox_config_load(const gchar * const file)
     }
 
     // Get main.colour
-    if (g_getenv(ENV_NO_COLOUR))
-        config->colourise_output = false;
-    else {
-        config->colourise_output = g_key_file_get_boolean(config_fd, "main", "colour", &config_error);
-        if (!config->colourise_output) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("main.colour not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->colourise_output = true;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->colourise_output = g_key_file_get_boolean(config_fd, "main", "colour", &config_error);
+    if (!config->colourise_output) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.colour not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->colourise_output = true;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 
     // Get main.lock
-    if (g_getenv(ENV_LOCK))
-        config->disallow_magic_commands = true;
-    else {
-        config->disallow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
-        if (!config->disallow_magic_commands && config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("main.lock not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->disallow_magic_commands = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->disallow_magic_commands = g_key_file_get_boolean(config_fd, "main", "lock", &config_error);
+    if (!config->disallow_magic_commands && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.lock not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->disallow_magic_commands = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 
     // Get main.wait_all
-    if (g_getenv(ENV_WAIT_ALL))
-        config->wait_all = true;
-    else {
-        config->wait_all = g_key_file_get_boolean(config_fd, "main", "wait_all", &config_error);
-        if (!config->wait_all && config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("main.wait_all not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->wait_all = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->wait_all = g_key_file_get_boolean(config_fd, "main", "wait_all", &config_error);
+    if (!config->wait_all && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.wait_all not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->wait_all = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 
@@ -231,10 +219,7 @@ bool sydbox_config_load(const gchar * const file)
 
 
     // Get log.file
-    if (g_getenv(ENV_LOG))
-        config->logfile = g_strdup(g_getenv(ENV_LOG));
-    else
-        config->logfile = g_key_file_get_string(config_fd, "log", "file", NULL);
+    config->logfile = g_key_file_get_string(config_fd, "log", "file", NULL);
 
     // Get log.level
     config->verbosity = g_key_file_get_integer(config_fd, "log", "level", &config_error);
@@ -259,80 +244,68 @@ bool sydbox_config_load(const gchar * const file)
     }
 
     // Get sandbox.path
-    if (g_getenv(ENV_DISABLE_PATH))
-        config->sandbox_path = false;
-    else {
-        config->sandbox_path = g_key_file_get_boolean(config_fd, "sandbox", "path", &config_error);
-        if (config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("sandbox.path not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->sandbox_path = true;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->sandbox_path = g_key_file_get_boolean(config_fd, "sandbox", "path", &config_error);
+    if (config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("sandbox.path not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->sandbox_path = true;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 
     // Get sandbox.exec
-    if (g_getenv(ENV_EXEC))
-        config->sandbox_exec = true;
-    else {
-        config->sandbox_exec = g_key_file_get_boolean(config_fd, "sandbox", "exec", &config_error);
-        if (config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("sandbox.exec not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->sandbox_exec = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->sandbox_exec = g_key_file_get_boolean(config_fd, "sandbox", "exec", &config_error);
+    if (config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("sandbox.exec not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->sandbox_exec = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 
     // Get sandbox.network
-    if (g_getenv(ENV_NET))
-        config->sandbox_network = true;
-    else {
-        config->sandbox_network = g_key_file_get_boolean(config_fd, "sandbox", "network", &config_error);
-        if (config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("main.network not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->sandbox_network = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->sandbox_network = g_key_file_get_boolean(config_fd, "sandbox", "network", &config_error);
+    if (config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.network not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->sandbox_network = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 
@@ -353,8 +326,8 @@ bool sydbox_config_load(const gchar * const file)
     }
 
     // Get net.default
-    if (g_getenv(ENV_NET_MODE)) {
-        const gchar *netdefault = g_getenv(ENV_NET_MODE);
+    gchar *netdefault = g_key_file_get_string(config_fd, "net", "default", NULL);
+    if (NULL != netdefault) {
         if (0 == strncmp(netdefault, "allow", 6))
             config->network_mode = SYDBOX_NETWORK_ALLOW;
         else if (0 == strncmp(netdefault, "deny", 5))
@@ -362,55 +335,34 @@ bool sydbox_config_load(const gchar * const file)
         else if (0 == strncmp(netdefault, "local", 6))
             config->network_mode = SYDBOX_NETWORK_LOCAL;
         else {
-            g_printerr("error: invalid value for "ENV_NET_MODE" `%s'\n", netdefault);
+            g_printerr("error: invalid value for net.default `%s'\n", netdefault);
+            g_free(netdefault);
             g_key_file_free(config_fd);
             g_free(config);
             return false;
         }
-    }
-    else {
-        gchar *netdefault = g_key_file_get_string(config_fd, "net", "default", NULL);
-        if (NULL != netdefault) {
-            if (0 == strncmp(netdefault, "allow", 6))
-                config->network_mode = SYDBOX_NETWORK_ALLOW;
-            else if (0 == strncmp(netdefault, "deny", 5))
-                config->network_mode = SYDBOX_NETWORK_DENY;
-            else if (0 == strncmp(netdefault, "local", 6))
-                config->network_mode = SYDBOX_NETWORK_LOCAL;
-            else {
-                g_printerr("error: invalid value for net.default `%s'\n", netdefault);
-                g_free(netdefault);
-                g_key_file_free(config_fd);
-                g_free(config);
-                return false;
-            }
-            g_free(netdefault);
-        }
+        g_free(netdefault);
     }
 
     // Get net.restrict_connect
-    if (g_getenv(ENV_NET_RESTRICT_CONNECT))
-        config->network_restrict_connect = true;
-    else {
-        config->network_restrict_connect = g_key_file_get_boolean(config_fd, "net", "restrict_connect", &config_error);
-        if (config_error) {
-            switch (config_error->code) {
-                case G_KEY_FILE_ERROR_INVALID_VALUE:
-                    g_printerr("net.restrict_connect not a boolean: %s", config_error->message);
-                    g_error_free(config_error);
-                    g_key_file_free(config_fd);
-                    g_free(config);
-                    return false;
-                case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
-                case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
-                    g_error_free(config_error);
-                    config_error = NULL;
-                    config->network_restrict_connect = false;
-                    break;
-                default:
-                    g_assert_not_reached();
-                    break;
-            }
+    config->network_restrict_connect = g_key_file_get_boolean(config_fd, "net", "restrict_connect", &config_error);
+    if (config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("net.restrict_connect not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->network_restrict_connect = false;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
         }
     }
 

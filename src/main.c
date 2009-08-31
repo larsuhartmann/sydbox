@@ -309,6 +309,8 @@ static int sydbox_internal_main(int argc, char **argv)
 
     if (logfile)
         sydbox_config_set_log_file(logfile);
+    else if (g_getenv(ENV_LOG))
+        sydbox_config_set_log_file(g_getenv(ENV_LOG));
 
     /* initialize logging as early as possible */
     sydbox_log_init();
@@ -317,17 +319,25 @@ static int sydbox_internal_main(int argc, char **argv)
 
     if (colour)
         sydbox_config_set_colourise_output(true);
+    else if (g_getenv(ENV_NO_COLOUR))
+        sydbox_config_set_colourise_output(false);
 
     if (disable_sandbox_path)
+        sydbox_config_set_sandbox_path(false);
+    else if (g_getenv(ENV_DISABLE_PATH))
         sydbox_config_set_sandbox_path(false);
 
     if (sandbox_exec)
         sydbox_config_set_sandbox_exec(true);
+    else if (g_getenv(ENV_EXEC))
+        sydbox_config_set_sandbox_exec(true);
 
     if (sandbox_net)
         sydbox_config_set_sandbox_network(true);
+    else if (g_getenv(ENV_NET))
+        sydbox_config_set_sandbox_network(true);
 
-    if (NULL != sandbox_net_mode) {
+    if (sandbox_net_mode) {
         if (0 == strncmp(sandbox_net_mode, "allow", 6))
             sydbox_config_set_network_mode(SYDBOX_NETWORK_ALLOW);
         else if (0 == strncmp(sandbox_net_mode, "deny", 5))
@@ -339,14 +349,33 @@ static int sydbox_internal_main(int argc, char **argv)
             return EXIT_FAILURE;
         }
     }
+    else if (g_getenv(ENV_NET_MODE)) {
+        const gchar *netdefault = g_getenv(ENV_NET_MODE);
+        if (0 == strncmp(netdefault, "allow", 6))
+            sydbox_config_set_network_mode(SYDBOX_NETWORK_ALLOW);
+        else if (0 == strncmp(netdefault, "deny", 5))
+            sydbox_config_set_network_mode(SYDBOX_NETWORK_DENY);
+        else if (0 == strncmp(netdefault, "local", 6))
+            sydbox_config_set_network_mode(SYDBOX_NETWORK_LOCAL);
+        else {
+            g_printerr("error: invalid value for "ENV_NET_MODE" `%s'\n", netdefault);
+            return EXIT_FAILURE;
+        }
+    }
 
     if (sandbox_net_restrict_connect)
+        sydbox_config_set_network_restrict_connect(true);
+    else if (g_getenv(ENV_NET_RESTRICT_CONNECT))
         sydbox_config_set_network_restrict_connect(true);
 
     if (lock)
         sydbox_config_set_disallow_magic_commands(true);
+    else if (g_getenv(ENV_LOCK))
+        sydbox_config_set_disallow_magic_commands(true);
 
     if (wait_all)
+        sydbox_config_set_wait_all(true);
+    else if (g_getenv(ENV_WAIT_ALL))
         sydbox_config_set_wait_all(true);
 
     if (dump) {
