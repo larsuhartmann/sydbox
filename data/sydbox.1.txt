@@ -176,10 +176,14 @@ according to the command. Currently there's one type of magic commands:
   * */dev/sydbox/toggle*            stat'ing this path toggles path sandboxing.
   * */dev/sydbox/lock*              stat'ing this path locks magic commands.
   * */dev/sydbox/exec_lock*         stat'ing this path locks magic commands when an execve(2) is encountered.
-  * */dev/sydbox/sandbox_exec*      stat'ing this path turns on execve(2) sandboxing.
-  * */dev/sydbox/sandunbox_exec*    stat'ing this path turns off execve(2) sandboxing.
+  * */dev/sydbox/sandbox/exec*      stat'ing this path turns on execve(2) sandboxing.
+  * */dev/sydbox/sandunbox/exec*    stat'ing this path turns off execve(2) sandboxing.
   * */dev/sydbox/write/PATH*        stat'ing this path adds *PATH* to the list of write allowed paths.
   * */dev/sydbox/unwrite/PATH*      stat'ing this path removes *PATH* from the list of write allowed paths.
+  * */dev/sydbox/addexec/PATH*      stat'ing this path adds *PATH* to the list of execve(2) allowed paths.
+  * */dev/sydbox/rmexec/PATH*       stat'ing this path removes *PATH* from the list of execve(2) allowed paths.
+  * */dev/sydbox/addfilter/PATTERN* stat'ing this path adds *PATTERN* to the list of violation filter patterns.
+  * */dev/sydbox/rmfilter/PATTERN*  stat'ing this path removes *PATTERN* from the list of violation filter patterns.
   * */dev/sydbox/net/allow*         stat'ing this path allows access to network.
   * */dev/sydbox/net/deny*          stat'ing this path denies access to network.
   * */dev/sydbox/net/local*         stat'ing this path restricts network access to local connections.
