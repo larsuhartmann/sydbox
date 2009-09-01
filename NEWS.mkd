@@ -3,6 +3,15 @@
 This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
+### 0.1
+* Add magic commands addexec and rmexec.
+* Fix loading of options from environment.
+* Sandbox `sendto()` calls.
+* Extend network whitelist to work for deny mode.
+* Intercept `lstat()` calls for magic stat as well.
+* Exit with correct error code when child is terminated by a signal.
+* Many performance improvements.
+
 ### 0.1_rc6
 * Changed network interface with a more cleaner one.
 * Support for network whitelisting.
