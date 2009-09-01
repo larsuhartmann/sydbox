@@ -47,6 +47,10 @@
 #define CMD_SANDBOX_EXEC_LEN            (CMD_PATH_LEN + 13)
 #define CMD_SANDUNBOX_EXEC              CMD_PATH"sandunbox/exec"
 #define CMD_SANDUNBOX_EXEC_LEN          (CMD_PATH_LEN + 15)
+#define CMD_ADDEXEC                     CMD_PATH"addexec/"
+#define CMD_ADDEXEC_LEN                 (CMD_PATH_LEN + 8)
+#define CMD_RMEXEC                      CMD_PATH"rmexec/"
+#define CMD_RMEXEC_LEN                  (CMD_PATH_LEN + 7)
 #define CMD_SANDBOX_NET                 (CMD_PATH"sandbox/net")
 #define CMD_SANDBOX_NET_LEN             (CMD_PATH_LEN + 12)
 #define CMD_SANDUNBOX_NET               (CMD_PATH"sandunbox/net")
@@ -89,6 +93,10 @@ bool path_magic_rmwrite(const char *path);
 bool path_magic_sandbox_exec(const char *path);
 
 bool path_magic_sandunbox_exec(const char *path);
+
+bool path_magic_addexec(const char *path);
+
+bool path_magic_rmexec(const char *path);
 
 bool path_magic_sandbox_net(const char *path);
 

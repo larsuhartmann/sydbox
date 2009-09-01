@@ -109,6 +109,16 @@ inline bool path_magic_sandunbox_exec(const char *path)
     return (0 == strncmp(path, CMD_SANDUNBOX_EXEC, CMD_SANDUNBOX_EXEC_LEN));
 }
 
+inline bool path_magic_addexec(const char *path)
+{
+    return (0 == strncmp(path, CMD_ADDEXEC, CMD_ADDEXEC_LEN));
+}
+
+inline bool path_magic_rmexec(const char *path)
+{
+    return (0 == strncmp(path, CMD_RMEXEC, CMD_RMEXEC_LEN));
+}
+
 inline bool path_magic_sandbox_net(const char *path)
 {
     return (0 == strncmp(path, CMD_SANDBOX_NET, CMD_SANDBOX_NET_LEN));

@@ -383,7 +383,7 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
     else if (G_UNLIKELY(path_magic_rmwrite(path))) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMWRITE_LEN;
-        rpath_sanitized = sydbox_compress_path (rpath);
+        rpath_sanitized = sydbox_compress_path(rpath);
         if (NULL != child->sandbox->write_prefixes)
             pathnode_delete(&(child->sandbox->write_prefixes), rpath_sanitized);
         g_info("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
@@ -398,6 +398,21 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         data->result = RS_MAGIC;
         child->sandbox->exec = false;
         g_info("execve(2) sandboxing is now disabled for child %i", child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_addexec(path))) {
+        data->result = RS_MAGIC;
+        rpath = path + CMD_ADDEXEC_LEN;
+        pathnode_new(&(child->sandbox->exec_prefixes), rpath, 1);
+        g_info("approved addexec(\"%s\") for child %i", rpath, child->pid);
+    }
+    else if (G_UNLIKELY(path_magic_rmexec(path))) {
+        data->result = RS_MAGIC;
+        rpath = path + CMD_RMEXEC_LEN;
+        rpath_sanitized = sydbox_compress_path(rpath);
+        if (NULL != child->sandbox->exec_prefixes)
+            pathnode_delete(&(child->sandbox->exec_prefixes), rpath_sanitized);
+        g_info("approved rmexec(\"%s\") for child %i", rpath_sanitized, child->pid);
+        g_free(rpath_sanitized);
     }
     else if (G_UNLIKELY(path_magic_sandbox_net(path))) {
         data->result = RS_MAGIC;
