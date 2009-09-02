@@ -68,6 +68,10 @@ void tchild_inherit(struct tchild *child, struct tchild *parent);
 
 void tchild_free_one(gpointer child_ptr);
 
+void tchild_kill_one(gpointer pid_ptr, gpointer child_ptr, void *userdata);
+
+void tchild_cont_one(gpointer pid_ptr, gpointer child_ptr, void *userdata);
+
 void tchild_delete(GHashTable *children, pid_t pid);
 
 struct tchild *tchild_find(GHashTable *children, pid_t pid);

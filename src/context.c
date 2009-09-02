@@ -48,7 +48,10 @@ context_t *context_new (void)
 
 void context_free(context_t *ctx)
 {
-    g_hash_table_destroy(ctx->children);
+    if (NULL != ctx->children) {
+        g_hash_table_destroy(ctx->children);
+        ctx->children = NULL;
+    }
     g_free(ctx);
 }
 

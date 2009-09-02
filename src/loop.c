@@ -244,8 +244,12 @@ int trace_loop(context_t *ctx)
                         g_message("eldest child %i exited with return code %d", pid, ret);
                     else
                         g_info("eldest child %i exited with return code %d", pid, ret);
-                    if (!sydbox_config_get_wait_all())
+                    if (!sydbox_config_get_wait_all()) {
+                        g_hash_table_foreach(ctx->children, tchild_cont_one, NULL);
+                        g_hash_table_destroy(ctx->children);
+                        ctx->children = NULL;
                         return ret;
+                    }
                 }
                 else
                     g_debug("child %i exited with return code: %d", pid, ret);
@@ -255,8 +259,12 @@ int trace_loop(context_t *ctx)
                 if (G_UNLIKELY(ctx->eldest == pid)) {
                     ret = 128 + WTERMSIG(status);
                     g_message("eldest child %i exited with signal %d", pid, WTERMSIG(status));
-                    if (!sydbox_config_get_wait_all())
+                    if (!sydbox_config_get_wait_all()) {
+                        g_hash_table_foreach(ctx->children, tchild_cont_one, NULL);
+                        g_hash_table_destroy(ctx->children);
+                        ctx->children = NULL;
                         return ret;
+                    }
                 }
                 else
                     g_info("child %i exited with signal %d", pid, WTERMSIG(status));

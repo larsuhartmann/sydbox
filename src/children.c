@@ -32,6 +32,7 @@
 
 #include "path.h"
 #include "children.h"
+#include "trace.h"
 #include "sydbox-log.h"
 #include "sydbox-config.h"
 
@@ -119,6 +120,18 @@ void tchild_free_one(gpointer child_ptr)
     if (G_LIKELY(NULL != child->cwd))
         g_free(child->cwd);
     g_free(child);
+}
+
+void tchild_kill_one(gpointer pid_ptr, gpointer child_ptr G_GNUC_UNUSED, void *userdata G_GNUC_UNUSED)
+{
+    pid_t pid = GPOINTER_TO_INT(pid_ptr);
+    trace_kill(pid);
+}
+
+void tchild_cont_one(gpointer pid_ptr, gpointer child_ptr G_GNUC_UNUSED, void *userdata G_GNUC_UNUSED)
+{
+    pid_t pid = GPOINTER_TO_INT(pid_ptr);
+    trace_cont(pid);
 }
 
 void tchild_delete(GHashTable *children, pid_t pid)

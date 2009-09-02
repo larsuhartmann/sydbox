@@ -124,19 +124,14 @@ static GOptionEntry entries[] =
 };
 
 // Cleanup functions
-static void cleanup_child(gpointer pid_ptr, gpointer child_ptr G_GNUC_UNUSED, void *userdata G_GNUC_UNUSED)
-{
-    pid_t pid = GPOINTER_TO_INT(pid_ptr);
-    trace_kill(pid);
-}
-
 static void cleanup(void)
 {
     dispatch_free();
     syscall_free();
     sydbox_config_rmfilter_all();
     if (NULL != ctx) {
-        g_hash_table_foreach(ctx->children, cleanup_child, NULL);
+        if (NULL != ctx->children)
+            g_hash_table_foreach(ctx->children, tchild_kill_one, NULL);
         context_free(ctx);
         ctx = NULL;
     }
@@ -214,14 +209,14 @@ static int sydbox_execute_parent(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUS
     struct tchild *eldest;
 
     new_action.sa_handler = sig_cleanup;
-    sigemptyset (&new_action.sa_mask);
+    sigemptyset(&new_action.sa_mask);
     new_action.sa_flags = 0;
 
-#define HANDLE_SIGNAL(signal)                           \
-    do {                                                \
-        sigaction ((signal), NULL, &old_action);        \
-        if (old_action.sa_handler != SIG_IGN)           \
-            sigaction ((signal), &new_action, NULL);    \
+#define HANDLE_SIGNAL(sig)                          \
+    do {                                            \
+        sigaction ((sig), NULL, &old_action);       \
+        if (old_action.sa_handler != SIG_IGN)       \
+            sigaction ((sig), &new_action, NULL);   \
     } while (0)
 
     HANDLE_SIGNAL(SIGABRT);
@@ -295,7 +290,7 @@ static int sydbox_internal_main(int argc, char **argv)
     syscall_init();
     ctx = context_new();
 
-    g_atexit (cleanup);
+    g_atexit(cleanup);
 
     /*
      * options are loaded from config file, updated from the environment, and
