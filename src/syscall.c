@@ -349,38 +349,38 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         return;
     }
 
-    if (G_UNLIKELY(path_magic_on(path))) {
+    if (path_magic_on(path)) {
         data->result = RS_MAGIC;
         child->sandbox->path = true;
         g_info("path sandboxing is now enabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_off(path))) {
+    else if (path_magic_off(path)) {
         data->result = RS_MAGIC;
         child->sandbox->path = false;
         g_info("path sandboxing is now disabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_toggle(path))) {
+    else if (path_magic_toggle(path)) {
         data->result = RS_MAGIC;
         child->sandbox->path = !(child->sandbox->path);
         g_info("path sandboxing is now %sabled for child %i", child->sandbox->path ? "en" : "dis", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_lock(path))) {
+    else if (path_magic_lock(path)) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_SET;
         g_info("access to magic commands is now denied for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_exec_lock(path))) {
+    else if (path_magic_exec_lock(path)) {
         data->result = RS_MAGIC;
         child->sandbox->lock = LOCK_PENDING;
         g_info("access to magic commands will be denied on execve() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_write(path))) {
+    else if (path_magic_write(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;
         pathnode_new(&(child->sandbox->write_prefixes), rpath, 1);
         g_info("approved addwrite(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (G_UNLIKELY(path_magic_rmwrite(path))) {
+    else if (path_magic_rmwrite(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMWRITE_LEN;
         rpath_sanitized = sydbox_compress_path(rpath);
@@ -389,23 +389,23 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         g_info("approved rmwrite(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free(rpath_sanitized);
     }
-    else if (G_UNLIKELY(path_magic_sandbox_exec(path))) {
+    else if (path_magic_sandbox_exec(path)) {
         data->result = RS_MAGIC;
         child->sandbox->exec = true;
         g_info("execve(2) sandboxing is now enabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_sandunbox_exec(path))) {
+    else if (path_magic_sandunbox_exec(path)) {
         data->result = RS_MAGIC;
         child->sandbox->exec = false;
         g_info("execve(2) sandboxing is now disabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_addexec(path))) {
+    else if (path_magic_addexec(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_ADDEXEC_LEN;
         pathnode_new(&(child->sandbox->exec_prefixes), rpath, 1);
         g_info("approved addexec(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (G_UNLIKELY(path_magic_rmexec(path))) {
+    else if (path_magic_rmexec(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMEXEC_LEN;
         rpath_sanitized = sydbox_compress_path(rpath);
@@ -414,54 +414,54 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         g_info("approved rmexec(\"%s\") for child %i", rpath_sanitized, child->pid);
         g_free(rpath_sanitized);
     }
-    else if (G_UNLIKELY(path_magic_sandbox_net(path))) {
+    else if (path_magic_sandbox_net(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network = true;
         g_info("network sandboxing is now enabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_sandunbox_net(path))) {
+    else if (path_magic_sandunbox_net(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network = false;
         g_info("network sandboxing is now disabled for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_addfilter(path))) {
+    else if (path_magic_addfilter(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_ADDFILTER_LEN;
         sydbox_config_addfilter(rpath);
         g_info("approved addfilter(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (G_UNLIKELY(path_magic_rmfilter(path))) {
+    else if (path_magic_rmfilter(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_RMFILTER_LEN;
         sydbox_config_rmfilter(rpath);
         g_info("approved rmfilter(\"%s\") for child %i", rpath, child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_allow(path))) {
+    else if (path_magic_net_allow(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network_mode = SYDBOX_NETWORK_ALLOW;
         g_info("approved net.allow() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_deny(path))) {
+    else if (path_magic_net_deny(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network_mode = SYDBOX_NETWORK_DENY;
         g_info("approved net.deny() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_local(path))) {
+    else if (path_magic_net_local(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network_mode = SYDBOX_NETWORK_LOCAL;
         g_info("approved net.local() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_restrict_connect(path))) {
+    else if (path_magic_net_restrict_connect(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network_restrict_connect = true;
         g_info("approved net.restrict.connect() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_unrestrict_connect(path))) {
+    else if (path_magic_net_unrestrict_connect(path)) {
         data->result = RS_MAGIC;
         child->sandbox->network_restrict_connect = false;
         g_info("approved net.unrestrict.connect() for child %i", child->pid);
     }
-    else if (G_UNLIKELY(path_magic_net_whitelist(path))) {
+    else if (path_magic_net_whitelist(path)) {
         data->result = RS_MAGIC;
         whitelist = sydbox_config_get_network_whitelist();
         rpath = path + CMD_NET_WHITELIST_LEN;
@@ -470,7 +470,7 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         else
             sydbox_config_set_network_whitelist(whitelist);
     }
-    else if (G_UNLIKELY(child->sandbox->path || !path_magic_enabled(path)))
+    else if (child->sandbox->path || !path_magic_enabled(path))
         data->result = RS_MAGIC;
 
     if (data->result == RS_MAGIC) {
