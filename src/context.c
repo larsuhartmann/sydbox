@@ -38,7 +38,7 @@ context_t *context_new (void)
 {
     context_t *ctx;
 
-    ctx = (context_t *) g_malloc0(sizeof(context_t));
+    ctx = (context_t *) g_new0(context_t, 1);
 
     ctx->before_initial_execve = true;
     ctx->children = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, tchild_free_one);
