@@ -1,5 +1,5 @@
 // sydbox man page
-// vim: set ts=4 sts=4 et tw=80 ft=asciidoc :
+// vim: set ts=4 sts=4 et tw=120 ft=asciidoc :
 // Copyright (c) 2009 Ali Polatel <polatel@gmail.com>
 // Distributed under the terms of the GNU General Public License v2
 SYDBOX(1)
@@ -21,16 +21,14 @@ DESCRIPTION
 Sydbox is a sandboxing utility.
 
 *Features*:::
-- Ptrace based which means it can sandbox static binaries unliked *LD_PRELOAD*
-  based sandbox utilities.
+- Ptrace based which means it can sandbox static binaries unliked *LD_PRELOAD* based sandbox utilities.
 - Intercepts system calls and checks for allowed filesystem prefixes, denies them when checks fail.
 - Basic support for disallowing network connections.
 - Basic support for sandboxing execve(2) calls.
 
 OPTIONS
 -------
-The ordering of option precedence is configuration file, environment variables,
-command line parameters.
+The ordering of option precedence is configuration file, environment variables, command line parameters.
 
 *-?*::
 *--help*::
@@ -187,6 +185,9 @@ according to the command. Currently there's one type of magic commands:
   * */dev/sydbox/net/allow*         stat'ing this path allows access to network.
   * */dev/sydbox/net/deny*          stat'ing this path denies access to network.
   * */dev/sydbox/net/local*         stat'ing this path restricts network access to local connections.
+  * */dev/sydbox/net/restrict/connect*   stat'ing this path restricts connect access to addresses bind'ed by parents.
+  * */dev/sydbox/net/unrestrict/connect* stat'ing this path unrestricts connect access to addresses bind'ed by parents.
+  * */dev/sydbox/net/whitelist/ADDR*     stat'ing this path adds the given address to the network whitelist.
   * */dev/sydbox*                   stat'ing this path succeeds if magic commands are allowed.
   * */dev/sydbox/enabled*           stat'ing this path succeeds if path sandboxing is on, fails otherwise.
 
@@ -210,6 +211,5 @@ Copyright (C) 2009 Ali Polatel <polatel at gmail dot com>
 
 Copyright (C) 2009 Saleem Abdulrasool <compnerd at compnerd dot org>
 
-Free use of this software is granted under the terms of the GNU General Public
-License (GPL).
+Free use of this software is granted under the terms of the GNU General Public License (GPL).
 
