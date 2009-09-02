@@ -89,6 +89,16 @@ inline bool path_magic_exec_lock(const char *path)
     return (0 == strncmp(path, CMD_EXEC_LOCK, CMD_EXEC_LOCK_LEN));
 }
 
+inline bool path_magic_wait_all(const char *path)
+{
+    return (0 == strncmp(path, CMD_WAIT_ALL, CMD_WAIT_ALL_LEN));
+}
+
+inline bool path_magic_wait_eldest(const char *path)
+{
+    return (0 == strncmp(path, CMD_WAIT_ELDEST, CMD_WAIT_ELDEST_LEN));
+}
+
 inline bool path_magic_write(const char *path)
 {
     return (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN));

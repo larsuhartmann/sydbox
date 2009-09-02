@@ -90,7 +90,7 @@ static gboolean sandbox_net_restrict_connect;
 static gboolean lock;
 static gboolean colour;
 static gboolean version;
-static gboolean wait_all;
+static gboolean nowait;
 
 static GOptionEntry entries[] =
 {
@@ -118,8 +118,8 @@ static GOptionEntry entries[] =
         "Network sandboxing mode (one of: allow, deny, local)", NULL},
     { "network-restrict-connect", 'R', 0, G_OPTION_ARG_NONE,                       &sandbox_net_restrict_connect,
         "Restrict network connections for network mode local", NULL},
-    { "wait-all",               'W', 0, G_OPTION_ARG_NONE,                         &wait_all,
-        "Wait for all children to exit before exiting", NULL},
+    { "exit-with-eldest",       'X', 0, G_OPTION_ARG_NONE,                         &nowait,
+        "Finish tracing when eldest child exits", NULL},
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
 
@@ -368,10 +368,10 @@ static int sydbox_internal_main(int argc, char **argv)
     else if (g_getenv(ENV_LOCK))
         sydbox_config_set_disallow_magic_commands(true);
 
-    if (wait_all)
-        sydbox_config_set_wait_all(true);
-    else if (g_getenv(ENV_WAIT_ALL))
-        sydbox_config_set_wait_all(true);
+    if (nowait)
+        sydbox_config_set_wait_all(false);
+    else if (g_getenv(ENV_NO_WAIT))
+        sydbox_config_set_wait_all(false);
 
     if (dump) {
         sydbox_config_write_to_stderr();

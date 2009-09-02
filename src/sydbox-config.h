@@ -40,7 +40,7 @@
 #define ENV_NO_COLOUR               "SYDBOX_NO_COLOUR"
 #define ENV_NO_CONFIG               "SYDBOX_NO_CONFIG"
 #define ENV_LOCK                    "SYDBOX_LOCK"
-#define ENV_WAIT_ALL                "SYDBOX_WAIT_ALL"
+#define ENV_NO_WAIT                 "SYDBOX_EXIT_WITH_ELDEST"
 
 enum {
     SYDBOX_NETWORK_ALLOW,

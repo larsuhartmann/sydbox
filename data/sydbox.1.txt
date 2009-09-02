@@ -82,9 +82,9 @@ The ordering of option precedence is configuration file, environment variables, 
 *--network-restrict-connect*::
     Restrict connections for network mode local
 
-*-W*::
-*--wait-all*::
-    Wait for all children to exit before exiting
+*-X*::
+*--exit-with-eldest*::
+    Finish tracing when eldest child exits
 
 ENVIRONMENT VARIABLES
 ---------------------
@@ -157,10 +157,10 @@ SYDBOX_LOCK
 If this variable is set, sydbox will disallow magic commands. This is equivalent
 to *-L* option.
 
-SYDBOX_WAIT_ALL
-~~~~~~~~~~~~~~~~
-If this variable is set, sydbox will wait for all children to exit before
-exiting. This is equivalent to *-W* option.
+SYDBOX_EXIT_WITH_ELDEST
+~~~~~~~~~~~~~~~~~~~~~~~
+If this variable is set, sydbox will finish tracing when the eldest child exits.
+This is equivalent to the *-X* option.
 
 MAGIC COMMANDS
 --------------
@@ -174,6 +174,8 @@ according to the command. Currently there's one type of magic commands:
   * */dev/sydbox/toggle*            stat'ing this path toggles path sandboxing.
   * */dev/sydbox/lock*              stat'ing this path locks magic commands.
   * */dev/sydbox/exec_lock*         stat'ing this path locks magic commands when an execve(2) is encountered.
+  * */dev/sydbox/wait/all*          stat'ing this path sets wait mode to all.
+  * */dev/sydbox/wait/eldest*       stat'ing this path sets wait mode to eldest.
   * */dev/sydbox/sandbox/exec*      stat'ing this path turns on execve(2) sandboxing.
   * */dev/sydbox/sandunbox/exec*    stat'ing this path turns off execve(2) sandboxing.
   * */dev/sydbox/write/PATH*        stat'ing this path adds *PATH* to the list of write allowed paths.

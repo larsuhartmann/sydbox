@@ -39,6 +39,10 @@
 #define CMD_LOCK_LEN                    (CMD_PATH_LEN + 5)
 #define CMD_EXEC_LOCK                   CMD_PATH"exec_lock"
 #define CMD_EXEC_LOCK_LEN               (CMD_PATH_LEN + 10)
+#define CMD_WAIT_ALL                    CMD_PATH"wait/all"
+#define CMD_WAIT_ALL_LEN                (CMD_PATH_LEN + 9)
+#define CMD_WAIT_ELDEST                 CMD_PATH"wait/eldest"
+#define CMD_WAIT_ELDEST_LEN             (CMD_PATH_LEN + 12)
 #define CMD_WRITE                       CMD_PATH"write/"
 #define CMD_WRITE_LEN                   (CMD_PATH_LEN + 6)
 #define CMD_RMWRITE                     CMD_PATH"unwrite/"
@@ -85,6 +89,10 @@ bool path_magic_enabled(const char *path);
 bool path_magic_lock(const char *path);
 
 bool path_magic_exec_lock(const char *path);
+
+bool path_magic_wait_all(const char *path);
+
+bool path_magic_wait_eldest(const char *path);
 
 bool path_magic_write(const char *path);
 

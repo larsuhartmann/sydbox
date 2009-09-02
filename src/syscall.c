@@ -374,6 +374,16 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         child->sandbox->lock = LOCK_PENDING;
         g_info("access to magic commands will be denied on execve() for child %i", child->pid);
     }
+    else if (path_magic_wait_all(path)) {
+        data->result = RS_MAGIC;
+        sydbox_config_set_wait_all(true);
+        g_info("tracing will be finished when all children exit");
+    }
+    else if (path_magic_wait_eldest(path)) {
+        data->result = RS_MAGIC;
+        sydbox_config_set_wait_all(false);
+        g_info("tracing will be finished when the eldest child exits");
+    }
     else if (path_magic_write(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;

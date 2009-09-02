@@ -69,7 +69,7 @@ static void sydbox_config_set_defaults(void)
     config->network_restrict_connect = false;
     config->network_mode = SYDBOX_NETWORK_ALLOW;
     config->disallow_magic_commands = false;
-    config->wait_all = false;
+    config->wait_all = true;
     config->allow_proc_pid = true;
 }
 
@@ -179,7 +179,7 @@ bool sydbox_config_load(const gchar * const file)
             case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
                 g_error_free(config_error);
                 config_error = NULL;
-                config->wait_all = false;
+                config->wait_all = true;
                 break;
             default:
                 g_assert_not_reached();
