@@ -3,6 +3,13 @@
 This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
+### 0.2_alpha
+* Wait for all children to exit by default. This can be unset using the command
+  line option -X or the magic command `wait/eldest`.
+* Let the children continue their execution by calling
+  `ptrace(PTRACE\_CONT, ...)` instead of attempting to kill them during exit for
+  `wait/eldest` mode.
+
 ### 0.1
 * Add magic commands addexec and rmexec.
 * Fix loading of options from environment.
