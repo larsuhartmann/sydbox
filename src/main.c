@@ -265,7 +265,7 @@ static int sydbox_execute_parent(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUS
         g_printerr("failed to get current working directory: %s", g_strerror(errno));
         exit(-1);
     }
-    eldest->inherited = true;
+    eldest->flags &= ~TCHILD_NEEDINHERIT;
 
     g_info ("child %i is ready to go, resuming", pid);
     if (0 > trace_syscall(pid, 0)) {

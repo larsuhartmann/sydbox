@@ -27,9 +27,10 @@
 #include <glib.h>
 
 /* TCHILD flags */
-#define TCHILD_NEEDSETUP   (1 << 0)    /* child needs setup */
-#define TCHILD_INSYSCALL   (1 << 1)    /* child is in syscall */
-#define TCHILD_DENYSYSCALL (1 << 2)    /* child has been denied access to the syscall */
+#define TCHILD_NEEDSETUP   (1 << 0)    /* child needs setup. */
+#define TCHILD_NEEDINHERIT (1 << 1)    /* child needs to inherit sandbox data from her parent. */
+#define TCHILD_INSYSCALL   (1 << 2)    /* child is in syscall. */
+#define TCHILD_DENYSYSCALL (1 << 3)    /* child has been denied access to the syscall. */
 
 /* per process tracking data */
 enum lock_status
@@ -59,7 +60,6 @@ struct tchild
     char *cwd;               // Child's current working directory.
     unsigned long sno;       // Last system call called by child.
     long retval;             // Replaced system call will return this value.
-    bool inherited;          // true if the child has inherited sandbox data from her parent.
     struct tdata *sandbox;   // Sandbox data */
 };
 

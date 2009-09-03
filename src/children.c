@@ -43,12 +43,11 @@ void tchild_new(GHashTable *children, pid_t pid)
 
     g_debug("new child %i", pid);
     child = (struct tchild *) g_malloc(sizeof(struct tchild));
-    child->flags = TCHILD_NEEDSETUP;
+    child->flags = TCHILD_NEEDSETUP | TCHILD_NEEDINHERIT;
     child->pid = pid;
     child->sno = 0xbadca11;
     child->retval = -1;
     child->cwd = NULL;
-    child->inherited = false;
     child->sandbox = (struct tdata *) g_malloc(sizeof(struct tdata));
     child->sandbox->path = true;
     child->sandbox->exec = false;
@@ -76,7 +75,7 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
     GSList *walk;
 
     g_assert(NULL != child && NULL != parent);
-    if (child->inherited)
+    if (!(child->flags & TCHILD_NEEDINHERIT))
         return;
 
     if (G_LIKELY(NULL != parent->cwd)) {
@@ -103,7 +102,7 @@ void tchild_inherit(struct tchild *child, struct tchild *parent)
         walk = g_slist_next(walk);
     }
 
-    child->inherited = true;
+    child->flags &= ~TCHILD_NEEDINHERIT;
 }
 
 void tchild_free_one(gpointer child_ptr)

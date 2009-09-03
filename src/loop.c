@@ -103,7 +103,7 @@ static int xfork(context_t *ctx, struct tchild *child)
         newchild = tchild_find(ctx->children, childpid);
         tchild_inherit(newchild, child);
     }
-    else if (!newchild->inherited) {
+    else if (newchild->flags & TCHILD_NEEDINHERIT) {
         /* Child has already been born but hasn't inherited parent's sandbox data
          * yet. Inherit parent's sandbox data and resume the child.
          */
