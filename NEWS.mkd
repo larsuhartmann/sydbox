@@ -3,6 +3,9 @@
 This file lists the major changes between versions. For a more detailed list of
 every change, see git log.
 
+### 0.2_alpha3
+* Fix tests
+
 ### 0.2_alpha2
 * Ship a configuration file for Paludis.
 * Small performance improvements.
