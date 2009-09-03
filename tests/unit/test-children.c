@@ -63,7 +63,7 @@ static void no_log (const gchar *log_domain, GLogLevelFlags log_level, const gch
 int main(int argc, char **argv)
 {
     g_setenv(ENV_NO_CONFIG, "1", 1);
-    sydbox_config_load(NULL);
+    sydbox_config_load(NULL, NULL);
 
     g_test_init (&argc, &argv, NULL);
 
