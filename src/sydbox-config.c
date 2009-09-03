@@ -73,9 +73,9 @@ static void sydbox_config_set_defaults(void)
     config->allow_proc_pid = true;
 }
 
-bool sydbox_config_load(const gchar * const file)
+bool sydbox_config_load(const gchar * const file, const gchar * const profile)
 {
-    const gchar *config_file;
+    gchar *config_file;
     GKeyFile *config_fd;
     GError *config_error = NULL;
 
@@ -94,11 +94,13 @@ bool sydbox_config_load(const gchar * const file)
 
     // Figure out the path to the configuration file
     if (file)
-        config_file = file;
+        config_file = g_strdup(file);
+    else if (profile)
+        config_file = g_strdup_printf(DATADIR G_DIR_SEPARATOR_S "sydbox" G_DIR_SEPARATOR_S "%s.conf", profile);
     else if (g_getenv(ENV_CONFIG))
-        config_file = g_getenv(ENV_CONFIG);
+        config_file = g_strdup(g_getenv(ENV_CONFIG));
     else
-        config_file = SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf";
+        config_file = g_strdup(SYSCONFDIR G_DIR_SEPARATOR_S "sydbox.conf");
 
     // Initialize key file
     config_fd = g_key_file_new();
@@ -110,12 +112,14 @@ bool sydbox_config_load(const gchar * const file)
                  */
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 sydbox_config_set_defaults();
                 return true;
             default:
                 g_printerr("failed to parse config file: %s\n", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
         }
@@ -129,6 +133,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("main.colour not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -151,6 +156,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("main.lock not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -173,6 +179,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("main.wait_all not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -195,6 +202,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("main.allow_proc_pid not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -228,6 +236,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("log.level not an integer: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -250,6 +259,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("sandbox.path not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -272,6 +282,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("sandbox.exec not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -294,6 +305,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("main.network not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -337,6 +349,7 @@ bool sydbox_config_load(const gchar * const file)
             g_printerr("error: invalid value for net.default `%s'\n", netdefault);
             g_free(netdefault);
             g_key_file_free(config_fd);
+            g_free(config_file);
             g_free(config);
             return false;
         }
@@ -351,6 +364,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("net.restrict_connect not a boolean: %s", config_error->message);
                 g_error_free(config_error);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
@@ -373,6 +387,7 @@ bool sydbox_config_load(const gchar * const file)
                 g_printerr("error: malformed address `%s' at position %d of net.whitelist\n", netwhitelist[i], i);
                 g_strfreev(netwhitelist);
                 g_key_file_free(config_fd);
+                g_free(config_file);
                 g_free(config);
                 return false;
             }
@@ -382,6 +397,7 @@ bool sydbox_config_load(const gchar * const file)
 
     // Cleanup and return
     g_key_file_free(config_fd);
+    g_free(config_file);
     return true;
 }
 

@@ -80,6 +80,7 @@ static gint verbosity = -1;
 
 static gchar *logfile;
 static gchar *config_file;
+static gchar *config_profile;
 static gchar *sandbox_net_mode;
 
 static gboolean dump;
@@ -98,6 +99,8 @@ static GOptionEntry entries[] =
         "Show version information",       NULL },
     { "config",                 'c', 0, G_OPTION_ARG_FILENAME,                     &config_file,
         "Path to the configuration file", NULL },
+    { "profile",                'p', 0, G_OPTION_ARG_STRING,                       &config_profile,
+        "Profile name of the configuration file", NULL },
     { "dump",                   'D', 0, G_OPTION_ARG_NONE,                         &dump,
         "Dump configuration and exit",    NULL },
     { "log-level",              '0', 0, G_OPTION_ARG_INT,                          &verbosity,
@@ -296,7 +299,7 @@ static int sydbox_internal_main(int argc, char **argv)
      * options are loaded from config file, updated from the environment, and
      * then overridden by the user passed parameters.
      */
-    if (!sydbox_config_load(config_file))
+    if (!sydbox_config_load(config_file, config_profile))
         return EXIT_FAILURE;
 
     if (verbosity >= 0)

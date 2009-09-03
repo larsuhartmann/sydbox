@@ -1,7 +1,8 @@
 CLEANFILES= syscall_marshaller.c syscall_marshaller.h gmon.out
 EXTRA_DIST= syscall_marshaller.list
 
-AM_CFLAGS= -DSYSCONFDIR=\"$(sysconfdir)\" -DGIT_HEAD=\"$(GIT_HEAD)\" \
+AM_CFLAGS= -DDATADIR=\"$(datadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
+	   -DGIT_HEAD=\"$(GIT_HEAD)\" \
 	   $(glib_CFLAGS) $(gobject_CFLAGS) @SYDBOX_CFLAGS@
 bin_PROGRAMS = sydbox
 sydbox_SOURCES = children.h context.h flags.h sydbox-log.h loop.h \

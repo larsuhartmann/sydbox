@@ -61,7 +61,7 @@ enum {
  *
  * Since: 0.1_alpha
  **/
-bool sydbox_config_load(const gchar * const config);
+bool sydbox_config_load(const gchar * const config, const gchar * const profile);
 
 /**
  * sydbox_config_update_from_environment:
