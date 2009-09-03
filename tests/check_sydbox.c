@@ -15,7 +15,7 @@ int main(void) {
     int number_failed;
 
     setenv(ENV_NO_CONFIG, "1", 1);
-    sydbox_config_load(NULL);
+    sydbox_config_load(NULL, NULL);
 
     /* Add suites */
     SRunner *sr = srunner_create(trace_suite_create());
