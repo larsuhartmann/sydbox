@@ -35,6 +35,7 @@ nodist_check_sydbox_SOURCES= $(top_builddir)/src/syscall_marshaller.c
 check_sydbox_CFLAGS = \
 		      -I$(top_builddir)/src \
 		      @SYDBOX_CFLAGS@ \
+		      -DDATADIR=\"$(datadir)\" \
 		      -DSYSCONFDIR=\"$(sysconfdir)\" \
 		      $(glib_CFLAGS) $(gobject_CFLAGS) $(check_CFLAGS)
 check_sydbox_LDADD = $(glib_LIBS) $(gobject_LIBS) $(check_LIBS)
