@@ -29,6 +29,7 @@
 /* TCHILD flags */
 #define TCHILD_NEEDSETUP   (1 << 0)    /* child needs setup */
 #define TCHILD_INSYSCALL   (1 << 1)    /* child is in syscall */
+#define TCHILD_DENYSYSCALL (1 << 2)    /* child has been denied access to the syscall */
 
 /* per process tracking data */
 enum lock_status
@@ -56,8 +57,8 @@ struct tchild
     int flags;               // TCHILD_ flags
     pid_t pid;               // Process ID of the child.
     char *cwd;               // Child's current working directory.
-    unsigned long sno;       // Original syscall no when a system call is faked.
-    long retval;             // Faked syscall will return this value.
+    unsigned long sno;       // Last system call called by child.
+    long retval;             // Replaced system call will return this value.
     bool inherited;          // true if the child has inherited sandbox data from her parent.
     struct tdata *sandbox;   // Sandbox data */
 };

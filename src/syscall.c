@@ -55,7 +55,6 @@
 #include "dispatch.h"
 
 #define BAD_SYSCALL                 0xbadca11
-#define IS_BAD_SYSCALL(_sno)        (BAD_SYSCALL == (_sno))
 #define IS_SUPPORTED_FAMILY(f)      ((f) == AF_UNIX || (f) == AF_INET || (f) == AF_INET6)
 #define IS_NET_CALL(fl)             ((fl) & (BIND_CALL | CONNECT_CALL | SENDTO_CALL | DECODE_SOCKETCALL))
 #define NET_RESTRICTED_CALL(fl)     ((fl) & (CONNECT_CALL | SENDTO_CALL))
@@ -1340,25 +1339,28 @@ int syscall_handle(context_t *ctx, struct tchild *child)
     struct checkdata data;
     SystemCall *handler;
 
-    // Get the system call number of child
-    if (0 > trace_get_syscall(child->pid, &sno)) {
-        if (G_UNLIKELY(ESRCH != errno)) {
-            /* Error getting system call using ptrace()
-             * child is still alive, hence the error is fatal.
-             */
-            g_critical("failed to get system call: %s", g_strerror(errno));
-            g_printerr("failed to get system call: %s", g_strerror(errno));
-            exit(-1);
+    if (!(child->flags & TCHILD_INSYSCALL)) {
+        /* Child is entering the system call.
+         * Get the system call number of child.
+         * Save it in child->sno.
+         */
+        if (0 > trace_get_syscall(child->pid, &sno)) {
+            if (G_UNLIKELY(ESRCH != errno)) {
+                /* Error getting system call using ptrace()
+                 * child is still alive, hence the error is fatal.
+                 */
+                g_critical("failed to get system call: %s", g_strerror(errno));
+                g_printerr("failed to get system call: %s", g_strerror(errno));
+                exit(-1);
+            }
+            // Child is dead, remove it
+            return context_remove_child(ctx, child->pid);
         }
-        // Child is dead, remove it
-        return context_remove_child(ctx, child->pid);
+        child->sno = sno;
+        sname = dispatch_name(child->personality, child->sno);
     }
-
-    /* Get the name of the syscall for logging
-     * If system call no is BAD_SYSCALL, this is a faked system call and the real
-     * system call number is stored in child->sno.
-     */
-    sname = dispatch_name(child->personality, IS_BAD_SYSCALL(sno) ? child->sno : (unsigned long) sno);
+    else
+        sno = child->sno;
 
     if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
         g_debug_trace("child %i is entering system call %lu(%s)", child->pid, sno, sname);
@@ -1394,7 +1396,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
                     /* fall through */
                 case RS_DENY:
                     g_debug("denying access to system call %lu(%s)", sno, sname);
-                    child->sno = sno;
+                    child->flags |= TCHILD_DENYSYSCALL;
                     if (0 > trace_set_syscall(child->pid, BAD_SYSCALL)) {
                         if (G_UNLIKELY(ESRCH != errno)) {
                             g_critical("failed to set system call: %s", g_strerror(errno));
@@ -1418,11 +1420,12 @@ int syscall_handle(context_t *ctx, struct tchild *child)
     else { // Exiting sytem call
         g_debug_trace("child %i is exiting system call %lu(%s)", child->pid, sno, sname);
 
-        if (IS_BAD_SYSCALL(sno)) {
+        if (child->flags & TCHILD_DENYSYSCALL) {
             /* Child is exiting a denied system call.
              */
             if (0 > syscall_handle_badcall(child))
                 return context_remove_child(ctx, child->pid);
+            child->flags &= ~TCHILD_DENYSYSCALL;
         }
         else if (dispatch_chdir(child->personality, sno)) {
             /* Child is exiting a system call that may have changed its current
