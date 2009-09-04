@@ -50,7 +50,7 @@ The ordering of option precedence is configuration file, environment variables, 
 *--dump*::
     Dump configuration and exit
 
-*-0::
+*-0*::
 *--log-level*::
     Logging verbosity
 
