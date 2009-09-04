@@ -42,6 +42,10 @@ The ordering of option precedence is configuration file, environment variables, 
 *--config*::
     Specify path to the configuration file
 
+*-p*::
+*--profile*::
+    Specify profile of the configuration file, equal to specifying DATADIR/sydbox/NAME.conf as configuration file
+
 *-D*::
 *--dump*::
     Dump configuration and exit
