@@ -1334,12 +1334,14 @@ static int syscall_handle_clone(context_t *ctx, struct tchild *child)
  */
 int syscall_handle(context_t *ctx, struct tchild *child)
 {
+    bool entering;
     int flags;
     long sno;
     struct checkdata data;
     SystemCall *handler;
 
-    if (!(child->flags & TCHILD_INSYSCALL)) {
+    entering = !(child->flags & TCHILD_INSYSCALL);
+    if (entering) {
         /* Child is entering the system call.
          * Get the system call number of child.
          * Save it in child->sno.
@@ -1362,7 +1364,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
     else
         sno = child->sno;
 
-    if (!(child->flags & TCHILD_INSYSCALL)) { // Entering syscall
+    if (entering) {
         g_debug_trace("child %i is entering system call %lu(%s)", child->pid, sno, sname);
 
         /* Get handler for the system call
@@ -1417,7 +1419,7 @@ int syscall_handle(context_t *ctx, struct tchild *child)
             }
         }
     }
-    else { // Exiting sytem call
+    else {
         g_debug_trace("child %i is exiting system call %lu(%s)", child->pid, sno, sname);
 
         if (child->flags & TCHILD_DENYSYSCALL) {
