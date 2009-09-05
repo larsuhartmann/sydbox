@@ -99,6 +99,16 @@ inline bool path_magic_wait_eldest(const char *path)
     return (0 == strncmp(path, CMD_WAIT_ELDEST, CMD_WAIT_ELDEST_LEN));
 }
 
+inline bool path_magic_wrap_lstat(const char *path)
+{
+    return (0 == strncmp(path, CMD_WRAP_LSTAT, CMD_WRAP_LSTAT_LEN));
+}
+
+inline bool path_magic_nowrap_lstat(const char *path)
+{
+    return (0 == strncmp(path, CMD_NOWRAP_LSTAT, CMD_NOWRAP_LSTAT_LEN));
+}
+
 inline bool path_magic_write(const char *path)
 {
     return (0 == strncmp(path, CMD_WRITE, CMD_WRITE_LEN));

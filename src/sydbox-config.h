@@ -41,6 +41,7 @@
 #define ENV_NO_CONFIG               "SYDBOX_NO_CONFIG"
 #define ENV_LOCK                    "SYDBOX_LOCK"
 #define ENV_NO_WAIT                 "SYDBOX_EXIT_WITH_ELDEST"
+#define ENV_NOWRAP_LSTAT            "SYDBOX_NOWRAP_LSTAT"
 
 enum {
     SYDBOX_NETWORK_ALLOW,
@@ -182,6 +183,10 @@ void sydbox_config_set_wait_all(bool waitall);
 bool sydbox_config_get_allow_proc_pid(void);
 
 void sydbox_config_set_allow_proc_pid(bool allow);
+
+bool sydbox_config_get_wrap_lstat(void);
+
+void sydbox_config_set_wrap_lstat(bool wrap);
 
 /**
  * sydbox_config_get_write_prefixes:

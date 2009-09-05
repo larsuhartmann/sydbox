@@ -92,6 +92,7 @@ static gboolean lock;
 static gboolean colour;
 static gboolean version;
 static gboolean nowait;
+static gboolean nowrap_lstat;
 
 static GOptionEntry entries[] =
 {
@@ -123,6 +124,8 @@ static GOptionEntry entries[] =
         "Restrict network connections for network mode local", NULL},
     { "exit-with-eldest",       'X', 0, G_OPTION_ARG_NONE,                         &nowait,
         "Finish tracing when eldest child exits", NULL},
+    { "nowrap-lstat",           'W', 0, G_OPTION_ARG_NONE,                         &nowrap_lstat,
+        "Disable wrapping of lstat() calls for too long paths", NULL},
     { NULL, -1, 0, 0, NULL, NULL, NULL },
 };
 
@@ -375,6 +378,11 @@ static int sydbox_internal_main(int argc, char **argv)
         sydbox_config_set_wait_all(false);
     else if (g_getenv(ENV_NO_WAIT))
         sydbox_config_set_wait_all(false);
+
+    if (nowrap_lstat)
+        sydbox_config_set_wrap_lstat(false);
+    else if (g_getenv(ENV_NOWRAP_LSTAT))
+        sydbox_config_set_wrap_lstat(false);
 
     if (dump) {
         sydbox_config_write_to_stderr();

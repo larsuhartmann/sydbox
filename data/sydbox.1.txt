@@ -90,6 +90,10 @@ The ordering of option precedence is configuration file, environment variables, 
 *--exit-with-eldest*::
     Finish tracing when eldest child exits
 
+*-W*::
+*--nowrap-lstat*::
+    Disable the lstat() wrapper for too long paths
+
 ENVIRONMENT VARIABLES
 ---------------------
 The behaviour of sydbox is affected by the following environment variables.
@@ -166,6 +170,11 @@ SYDBOX_EXIT_WITH_ELDEST
 If this variable is set, sydbox will finish tracing when the eldest child exits.
 This is equivalent to the *-X* option.
 
+SYDBOX_NOWRAP_LSTAT
+~~~~~~~~~~~~~~~~~~~
+If this variable is set, sydbox won't use its lstat() wrapper for too long paths.
+This is equivalent to the *-W* option.
+
 MAGIC COMMANDS
 --------------
 Sydbox has a concept of magic commands to interact with it during its run.
@@ -180,6 +189,8 @@ according to the command. Currently there's one type of magic commands:
   * */dev/sydbox/exec_lock*         stat'ing this path locks magic commands when an execve(2) is encountered.
   * */dev/sydbox/wait/all*          stat'ing this path sets wait mode to all.
   * */dev/sydbox/wait/eldest*       stat'ing this path sets wait mode to eldest.
+  * */dev/sydbox/wrap/lstat*        stat'ing this path enables the lstat() wrapper for too long paths.
+  * */dev/sydbox/nowrap/lstat*      stat'ing this path disables the lstat() wrapper for too long paths.
   * */dev/sydbox/sandbox/exec*      stat'ing this path turns on execve(2) sandboxing.
   * */dev/sydbox/sandunbox/exec*    stat'ing this path turns off execve(2) sandboxing.
   * */dev/sydbox/write/PATH*        stat'ing this path adds *PATH* to the list of write allowed paths.

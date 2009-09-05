@@ -43,6 +43,10 @@
 #define CMD_WAIT_ALL_LEN                (CMD_PATH_LEN + 9)
 #define CMD_WAIT_ELDEST                 CMD_PATH"wait/eldest"
 #define CMD_WAIT_ELDEST_LEN             (CMD_PATH_LEN + 12)
+#define CMD_WRAP_LSTAT                  CMD_PATH"wrap/lstat"
+#define CMD_WRAP_LSTAT_LEN              (CMD_PATH_LEN + 11)
+#define CMD_NOWRAP_LSTAT                CMD_PATH"nowrap/lstat"
+#define CMD_NOWRAP_LSTAT_LEN            (CMD_PATH_LEN + 13)
 #define CMD_WRITE                       CMD_PATH"write/"
 #define CMD_WRITE_LEN                   (CMD_PATH_LEN + 6)
 #define CMD_RMWRITE                     CMD_PATH"unwrite/"
@@ -97,6 +101,10 @@ bool path_magic_wait_eldest(const char *path);
 bool path_magic_write(const char *path);
 
 bool path_magic_rmwrite(const char *path);
+
+bool path_magic_wrap_lstat(const char *path);
+
+bool path_magic_nowrap_lstat(const char *path);
 
 bool path_magic_sandbox_exec(const char *path);
 

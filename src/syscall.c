@@ -383,6 +383,16 @@ static void systemcall_magic_stat(struct tchild *child, struct checkdata *data)
         sydbox_config_set_wait_all(false);
         g_info("tracing will be finished when the eldest child exits");
     }
+    else if (path_magic_wrap_lstat(path)) {
+        data->result = RS_MAGIC;
+        sydbox_config_set_wrap_lstat(true);
+        g_info("lstat() calls will now be wrapped");
+    }
+    else if (path_magic_nowrap_lstat(path)) {
+        data->result = RS_MAGIC;
+        sydbox_config_set_wrap_lstat(false);
+        g_info("lstat() calls will now not be wrapped");
+    }
     else if (path_magic_write(path)) {
         data->result = RS_MAGIC;
         rpath = path + CMD_WRITE_LEN;

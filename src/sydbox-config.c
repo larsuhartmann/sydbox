@@ -49,6 +49,7 @@ struct sydbox_config
     bool disallow_magic_commands;
     bool wait_all;
     bool allow_proc_pid;
+    bool wrap_lstat;
 
     GSList *filters;
     GSList *write_prefixes;
@@ -71,6 +72,7 @@ static void sydbox_config_set_defaults(void)
     config->disallow_magic_commands = false;
     config->wait_all = true;
     config->allow_proc_pid = true;
+    config->wrap_lstat = true;
 }
 
 bool sydbox_config_load(const gchar * const file, const gchar * const profile)
@@ -210,6 +212,28 @@ bool sydbox_config_load(const gchar * const file, const gchar * const profile)
                 g_error_free(config_error);
                 config_error = NULL;
                 config->allow_proc_pid = true;
+                break;
+            default:
+                g_assert_not_reached();
+                break;
+        }
+    }
+
+    config->wrap_lstat = g_key_file_get_boolean(config_fd, "main", "wrap_lstat", &config_error);
+    if (!config->wrap_lstat && config_error) {
+        switch (config_error->code) {
+            case G_KEY_FILE_ERROR_INVALID_VALUE:
+                g_printerr("main.wrap_lstat not a boolean: %s", config_error->message);
+                g_error_free(config_error);
+                g_key_file_free(config_fd);
+                g_free(config_file);
+                g_free(config);
+                return false;
+            case G_KEY_FILE_ERROR_GROUP_NOT_FOUND:
+            case G_KEY_FILE_ERROR_KEY_NOT_FOUND:
+                g_error_free(config_error);
+                config_error = NULL;
+                config->wrap_lstat = true;
                 break;
             default:
                 g_assert_not_reached();
@@ -426,7 +450,6 @@ void sydbox_config_update_from_environment(void)
     }
 }
 
-
 static inline void print_slist_entry(gpointer data, gpointer userdata G_GNUC_UNUSED)
 {
     gchar *cdata = (gchar *) data;
@@ -596,6 +619,16 @@ bool sydbox_config_get_allow_proc_pid(void)
 void sydbox_config_set_allow_proc_pid(bool allow)
 {
     config->allow_proc_pid = allow;
+}
+
+bool sydbox_config_get_wrap_lstat(void)
+{
+    return config->wrap_lstat;
+}
+
+void sydbox_config_set_wrap_lstat(bool wrap)
+{
+    config->wrap_lstat = wrap;
 }
 
 GSList *sydbox_config_get_write_prefixes(void)
