@@ -1446,7 +1446,8 @@ int syscall_handle(context_t *ctx, struct tchild *child)
             if (0 > syscall_handle_chdir(child))
                 return context_remove_child(ctx, child->pid);
         }
-        else if (child->sandbox->network_restrict_connect && dispatch_maybind(child->personality, sno)) {
+        else if (child->sandbox->network && child->sandbox->network_restrict_connect &&
+                dispatch_maybind(child->personality, sno)) {
             flags = dispatch_lookup(child->personality, sno);
             if (0 > syscall_handle_bind(child, flags))
                 return context_remove_child(ctx, child->pid);
