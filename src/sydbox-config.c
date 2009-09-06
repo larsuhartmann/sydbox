@@ -485,6 +485,9 @@ void sydbox_config_write_to_stderr (void)
     g_fprintf(stderr, "main.lock = %s\n", config->disallow_magic_commands ? "set" : "unset");
     g_fprintf(stderr, "main.wait_all = %s\n", config->wait_all ? "yes" : "no");
     g_fprintf(stderr, "main.allow_proc_pid = %s\n", config->allow_proc_pid ? "yes" : "no");
+    g_fprintf(stderr, "main.wrap_lstat = %s\n", config->wrap_lstat ? "yes" : "no");
+    g_fprintf(stderr, "main.filters:\n");
+    g_slist_foreach(config->filters, print_slist_entry, NULL);
     g_fprintf(stderr, "log.file = %s\n", config->logfile ? config->logfile : "stderr");
     g_fprintf(stderr, "log.level = %d\n", config->verbosity);
     g_fprintf(stderr, "sandbox.path = %s\n", config->sandbox_path ? "yes" : "no");
