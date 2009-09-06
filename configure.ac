@@ -400,6 +400,18 @@ if test x"$SYDBOX_PROFILE" = x"yes" ; then
 	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -pg"
 	LDFLAGS="$LDFLAGS -pg"
 fi
+AC_MSG_CHECKING([whether coverage testing should be enabled])
+AC_ARG_ENABLE([gcov],
+			  [AS_HELP_STRING([--enable-gcov],
+							  [add gcov support (for debugging)])],
+			  SYDBOX_COVERAGE="$enableval",
+			  SYDBOX_COVERAGE="no")
+AC_MSG_RESULT([$SYDBOX_COVERAGE])
+if test x"$SYDBOX_COVERAGE" = x"yes" ; then
+	AX_CHECK_COMPILER_FLAGS([-fprofile-arcs],, AC_MSG_ERROR([your compiler doesn't support -fprofile-arcs flag]))
+	AX_CHECK_COMPILER_FLAGS([-ftest-coverage],, AC_MSG_ERROR([your compiler doesn't support -ftest-coverage flag]))
+	SYDBOX_CFLAGS="$SYDBOX_CFLAGS -fprofile-arcs -ftest-coverage"
+fi
 AC_SUBST([SYDBOX_CFLAGS])
 dnl }}}
 

@@ -1,4 +1,4 @@
-CLEANFILES= syscall_marshaller.c syscall_marshaller.h gmon.out
+CLEANFILES= syscall_marshaller.c syscall_marshaller.h gmon.out *.gcda *.gcno
 EXTRA_DIST= syscall_marshaller.list
 
 AM_CFLAGS= -DDATADIR=\"$(datadir)\" -DSYSCONFDIR=\"$(sysconfdir)\" \

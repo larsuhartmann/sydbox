@@ -12,6 +12,8 @@ Makefile.in
 Makefile
 shave
 
+*.gcda
+*.gcno
 gmon.out
 gprof*
 
